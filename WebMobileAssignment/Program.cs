@@ -1,11 +1,23 @@
 var builder = WebApplication.CreateBuilder(args);
 
-var app = builder.Build();
-app.UseHttpsRedirection();
-app.UseStaticFiles();  
-app.MapDefaultControllerRoute();
-app.Run();
+// Add MVC services
+builder.Services.AddControllersWithViews();
 
-app.MapGet("/", () => "Hello chunwen123!");
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
