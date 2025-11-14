@@ -6,6 +6,6 @@ app.UseStaticFiles();
 app.MapDefaultControllerRoute();
 app.Run();
 
-app.MapGet("/", () => "Hello chunwen123!");
+app.MapGet("/", () => "Hello everyone!!!");
 
 app.Run();
