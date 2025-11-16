@@ -6,10 +6,10 @@ namespace WebMobileAssignment.Controllers
     {
         // GET: /Account/Login
         public IActionResult Login()
-      {
+        {
             // This is a placeholder - authentication will be implemented later
-            ViewData["Message"] = "Login page - Authentication will be implemented later";
-          return View();
+            ViewBag.Message = "Login page - Authentication will be implemented later";
+            return View();
         }
     }
 }
