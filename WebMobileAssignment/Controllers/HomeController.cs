@@ -7,7 +7,7 @@ namespace WebMobileAssignment.Controllers
         // GET: /Home/Index
         public IActionResult Index()
         {
-            ViewData["Title"] = "Home";
+            ViewBag.Title = "Home";
             return View();
         }
 

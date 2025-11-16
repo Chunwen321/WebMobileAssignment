@@ -1,64 +1,70 @@
 @{
-    ViewData["Title"] = "Login";
+    ViewBag.Title = "Login";
 }
 
 <div class="login-container-horizontal">
     <div class="login-card-horizontal">
- <!-- Left Side - Branding -->
+        <!-- Left Side - Branding -->
         <div class="login-left">
-    <div class="login-branding">
-     <div class="brand-icon">
-     <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" viewBox="0 0 16 16">
-     <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
-    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
-               </svg>
-       </div>
-         <h2 class="brand-title">Tuition Attendance System</h2>
-          <p class="brand-description">
-    Streamline your tuition center operations with our comprehensive attendance tracking solution.
-   </p>
-        
-          <!-- User Types Display -->
- <div class="user-types-display">
- <div class="user-type-item">
-   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="icon-red" viewBox="0 0 16 16">
-      <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-      </svg>
-       <span>Admin</span>
-  </div>
-        <div class="user-type-item">
-   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="icon-blue" viewBox="0 0 16 16">
-      <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-        </svg>
-<span>Teacher</span>
- </div>
-    <div class="user-type-item">
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="icon-green" viewBox="0 0 16 16">
-      <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
-    </svg>
-    <span>Student</span>
-         </div>
-  <div class="user-type-item">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="icon-yellow" viewBox="0 0 16 16">
-           <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-  <path fill-rule="evenodd" d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216z"/>
-             <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
-   </svg>
-  <span>Parent</span>
-         </div>
-      </div>
-      </div>
+            <div class="login-branding">
+                <div class="brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor"
+                        viewBox="0 0 16 16">
+                        <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z" />
+                        <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z" />
+                    </svg>
+                </div>
+                <h2 class="brand-title">Tuition Attendance System</h2>
+                <p class="brand-description">
+                    Streamline your tuition center operations with our comprehensive attendance tracking solution.
+                </p>
+
+                <!-- User Types Display -->
+                <div class="user-types-display">
+                    <div class="user-type-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            class="icon-red" viewBox="0 0 16 16">
+                            <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                        </svg>
+                        <span>Admin</span>
+                    </div>
+                    <div class="user-type-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            class="icon-blue" viewBox="0 0 16 16">
+                            <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                        </svg>
+                        <span>Teacher</span>
+                    </div>
+                    <div class="user-type-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            class="icon-green" viewBox="0 0 16 16">
+                            <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                        </svg>
+                        <span>Student</span>
+                    </div>
+                    <div class="user-type-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            class="icon-yellow" viewBox="0 0 16 16">
+                            <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                            <path fill-rule="evenodd"
+                                d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216z" />
+                            <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+                        </svg>
+                        <span>Parent</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Right Side - Login Form -->
         <div class="login-right">
-    <div class="login-form-container">
-       <div class="form-header">
-      <h3 class="form-title">Welcome Back</h3>
-      <p class="form-subtitle">Please login to continue</p>
+            <div class="login-form-container">
+                <div class="form-header">
+                    <h3 class="form-title">Welcome Back</h3>
+                    <p class="form-subtitle">Please login to continue</p>
                 </div>
 
-     <form>
+                <form>
                     <div class="mb-3">
                         <label for="userType" class="form-label">User Type</label>
                         <select class="form-select" id="userType" required>
@@ -70,35 +76,35 @@
                         </select>
                     </div>
 
-       <div class="mb-3">
-     <label for="username" class="form-label">Username</label>
-  <input type="text" class="form-control" id="username" placeholder="Enter username" required>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" placeholder="Enter username" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+                        <a href="#" class="forgot-link">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        Login
+                    </button>
+
+                    <div class="text-center">
+                        <a asp-controller="Home" asp-action="Index" class="back-link">
+                            Back to Home
+                        </a>
+                    </div>
+                </form>
             </div>
-
-          <div class="mb-3">
-     <label for="password" class="form-label">Password</label>
-   <input type="password" class="form-control" id="password" placeholder="Enter password" required>
-     </div>
-
-       <div class="d-flex justify-content-between align-items-center mb-3">
-   <div class="form-check">
-      <input type="checkbox" class="form-check-input" id="rememberMe">
-       <label class="form-check-label" for="rememberMe">Remember me</label>
-    </div>
-   <a href="#" class="forgot-link">Forgot password?</a>
-    </div>
-
-    <button type="submit" class="btn btn-primary w-100 mb-3">
-     Login
-     </button>
-
-     <div class="text-center">
-     <a asp-controller="Home" asp-action="Index" class="back-link">
-       Back to Home
-         </a>
-   </div>
-            </form>
-        </div>
         </div>
     </div>
 </div>
