@@ -16,5 +16,11 @@ namespace WebMobileAssignment.Controllers
         {
             return View();
         }
+
+        // GET: /Home/Student
+        public IActionResult Student()
+        {
+            return View();
+        }
     }
 }
