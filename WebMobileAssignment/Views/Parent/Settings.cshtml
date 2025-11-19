@@ -1,0 +1,128 @@
+@{
+    ViewBag.Title = "Settings";
+    Layout = "~/Views/Shared/_ParentLayout.cshtml";
+}
+
+<div class="row g-3">
+    <!-- Account Settings -->
+    <div class="col-lg-8">
+  <div class="dashboard-card settings-account-card">
+<div class="card-header-custom">
+    <h5 class="card-title">
+   <i class="bi bi-person-circle"></i>
+Account Settings
+  </h5>
+       </div>
+
+    <form>
+ <div class="row g-3">
+ <div class="col-md-6">
+     <label class="form-label">First Name</label>
+ <input type="text" class="form-control" value="Robert" required>
+   </div>
+    <div class="col-md-6">
+  <label class="form-label">Last Name</label>
+<input type="text" class="form-control" value="Doe" required>
+     </div>
+      <div class="col-md-6">
+       <label class="form-label">Email Address</label>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+    <input type="email" class="form-control" value="robert.doe@email.com" required>
+        </div>
+ </div>
+    <div class="col-md-6">
+    <label class="form-label">Phone Number</label>
+     <div class="input-group">
+<span class="input-group-text"><i class="bi bi-phone"></i></span>
+    <input type="tel" class="form-control" value="012-987-6543" required>
+ </div>
+     </div>
+   <div class="col-12">
+      <label class="form-label">Address</label>
+<textarea class="form-control" rows="2">123 Main Street, Kuala Lumpur, Malaysia</textarea>
+     </div>
+<div class="col-12 mb-0">
+ <button type="submit" class="btn btn-primary">
+  <i class="bi bi-check-circle me-2"></i>Save Changes
+</button>
+     <button type="button" class="btn btn-outline-secondary">
+     <i class="bi bi-x-circle me-2"></i>Cancel
+ </button>
+    </div>
+</div>
+  </form>
+ </div>
+
+   <!-- Change Password -->
+<div class="dashboard-card mb-3">
+   <div class="card-header-custom">
+       <h5 class="card-title">
+<i class="bi bi-shield-lock"></i>
+     Change Password
+   </h5>
+    </div>
+
+  <form>
+     <div class="password-field-group mb-3">
+  <label class="form-label fw-semibold">Current Password</label>
+<div class="password-input-wrapper">
+<i class="bi bi-lock-fill password-icon"></i>
+    <input type="password" class="form-control password-input" placeholder="Enter current password" required>
+        </div>
+       </div>
+   
+       <div class="password-field-group mb-3">
+ <label class="form-label fw-semibold">New Password</label>
+ <div class="password-input-wrapper">
+  <i class="bi bi-lock-fill password-icon"></i>
+  <input type="password" class="form-control password-input" placeholder="Enter new password" required>
+  </div>
+     <small class="form-text text-muted d-block mt-1">
+   <i class="bi bi-info-circle me-1"></i>Password must be at least 8 characters long
+         </small>
+      </div>
+         
+    <div class="password-field-group mb-3">
+ <label class="form-label fw-semibold">Confirm New Password</label>
+    <div class="password-input-wrapper">
+    <i class="bi bi-lock-fill password-icon"></i>
+    <input type="password" class="form-control password-input" placeholder="Confirm new password" required>
+     </div>
+ </div>
+    
+   <button type="submit" class="btn btn-update-password">
+      <i class="bi bi-key-fill me-2"></i>Update Password
+  </button>
+ </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+ <div class="col-lg-4">
+     <!-- Profile Summary -->
+   <div class="dashboard-card">
+  <div class="text-center mb-3">
+      <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;">
+ <i class="bi bi-person-fill"></i>
+       </div>
+     <h5 class="mb-1">Robert Doe</h5>
+      <p class="text-muted mb-0">Parent/Guardian</p>
+   </div>
+      <div class="list-group list-group-flush">
+   <div class="list-group-item px-0">
+   <small class="text-muted d-block">Account ID</small>
+     <strong>PAR001</strong>
+     </div>
+     <div class="list-group-item px-0">
+ <small class="text-muted d-block">Member Since</small>
+  <strong>January 1, 2024</strong>
+    </div>
+  <div class="list-group-item px-0">
+     <small class="text-muted d-block">Status</small>
+   <span class="badge bg-success">Active</span>
+    </div>
+  </div>
+ </div>
+    </div>
+</div>
