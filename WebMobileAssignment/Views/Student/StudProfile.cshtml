@@ -1,0 +1,114 @@
+﻿@{
+    ViewBag.Title = "Student Profile";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+}
+
+<div class="row g-3">
+    <!-- Profile Card -->
+    <div class="col-lg-4">
+        <div class="dashboard-card">
+            <div class="text-center mb-4">
+                <div class="user-avatar mx-auto mb-3" style="width: 120px; height: 120px; font-size: 3rem; background: #198754;">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <h4 class="mb-1">John Doe</h4>
+                <p class="text-muted mb-2">Student ID: STU001</p>
+                <span class="badge bg-success">Active</span>
+            </div>
+
+            <div class="list-group list-group-flush">
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <span class="text-muted"><i class="bi bi-calendar3 me-2"></i>Date of Birth</span>
+                    <strong>May 15, 2010</strong>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <span class="text-muted"><i class="bi bi-gender-ambiguous me-2"></i>Gender</span>
+                    <strong>Male</strong>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <span class="text-muted"><i class="bi bi-phone me-2"></i>Phone</span>
+                    <strong>012-345-6789</strong>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email</span>
+                    <strong>john@email.com</strong>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <span class="text-muted"><i class="bi bi-calendar-check me-2"></i>Join Date</span>
+                    <strong>Jan 1, 2024</strong>
+                </div>
+            </div>
+
+            <button class="btn btn-outline-primary w-100 mt-3">
+                <i class="bi bi-pencil-fill me-2"></i>Edit Profile
+            </button>
+        </div>
+    </div>
+
+    <!-- Details Section -->
+    <div class="col-lg-8">
+        <!-- Class Information -->
+        <div class="dashboard-card mb-3">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-book-fill"></i>
+                    Class Information
+                </h5>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="card-icon blue">
+                                <i class="bi bi-mortarboard-fill"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Current Class</small>
+                                <strong>Form 5 Science</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="card-icon yellow">
+                                <i class="bi bi-calendar-week-fill"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Class Schedule</small>
+                                <strong>Mon, Wed, Fri</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="card-icon green">
+                                <i class="bi bi-clock-fill"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Class Time</small>
+                                <strong>2:00 PM - 4:00 PM</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="card-icon red">
+                                <i class="bi bi-person-video3"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Class Teacher</small>
+                                <strong>Mrs. Sarah Johnson</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
