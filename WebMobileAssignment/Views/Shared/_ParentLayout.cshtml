@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title - Parent Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/parent.css" asp-append-version="true" />
+</head>
+<body class="parent-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+   <div class="sidebar-header">
+     <div class="sidebar-brand">
+                <i class="bi bi-calendar-check-fill"></i>
+      <span>Parent Portal</span>
+  </div>
+ </div>
+
+   <nav class="sidebar-nav">
+      <!-- Dashboard -->
+       <a asp-controller="Parent" asp-action="Dashboard" 
+ class="sidebar-item @(ViewBag.ActiveMenu == "Dashboard" ? "active" : "")">
+              <div class="sidebar-item-content">
+              <i class="bi bi-house-door-fill"></i>
+         <span>Dashboard</span>
+   </div>
+   </a>
+
+     <!-- Attendance - Dropdown -->
+      <div class="sidebar-dropdown">
+         <button class="sidebar-item dropdown-toggle @(ViewBag.ActiveMenu == "Attendance" ? "active" : "")" 
+ type="button" data-bs-toggle="collapse" data-bs-target="#attendanceMenu">
+         <div class="sidebar-item-content">
+      <i class="bi bi-calendar-event-fill"></i>
+    <span>Attendance</span>
+            </div>
+        <i class="bi bi-chevron-down"></i>
+           </button>
+  <div class="collapse @(ViewBag.ActiveMenu == "Attendance" ? "show" : "")" id="attendanceMenu">
+          <a asp-controller="Parent" asp-action="AttendanceHistory" 
+    class="sidebar-subitem @(ViewBag.ActiveSubmenu == "History" ? "active" : "")">
+  <i class="bi bi-clock-history"></i>
+             <span>View Attendance History</span>
+ </a>
+  <a asp-controller="Parent" asp-action="MonthlySummary" 
+  class="sidebar-subitem @(ViewBag.ActiveSubmenu == "MonthlySummary" ? "active" : "")">
+            <i class="bi bi-bar-chart-fill"></i>
+     <span>Monthly Summary</span>
+        </a>
+<a asp-controller="Parent" asp-action="DownloadReport" 
+     class="sidebar-subitem">
+       <i class="bi bi-file-earmark-pdf-fill"></i>
+<span>Download Report (PDF)</span>
+     </a>
+      </div>
+    </div>
+
+ <!-- Child Profile -->
+      <a asp-controller="Parent" asp-action="StudentProfile" 
+class="sidebar-item @(ViewBag.ActiveMenu == "StudentProfile" ? "active" : "")">
+     <div class="sidebar-item-content">
+       <i class="bi bi-person-badge-fill"></i>
+           <span>Child Profile</span>
+       </div>
+       </a>
+
+     <!-- Notifications -->
+   <a asp-controller="Parent" asp-action="Notifications" 
+  class="sidebar-item @(ViewBag.ActiveMenu == "Notifications" ? "active" : "")">
+              <div class="sidebar-item-content">
+      <i class="bi bi-bell-fill"></i>
+       <span>Notifications</span>
+    </div>
+        <span class="notification-badge">3</span>
+    </a>
+
+       <!-- Settings -->
+         <a asp-controller="Parent" asp-action="Settings" 
+     class="sidebar-item @(ViewBag.ActiveMenu == "Settings" ? "active" : "")">
+              <div class="sidebar-item-content">
+       <i class="bi bi-gear-fill"></i>
+           <span>Settings</span>
+            </div>
+ </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+   <div class="user-info">
+         <div class="user-avatar">
+ <i class="bi bi-person-fill"></i>
+          </div>
+                <div class="user-details">
+       <div class="user-name">Parent Name</div>
+     <div class="user-role">Guardian</div>
+   </div>
+     </div>
+       <a asp-controller="Account" asp-action="Login" class="logout-btn" title="Logout">
+           <i class="bi bi-box-arrow-right"></i>
+        </a>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <button class="sidebar-toggle" id="sidebarToggle">
+       <i class="bi bi-list"></i>
+    </button>
+  <div class="topbar-title">
+                <h1>@ViewBag.Title</h1>
+            </div>
+    <div class="topbar-actions">
+     <button class="topbar-btn" title="Notifications">
+   <i class="bi bi-bell-fill"></i>
+      <span class="badge">3</span>
+   </button>
+       </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+   @RenderBody()
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/parent.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
