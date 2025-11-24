@@ -1,0 +1,222 @@
+@{
+    ViewBag.Title = "Settings";
+    ViewBag.ActiveSubmenu = "Settings";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="list-group">
+            <a href="#generalSettings" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                <i class="bi bi-gear-fill me-2"></i>General Settings
+            </a>
+            <a href="#notificationSettings" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="bi bi-bell-fill me-2"></i>Notifications
+            </a>
+            <a href="#privacySettings" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="bi bi-shield-fill me-2"></i>Privacy
+            </a>
+            <a href="#accountSettings" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                <i class="bi bi-person-circle me-2"></i>Account
+            </a>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <!-- General Settings -->
+        <div class="dashboard-card" id="generalSettings">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-gear-fill"></i>
+                    General Settings
+                </h3>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <label class="form-label">Theme</label>
+                    <select class="form-select">
+                        <option selected>Light Theme</option>
+                        <option>Dark Theme</option>
+                        <option>Auto (System Default)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <label class="form-label">Language</label>
+                    <select class="form-select">
+                        <option selected>English</option>
+                        <option>Spanish</option>
+                        <option>French</option>
+                        <option>German</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                        <label class="form-check-label" for="emailNotifications">
+                            Receive email notifications for important updates
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary">
+                <i class="bi bi-check-circle me-2"></i>Save Settings
+            </button>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="dashboard-card" id="notificationSettings" style="display: none;">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-bell-fill"></i>
+                    Notification Settings
+                </h3>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="classReminders" checked>
+                    <label class="form-check-label" for="classReminders">
+                        Class reminders and notifications
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="attendanceAlerts" checked>
+                    <label class="form-check-label" for="attendanceAlerts">
+                        Attendance alerts
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="studentMessages" checked>
+                    <label class="form-check-label" for="studentMessages">
+                        Student messages and inquiries
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="systemUpdates" checked>
+                    <label class="form-check-label" for="systemUpdates">
+                        System updates and announcements
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn btn-primary">
+                <i class="bi bi-check-circle me-2"></i>Save Settings
+            </button>
+        </div>
+
+        <!-- Privacy Settings -->
+        <div class="dashboard-card" id="privacySettings" style="display: none;">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-shield-fill"></i>
+                    Privacy Settings
+                </h3>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Profile Visibility</label>
+                <select class="form-select">
+                    <option selected>Visible to Students and Parents</option>
+                    <option>Visible to Students Only</option>
+                    <option>Visible to Admin Only</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="allowMessaging" checked>
+                    <label class="form-check-label" for="allowMessaging">
+                        Allow students to contact me
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="shareAttendance" checked>
+                    <label class="form-check-label" for="shareAttendance">
+                        Share attendance reports with parents
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn btn-primary">
+                <i class="bi bi-check-circle me-2"></i>Save Settings
+            </button>
+        </div>
+
+        <!-- Account Settings -->
+        <div class="dashboard-card" id="accountSettings" style="display: none;">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-person-circle"></i>
+                    Account Settings
+                </h3>
+            </div>
+
+            <div class="alert alert-info mb-4">
+                <i class="bi bi-info-circle me-2"></i>
+                Manage your account security and login information
+            </div>
+
+            <h6 class="mb-3">Two-Factor Authentication</h6>
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="twoFactorAuth">
+                    <label class="form-check-label" for="twoFactorAuth">
+                        Enable two-factor authentication for enhanced security
+                    </label>
+                </div>
+            </div>
+
+            <h6 class="mb-3">Active Sessions</h6>
+            <div class="table-responsive mb-4">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Location</th>
+                            <th>Last Active</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Chrome - Windows</td>
+                            <td>New York, USA</td>
+                            <td>2 minutes ago</td>
+                            <td><span class="badge bg-success">Current</span></td>
+                        </tr>
+                        <tr>
+                            <td>Safari - iPhone</td>
+                            <td>New York, USA</td>
+                            <td>1 hour ago</td>
+                            <td><a href="#" class="btn btn-sm btn-outline-danger">Logout</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button class="btn btn-danger">
+                <i class="bi bi-box-arrow-right me-2"></i>Logout All Other Sessions
+            </button>
+        </div>
+    </div>
+</div>

@@ -30,13 +30,13 @@ namespace WebMobileAssignment.Controllers
             }
             else if (userType == "teacher")
             {
-                // Redirect teacher to teacher dashboard (to be implemented)
-                return RedirectToAction("Index", "Home");
+                // Redirect teacher to teacher dashboard
+                return RedirectToAction("TeachDashboard", "Teacher");
             }
             else if (userType == "student")
             {
-                // Redirect student to student dashboard (to be implemented)
-                return RedirectToAction("Index", "Home");
+                // Redirect student to student dashboard
+                return RedirectToAction("StudDashboard", "Student");
             }
 
             return View();

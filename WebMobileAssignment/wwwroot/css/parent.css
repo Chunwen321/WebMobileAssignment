@@ -30,6 +30,44 @@
     --text-muted: #6c757d;
 }
 
+/* ==================== PARENT CLASSES STYLES ==================== */
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 5px 0;
+}
+
+.detail-row .label {
+    font-weight: 600;
+    color: #666;
+}
+
+.detail-row .value {
+    text-align: right;
+}
+
+.performance-section h6 {
+    font-weight: 700;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.perf-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 5px 0;
+}
+
+.perf-row span:first-child {
+    color: #666;
+}
+
+.perf-row strong {
+    font-weight: 700;
+}
+
 /* 
  * ICON COLOR REFERENCE (from login page)
  */
@@ -554,7 +592,7 @@ background: rgba(220, 53, 69, 0.1);
   box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
     padding-left: 3rem !important;
 }
-}
+
 
 .btn-update-password {
     background: #ffc107;

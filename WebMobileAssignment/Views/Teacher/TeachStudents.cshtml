@@ -1,0 +1,153 @@
+@{
+    ViewBag.Title = "Students";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-people-fill"></i>
+                    Students
+                </h3>
+            </div>
+
+            <!-- Filters -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Filter by Class</label>
+                    <select class="form-select">
+                        <option selected>All Classes</option>
+                        <option>Form 5 Science</option>
+                        <option>Form 5 Mathematics</option>
+                        <option>Form 4 English</option>
+                        <option>Form 4 Science</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Search by Name</label>
+                    <input type="text" class="form-control" placeholder="Enter student name..." />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Search by ID</label>
+                    <input type="text" class="form-control" placeholder="Enter student ID..." />
+                </div>
+            </div>
+
+            <!-- Students List -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Class</th>
+                            <th>Attendance Rate</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>STU001</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-2" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <span>John Doe</span>
+                                </div>
+                            </td>
+                            <td>Form 5 Science</td>
+                            <td><span class="badge bg-success">95%</span></td>
+                            <td><span class="badge bg-info">Active</span></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>STU002</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-2" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <span>Jane Smith</span>
+                                </div>
+                            </td>
+                            <td>Form 5 Science</td>
+                            <td><span class="badge bg-success">92%</span></td>
+                            <td><span class="badge bg-info">Active</span></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>STU003</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-2" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <span>Michael Johnson</span>
+                                </div>
+                            </td>
+                            <td>Form 5 Mathematics</td>
+                            <td><span class="badge bg-success">88%</span></td>
+                            <td><span class="badge bg-info">Active</span></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>STU004</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-2" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <span>Sarah Williams</span>
+                                </div>
+                            </td>
+                            <td>Form 4 English</td>
+                            <td><span class="badge bg-warning">79%</span></td>
+                            <td><span class="badge bg-info">Active</span></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>STU005</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-2" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <span>David Brown</span>
+                                </div>
+                            </td>
+                            <td>Form 4 Science</td>
+                            <td><span class="badge bg-success">91%</span></td>
+                            <td><span class="badge bg-info">Active</span></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item"><a class="page-link" href="#">Previous</a></li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
