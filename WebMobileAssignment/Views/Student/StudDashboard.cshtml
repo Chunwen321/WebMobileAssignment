@@ -1,0 +1,203 @@
+@{
+    ViewBag.Title = "Student Dashboard";
+Layout = "~/Views/Shared/_StudentLayout.cshtml";
+}
+
+<div class="row g-3 mb-4">
+    <!-- Attendance Stats -->
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="stat-label">Total Present</div>
+        <div class="stat-value">45</div>
+            <div class="stat-change positive">
+         <i class="bi bi-arrow-up"></i>
+        <span>+5% from last month</span>
+  </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+        <div class="stat-label">Total Absent</div>
+      <div class="stat-value">3</div>
+            <div class="stat-change negative">
+          <i class="bi bi-arrow-down"></i>
+            <span>-2% from last month</span>
+            </div>
+     </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+            <div class="stat-label">Total Late</div>
+   <div class="stat-value">2</div>
+    <div class="stat-change positive">
+     <i class="bi bi-arrow-up"></i>
+         <span>Same as last month</span>
+     </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+    <div class="stat-label">Attendance Rate</div>
+            <div class="stat-value">94%</div>
+  <div class="stat-change positive">
+              <i class="bi bi-arrow-up"></i>
+    <span>+3% from last month</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Child Summary -->
+    <div class="col-lg-4">
+        <div class="dashboard-card">
+      <div class="card-header-custom">
+  <h3 class="card-title">
+          <i class="bi bi-person-badge-fill"></i>
+          Student Summary
+    </h3>
+            </div>
+         <div class="text-center mb-3">
+          <div class="user-avatar mx-auto" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;">
+        <i class="bi bi-person-fill"></i>
+  </div>
+                <h5 class="mt-3 mb-1">John Doe</h5>
+                <p class="text-muted mb-2">Student ID: STU001</p>
+       </div>
+      <div class="list-group list-group-flush">
+   <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+    <span class="text-muted"><i class="bi bi-book-fill me-2 text-primary"></i>Class</span>
+  <strong>Form 5 Science</strong>
+          </div>
+    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+       <span class="text-muted"><i class="bi bi-calendar3 me-2 text-success"></i>Total Classes</span>
+      <strong>50</strong>
+      </div>
+           <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+        <span class="text-muted"><i class="bi bi-check-circle-fill me-2 text-success"></i>Present</span>
+    <strong>45</strong>
+  </div>
+       <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+      <span class="text-muted"><i class="bi bi-x-circle-fill me-2 text-danger"></i>Absent</span>
+      <strong>3</strong>
+</div>
+    </div>
+        <a asp-controller="Parent" asp-action="StudentProfile" class="btn btn-outline-primary w-100 mt-3">
+                <i class="bi bi-eye-fill me-2"></i>View Full Profile
+     </a>
+   </div>
+    </div>
+
+    <!-- Attendance Overview Chart -->
+    <div class="col-lg-8">
+    <div class="dashboard-card">
+  <div class="card-header-custom">
+      <h3 class="card-title">
+                    <i class="bi bi-bar-chart-fill"></i>
+         Attendance Overview
+            </h3>
+     <select class="form-select form-select-sm" style="width: auto;">
+    <option>Last 7 Days</option>
+    <option selected>Last 30 Days</option>
+                    <option>Last 3 Months</option>
+                </select>
+            </div>
+            <!-- Chart Placeholder -->
+            <div class="text-center py-5" style="background: #f8f9fa; border-radius: 8px;">
+            <i class="bi bi-graph-up" style="font-size: 4rem; color: #ffc107;"></i>
+     <p class="text-muted mt-3 mb-0">Chart will be displayed here</p>
+     <small class="text-muted">Use Chart.js or similar library for visualization</small>
+            </div>
+            <div class="row mt-4 text-center">
+                <div class="col-4">
+      <div class="p-3" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
+      <h4 class="mb-0" style="color: #198754;">90%</h4>
+  <small class="text-muted">Present</small>
+               </div>
+                </div>
+      <div class="col-4">
+              <div class="p-3" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
+          <h4 class="mb-0" style="color: #dc3545;">6%</h4>
+         <small class="text-muted">Absent</small>
+     </div>
+             </div>
+     <div class="col-4">
+    <div class="p-3" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
+        <h4 class="mb-0" style="color: #ffc107;">4%</h4>
+       <small class="text-muted">Late</small>
+     </div>
+                </div>
+     </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Attendance -->
+<div class="row g-3 mt-3">
+    <div class="col-12">
+        <div class="dashboard-card">
+    <div class="card-header-custom">
+     <h3 class="card-title">
+         <i class="bi bi-clock-history"></i>
+        Recent Attendance
+         </h3>
+                <a asp-controller="Parent" asp-action="AttendanceHistory" class="btn btn-sm btn-outline-primary">
+        View All <i class="bi bi-arrow-right"></i>
+      </a>
+     </div>
+            <div class="table-responsive">
+            <table class="table table-hover align-middle">
+               <thead>
+      <tr>
+    <th>Date</th>
+       <th>Class</th>
+           <th>Time In</th>
+           <th>Status</th>
+    <th>Remarks</th>
+         </tr>
+          </thead>
+        <tbody>
+        <tr>
+      <td><i class="bi bi-calendar3 me-2 text-muted"></i>2024-01-15</td>
+           <td>Mathematics</td>
+      <td>2:00 PM</td>
+           <td><span class="badge bg-success">Present</span></td>
+           <td>On time</td>
+            </tr>
+            <tr>
+  <td><i class="bi bi-calendar3 me-2 text-muted"></i>2024-01-14</td>
+  <td>Science</td>
+ <td>2:15 PM</td>
+       <td><span class="badge bg-warning">Late</span></td>
+   <td>15 minutes late</td>
+              </tr>
+        <tr>
+ <td><i class="bi bi-calendar3 me-2 text-muted"></i>2024-01-13</td>
+       <td>English</td>
+   <td>-</td>
+       <td><span class="badge bg-danger">Absent</span></td>
+  <td>Medical leave</td>
+              </tr>
+       <tr>
+     <td><i class="bi bi-calendar3 me-2 text-muted"></i>2024-01-12</td>
+               <td>Mathematics</td>
+        <td>2:00 PM</td>
+   <td><span class="badge bg-success">Present</span></td>
+     <td>On time</td>
+       </tr>
+     <tr>
+           <td><i class="bi bi-calendar3 me-2 text-muted"></i>2024-01-11</td>
+       <td>Science</td>
+   <td>2:00 PM</td>
+        <td><span class="badge bg-success">Present</span></td>
+  <td>On time</td>
+   </tr>
+           </tbody>
+    </table>
+  </div>
+        </div>
+    </div>
+</div>

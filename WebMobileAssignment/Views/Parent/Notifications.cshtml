@@ -1,0 +1,361 @@
+@{
+    ViewBag.Title = "Notifications";
+    Layout = "~/Views/Shared/_ParentLayout.cshtml";
+}
+
+<div class="row g-3 mb-4">
+    <!-- Notification Stats -->
+    <div class="col-md-3">
+   <div class="stat-card" style="border-left-color: #0d6efd;">
+      <div class="stat-label">Total Notifications</div>
+       <div class="stat-value">15</div>
+   <div class="stat-change">
+        <i class="bi bi-bell-fill"></i>
+       <span>This month</span>
+     </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+    <div class="stat-card" style="border-left-color: #dc3545;">
+   <div class="stat-label">Unread</div>
+            <div class="stat-value">3</div>
+            <div class="stat-change">
+        <i class="bi bi-envelope-fill"></i>
+   <span>Needs attention</span>
+        </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+   <div class="stat-label">Warnings</div>
+      <div class="stat-value">2</div>
+  <div class="stat-change">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+           <span>Late alerts</span>
+     </div>
+ </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #198754;">
+       <div class="stat-label">Completed</div>
+   <div class="stat-value">12</div>
+    <div class="stat-change positive">
+ <i class="bi bi-check-circle-fill"></i>
+    <span>Read & acknowledged</span>
+       </div>
+     </div>
+    </div>
+</div>
+
+<div class="dashboard-card">
+    <div class="card-header-custom">
+        <h3 class="card-title">
+      <i class="bi bi-bell-fill"></i>
+  All Notifications
+        </h3>
+   <div class="d-flex gap-2">
+       <button class="btn btn-sm btn-outline-primary">
+       <i class="bi bi-check-all me-2"></i>Mark All as Read
+       </button>
+     <button class="btn btn-sm btn-outline-danger">
+    <i class="bi bi-trash me-2"></i>Clear All
+      </button>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+  <ul class="nav nav-pills mb-4">
+        <li class="nav-item">
+     <a class="nav-link active" href="#all" data-bs-toggle="pill">
+       <i class="bi bi-inbox-fill me-2"></i>All
+         </a>
+   </li>
+    <li class="nav-item">
+            <a class="nav-link" href="#unread" data-bs-toggle="pill">
+    <i class="bi bi-envelope-fill me-2"></i>Unread <span class="badge bg-danger ms-1">3</span>
+   </a>
+   </li>
+  <li class="nav-item">
+            <a class="nav-link" href="#alerts" data-bs-toggle="pill">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>Alerts
+     </a>
+      </li>
+  <li class="nav-item">
+     <a class="nav-link" href="#announcements" data-bs-toggle="pill">
+        <i class="bi bi-megaphone-fill me-2"></i>Announcements
+</a>
+        </li>
+    </ul>
+
+    <!-- Notifications List -->
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="all">
+      <!-- Unread Absence Alert -->
+       <div class="notification-item unread border-start border-danger border-4">
+          <div class="notification-header">
+  <div class="d-flex align-items-center gap-2">
+        <div class="notification-icon danger">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+         </div>
+      <div class="flex-grow-1">
+            <h6 class="mb-0">Absence Alert</h6>
+       <small class="text-muted">
+    <i class="bi bi-clock me-1"></i>2 hours ago
+           </small>
+   </div>
+       <span class="badge bg-danger">Unread</span>
+     </div>
+        </div>
+   <div class="notification-body">
+    <p class="mb-2">Your child <strong>John Doe</strong> was absent from <strong>Mathematics</strong> class on <strong>January 15, 2024</strong>.</p>
+       <p class="mb-0 text-muted"><i class="bi bi-info-circle me-1"></i>Please provide a reason or medical certificate if applicable.</p>
+        </div>
+       <div class="notification-footer">
+      <button class="btn btn-sm btn-outline-primary">
+       <i class="bi bi-reply-fill me-1"></i>Respond
+       </button>
+        <button class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-check me-1"></i>Mark as Read
+      </button>
+        </div>
+     </div>
+
+  <!-- Unread Consecutive Late Alert -->
+   <div class="notification-item unread border-start border-warning border-4">
+    <div class="notification-header">
+       <div class="d-flex align-items-center gap-2">
+      <div class="notification-icon warning">
+       <i class="bi bi-clock-fill"></i>
+     </div>
+     <div class="flex-grow-1">
+     <h6 class="mb-0">Consecutive Late Alert</h6>
+     <small class="text-muted">
+          <i class="bi bi-clock me-1"></i>1 day ago
+   </small>
+     </div>
+         <span class="badge bg-warning">Unread</span>
+     </div>
+       </div>
+       <div class="notification-body">
+<p class="mb-2">Your child has been late to class <strong>2 times consecutively</strong> this week.</p>
+   <ul class="mb-0">
+     <li>Science - January 14, 2024 (15 minutes late)</li>
+      <li>English - January 13, 2024 (10 minutes late)</li>
+     </ul>
+          </div>
+   <div class="notification-footer">
+      <button class="btn btn-sm btn-outline-warning">
+      <i class="bi bi-eye-fill me-1"></i>View Details
+   </button>
+     <button class="btn btn-sm btn-outline-secondary">
+   <i class="bi bi-check me-1"></i>Mark as Read
+ </button>
+  </div>
+       </div>
+
+            <!-- Unread Announcement -->
+            <div class="notification-item unread border-start border-primary border-4">
+         <div class="notification-header">
+     <div class="d-flex align-items-center gap-2">
+         <div class="notification-icon primary">
+       <i class="bi bi-megaphone-fill"></i>
+    </div>
+         <div class="flex-grow-1">
+   <h6 class="mb-0">School Holiday Announcement</h6>
+   <small class="text-muted">
+   <i class="bi bi-clock me-1"></i>2 days ago
+    </small>
+    </div>
+      <span class="badge bg-primary">Unread</span>
+    </div>
+       </div>
+        <div class="notification-body">
+ <p class="mb-2">The tuition center will be closed on <strong>January 20-22, 2024</strong> for the Chinese New Year celebration.</p>
+ <p class="mb-0 text-muted"><i class="bi bi-calendar-x me-1"></i>Classes will resume on January 23, 2024.</p>
+           </div>
+          <div class="notification-footer">
+         <button class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-check me-1"></i>Mark as Read
+       </button>
+     </div>
+   </div>
+
+     <!-- Read Notification -->
+            <div class="notification-item read border-start border-success border-4">
+         <div class="notification-header">
+      <div class="d-flex align-items-center gap-2">
+      <div class="notification-icon success">
+ <i class="bi bi-check-circle-fill"></i>
+    </div>
+        <div class="flex-grow-1">
+  <h6 class="mb-0">Attendance Summary Report</h6>
+      <small class="text-muted">
+   <i class="bi bi-clock me-1"></i>3 days ago
+       </small>
+       </div>
+ <span class="badge bg-secondary">Read</span>
+     </div>
+  </div>
+      <div class="notification-body">
+       <p class="mb-0">Monthly attendance report for <strong>December 2023</strong> is now available. Your child's attendance rate: <strong>95%</strong></p>
+</div>
+                <div class="notification-footer">
+      <a asp-controller="Parent" asp-action="MonthlySummary" class="btn btn-sm btn-outline-success">
+       <i class="bi bi-file-earmark-text me-1"></i>View Report
+           </a>
+    </div>
+     </div>
+
+   <!-- Read Notification -->
+  <div class="notification-item read border-start border-info border-4">
+       <div class="notification-header">
+    <div class="d-flex align-items-center gap-2">
+        <div class="notification-icon info">
+        <i class="bi bi-info-circle-fill"></i>
+      </div>
+          <div class="flex-grow-1">
+     <h6 class="mb-0">Class Schedule Update</h6>
+        <small class="text-muted">
+ <i class="bi bi-clock me-1"></i>5 days ago
+    </small>
+     </div>
+     <span class="badge bg-secondary">Read</span>
+      </div>
+   </div>
+     <div class="notification-body">
+    <p class="mb-0">The <strong>Mathematics</strong> class schedule has been updated. New time: <strong>3:00 PM - 5:00 PM</strong> starting next week.</p>
+       </div>
+     </div>
+
+            <!-- Read Notification -->
+  <div class="notification-item read border-start border-success border-4">
+       <div class="notification-header">
+            <div class="d-flex align-items-center gap-2">
+       <div class="notification-icon success">
+     <i class="bi bi-trophy-fill"></i>
+ </div>
+   <div class="flex-grow-1">
+          <h6 class="mb-0">Achievement Award</h6>
+         <small class="text-muted">
+          <i class="bi bi-clock me-1"></i>1 week ago
+     </small>
+       </div>
+ <span class="badge bg-secondary">Read</span>
+     </div>
+          </div>
+     <div class="notification-body">
+        <p class="mb-0">Congratulations! Your child received <strong>Perfect Attendance Award</strong> for the month of December 2023!</p>
+       </div>
+       </div>
+   </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-4 pt-4 border-top">
+  <div class="text-muted">
+   Showing 1 to 6 of 15 notifications
+        </div>
+   <nav>
+     <ul class="pagination mb-0">
+       <li class="page-item disabled">
+      <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+      </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+     <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+      <li class="page-item">
+     <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+     </li>
+  </ul>
+   </nav>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+    .notification-item {
+        padding: 1.25rem;
+  border-radius: 8px;
+      background: white;
+        margin-bottom: 1rem;
+  transition: all 0.3s ease;
+    }
+
+    .notification-item:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .notification-item.unread {
+        background: #f8f9fa;
+    }
+
+    .notification-item.read {
+    opacity: 0.8;
+    }
+
+    .notification-header {
+        margin-bottom: 0.75rem;
+    }
+
+    .notification-icon {
+        width: 40px;
+    height: 40px;
+        border-radius: 8px;
+        display: flex;
+ align-items: center;
+ justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .notification-icon.danger {
+        background: rgba(220, 53, 69, 0.1);
+     color: #dc3545;
+    }
+
+    .notification-icon.warning {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    .notification-icon.primary {
+  background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+
+    .notification-icon.success {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+
+    .notification-icon.info {
+      background: rgba(13, 202, 240, 0.1);
+        color: #0dcaf0;
+    }
+
+    .notification-body {
+        padding: 0.75rem 0;
+        line-height: 1.6;
+    }
+
+    .notification-footer {
+        padding-top: 0.75rem;
+      border-top: 1px solid #e9ecef;
+    display: flex;
+        gap: 0.5rem;
+    }
+
+    .nav-pills .nav-link {
+        color: #6c757d;
+        border-radius: 8px;
+    }
+
+    .nav-pills .nav-link.active {
+        background: #ffc107;
+        color: white;
+    }
+
+    .nav-pills .nav-link:hover {
+   background: rgba(255, 193, 7, 0.1);
+    }
+</style>
+}

@@ -1,0 +1,246 @@
+@{
+    ViewBag.Title = "Student Take Attendance";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+}
+
+<div class="dashboard-card mb-4">
+    <div class="card-header-custom">
+        <h3 class="card-title">
+<i class="bi bi-clock-history"></i>
+  Attendance History
+        </h3>
+    </div>
+
+    <!-- Filters -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+   <label class="form-label">Class</label>
+            <select class="form-select">
+        <option value="">All Classes</option>
+   <option>Mathematics</option>
+          <option>Science</option>
+      <option>English</option>
+    <option>History</option>
+            </select>
+        </div>
+   <div class="col-md-3">
+    <label class="form-label">Month</label>
+   <input type="month" class="form-control" value="2024-01">
+   </div>
+     <div class="col-md-3">
+   <label class="form-label">Status</label>
+         <select class="form-select">
+        <option value="">All Status</option>
+      <option>Present</option>
+   <option>Absent</option>
+        <option>Late</option>
+       </select>
+ </div>
+   <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+         <button class="btn btn-primary w-100">
+       <i class="bi bi-search me-2"></i>Search
+</button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+<div class="col-md-3">
+    <div class="p-3 text-center" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
+       <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i>
+        <h4 class="mt-2 mb-0" style="color: #198754;">45</h4>
+        <small class="text-muted">Total Present</small>
+     </div>
+    </div>
+   <div class="col-md-3">
+    <div class="p-3 text-center" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
+      <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #dc3545;"></i>
+         <h4 class="mt-2 mb-0" style="color: #dc3545;">3</h4>
+   <small class="text-muted">Total Absent</small>
+      </div>
+        </div>
+        <div class="col-md-3">
+   <div class="p-3 text-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
+     <i class="bi bi-clock-fill" style="font-size: 2rem; color: #ffc107;"></i>
+                <h4 class="mt-2 mb-0" style="color: #ffc107;">2</h4>
+  <small class="text-muted">Total Late</small>
+     </div>
+        </div>
+   <div class="col-md-3">
+   <div class="p-3 text-center" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
+         <i class="bi bi-graph-up" style="font-size: 2rem; color: #0d6efd;"></i>
+  <h4 class="mt-2 mb-0" style="color: #0d6efd;">94%</h4>
+         <small class="text-muted">Attendance Rate</small>
+        </div>
+  </div>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+<thead class="table-light">
+        <tr>
+         <th><input type="checkbox" class="form-check-input"></th>
+        <th>Date</th>
+           <th>Day</th>
+       <th>Class</th>
+      <th>Subject</th>
+          <th>Time In</th>
+                    <th>Time Out</th>
+      <th>Status</th>
+     <th>Remarks</th>
+            <th>Actions</th>
+      </tr>
+     </thead>
+   <tbody>
+       <tr>
+      <td><input type="checkbox" class="form-check-input"></td>
+  <td>
+    <i class="bi bi-calendar3 me-2 text-muted"></i>
+ <strong>2024-01-15</strong>
+   </td>
+          <td>Monday</td>
+                  <td>Form 5 Science</td>
+         <td>Mathematics</td>
+           <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
+           <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
+     <td><span class="badge bg-success">Present</span></td>
+     <td>On time</td>
+      <td>
+     <button class="btn btn-sm btn-outline-primary" title="View Details">
+  <i class="bi bi-eye"></i>
+    </button>
+      </td>
+        </tr>
+          <tr>
+   <td><input type="checkbox" class="form-check-input"></td>
+         <td>
+       <i class="bi bi-calendar3 me-2 text-muted"></i>
+     <strong>2024-01-14</strong>
+     </td>
+    <td>Sunday</td>
+  <td>Form 5 Science</td>
+     <td>Science</td>
+      <td><i class="bi bi-clock me-1"></i>2:15 PM</td>
+         <td><i class="bi bi-clock me-1"></i>4:15 PM</td>
+        <td><span class="badge bg-warning">Late</span></td>
+<td>15 minutes late</td>
+        <td>
+      <button class="btn btn-sm btn-outline-primary" title="View Details">
+           <i class="bi bi-eye"></i>
+    </button>
+         </td>
+     </tr>
+                <tr>
+       <td><input type="checkbox" class="form-check-input"></td>
+          <td>
+    <i class="bi bi-calendar3 me-2 text-muted"></i>
+  <strong>2024-01-13</strong>
+   </td>
+     <td>Saturday</td>
+       <td>Form 5 Science</td>
+   <td>English</td>
+     <td>-</td>
+          <td>-</td>
+            <td><span class="badge bg-danger">Absent</span></td>
+ <td>Medical leave</td>
+      <td>
+             <button class="btn btn-sm btn-outline-primary" title="View Details">
+           <i class="bi bi-eye"></i>
+    </button>
+       </td>
+                </tr>
+       <tr>
+      <td><input type="checkbox" class="form-check-input"></td>
+        <td>
+   <i class="bi bi-calendar3 me-2 text-muted"></i>
+      <strong>2024-01-12</strong>
+       </td>
+         <td>Friday</td>
+           <td>Form 5 Science</td>
+                    <td>Mathematics</td>
+           <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
+       <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
+     <td><span class="badge bg-success">Present</span></td>
+        <td>On time</td>
+          <td>
+   <button class="btn btn-sm btn-outline-primary" title="View Details">
+          <i class="bi bi-eye"></i>
+             </button>
+        </td>
+      </tr>
+ <tr>
+      <td><input type="checkbox" class="form-check-input"></td>
+<td>
+            <i class="bi bi-calendar3 me-2 text-muted"></i>
+        <strong>2024-01-11</strong>
+       </td>
+         <td>Thursday</td>
+   <td>Form 5 Science</td>
+       <td>Science</td>
+      <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
+  <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
+                    <td><span class="badge bg-success">Present</span></td>
+      <td>On time</td>
+         <td>
+     <button class="btn btn-sm btn-outline-primary" title="View Details">
+   <i class="bi bi-eye"></i>
+         </button>
+            </td>
+         </tr>
+        <tr>
+         <td><input type="checkbox" class="form-check-input"></td>
+       <td>
+       <i class="bi bi-calendar3 me-2 text-muted"></i>
+        <strong>2024-01-10</strong>
+ </td>
+               <td>Wednesday</td>
+   <td>Form 5 Science</td>
+         <td>History</td>
+   <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
+           <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
+      <td><span class="badge bg-success">Present</span></td>
+          <td>On time</td>
+  <td>
+     <button class="btn btn-sm btn-outline-primary" title="View Details">
+       <i class="bi bi-eye"></i>
+          </button>
+   </td>
+   </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+  <div class="d-flex justify-content-between align-items-center mt-4">
+   <div class="text-muted">
+     Showing 1 to 6 of 50 entries
+   </div>
+        <nav>
+      <ul class="pagination mb-0">
+                <li class="page-item disabled">
+        <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+         </li>
+         <li class="page-item active"><a class="page-link" href="#">1</a></li>
+           <li class="page-item"><a class="page-link" href="#">2</a></li>
+    <li class="page-item"><a class="page-link" href="#">3</a></li>
+       <li class="page-item"><a class="page-link" href="#">4</a></li>
+           <li class="page-item"><a class="page-link" href="#">5</a></li>
+          <li class="page-item">
+        <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+    </li>
+    </ul>
+        </nav>
+</div>
+
+    <!-- Action Buttons -->
+    <div class="mt-4 d-flex gap-2">
+   <button class="btn btn-outline-primary">
+         <i class="bi bi-download me-2"></i>Export to Excel
+        </button>
+        <button class="btn btn-outline-danger">
+            <i class="bi bi-file-pdf me-2"></i>Export to PDF
+      </button>
+    </div>
+</div>

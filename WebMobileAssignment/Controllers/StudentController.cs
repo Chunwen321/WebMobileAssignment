@@ -7,7 +7,7 @@ namespace WebMobileAssignment.Controllers
         // Dashboard
         public IActionResult StudDashboard()
         {
-            ViewBag.ActiveMenu = "Dashboard";
+            ViewBag.ActiveMenu = "StudDashboard";
             return View("StudDashboard");
         }
 
@@ -17,13 +17,6 @@ namespace WebMobileAssignment.Controllers
             ViewBag.ActiveMenu = "Attendance";
             ViewBag.ActiveSubmenu = "History";
             return View("StudAttendanceHistory");
-        }
-
-        // Classes
-        public IActionResult StudClasses()
-        {
-            ViewBag.ActiveMenu = "Classes";
-            return View("StudClasses");
         }
 
         // Take Attendance
@@ -37,22 +30,21 @@ namespace WebMobileAssignment.Controllers
         // Student Profile
         public IActionResult StudProfile()
         {
-            ViewBag.ActiveMenu = "Profile";
+            ViewBag.ActiveMenu = "StudProfile";
             return View("StudProfile");
         }
 
         // Settings
         public IActionResult StudSettings()
         {
-            ViewBag.ActiveMenu = "Settings";
+            ViewBag.ActiveMenu = "StudSettings";
             return View("StudSettings");
         }
 
         // Change Password
         public IActionResult StudChangePassword()
         {
-            ViewBag.ActiveMenu = "Settings";
-            ViewBag.ActiveSubmenu = "ChangePassword";
+            ViewBag.ActiveMenu = "StudChangePassword";
             return View("StudChangePassword");
         }
     }

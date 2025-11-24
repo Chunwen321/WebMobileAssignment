@@ -27,7 +27,7 @@
 
             <!-- Dashboard -->
             <a asp-controller="Student" asp-action="StudDashboard"
-               class="sidebar-item @(ViewBag.ActiveMenu == "Dashboard" ? "active" : "")">
+               class="sidebar-item @(ViewBag.ActiveMenu == "StudDashboard" ? "active" : "")">
                 <div class="sidebar-item-content">
                     <i class="bi bi-house-door-fill"></i>
                     <span>Dashboard</span>
@@ -64,18 +64,9 @@
                 </div>
             </div>
 
-            <!-- Classes -->
-            <a asp-controller="Student" asp-action="StudClasses"
-               class="sidebar-item @(ViewBag.ActiveMenu == "Classes" ? "active" : "")">
-                <div class="sidebar-item-content">
-                    <i class="bi bi-book-fill"></i>
-                    <span>Classes</span>
-                </div>
-            </a>
-
             <!-- Student Profile -->
             <a asp-controller="Student" asp-action="StudProfile"
-               class="sidebar-item @(ViewBag.ActiveMenu == "Profile" ? "active" : "")">
+               class="sidebar-item @(ViewBag.ActiveMenu == "StudProfile" ? "active" : "")">
                 <div class="sidebar-item-content">
                     <i class="bi bi-person-badge-fill"></i>
                     <span>Student Profile</span>

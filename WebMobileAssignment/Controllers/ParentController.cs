@@ -27,13 +27,6 @@ namespace WebMobileAssignment.Controllers
             return View();
         }
 
-        // Classes
-        public IActionResult ParentClasses()
-        {
-            ViewBag.ActiveMenu = "Classes";
-            return View();
-        }
-
     // Attendance - Download Report
     public IActionResult DownloadReport()
         {
@@ -56,7 +49,6 @@ namespace WebMobileAssignment.Controllers
             return View();
      }
 
- 
         // Settings
    public IActionResult Settings()
         {
