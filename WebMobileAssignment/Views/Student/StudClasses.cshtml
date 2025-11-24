@@ -4,16 +4,17 @@
 }
 
 <div class="container-fluid">
+    <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="mb-2">My Classes</h1>
-            <p class="text-muted">View and track your enrolled classes</p>
+            <p class="text-muted">View and track your enrolled classes and performance</p>
         </div>
     </div>
 
     <!-- Filter and Search -->
     <div class="row mb-4">
-        <div class="col-md-6">
+        <div class="col-md-5">
             <input type="text" class="form-control" placeholder="Search classes by name or code...">
         </div>
         <div class="col-md-3">
@@ -23,12 +24,52 @@
                 <option value="2">Semester 2</option>
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <select class="form-select">
                 <option value="">All Status</option>
                 <option value="active">Active</option>
                 <option value="completed">Completed</option>
             </select>
+        </div>
+    </div>
+
+    <!-- Overall Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dashboard-card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">Total Classes</div>
+                    <div class="stat-value">6</div>
+                    <small class="text-muted">This semester</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dashboard-card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">Average Attendance</div>
+                    <div class="stat-value text-success">91%</div>
+                    <small class="text-muted">Across all classes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dashboard-card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">GPA</div>
+                    <div class="stat-value text-primary">3.8</div>
+                    <small class="text-muted">Current semester</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dashboard-card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">Pending Assignments</div>
+                    <div class="stat-value text-warning">3</div>
+                    <small class="text-muted">Due this week</small>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -71,7 +112,7 @@
                             <strong class="text-primary">A-</strong>
                         </div>
                     </div>
-                    <button class="btn btn-primary btn-sm mt-3 w-100">View Details</button>
+                    <a href="@Url.Action("StudClassDetail", "Student")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
                 </div>
             </div>
         </div>
@@ -113,7 +154,7 @@
                             <strong class="text-primary">B+</strong>
                         </div>
                     </div>
-                    <button class="btn btn-primary btn-sm mt-3 w-100">View Details</button>
+                    <a href="@Url.Action("StudClassDetail", "Student")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
                 </div>
             </div>
         </div>
@@ -155,7 +196,7 @@
                             <strong class="text-primary">A</strong>
                         </div>
                     </div>
-                    <button class="btn btn-primary btn-sm mt-3 w-100">View Details</button>
+                    <a href="@Url.Action("StudClassDetail", "Student")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
                 </div>
             </div>
         </div>
@@ -197,7 +238,7 @@
                             <strong class="text-primary">B</strong>
                         </div>
                     </div>
-                    <button class="btn btn-primary btn-sm mt-3 w-100">View Details</button>
+                    <a href="@Url.Action("StudClassDetail", "Student")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
                 </div>
             </div>
         </div>
@@ -239,7 +280,7 @@
                             <strong class="text-primary">A-</strong>
                         </div>
                     </div>
-                    <button class="btn btn-primary btn-sm mt-3 w-100">View Details</button>
+                    <a href="@Url.Action("StudClassDetail", "Student")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
                 </div>
             </div>
         </div>

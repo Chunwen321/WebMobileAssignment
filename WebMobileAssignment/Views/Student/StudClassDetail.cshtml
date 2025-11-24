@@ -1,0 +1,243 @@
+@{
+    ViewBag.Title = "Class Details";
+    ViewBag.ActiveMenu = "Classes";
+}
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-2">Advanced Data Structures</h1>
+            <p class="text-muted">Class Code: CS302 | Semester 1 | 3 Credits</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Class Information -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Class Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-item">
+                        <label>Instructor:</label>
+                        <span>Dr. Jane Smith</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Schedule:</label>
+                        <span>Mon, Wed, Fri - 10:00 AM - 11:30 AM</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Location:</label>
+                        <span>Room 301, Building A</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Credits:</label>
+                        <span>3</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Status:</label>
+                        <span>
+                            <span class="badge bg-primary">Active</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Performance -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up"></i> Your Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="stat-row">
+                        <span>Attendance:</span>
+                        <strong class="text-success">92%</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Current Grade:</span>
+                        <strong class="text-primary">A- (89%)</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Class Rank:</span>
+                        <strong>5th of 42 students</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Sessions Attended:</span>
+                        <strong>30 of 32</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning"></i> Quick Links
+                    </h5>
+                </div>
+                <div class="card-body d-flex flex-column gap-2">
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-chat"></i> Class Announcements
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-file-earmark"></i> Course Materials
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-calendar-event"></i> Upcoming Sessions
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-chat-dots"></i> Contact Instructor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Announcements -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-megaphone"></i> Recent Announcements
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="announcement-item mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Midterm Exam Rescheduled</h6>
+                                <p class="text-muted mb-0 small">Posted 2 days ago</p>
+                            </div>
+                            <span class="badge bg-warning">Urgent</span>
+                        </div>
+                        <p class="mb-0 mt-2">The midterm exam has been rescheduled to next Friday at 2:00 PM. Please prepare accordingly.</p>
+                    </div>
+                    <div class="announcement-item mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Assignment 3 Posted</h6>
+                                <p class="text-muted mb-0 small">Posted 5 days ago</p>
+                            </div>
+                            <span class="badge bg-info">Assignment</span>
+                        </div>
+                        <p class="mb-0 mt-2">New assignment on Binary Search Trees is now available. Due date is November 30, 2024.</p>
+                    </div>
+                    <div class="announcement-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">Welcome to Advanced Data Structures</h6>
+                                <p class="text-muted mb-0 small">Posted 1 month ago</p>
+                            </div>
+                            <span class="badge bg-success">Info</span>
+                        </div>
+                        <p class="mb-0 mt-2">Welcome to the course! Please review the syllabus and course schedule before the first class.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Details -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-check"></i> Your Attendance
+                    </h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Nov 22, 2024</td>
+                                <td><span class="badge bg-success">Present</span></td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Nov 20, 2024</td>
+                                <td><span class="badge bg-success">Present</span></td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Nov 18, 2024</td>
+                                <td><span class="badge bg-success">Present</span></td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Nov 15, 2024</td>
+                                <td><span class="badge bg-warning text-dark">Late</span></td>
+                                <td>Traffic delay</td>
+                            </tr>
+                            <tr>
+                                <td>Nov 13, 2024</td>
+                                <td><span class="badge bg-danger">Absent</span></td>
+                                <td>Medical appointment</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .announcement-item {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .stat-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-item label {
+        font-weight: 600;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .info-item span {
+        text-align: right;
+    }
+</style>
