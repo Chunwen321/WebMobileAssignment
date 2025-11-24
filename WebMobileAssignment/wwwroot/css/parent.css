@@ -68,6 +68,18 @@
     font-weight: 700;
 }
 
+/* ==================== CLASS DETAIL STYLES ==================== */
+.material-item {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.material-item h6 {
+    font-weight: 600;
+    color: #333;
+}
+
 /* 
  * ICON COLOR REFERENCE (from login page)
  */

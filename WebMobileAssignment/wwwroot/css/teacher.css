@@ -70,11 +70,13 @@
 .stat-item-label {
     font-weight: 500;
     color: #666;
+    font-size: 0.9rem;
 }
 
 .stat-item-value {
     font-weight: 700;
     font-size: 1.1rem;
+    color: #0d6efd;
 }
 
 .search-box {

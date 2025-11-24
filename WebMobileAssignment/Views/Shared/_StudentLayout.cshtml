@@ -64,6 +64,15 @@
                 </div>
             </div>
 
+            <!-- Classes -->
+            <a asp-controller="Student" asp-action="StudClasses"
+               class="sidebar-item @(ViewBag.ActiveMenu == "Classes" ? "active" : "")">
+                <div class="sidebar-item-content">
+                    <i class="bi bi-book-fill"></i>
+                    <span>Classes</span>
+                </div>
+            </a>
+
             <!-- Student Profile -->
             <a asp-controller="Student" asp-action="StudProfile"
                class="sidebar-item @(ViewBag.ActiveMenu == "StudProfile" ? "active" : "")">
