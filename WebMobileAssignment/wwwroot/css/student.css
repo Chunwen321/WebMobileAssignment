@@ -39,6 +39,7 @@
  * UTILITY CLASSES
  */
 
+<<<<<<< Updated upstream
 /* Button primary green theme */
 .btn-primary-yellow {
     background: #198754;
@@ -49,6 +50,102 @@
 .btn-primary-yellow:hover {
     background: #157347;
     border-color: #157347;
+=======
+/* ==================== CLASS CARD STYLES ==================== */
+.class-card {
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+.class-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.class-header {
+    padding: 15px;
+}
+
+.class-meta {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.class-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+.info-item label {
+    font-weight: 600;
+    color: #666;
+}
+
+.info-item span {
+    text-align: right;
+}
+
+.class-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* ==================== STATISTICS CARD STYLES ==================== */
+.stat-card {
+    text-align: center;
+    border-radius: 8px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card .stat-label {
+    font-weight: 500;
+    color: #666;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #198754;
+    margin-bottom: 8px;
+}
+
+/* ==================== CLASS DETAIL STYLES ==================== */
+.announcement-item {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.announcement-item h6 {
+    font-weight: 600;
+    color: #333;
+>>>>>>> Stashed changes
 }
 
 /* ==================== CLASS CARD STYLES ==================== */
@@ -371,7 +468,7 @@ color: white;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #198754;
+    background: #02a145;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -578,6 +675,27 @@ background: rgba(220, 53, 69, 0.1);
     color: #dc3545;
 }
 
+.btn-outline-primary {
+    background: #228B22;
+    border: none;
+    color: #2c3e50;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+    .btn-outline-primary:hover {
+        background: #02a145;
+        color: #2c3e50;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-outline-primary:active {
+        transform: translateY(0);
+    }
+
 /* Stats Cards */
 .stat-card {
     background: white;
@@ -651,13 +769,13 @@ background: rgba(220, 53, 69, 0.1);
 
 
 .btn-update-password {
-    background: #ffc107;
+    background: #228B22;
     border: none;
     color: #2c3e50;
     padding: 0.75rem 2rem;
     font-weight: 600;
     border-radius: 8px;
- transition: all 0.3s ease;
+    transition: all 0.3s ease;
 }
 
     .btn-update-password:hover {
@@ -692,6 +810,27 @@ background: rgba(220, 53, 69, 0.1);
     margin-bottom: 1rem !important;
     padding-bottom: 0.75rem !important;
 }
+
+.btn-primary {
+    background: #228B22;
+    border: none;
+    color: #2c3e50;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+    .btn-primary:hover {
+        background: #02a145;
+        color: #2c3e50;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
 
 /* Remove ALL bottom spacing from button container */
 .settings-account-card .row.g-3 > .col-12:last-child {
