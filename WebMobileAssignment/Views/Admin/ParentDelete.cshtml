@@ -1,0 +1,126 @@
+@model WebMobileAssignment.Models.Parent
+@{
+    ViewBag.Title = "Delete Parent";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-trash-fill text-danger"></i> Delete Parent</h5>
+            <a asp-action="ParentIndex" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>@TempData["ErrorMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="alert alert-danger border-danger" role="alert">
+            <h5 class="alert-heading">
+                <i class="bi bi-exclamation-triangle-fill"></i> Confirm Deletion
+            </h5>
+            <p>Are you sure you want to delete this parent/guardian? This action cannot be undone.</p>
+            <hr>
+            <p class="mb-0">
+                @if (Model.Students != null && Model.Students.Any())
+                {
+                    <strong>Warning:</strong>
+                    <text> This parent has @Model.Students.Count() linked student(s). 
+                    Deleting will remove the parent association from these students.</text>
+                }
+                else
+                {
+                    <span>This parent has no linked students.</span>
+                }
+            </p>
+        </div>
+
+        <div class="dashboard-card bg-white p-0 rounded shadow-sm overflow-hidden">
+            <!-- Header Banner -->
+            <div class="bg-light p-4 border-bottom">
+                <div class="text-center">
+                    <div class="display-1 text-secondary mb-2">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h3 class="mb-0">@Model.User.FullName</h3>
+                    <span class="badge bg-danger mt-2">@Model.ParentId</span>
+                </div>
+            </div>
+
+            <!-- Details Body -->
+            <div class="p-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-3">Contact Information</h6>
+                        <div class="mb-2">
+                            <label class="small text-muted d-block">Email</label>
+                            <span>@Model.User.Email</span>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted d-block">Phone Number</label>
+                            <span>@(Model.PhoneNumber ?? "Not provided")</span>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted d-block">Account Status</label>
+                            <span class="badge bg-@(Model.User.IsActive ? "success" : "secondary")">
+                                @(Model.User.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-3">Linked Students</h6>
+                        @if (Model.Students != null && Model.Students.Any())
+                        {
+                            <ul class="list-unstyled">
+                                @foreach (var student in Model.Students)
+                                {
+                                    <li class="mb-2">
+                                        <i class="bi bi-person-fill text-primary me-1"></i>
+                                        <strong>@student.User.FullName</strong>
+                                        <span class="text-muted small">(@student.StudentId)</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="text-muted">No linked students</p>
+                        }
+                        <div class="mt-3">
+                            <label class="small text-muted d-block">Account Created</label>
+                            <span>@Model.User.CreatedDate.ToString("dd MMM yyyy")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="bg-light p-3 border-top">
+                <form asp-action="ParentDelete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.ParentId" />
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="ParentIndex" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you absolutely sure you want to delete @Model.User.FullName? This action cannot be undone.');">
+                            <i class="bi bi-trash-fill"></i> Yes, Delete Parent
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
