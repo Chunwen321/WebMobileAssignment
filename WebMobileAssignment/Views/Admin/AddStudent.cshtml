@@ -1,0 +1,130 @@
+@{
+    ViewBag.Title = "Add New Student";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-person-plus-fill"></i> Add New Student</h5>
+            <a asp-action="StudentIndex" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card bg-white p-4 rounded shadow-sm">
+            <form asp-action="StudentCreate" method="post">
+                @Html.AntiForgeryToken()
+                
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error!</strong> Please correct the following errors:
+                        <ul class="mb-0 mt-2">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <h6 class="text-muted mb-3">Student Information</h6>
+                <div class="row">
+                    <!-- Name -->
+                    <div class="col-md-6 mb-3">
+                        <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" id="fullName" name="fullName" class="form-control" placeholder="e.g. Alex Smith" value="@ViewBag.FullName" required />
+                    </div>
+
+                    <!-- Email -->
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="e.g. alex.smith@student.com" value="@ViewBag.Email" required />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Password -->
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required />
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div class="col-md-6 mb-3">
+                        <label for="dateOfBirth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                        <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" value="@ViewBag.DateOfBirth" required />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Gender -->
+                    <div class="col-md-6 mb-3">
+                        <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                        <select id="gender" name="gender" class="form-select" required>
+                            <option value="">-- Select Gender --</option>
+                            <option value="Male" selected="@(ViewBag.Gender == "Male")">Male</option>
+                            <option value="Female" selected="@(ViewBag.Gender == "Female")">Female</option>
+                        </select>
+                    </div>
+
+                    <!-- Parent Link -->
+                    <div class="col-md-6 mb-3">
+                        <label for="parentId" class="form-label">Parent</label>
+                        <select id="parentId" name="parentId" class="form-select">
+                            <option value="">-- Select Parent (Optional) --</option>
+                            @if (ViewBag.Parents != null)
+                            {
+                                @foreach (var parent in ViewBag.Parents)
+                                {
+                                    <option value="@parent.ParentId" selected="@(ViewBag.ParentId == parent.ParentId)">
+                                        @parent.User.FullName (@parent.ParentId)
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-3 mt-3">Academic Details</h6>
+                <div class="row">
+                    <!-- Class -->
+                    <div class="col-md-6 mb-3">
+                        <label for="classId" class="form-label">Assigned Class</label>
+                        <select id="classId" name="classId" class="form-select">
+                            <option value="">-- Select Class (Optional) --</option>
+                            @if (ViewBag.Classes != null)
+                            {
+                                @foreach (var cls in ViewBag.Classes)
+                                {
+                                    <option value="@cls.ClassId" selected="@(ViewBag.ClassId == cls.ClassId)">
+                                        @cls.ClassName (@cls.ClassId)
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12 text-end">
+                        <button type="reset" class="btn btn-light me-2">Reset</button>
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-save"></i> Save Student
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
