@@ -1,0 +1,127 @@
+@{
+    ViewBag.Title = "Classes";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-book-fill"></i>
+                    My Classes
+                </h3>
+                <button class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Add Class
+                </button>
+            </div>
+
+            <!-- Classes Grid -->
+            <div class="row">
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-book-fill text-primary me-2"></i>Form 5 Science
+                            </h5>
+                            <p class="text-muted mb-3">Science Department</p>
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <h6 class="mb-1">30</h6>
+                                    <small class="text-muted">Students</small>
+                                </div>
+                                <div class="col-6">
+                                    <h6 class="mb-1">45</h6>
+                                    <small class="text-muted">Sessions</small>
+                                </div>
+                            </div>
+                            <p class="mb-3">
+                                <small class="text-muted">Avg. Attendance:</small><br>
+                                <span class="badge bg-success">94%</span>
+                            </p>
+                            <a href="@Url.Action("TeachClassDetail", "Teacher")" class="btn btn-sm btn-outline-primary w-100">View Details</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-book-fill text-info me-2"></i>Form 5 Mathematics
+                            </h5>
+                            <p class="text-muted mb-3">Mathematics Department</p>
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <h6 class="mb-1">28</h6>
+                                    <small class="text-muted">Students</small>
+                                </div>
+                                <div class="col-6">
+                                    <h6 class="mb-1">42</h6>
+                                    <small class="text-muted">Sessions</small>
+                                </div>
+                            </div>
+                            <p class="mb-3">
+                                <small class="text-muted">Avg. Attendance:</small><br>
+                                <span class="badge bg-success">91%</span>
+                            </p>
+                            <a href="@Url.Action("TeachClassDetail", "Teacher")" class="btn btn-sm btn-outline-primary w-100">View Details</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-book-fill text-success me-2"></i>Form 4 English
+                            </h5>
+                            <p class="text-muted mb-3">Language Department</p>
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <h6 class="mb-1">32</h6>
+                                    <small class="text-muted">Students</small>
+                                </div>
+                                <div class="col-6">
+                                    <h6 class="mb-1">48</h6>
+                                    <small class="text-muted">Sessions</small>
+                                </div>
+                            </div>
+                            <p class="mb-3">
+                                <small class="text-muted">Avg. Attendance:</small><br>
+                                <span class="badge bg-success">93%</span>
+                            </p>
+                            <a href="@Url.Action("TeachClassDetail", "Teacher")" class="btn btn-sm btn-outline-primary w-100">View Details</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-book-fill text-warning me-2"></i>Form 4 Science
+                            </h5>
+                            <p class="text-muted mb-3">Science Department</p>
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <h6 class="mb-1">31</h6>
+                                    <small class="text-muted">Students</small>
+                                </div>
+                                <div class="col-6">
+                                    <h6 class="mb-1">44</h6>
+                                    <small class="text-muted">Sessions</small>
+                                </div>
+                            </div>
+                            <p class="mb-3">
+                                <small class="text-muted">Avg. Attendance:</small><br>
+                                <span class="badge bg-warning">89%</span>
+                            </p>
+                            <a href="@Url.Action("TeachClassDetail", "Teacher")" class="btn btn-sm btn-outline-primary w-100">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,139 @@
+@{
+    ViewBag.Title = "Teacher Profile";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="dashboard-card text-center">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-person-badge-fill"></i>
+                    Profile Information
+                </h3>
+            </div>
+            <div class="user-avatar mx-auto mb-3" style="width: 120px; height: 120px; font-size: 3rem; background: #0d6efd;">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <h5 class="mb-2">Mr. Robert Smith</h5>
+            <p class="text-muted mb-3">Teacher ID: TCH001</p>
+            <p class="text-muted mb-4">Senior Science Instructor</p>
+            <a href="#" class="btn btn-primary w-100 mb-2">
+                <i class="bi bi-pencil-square me-2"></i>Edit Profile
+            </a>
+            <a href="#" class="btn btn-outline-secondary w-100">
+                <i class="bi bi-image me-2"></i>Change Photo
+            </a>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-file-earmark-person-fill"></i>
+                    Personal Information
+                </h3>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" value="Robert Smith" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Teacher ID</label>
+                    <input type="text" class="form-control" value="TCH001" disabled />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control" value="robert.smith@school.edu" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" value="+1 (555) 123-4567" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Department</label>
+                    <input type="text" class="form-control" value="Science" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Specialization</label>
+                    <input type="text" class="form-control" value="Physics & Chemistry" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Date of Birth</label>
+                    <input type="date" class="form-control" value="1985-05-15" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Joining Date</label>
+                    <input type="date" class="form-control" value="2010-08-01" disabled />
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <label class="form-label">Address</label>
+                    <textarea class="form-control" rows="2">123 Main Street, Apartment 4B, Springfield, IL 62701</textarea>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <button class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Save Changes
+                    </button>
+                    <button class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="dashboard-card mt-3">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-info-circle-fill"></i>
+                    Professional Information
+                </h3>
+            </div>
+
+            <div class="list-group list-group-flush">
+                <div class="list-group-item px-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted"><i class="bi bi-briefcase-fill me-2"></i>Total Classes Teaching</span>
+                        <strong>4</strong>
+                    </div>
+                </div>
+                <div class="list-group-item px-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted"><i class="bi bi-people-fill me-2"></i>Total Students</span>
+                        <strong>121</strong>
+                    </div>
+                </div>
+                <div class="list-group-item px-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted"><i class="bi bi-calendar-event-fill me-2"></i>Sessions Conducted</span>
+                        <strong>156</strong>
+                    </div>
+                </div>
+                <div class="list-group-item px-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted"><i class="bi bi-graph-up me-2"></i>Avg. Attendance Rate</span>
+                        <strong><span class="badge bg-success">92%</span></strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

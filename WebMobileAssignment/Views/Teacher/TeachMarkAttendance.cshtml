@@ -1,0 +1,165 @@
+@{
+    ViewBag.Title = "Mark Attendance";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-pencil-square"></i>
+                    Mark Attendance
+                </h3>
+            </div>
+
+            <!-- Class Selection -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Select Class</label>
+                    <select class="form-select">
+                        <option selected>Choose a class...</option>
+                        <option>Form 5 Science</option>
+                        <option>Form 5 Mathematics</option>
+                        <option>Form 4 English</option>
+                        <option>Form 4 Science</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-control" />
+                </div>
+            </div>
+
+            <!-- Student Attendance List -->
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th>Status</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>STU001</td>
+                            <td>John Doe</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="status1" id="present1" checked />
+                                    <label class="btn btn-outline-success" for="present1">Present</label>
+
+                                    <input type="radio" class="btn-check" name="status1" id="absent1" />
+                                    <label class="btn btn-outline-danger" for="absent1">Absent</label>
+
+                                    <input type="radio" class="btn-check" name="status1" id="late1" />
+                                    <label class="btn btn-outline-warning" for="late1">Late</label>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" placeholder="Notes..." />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>STU002</td>
+                            <td>Jane Smith</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="status2" id="present2" checked />
+                                    <label class="btn btn-outline-success" for="present2">Present</label>
+
+                                    <input type="radio" class="btn-check" name="status2" id="absent2" />
+                                    <label class="btn btn-outline-danger" for="absent2">Absent</label>
+
+                                    <input type="radio" class="btn-check" name="status2" id="late2" />
+                                    <label class="btn btn-outline-warning" for="late2">Late</label>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" placeholder="Notes..." />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>STU003</td>
+                            <td>Michael Johnson</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="status3" id="present3" />
+                                    <label class="btn btn-outline-success" for="present3">Present</label>
+
+                                    <input type="radio" class="btn-check" name="status3" id="absent3" checked />
+                                    <label class="btn btn-outline-danger" for="absent3">Absent</label>
+
+                                    <input type="radio" class="btn-check" name="status3" id="late3" />
+                                    <label class="btn btn-outline-warning" for="late3">Late</label>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" placeholder="Medical leave..." />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>STU004</td>
+                            <td>Sarah Williams</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="status4" id="present4" />
+                                    <label class="btn btn-outline-success" for="present4">Present</label>
+
+                                    <input type="radio" class="btn-check" name="status4" id="absent4" />
+                                    <label class="btn btn-outline-danger" for="absent4">Absent</label>
+
+                                    <input type="radio" class="btn-check" name="status4" id="late4" checked />
+                                    <label class="btn btn-outline-warning" for="late4">Late</label>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" placeholder="10 minutes late..." />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="p-3" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px; text-align: center;">
+                        <h5 class="mb-0" style="color: #198754;">2</h5>
+                        <small class="text-muted">Present</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px; text-align: center;">
+                        <h5 class="mb-0" style="color: #dc3545;">1</h5>
+                        <small class="text-muted">Absent</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px; text-align: center;">
+                        <h5 class="mb-0" style="color: #ffc107;">1</h5>
+                        <small class="text-muted">Late</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px; text-align: center;">
+                        <h5 class="mb-0" style="color: #0d6efd;">50%</h5>
+                        <small class="text-muted">Attendance Rate</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-4">
+                <button class="btn btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>Submit Attendance
+                </button>
+                <button class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

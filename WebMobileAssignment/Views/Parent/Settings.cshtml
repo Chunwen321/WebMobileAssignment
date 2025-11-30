@@ -1,7 +1,6 @@
 @{
-    ViewBag.Title = "Change Profile Settings";
-    ViewBag.ActiveSubmenu = "Settings";
-    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewBag.Title = "Settings";
+    Layout = "~/Views/Shared/_ParentLayout.cshtml";
 }
 
 <div class="row g-3">
@@ -47,9 +46,55 @@ Account Settings
  <button type="submit" class="btn btn-primary">
   <i class="bi bi-check-circle me-2"></i>Save Changes
 </button>
+     <button type="button" class="btn btn-outline-secondary">
+     <i class="bi bi-x-circle me-2"></i>Cancel
+ </button>
     </div>
 </div>
   </form>
+ </div>
+
+   <!-- Change Password -->
+<div class="dashboard-card mb-3">
+   <div class="card-header-custom">
+       <h5 class="card-title">
+<i class="bi bi-shield-lock"></i>
+     Change Password
+   </h5>
+    </div>
+
+  <form>
+     <div class="password-field-group mb-3">
+  <label class="form-label fw-semibold">Current Password</label>
+<div class="password-input-wrapper">
+<i class="bi bi-lock-fill password-icon"></i>
+    <input type="password" class="form-control password-input" placeholder="Enter current password" required>
+        </div>
+       </div>
+   
+       <div class="password-field-group mb-3">
+ <label class="form-label fw-semibold">New Password</label>
+ <div class="password-input-wrapper">
+  <i class="bi bi-lock-fill password-icon"></i>
+  <input type="password" class="form-control password-input" placeholder="Enter new password" required>
+  </div>
+     <small class="form-text text-muted d-block mt-1">
+   <i class="bi bi-info-circle me-1"></i>Password must be at least 8 characters long
+         </small>
+      </div>
+         
+    <div class="password-field-group mb-3">
+ <label class="form-label fw-semibold">Confirm New Password</label>
+    <div class="password-input-wrapper">
+    <i class="bi bi-lock-fill password-icon"></i>
+    <input type="password" class="form-control password-input" placeholder="Confirm new password" required>
+     </div>
+ </div>
+    
+   <button type="submit" class="btn btn-update-password">
+      <i class="bi bi-key-fill me-2"></i>Update Password
+  </button>
+ </form>
         </div>
     </div>
 
@@ -58,11 +103,11 @@ Account Settings
      <!-- Profile Summary -->
    <div class="dashboard-card">
   <div class="text-center mb-3">
-                <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #02a145;">
+      <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;">
  <i class="bi bi-person-fill"></i>
        </div>
      <h5 class="mb-1">Robert Doe</h5>
-      <p class="text-muted mb-0">Student</p>
+      <p class="text-muted mb-0">Parent/Guardian</p>
    </div>
       <div class="list-group list-group-flush">
    <div class="list-group-item px-0">

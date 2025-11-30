@@ -1,30 +1,83 @@
-/* ==================== STUDENT PORTAL STYLES ==================== */
+/* ==================== PARENT PORTAL STYLES ==================== */
 
 /* ==================== COLOR VARIABLES ==================== */
 /* 
- * SIDEBAR COLORS (matching login page student icon)
+ * SIDEBAR COLORS (matching login page parent icon)
  */
 :root {
-    /* Primary Sidebar */
+  /* Primary Sidebar */
     --sidebar-bg-start: #2c3e50;
-    --sidebar-bg-end: #34495e;
-
-    --student-accent: #198754; /* main green */
-    --student-accent-hover: rgba(25, 135, 84, 0.1);
-    --student-accent-active: rgba(25, 135, 84, 0.15);
-   
-    /* Status Colors */
+ --sidebar-bg-end: #34495e;
+    
+  /* Accent Color (Yellow - from login page parent icon) */
+    --parent-accent: #ffc107;
+--parent-accent-hover: rgba(255, 193, 7, 0.1);
+    --parent-accent-active: rgba(255, 193, 7, 0.15);
+    
+ /* Status Colors */
     --color-success: #198754;
     --color-danger: #dc3545;
     --color-warning: #ffc107;
     --color-info: #0d6efd;
+    
     /* Background */
     --page-bg: #f5f7fa;
     --card-bg: #ffffff;
+  
     /* Text Colors */
     --text-primary: #2c3e50;
     --text-secondary: #6c757d;
     --text-muted: #6c757d;
+}
+
+/* ==================== PARENT CLASSES STYLES ==================== */
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 5px 0;
+}
+
+.detail-row .label {
+    font-weight: 600;
+    color: #666;
+}
+
+.detail-row .value {
+    text-align: right;
+}
+
+.performance-section h6 {
+    font-weight: 700;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.perf-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 5px 0;
+}
+
+.perf-row span:first-child {
+    color: #666;
+}
+
+.perf-row strong {
+    font-weight: 700;
+}
+
+/* ==================== CLASS DETAIL STYLES ==================== */
+.material-item {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.material-item h6 {
+    font-weight: 600;
+    color: #333;
 }
 
 /* 
@@ -32,247 +85,53 @@
  */
 .icon-red { color: #dc3545; }      /* Admin */
 .icon-blue { color: #0d6efd; }     /* Teacher */
-.icon-green { color: #02a145; }    /* Student */
+.icon-green { color: #198754; }    /* Student */
 .icon-yellow { color: #ffc107; }   /* Parent - THIS IS OUR SIDEBAR COLOR! */
 
 /* 
  * UTILITY CLASSES
  */
 
-<<<<<<< Updated upstream
-/* Button primary green theme */
+/* Button primary yellow theme */
 .btn-primary-yellow {
-    background: #198754;
-    border-color: #198754;
-    color: #ffffff;
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #2c3e50;
 }
 
 .btn-primary-yellow:hover {
-    background: #157347;
-    border-color: #157347;
-=======
-/* ==================== CLASS CARD STYLES ==================== */
-.class-card {
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-}
-
-.class-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-.class-header {
-    padding: 15px;
-}
-
-.class-meta {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-
-.class-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-}
-
-.info-item label {
-    font-weight: 600;
-    color: #666;
-}
-
-.info-item span {
-    text-align: right;
-}
-
-.class-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 0.9rem;
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-}
-
-/* ==================== STATISTICS CARD STYLES ==================== */
-.stat-card {
-    text-align: center;
-    border-radius: 8px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card .stat-label {
-    font-weight: 500;
-    color: #666;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.stat-card .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #198754;
-    margin-bottom: 8px;
-}
-
-/* ==================== CLASS DETAIL STYLES ==================== */
-.announcement-item {
-    background: #f8f9fa;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-.announcement-item h6 {
-    font-weight: 600;
-    color: #333;
->>>>>>> Stashed changes
-}
-
-/* ==================== CLASS CARD STYLES ==================== */
-.class-card {
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-}
-
-.class-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-.class-header {
-    padding: 15px;
-}
-
-.class-meta {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-
-.class-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-}
-
-.info-item label {
-    font-weight: 600;
-    color: #666;
-}
-
-.info-item span {
-    text-align: right;
-}
-
-.class-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 0.9rem;
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-}
-
-/* ==================== STATISTICS CARD STYLES ==================== */
-.stat-card {
-    text-align: center;
-    border-radius: 8px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card .stat-label {
-    font-weight: 500;
-    color: #666;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.stat-card .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #198754;
-    margin-bottom: 8px;
-}
-
-/* ==================== CLASS DETAIL STYLES ==================== */
-.announcement-item {
-    background: #f8f9fa;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-.announcement-item h6 {
-    font-weight: 600;
-    color: #333;
+    background: #ffb300;
+  border-color: #ffb300;
 }
 
 /* Card accent */
 .card-accent-yellow {
-    border-left: 4px solid #198754;
+    border-left: 4px solid #ffc107;
 }
 
 /* Badge/Tag */
 .badge-yellow {
-    background: #198754;
-    color: #ffffff;
+    background: #ffc107;
+    color: #2c3e50;
 }
 
 /* Icon backgrounds */
 .icon-bg-yellow {
-    background: rgba(25, 135, 84, 0.1);
-    color: #198754;
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
 }
-
 
 /* ==================== LAYOUT STRUCTURE ==================== */
 
 /* Layout Structure */
-.student-layout {
+.parent-layout {
     margin: 0;
     padding: 0;
   background: #f5f7fa;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-.student-layout main {
+.parent-layout main {
     display: block;
   min-height: auto;
  padding: 0;
@@ -308,10 +167,10 @@
     color: white;
 }
 
-    .sidebar-brand i {
-        font-size: 1.75rem;
-        color: #02a145;
-    }
+.sidebar-brand i {
+    font-size: 1.75rem;
+    color: #ffc107;
+}
 
 /* Sidebar Navigation */
 .sidebar-nav {
@@ -357,12 +216,12 @@ width: 6px;
     flex: 1;
 }
 
-    .sidebar-item-content i {
-        font-size: 1.125rem;
-        width: 24px;
-        flex-shrink: 0;
-        color: #02a145;
-    }
+.sidebar-item-content i {
+    font-size: 1.125rem;
+    width: 24px;
+    flex-shrink: 0;
+    color: #ffc107;
+}
 
 .sidebar-item-content span {
   font-size: 0.95rem;
@@ -377,18 +236,18 @@ color: white;
 .sidebar-item.active {
     background: rgba(255, 193, 7, 0.15);
     color: white;
-    border-left: 4px solid #02a145;
+    border-left: 4px solid #ffc107;
 }
 
-    .sidebar-item.active::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 100%;
-        width: 4px;
-        background: #02a145;
-    }
+.sidebar-item.active::before {
+  content: '';
+    position: absolute;
+    left: 0;
+ top: 0;
+    height: 100%;
+    width: 4px;
+  background: #ffc107;
+}
 
 /* Notification Badge */
 .notification-badge {
@@ -432,7 +291,7 @@ color: white;
 
 .sidebar-subitem i {
     font-size: 1rem;
-    color: #02a145;
+    color: #ffc107;
     opacity: 0.7;
 }
 
@@ -466,9 +325,9 @@ color: white;
 
 .user-avatar {
     width: 40px;
-    height: 40px;
+ height: 40px;
     border-radius: 50%;
-    background: #02a145;
+    background: #ffc107;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -641,9 +500,9 @@ display: flex;
     gap: 0.5rem;
 }
 
-    .card-title i {
-        color: #02a145;
-    }
+.card-title i {
+    color: #ffc107;
+}
 
 .card-icon {
     width: 48px;
@@ -674,27 +533,6 @@ display: flex;
 background: rgba(220, 53, 69, 0.1);
     color: #dc3545;
 }
-
-.btn-outline-primary {
-    background: #228B22;
-    border: none;
-    color: #2c3e50;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-    .btn-outline-primary:hover {
-        background: #02a145;
-        color: #2c3e50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-    }
-
-    .btn-outline-primary:active {
-        transform: translateY(0);
-    }
 
 /* Stats Cards */
 .stat-card {
@@ -769,21 +607,21 @@ background: rgba(220, 53, 69, 0.1);
 
 
 .btn-update-password {
-    background: #228B22;
+    background: #ffc107;
     border: none;
     color: #2c3e50;
     padding: 0.75rem 2rem;
     font-weight: 600;
     border-radius: 8px;
-    transition: all 0.3s ease;
+ transition: all 0.3s ease;
 }
 
-    .btn-update-password:hover {
-        background: #02a145;
-        color: #2c3e50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-    }
+.btn-update-password:hover {
+    background: #ffb300;
+    color: #2c3e50;
+    transform: translateY(-2px);
+ box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
 
 .btn-update-password:active {
     transform: translateY(0);
@@ -810,27 +648,6 @@ background: rgba(220, 53, 69, 0.1);
     margin-bottom: 1rem !important;
     padding-bottom: 0.75rem !important;
 }
-
-.btn-primary {
-    background: #228B22;
-    border: none;
-    color: #2c3e50;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-    .btn-primary:hover {
-        background: #02a145;
-        color: #2c3e50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-    }
-
-    .btn-primary:active {
-        transform: translateY(0);
-    }
 
 /* Remove ALL bottom spacing from button container */
 .settings-account-card .row.g-3 > .col-12:last-child {

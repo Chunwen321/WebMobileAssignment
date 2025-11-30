@@ -1,0 +1,96 @@
+@{
+    ViewBag.Title = "Add New Teacher";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-person-plus-fill"></i> Add New Teacher</h5>
+            <a asp-action="TeacherIndex" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card bg-white p-4 rounded shadow-sm">
+            <form asp-action="TeacherCreate" method="post">
+                @Html.AntiForgeryToken()
+                
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error!</strong> Please correct the following errors:
+                        <ul class="mb-0 mt-2">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <h6 class="text-muted mb-3">Teacher Information</h6>
+                <div class="row">
+                    <!-- Name -->
+                    <div class="col-md-6 mb-3">
+                        <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" id="fullName" name="fullName" class="form-control" placeholder="e.g. John Smith" value="@ViewBag.FullName" required />
+                    </div>
+
+                    <!-- Email -->
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="e.g. john.smith@teacher.com" value="@ViewBag.Email" required />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Password -->
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required />
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div class="col-md-6 mb-3">
+                        <label for="phoneNumber" class="form-label">Phone Number</label>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="e.g. +1234567890" value="@ViewBag.PhoneNumber" />
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-3 mt-3">Professional Details</h6>
+                <div class="row">
+                    <!-- Subject -->
+                    <div class="col-md-6 mb-3">
+                        <label for="subjectTeach" class="form-label">Subject Taught</label>
+                        <input type="text" id="subjectTeach" name="subjectTeach" class="form-control" placeholder="e.g. Mathematics" value="@ViewBag.SubjectTeach" />
+                    </div>
+
+                    <!-- Hire Date -->
+                    <div class="col-md-6 mb-3">
+                        <label for="hireDate" class="form-label">Hire Date <span class="text-danger">*</span></label>
+                        <input type="date" id="hireDate" name="hireDate" class="form-control" value="@ViewBag.HireDate" required />
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12 text-end">
+                        <button type="reset" class="btn btn-light me-2">Reset</button>
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-save"></i> Save Teacher
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

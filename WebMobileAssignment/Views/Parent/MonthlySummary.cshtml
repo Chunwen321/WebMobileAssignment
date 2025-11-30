@@ -1,0 +1,261 @@
+@{
+    ViewBag.Title = "Monthly Summary";
+    Layout = "~/Views/Shared/_ParentLayout.cshtml";
+}
+
+<div class="dashboard-card mb-4">
+    <div class="card-header-custom">
+        <h3 class="card-title">
+<i class="bi bi-bar-chart-fill"></i>
+  Monthly Attendance Summary
+        </h3>
+        <select class="form-select form-select-sm" style="width: auto;">
+            <option>January 2024</option>
+          <option>February 2024</option>
+            <option>March 2024</option>
+      <option>April 2024</option>
+        </select>
+    </div>
+
+    <!-- Monthly Stats Overview -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: #0d6efd;">
+    <div class="stat-label">Total Classes</div>
+  <div class="stat-value">50</div>
+       <div class="stat-change">
+             <i class="bi bi-calendar3"></i>
+   <span>This month</span>
+   </div>
+     </div>
+        </div>
+<div class="col-md-3">
+   <div class="stat-card" style="border-left-color: #198754;">
+       <div class="stat-label">Days Present</div>
+       <div class="stat-value">45</div>
+                <div class="stat-change positive">
+          <i class="bi bi-arrow-up"></i>
+         <span>90% attendance</span>
+      </div>
+  </div>
+        </div>
+   <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: #dc3545;">
+       <div class="stat-label">Days Absent</div>
+   <div class="stat-value">3</div>
+          <div class="stat-change">
+           <i class="bi bi-x-circle"></i>
+      <span>6% of total</span>
+          </div>
+            </div>
+</div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: #ffc107;">
+        <div class="stat-label">Times Late</div>
+        <div class="stat-value">2</div>
+  <div class="stat-change">
+     <i class="bi bi-clock"></i>
+       <span>4% of total</span>
+     </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Percentage Graph -->
+    <div class="row g-3">
+     <div class="col-lg-6">
+            <h5 class="mb-3">Attendance Percentage</h5>
+       <div class="text-center py-5" style="background: #f8f9fa; border-radius: 8px;">
+ <i class="bi bi-pie-chart-fill" style="font-size: 4rem; color: #ffc107;"></i>
+     <p class="text-muted mt-3 mb-0">Pie Chart will be displayed here</p>
+      <small class="text-muted">Use Chart.js for visualization</small>
+            </div>
+ 
+       <!-- Legend -->
+            <div class="mt-3">
+ <div class="d-flex align-items-center justify-content-around">
+         <div class="text-center">
+        <div class="d-flex align-items-center gap-2">
+       <div style="width: 20px; height: 20px; background: #198754; border-radius: 4px;"></div>
+           <span>Present</span>
+         </div>
+          <h4 class="mt-2 mb-0" style="color: #198754;">90%</h4>
+        </div>
+ <div class="text-center">
+  <div class="d-flex align-items-center gap-2">
+        <div style="width: 20px; height: 20px; background: #dc3545; border-radius: 4px;"></div>
+             <span>Absent</span>
+             </div>
+           <h4 class="mt-2 mb-0" style="color: #dc3545;">6%</h4>
+   </div>
+              <div class="text-center">
+ <div class="d-flex align-items-center gap-2">
+             <div style="width: 20px; height: 20px; background: #ffc107; border-radius: 4px;"></div>
+         <span>Late</span>
+         </div>
+      <h4 class="mt-2 mb-0" style="color: #ffc107;">4%</h4>
+       </div>
+       </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+            <h5 class="mb-3">Monthly Trend</h5>
+        <div class="text-center py-5" style="background: #f8f9fa; border-radius: 8px;">
+       <i class="bi bi-graph-up" style="font-size: 4rem; color: #ffc107;"></i>
+ <p class="text-muted mt-3 mb-0">Line Chart will be displayed here</p>
+     <small class="text-muted">Showing attendance trend over months</small>
+        </div>
+      </div>
+    </div>
+</div>
+
+<!-- Monthly Summary Table -->
+<div class="dashboard-card">
+<div class="card-header-custom">
+        <h3 class="card-title">
+    <i class="bi bi-table"></i>
+      Detailed Summary by Subject
+        </h3>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+      <thead class="table-light">
+           <tr>
+   <th>Subject</th>
+          <th>Total Classes</th>
+  <th>Present</th>
+            <th>Absent</th>
+     <th>Late</th>
+      <th>Attendance Rate</th>
+            <th>Status</th>
+</tr>
+   </thead>
+            <tbody>
+    <tr>
+  <td>
+            <i class="bi bi-calculator-fill me-2" style="color: #0d6efd;"></i>
+       <strong>Mathematics</strong>
+                </td>
+           <td>12</td>
+            <td><span class="badge bg-success-subtle text-success">11</span></td>
+        <td><span class="badge bg-danger-subtle text-danger">0</span></td>
+            <td><span class="badge bg-warning-subtle text-warning">1</span></td>
+     <td>
+             <div class="progress" style="height: 20px;">
+     <div class="progress-bar bg-success" role="progressbar" style="width: 92%">92%</div>
+          </div>
+    </td>
+       <td><span class="badge bg-success">Excellent</span></td>
+           </tr>
+           <tr>
+     <td>
+     <i class="bi bi-flask-fill me-2" style="color: #198754;"></i>
+      <strong>Science</strong>
+        </td>
+                    <td>10</td>
+   <td><span class="badge bg-success-subtle text-success">9</span></td>
+    <td><span class="badge bg-danger-subtle text-danger">1</span></td>
+        <td><span class="badge bg-warning-subtle text-warning">0</span></td>
+           <td>
+   <div class="progress" style="height: 20px;">
+          <div class="progress-bar bg-success" role="progressbar" style="width: 90%">90%</div>
+            </div>
+        </td>
+        <td><span class="badge bg-success">Excellent</span></td>
+     </tr>
+  <tr>
+<td>
+        <i class="bi bi-book-fill me-2" style="color: #ffc107;"></i>
+             <strong>English</strong>
+  </td>
+    <td>8</td>
+              <td><span class="badge bg-success-subtle text-success">7</span></td>
+      <td><span class="badge bg-danger-subtle text-danger">1</span></td>
+           <td><span class="badge bg-warning-subtle text-warning">0</span></td>
+  <td>
+          <div class="progress" style="height: 20px;">
+      <div class="progress-bar bg-warning" role="progressbar" style="width: 88%">88%</div>
+         </div>
+         </td>
+          <td><span class="badge bg-warning">Good</span></td>
+    </tr>
+     <tr>
+           <td>
+       <i class="bi bi-globe-fill me-2" style="color: #dc3545;"></i>
+      <strong>History</strong>
+              </td>
+         <td>10</td>
+    <td><span class="badge bg-success-subtle text-success">9</span></td>
+        <td><span class="badge bg-danger-subtle text-danger">0</span></td>
+  <td><span class="badge bg-warning-subtle text-warning">1</span></td>
+    <td>
+             <div class="progress" style="height: 20px;">
+         <div class="progress-bar bg-success" role="progressbar" style="width: 90%">90%</div>
+     </div>
+        </td>
+               <td><span class="badge bg-success">Excellent</span></td>
+           </tr>
+ <tr>
+              <td>
+        <i class="bi bi-palette-fill me-2" style="color: #6f42c1;"></i>
+                <strong>Arts</strong>
+</td>
+     <td>10</td>
+      <td><span class="badge bg-success-subtle text-success">9</span></td>
+     <td><span class="badge bg-danger-subtle text-danger">1</span></td>
+          <td><span class="badge bg-warning-subtle text-warning">0</span></td>
+  <td>
+  <div class="progress" style="height: 20px;">
+       <div class="progress-bar bg-success" role="progressbar" style="width: 90%">90%</div>
+         </div>
+ </td>
+   <td><span class="badge bg-success">Excellent</span></td>
+     </tr>
+            </tbody>
+       <tfoot class="table-light">
+     <tr>
+         <th>Total</th>
+   <th>50</th>
+         <th><span class="badge bg-success">45</span></th>
+        <th><span class="badge bg-danger">3</span></th>
+        <th><span class="badge bg-warning">2</span></th>
+ <th>
+             <div class="progress" style="height: 20px;">
+ <div class="progress-bar bg-success" role="progressbar" style="width: 90%">90%</div>
+          </div>
+              </th>
+     <th><span class="badge bg-success">Excellent</span></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-outline-primary">
+            <i class="bi bi-printer me-2"></i>Print Summary
+        </button>
+        <a asp-controller="Parent" asp-action="DownloadReport" class="btn btn-danger">
+       <i class="bi bi-file-pdf me-2"></i>Download PDF Report
+   </a>
+        <button class="btn btn-outline-success">
+        <i class="bi bi-file-excel me-2"></i>Export to Excel
+        </button>
+    </div>
+</div>
+
+<!-- Notes Section -->
+<div class="dashboard-card mt-3">
+    <div class="card-header-custom">
+      <h3 class="card-title">
+   <i class="bi bi-info-circle-fill"></i>
+            Important Notes
+        </h3>
+    </div>
+    <div class="alert alert-info mb-0">
+        <i class="bi bi-lightbulb-fill me-2"></i>
+  <strong>Note:</strong> Attendance rate of 90% and above is considered Excellent. 80-89% is Good. Below 80% requires attention.
+    </div>
+</div>

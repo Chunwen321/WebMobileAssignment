@@ -1,0 +1,331 @@
+@{
+    ViewBag.Title = "My Classes";
+    ViewBag.ActiveMenu = "Classes";
+}
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-2">My Classes</h1>
+            <p class="text-muted">View and track your enrolled classes and performance</p>
+        </div>
+    </div>
+
+    <!-- Filter and Search -->
+    <div class="row mb-4">
+        <div class="col-md-5">
+            <input type="text" class="form-control" placeholder="Search classes by name or code...">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select">
+                <option value="">All Semesters</option>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Overall Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dashboard-card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">Total Classes</div>
+                    <div class="stat-value">6</div>
+                    <small class="text-muted">This semester</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dashboard-card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">Average Attendance</div>
+                    <div class="stat-value text-success">91%</div>
+                    <small class="text-muted">Across all classes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dashboard-card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">GPA</div>
+                    <div class="stat-value text-primary">3.8</div>
+                    <small class="text-muted">Current semester</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dashboard-card stat-card">
+                <div class="card-body">
+                    <div class="stat-label">Pending Assignments</div>
+                    <div class="stat-value text-warning">3</div>
+                    <small class="text-muted">Due this week</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Classes Grid -->
+    <div class="row">
+        <!-- Class Card 1 -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card class-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #0d6efd 0%, #0d5ee8 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="bi bi-book"></i> Advanced Data Structures
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">CS302</span>
+                        <span class="badge bg-light text-dark">3 Credits</span>
+                    </div>
+                    <div class="class-info">
+                        <div class="info-item">
+                            <label>Instructor:</label>
+                            <span>Dr. Jane Smith</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Schedule:</label>
+                            <span>Mon, Wed, Fri - 10:00 AM</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Location:</label>
+                            <span>Room 301, Building A</span>
+                        </div>
+                    </div>
+                    <div class="class-stats mt-3 pt-3 border-top">
+                        <div class="stat-row">
+                            <span>Attendance:</span>
+                            <strong class="text-success">92%</strong>
+                        </div>
+                        <div class="stat-row">
+                            <span>Grade:</span>
+                            <strong class="text-primary">A-</strong>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("StudClassDetail", "Student")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class Card 2 -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card class-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #198754 0%, #157347 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="bi bi-flask"></i> Database Systems
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">CS305</span>
+                        <span class="badge bg-light text-dark">3 Credits</span>
+                    </div>
+                    <div class="class-info">
+                        <div class="info-item">
+                            <label>Instructor:</label>
+                            <span>Prof. Robert Davis</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Schedule:</label>
+                            <span>Tue, Thu - 2:00 PM</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Location:</label>
+                            <span>Room 215, Building C</span>
+                        </div>
+                    </div>
+                    <div class="class-stats mt-3 pt-3 border-top">
+                        <div class="stat-row">
+                            <span>Attendance:</span>
+                            <strong class="text-success">88%</strong>
+                        </div>
+                        <div class="stat-row">
+                            <span>Grade:</span>
+                            <strong class="text-primary">B+</strong>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("StudClassDetail", "Student")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class Card 3 -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card class-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
+                    <h5 class="mb-0 text-dark">
+                        <i class="bi bi-calculator"></i> Discrete Mathematics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">MATH201</span>
+                        <span class="badge bg-light text-dark">4 Credits</span>
+                    </div>
+                    <div class="class-info">
+                        <div class="info-item">
+                            <label>Instructor:</label>
+                            <span>Dr. Sarah Johnson</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Schedule:</label>
+                            <span>Mon, Wed - 1:00 PM</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Location:</label>
+                            <span>Room 105, Building B</span>
+                        </div>
+                    </div>
+                    <div class="class-stats mt-3 pt-3 border-top">
+                        <div class="stat-row">
+                            <span>Attendance:</span>
+                            <strong class="text-success">95%</strong>
+                        </div>
+                        <div class="stat-row">
+                            <span>Grade:</span>
+                            <strong class="text-primary">A</strong>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("StudClassDetail", "Student")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class Card 4 -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card class-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="bi bi-chat-square"></i> Software Engineering
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">CS410</span>
+                        <span class="badge bg-light text-dark">3 Credits</span>
+                    </div>
+                    <div class="class-info">
+                        <div class="info-item">
+                            <label>Instructor:</label>
+                            <span>Prof. Michael Brown</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Schedule:</label>
+                            <span>Fri - 3:00 PM</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Location:</label>
+                            <span>Room 410, Building A</span>
+                        </div>
+                    </div>
+                    <div class="class-stats mt-3 pt-3 border-top">
+                        <div class="stat-row">
+                            <span>Attendance:</span>
+                            <strong class="text-warning">80%</strong>
+                        </div>
+                        <div class="stat-row">
+                            <span>Grade:</span>
+                            <strong class="text-primary">B</strong>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("StudClassDetail", "Student")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class Card 5 -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card class-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="bi bi-cpu"></i> Operating Systems
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">CS303</span>
+                        <span class="badge bg-light text-dark">3 Credits</span>
+                    </div>
+                    <div class="class-info">
+                        <div class="info-item">
+                            <label>Instructor:</label>
+                            <span>Dr. James Wilson</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Schedule:</label>
+                            <span>Tue, Thu - 11:00 AM</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Location:</label>
+                            <span>Room 320, Building C</span>
+                        </div>
+                    </div>
+                    <div class="class-stats mt-3 pt-3 border-top">
+                        <div class="stat-row">
+                            <span>Attendance:</span>
+                            <strong class="text-success">90%</strong>
+                        </div>
+                        <div class="stat-row">
+                            <span>Grade:</span>
+                            <strong class="text-primary">A-</strong>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("StudClassDetail", "Student")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class Card 6 (Completed) -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card class-card opacity-75">
+                <div class="class-header" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="bi bi-archive"></i> Web Development
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">CS201</span>
+                        <span class="badge bg-light text-dark">3 Credits</span>
+                        <span class="badge bg-secondary ms-1">Completed</span>
+                    </div>
+                    <div class="class-info">
+                        <div class="info-item">
+                            <label>Instructor:</label>
+                            <span>Prof. Lisa Anderson</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Schedule:</label>
+                            <span>Mon, Wed, Fri - 2:00 PM</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Location:</label>
+                            <span>Room 201, Building A</span>
+                        </div>
+                    </div>
+                    <div class="class-stats mt-3 pt-3 border-top">
+                        <div class="stat-row">
+                            <span>Attendance:</span>
+                            <strong class="text-success">100%</strong>
+                        </div>
+                        <div class="stat-row">
+                            <span>Grade:</span>
+                            <strong class="text-primary">A+</strong>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm mt-3 w-100 disabled">Archived</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

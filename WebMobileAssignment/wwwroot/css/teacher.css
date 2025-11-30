@@ -1,17 +1,17 @@
-/* ==================== STUDENT PORTAL STYLES ==================== */
+/* ==================== TEACHER PORTAL STYLES ==================== */
 
 /* ==================== COLOR VARIABLES ==================== */
 /* 
- * SIDEBAR COLORS (matching login page student icon)
+ * SIDEBAR COLORS (matching login page teacher icon)
  */
 :root {
     /* Primary Sidebar */
     --sidebar-bg-start: #2c3e50;
     --sidebar-bg-end: #34495e;
 
-    --student-accent: #198754; /* main green */
-    --student-accent-hover: rgba(25, 135, 84, 0.1);
-    --student-accent-active: rgba(25, 135, 84, 0.15);
+    --teacher-accent: #0d6efd; /* main blue */
+    --teacher-accent-hover: rgba(13, 110, 253, 0.1);
+    --teacher-accent-active: rgba(13, 110, 253, 0.15);
    
     /* Status Colors */
     --color-success: #198754;
@@ -27,255 +27,123 @@
     --text-muted: #6c757d;
 }
 
+/* ==================== CLASS DETAIL CARD STYLES ==================== */
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.info-value {
+    color: #333;
+}
+
+.attendance-stats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-item-label {
+    font-weight: 500;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.stat-item-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #0d6efd;
+}
+
+.search-box {
+    width: 250px;
+}
+
+.btn-xs {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
 /* 
- * ICON COLOR REFERENCE (from login page)
+  * ICON COLOR REFERENCE (from login page)
  */
 .icon-red { color: #dc3545; }      /* Admin */
 .icon-blue { color: #0d6efd; }     /* Teacher */
-.icon-green { color: #02a145; }    /* Student */
-.icon-yellow { color: #ffc107; }   /* Parent - THIS IS OUR SIDEBAR COLOR! */
+.icon-green { color: #198754; }    /* Student */
+.icon-yellow { color: #ffc107; }   /* Parent */
 
 /* 
  * UTILITY CLASSES
  */
 
-<<<<<<< Updated upstream
-/* Button primary green theme */
-.btn-primary-yellow {
-    background: #198754;
-    border-color: #198754;
+/* Button primary blue theme */
+.btn-primary-blue {
+    background: #0d6efd;
+    border-color: #0d6efd;
     color: #ffffff;
 }
 
-.btn-primary-yellow:hover {
-    background: #157347;
-    border-color: #157347;
-=======
-/* ==================== CLASS CARD STYLES ==================== */
-.class-card {
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-}
-
-.class-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-.class-header {
-    padding: 15px;
-}
-
-.class-meta {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-
-.class-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-}
-
-.info-item label {
-    font-weight: 600;
-    color: #666;
-}
-
-.info-item span {
-    text-align: right;
-}
-
-.class-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 0.9rem;
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-}
-
-/* ==================== STATISTICS CARD STYLES ==================== */
-.stat-card {
-    text-align: center;
-    border-radius: 8px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card .stat-label {
-    font-weight: 500;
-    color: #666;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.stat-card .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #198754;
-    margin-bottom: 8px;
-}
-
-/* ==================== CLASS DETAIL STYLES ==================== */
-.announcement-item {
-    background: #f8f9fa;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-.announcement-item h6 {
-    font-weight: 600;
-    color: #333;
->>>>>>> Stashed changes
-}
-
-/* ==================== CLASS CARD STYLES ==================== */
-.class-card {
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-}
-
-.class-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-.class-header {
-    padding: 15px;
-}
-
-.class-meta {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-
-.class-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-}
-
-.info-item label {
-    font-weight: 600;
-    color: #666;
-}
-
-.info-item span {
-    text-align: right;
-}
-
-.class-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 0.9rem;
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-}
-
-/* ==================== STATISTICS CARD STYLES ==================== */
-.stat-card {
-    text-align: center;
-    border-radius: 8px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card .stat-label {
-    font-weight: 500;
-    color: #666;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.stat-card .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #198754;
-    margin-bottom: 8px;
-}
-
-/* ==================== CLASS DETAIL STYLES ==================== */
-.announcement-item {
-    background: #f8f9fa;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-.announcement-item h6 {
-    font-weight: 600;
-    color: #333;
+.btn-primary-blue:hover {
+    background: #0b5ed7;
+    border-color: #0b5ed7;
 }
 
 /* Card accent */
-.card-accent-yellow {
-    border-left: 4px solid #198754;
+.card-accent-blue {
+    border-left: 4px solid #0d6efd;
 }
 
 /* Badge/Tag */
-.badge-yellow {
-    background: #198754;
+.badge-blue {
+    background: #0d6efd;
     color: #ffffff;
 }
 
 /* Icon backgrounds */
-.icon-bg-yellow {
-    background: rgba(25, 135, 84, 0.1);
-    color: #198754;
+.icon-bg-blue {
+    background: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
 }
 
 
 /* ==================== LAYOUT STRUCTURE ==================== */
 
 /* Layout Structure */
-.student-layout {
+.teacher-layout {
     margin: 0;
     padding: 0;
-  background: #f5f7fa;
+    background: #f5f7fa;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-.student-layout main {
+.teacher-layout main {
     display: block;
-  min-height: auto;
- padding: 0;
+    min-height: auto;
+    padding: 0;
 }
 
 /* Sidebar Styles */
@@ -286,7 +154,6 @@
     height: 100vh;
     width: 280px;
     background: #1c1a1a;
-    color: white;
     display: flex;
     flex-direction: column;
     z-index: 1000;
@@ -310,7 +177,7 @@
 
     .sidebar-brand i {
         font-size: 1.75rem;
-        color: #02a145;
+        color: #0d6efd;
     }
 
 /* Sidebar Navigation */
@@ -322,7 +189,7 @@
 }
 
 .sidebar-nav::-webkit-scrollbar {
-width: 6px;
+    width: 6px;
 }
 
 .sidebar-nav::-webkit-scrollbar-track {
@@ -331,22 +198,22 @@ width: 6px;
 
 .sidebar-nav::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
+    border-radius: 3px;
 }
 
 .sidebar-item {
     display: flex;
     align-items: center;
-  justify-content: space-between;
- padding: 0.875rem 1.5rem;
+    justify-content: space-between;
+    padding: 0.875rem 1.5rem;
     color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: all 0.3s ease;
+    text-decoration: none;
+    transition: all 0.3s ease;
     cursor: pointer;
     border: none;
     background: transparent;
     width: 100%;
-  text-align: left;
+    text-align: left;
     position: relative;
 }
 
@@ -361,23 +228,23 @@ width: 6px;
         font-size: 1.125rem;
         width: 24px;
         flex-shrink: 0;
-        color: #02a145;
+        color: #0d6efd;
     }
 
 .sidebar-item-content span {
-  font-size: 0.95rem;
+    font-size: 0.95rem;
     font-weight: 500;
 }
 
 .sidebar-item:hover {
-    background: rgba(255, 193, 7, 0.1);
-color: white;
+    background: rgba(13, 110, 253, 0.1);
+    color: white;
 }
 
 .sidebar-item.active {
-    background: rgba(255, 193, 7, 0.15);
+    background: rgba(13, 110, 253, 0.15);
     color: white;
-    border-left: 4px solid #02a145;
+    border-left: 4px solid #0d6efd;
 }
 
     .sidebar-item.active::before {
@@ -387,7 +254,7 @@ color: white;
         top: 0;
         height: 100%;
         width: 4px;
-        background: #02a145;
+        background: #0d6efd;
     }
 
 /* Notification Badge */
@@ -412,7 +279,7 @@ color: white;
 
 .dropdown-toggle i.bi-chevron-down {
     font-size: 0.875rem;
-  transition: transform 0.3s ease;
+    transition: transform 0.3s ease;
 }
 
 .dropdown-toggle[aria-expanded="true"] i.bi-chevron-down {
@@ -423,7 +290,7 @@ color: white;
     display: flex;
     align-items: center;
     gap: 0.75rem;
- padding: 0.75rem 1.5rem 0.75rem 3.5rem;
+    padding: 0.75rem 1.5rem 0.75rem 3.5rem;
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     transition: all 0.3s ease;
@@ -432,18 +299,18 @@ color: white;
 
 .sidebar-subitem i {
     font-size: 1rem;
-    color: #02a145;
+    color: #0d6efd;
     opacity: 0.7;
 }
 
 .sidebar-subitem:hover {
-    background: rgba(255, 193, 7, 0.08);
+    background: rgba(13, 110, 253, 0.08);
     color: white;
     padding-left: 3.75rem;
 }
 
 .sidebar-subitem.active {
-    background: rgba(255, 193, 7, 0.12);
+    background: rgba(13, 110, 253, 0.12);
     color: white;
     font-weight: 600;
 }
@@ -452,7 +319,7 @@ color: white;
 .sidebar-footer {
     padding: 1rem 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
- display: flex;
+    display: flex;
     align-items: center;
     justify-content: space-between;
 }
@@ -461,14 +328,14 @@ color: white;
     display: flex;
     align-items: center;
     gap: 0.75rem;
- flex: 1;
+    flex: 1;
 }
 
 .user-avatar {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #02a145;
+    background: #0d6efd;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -482,7 +349,7 @@ color: white;
 
 .user-name {
     font-size: 0.9rem;
-  font-weight: 600;
+    font-weight: 600;
     color: white;
     margin-bottom: 0.15rem;
 }
@@ -499,12 +366,12 @@ color: white;
     background: rgba(255, 255, 255, 0.1);
     border: none;
     color: white;
-display: flex;
+    display: flex;
     align-items: center;
-  justify-content: center;
+    justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-  text-decoration: none;
+    text-decoration: none;
 }
 
 .logout-btn:hover {
@@ -545,7 +412,7 @@ display: flex;
     border-radius: 8px;
     background: #f8f9fa;
     border: none;
- color: #2c3e50;
+    color: #2c3e50;
     font-size: 1.25rem;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -586,7 +453,7 @@ display: flex;
 }
 
 .topbar-btn:hover {
-  background: #ffc107;
+    background: #0d6efd;
     color: white;
 }
 
@@ -613,7 +480,7 @@ display: flex;
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+    transition: all 0.3s ease;
     height: 100%;
 }
 
@@ -626,7 +493,7 @@ display: flex;
     display: flex;
     align-items: center;
     justify-content: space-between;
-  margin-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid #f8f9fa;
 }
@@ -642,7 +509,7 @@ display: flex;
 }
 
     .card-title i {
-        color: #02a145;
+        color: #0d6efd;
     }
 
 .card-icon {
@@ -655,14 +522,14 @@ display: flex;
     font-size: 1.5rem;
 }
 
-.card-icon.yellow {
-    background: rgba(255, 193, 7, 0.1);
-    color: #ffc107;
-}
-
 .card-icon.blue {
     background: rgba(13, 110, 253, 0.1);
     color: #0d6efd;
+}
+
+.card-icon.yellow {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
 }
 
 .card-icon.green {
@@ -671,30 +538,9 @@ display: flex;
 }
 
 .card-icon.red {
-background: rgba(220, 53, 69, 0.1);
+    background: rgba(220, 53, 69, 0.1);
     color: #dc3545;
 }
-
-.btn-outline-primary {
-    background: #228B22;
-    border: none;
-    color: #2c3e50;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-    .btn-outline-primary:hover {
-        background: #02a145;
-        color: #2c3e50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-    }
-
-    .btn-outline-primary:active {
-        transform: translateY(0);
-    }
 
 /* Stats Cards */
 .stat-card {
@@ -702,7 +548,7 @@ background: rgba(220, 53, 69, 0.1);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border-left: 4px solid #ffc107;
+    border-left: 4px solid #0d6efd;
 }
 
 .stat-label {
@@ -715,13 +561,13 @@ background: rgba(220, 53, 69, 0.1);
 .stat-value {
     font-size: 2rem;
     font-weight: 700;
-  color: #2c3e50;
+    color: #2c3e50;
     margin-bottom: 0.25rem;
 }
 
 .stat-change {
     font-size: 0.875rem;
-  display: flex;
+    display: flex;
     align-items: center;
     gap: 0.25rem;
 }
@@ -755,23 +601,22 @@ background: rgba(220, 53, 69, 0.1);
 }
 
 .password-input {
- padding-left: 3rem !important;
+    padding-left: 3rem !important;
     border-radius: 8px;
     border: 1px solid #dee2e6;
     transition: all 0.3s ease;
 }
 
 .password-input:focus {
-    border-color: #ffc107;
-  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
     padding-left: 3rem !important;
 }
 
-
 .btn-update-password {
-    background: #228B22;
+    background: #0d6efd;
     border: none;
-    color: #2c3e50;
+    color: #ffffff;
     padding: 0.75rem 2rem;
     font-weight: 600;
     border-radius: 8px;
@@ -779,10 +624,10 @@ background: rgba(220, 53, 69, 0.1);
 }
 
     .btn-update-password:hover {
-        background: #02a145;
-        color: #2c3e50;
+        background: #0b5ed7;
+        color: #ffffff;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
     }
 
 .btn-update-password:active {
@@ -797,7 +642,7 @@ background: rgba(220, 53, 69, 0.1);
 }
 
 .settings-account-card form {
-  margin: 0 !important;
+    margin: 0 !important;
     padding: 0 !important;
 }
 
@@ -810,27 +655,6 @@ background: rgba(220, 53, 69, 0.1);
     margin-bottom: 1rem !important;
     padding-bottom: 0.75rem !important;
 }
-
-.btn-primary {
-    background: #228B22;
-    border: none;
-    color: #2c3e50;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-    .btn-primary:hover {
-        background: #02a145;
-        color: #2c3e50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-    }
-
-    .btn-primary:active {
-        transform: translateY(0);
-    }
 
 /* Remove ALL bottom spacing from button container */
 .settings-account-card .row.g-3 > .col-12:last-child {
@@ -846,12 +670,12 @@ background: rgba(220, 53, 69, 0.1);
 /* Responsive Design */
 @media (max-width: 992px) {
     .sidebar {
-     transform: translateX(-100%);
+        transform: translateX(-100%);
     }
 
     .sidebar.show {
-      transform: translateX(0);
-}
+        transform: translateX(0);
+    }
 
     .main-content {
         margin-left: 0;
@@ -859,8 +683,8 @@ background: rgba(220, 53, 69, 0.1);
 
     .sidebar-toggle {
         display: flex;
-   align-items: center;
-      justify-content: center;
+        align-items: center;
+        justify-content: center;
     }
 
     .topbar-title h1 {
@@ -870,7 +694,7 @@ background: rgba(220, 53, 69, 0.1);
 
 @media (max-width: 768px) {
     .page-content {
-     padding: 1rem;
+        padding: 1rem;
     }
 
     .topbar {
@@ -896,8 +720,8 @@ background: rgba(220, 53, 69, 0.1);
     }
 
     .card-title {
-     font-size: 1rem;
- }
+        font-size: 1rem;
+    }
 }
 
 /* Mobile Overlay */
@@ -909,7 +733,7 @@ background: rgba(220, 53, 69, 0.1);
         left: 0;
         width: 100%;
         height: 100%;
- background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.5);
         z-index: 999;
     }
 

@@ -1,0 +1,377 @@
+@{
+    ViewBag.Title = "My Children's Classes";
+    ViewBag.ActiveMenu = "Classes";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-2">My Children's Classes</h1>
+            <p class="text-muted">Monitor your children's enrolled classes and performance</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <select class="form-select">
+                <option value="">All Children</option>
+                <option value="1">Sarah Johnson</option>
+                <option value="2">John Johnson</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <input type="text" class="form-control" placeholder="Search by class name...">
+        </div>
+        <div class="col-md-4">
+            <select class="form-select">
+                <option value="">All Semesters</option>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Student: Sarah Johnson -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="bi bi-person-circle"></i> Sarah Johnson (ID: STU001)
+            </h4>
+        </div>
+
+        <!-- Class 1 for Sarah -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #0d6efd 0%, #0d5ee8 100%);">
+                    <h5 class="mb-0 text-white">Advanced Data Structures</h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">CS302</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    <div class="class-details">
+                        <div class="detail-row">
+                            <span class="label">Instructor:</span>
+                            <span class="value">Dr. Jane Smith</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Schedule:</span>
+                            <span class="value">Mon, Wed, Fri - 10:00 AM</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Credits:</span>
+                            <span class="value">3</span>
+                        </div>
+                    </div>
+                    <div class="performance-section mt-3 pt-3 border-top">
+                        <h6 class="mb-2">Performance</h6>
+                        <div class="perf-row">
+                            <span>Attendance:</span>
+                            <strong class="text-success">92%</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Current Grade:</span>
+                            <strong class="text-primary">A- (89%)</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Class Rank:</span>
+                            <strong>5th of 42 students</strong>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("ParentClassDetail", "Parent")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class 2 for Sarah -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #198754 0%, #157347 100%);">
+                    <h5 class="mb-0 text-white">Database Systems</h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">CS305</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    <div class="class-details">
+                        <div class="detail-row">
+                            <span class="label">Instructor:</span>
+                            <span class="value">Prof. Robert Davis</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Schedule:</span>
+                            <span class="value">Tue, Thu - 2:00 PM</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Credits:</span>
+                            <span class="value">3</span>
+                        </div>
+                    </div>
+                    <div class="performance-section mt-3 pt-3 border-top">
+                        <h6 class="mb-2">Performance</h6>
+                        <div class="perf-row">
+                            <span>Attendance:</span>
+                            <strong class="text-success">88%</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Current Grade:</span>
+                            <strong class="text-primary">B+ (85%)</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Class Rank:</span>
+                            <strong>12th of 38 students</strong>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("ParentClassDetail", "Parent")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class 3 for Sarah -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
+                    <h5 class="mb-0 text-dark">Discrete Mathematics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">MATH201</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    <div class="class-details">
+                        <div class="detail-row">
+                            <span class="label">Instructor:</span>
+                            <span class="value">Dr. Sarah Johnson</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Schedule:</span>
+                            <span class="value">Mon, Wed - 1:00 PM</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Credits:</span>
+                            <span class="value">4</span>
+                        </div>
+                    </div>
+                    <div class="performance-section mt-3 pt-3 border-top">
+                        <h6 class="mb-2">Performance</h6>
+                        <div class="perf-row">
+                            <span>Attendance:</span>
+                            <strong class="text-success">95%</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Current Grade:</span>
+                            <strong class="text-primary">A (92%)</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Class Rank:</span>
+                            <strong>2nd of 35 students</strong>
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student: John Johnson -->
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="bi bi-person-circle"></i> John Johnson (ID: STU045)
+            </h4>
+        </div>
+
+        <!-- Class 1 for John -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                    <h5 class="mb-0 text-white">Operating Systems</h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">CS303</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    <div class="class-details">
+                        <div class="detail-row">
+                            <span class="label">Instructor:</span>
+                            <span class="value">Dr. James Wilson</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Schedule:</span>
+                            <span class="value">Tue, Thu - 11:00 AM</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Credits:</span>
+                            <span class="value">3</span>
+                        </div>
+                    </div>
+                    <div class="performance-section mt-3 pt-3 border-top">
+                        <h6 class="mb-2">Performance</h6>
+                        <div class="perf-row">
+                            <span>Attendance:</span>
+                            <strong class="text-success">90%</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Current Grade:</span>
+                            <strong class="text-primary">A- (88%)</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Class Rank:</span>
+                            <strong>8th of 40 students</strong>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("ParentClassDetail", "Parent")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class 1 for John -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                    <h5 class="mb-0 text-white">Software Engineering</h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">CS410</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    <div class="class-details">
+                        <div class="detail-row">
+                            <span class="label">Instructor:</span>
+                            <span class="value">Prof. Michael Brown</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Schedule:</span>
+                            <span class="value">Fri - 3:00 PM</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Credits:</span>
+                            <span class="value">3</span>
+                        </div>
+                    </div>
+                    <div class="performance-section mt-3 pt-3 border-top">
+                        <h6 class="mb-2">Performance</h6>
+                        <div class="perf-row">
+                            <span>Attendance:</span>
+                            <strong class="text-warning">75%</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Current Grade:</span>
+                            <strong class="text-primary">B (80%)</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Class Rank:</span>
+                            <strong>22nd of 45 students</strong>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("ParentClassDetail", "Parent")" class="btn btn-primary btn-sm mt-3 w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class 2 for John -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="dashboard-card">
+                <div class="class-header" style="background: linear-gradient(135deg, #0d6efd 0%, #0d5ee8 100%);">
+                    <h5 class="mb-0 text-white">Network Programming</h5>
+                </div>
+                <div class="card-body">
+                    <div class="class-meta mb-3">
+                        <span class="badge bg-light text-dark">CS350</span>
+                        <span class="badge bg-warning">At Risk</span>
+                    </div>
+                    <div class="class-details">
+                        <div class="detail-row">
+                            <span class="label">Instructor:</span>
+                            <span class="value">Dr. Lisa Anderson</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Schedule:</span>
+                            <span class="value">Wed, Fri - 9:00 AM</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Credits:</span>
+                            <span class="value">3</span>
+                        </div>
+                    </div>
+                    <div class="performance-section mt-3 pt-3 border-top">
+                        <h6 class="mb-2">Performance</h6>
+                        <div class="perf-row">
+                            <span>Attendance:</span>
+                            <strong class="text-danger">68%</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Current Grade:</span>
+                            <strong class="text-danger">C+ (72%)</strong>
+                        </div>
+                        <div class="perf-row">
+                            <span>Class Rank:</span>
+                            <strong>38th of 42 students</strong>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("ParentClassDetail", "Parent")" class="btn btn-danger btn-sm mt-3 w-100">Needs Attention</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .class-header {
+        padding: 15px;
+    }
+
+    .class-meta {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+
+    .class-details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        padding: 5px 0;
+    }
+
+    .detail-row .label {
+        font-weight: 600;
+        color: #666;
+    }
+
+    .detail-row .value {
+        text-align: right;
+    }
+
+    .performance-section h6 {
+        font-weight: 700;
+        color: #333;
+        font-size: 0.95rem;
+    }
+
+    .perf-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        padding: 5px 0;
+    }
+
+    .perf-row span:first-child {
+        color: #666;
+    }
+
+    .perf-row strong {
+        font-weight: 700;
+    }
+</style>
