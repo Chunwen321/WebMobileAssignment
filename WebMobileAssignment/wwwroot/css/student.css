@@ -1,18 +1,13 @@
-/* ==================== STUDENT PORTAL STYLES ==================== */
+/* ==================== STUDENT PORTAL STYLES (CLEANED & REORDERED) ==================== */
 
 /* ==================== COLOR VARIABLES ==================== */
-/* 
- * SIDEBAR COLORS (matching login page student icon)
- */
 :root {
     /* Primary Sidebar */
     --sidebar-bg-start: #2c3e50;
     --sidebar-bg-end: #34495e;
-
     --student-accent: #198754; /* main green */
     --student-accent-hover: rgba(25, 135, 84, 0.1);
     --student-accent-active: rgba(25, 135, 84, 0.15);
-   
     /* Status Colors */
     --color-success: #198754;
     --color-danger: #dc3545;
@@ -27,258 +22,54 @@
     --text-muted: #6c757d;
 }
 
-/* 
- * ICON COLOR REFERENCE (from login page)
- */
-.icon-red { color: #dc3545; }      /* Admin */
-.icon-blue { color: #0d6efd; }     /* Teacher */
-.icon-green { color: #02a145; }    /* Student */
-.icon-yellow { color: #ffc107; }   /* Parent - THIS IS OUR SIDEBAR COLOR! */
-
-/* 
- * UTILITY CLASSES
- */
-
-<<<<<<< Updated upstream
-/* Button primary green theme */
-.btn-primary-yellow {
-    background: #198754;
-    border-color: #198754;
-    color: #ffffff;
+/* ==================== ICON COLOR REFERENCE ==================== */
+.icon-red {
+    color: #dc3545;
 }
-
-.btn-primary-yellow:hover {
-    background: #157347;
-    border-color: #157347;
-=======
-/* ==================== CLASS CARD STYLES ==================== */
-.class-card {
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
+/* Admin */
+.icon-blue {
+    color: #0d6efd;
 }
-
-.class-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+/* Teacher */
+.icon-green {
+    color: #02a145;
 }
-
-.class-header {
-    padding: 15px;
+/* Student */
+.icon-yellow {
+    color: #ffc107;
 }
+/* Parent - THIS IS OUR SIDEBAR COLOR! */
 
-.class-meta {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-
-.class-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-}
-
-.info-item label {
-    font-weight: 600;
-    color: #666;
-}
-
-.info-item span {
-    text-align: right;
-}
-
-.class-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 0.9rem;
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-}
-
-/* ==================== STATISTICS CARD STYLES ==================== */
-.stat-card {
-    text-align: center;
-    border-radius: 8px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card .stat-label {
-    font-weight: 500;
-    color: #666;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.stat-card .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #198754;
-    margin-bottom: 8px;
-}
-
-/* ==================== CLASS DETAIL STYLES ==================== */
-.announcement-item {
-    background: #f8f9fa;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-.announcement-item h6 {
-    font-weight: 600;
-    color: #333;
->>>>>>> Stashed changes
-}
-
-/* ==================== CLASS CARD STYLES ==================== */
-.class-card {
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-}
-
-.class-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-.class-header {
-    padding: 15px;
-}
-
-.class-meta {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-
-.class-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-}
-
-.info-item label {
-    font-weight: 600;
-    color: #666;
-}
-
-.info-item span {
-    text-align: right;
-}
-
-.class-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 0.9rem;
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-}
-
-/* ==================== STATISTICS CARD STYLES ==================== */
-.stat-card {
-    text-align: center;
-    border-radius: 8px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card .stat-label {
-    font-weight: 500;
-    color: #666;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.stat-card .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #198754;
-    margin-bottom: 8px;
-}
-
-/* ==================== CLASS DETAIL STYLES ==================== */
-.announcement-item {
-    background: #f8f9fa;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-.announcement-item h6 {
-    font-weight: 600;
-    color: #333;
-}
-
-/* Card accent */
-.card-accent-yellow {
-    border-left: 4px solid #198754;
-}
-
-/* Badge/Tag */
+/* ==================== UTILITY CLASSES ==================== */
 .badge-yellow {
     background: #198754;
     color: #ffffff;
 }
 
-/* Icon backgrounds */
 .icon-bg-yellow {
     background: rgba(25, 135, 84, 0.1);
     color: #198754;
 }
 
+.card-accent-yellow {
+    border-left: 4px solid #198754;
+}
 
 /* ==================== LAYOUT STRUCTURE ==================== */
-
-/* Layout Structure */
 .student-layout {
     margin: 0;
     padding: 0;
-  background: #f5f7fa;
+    background: var(--page-bg);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-.student-layout main {
-    display: block;
-  min-height: auto;
- padding: 0;
-}
+    .student-layout main {
+        display: block;
+        min-height: auto;
+        padding: 0;
+    }
 
-/* Sidebar Styles */
+/* ==================== SIDEBAR ==================== */
 .sidebar {
     position: fixed;
     left: 0;
@@ -313,7 +104,6 @@
         color: #02a145;
     }
 
-/* Sidebar Navigation */
 .sidebar-nav {
     flex: 1;
     padding: 1rem 0;
@@ -321,32 +111,33 @@
     overflow-x: hidden;
 }
 
-.sidebar-nav::-webkit-scrollbar {
-width: 6px;
-}
+    /* custom scrollbar */
+    .sidebar-nav::-webkit-scrollbar {
+        width: 6px;
+    }
 
-.sidebar-nav::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-}
+    .sidebar-nav::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
 
-.sidebar-nav::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
+    .sidebar-nav::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+    }
 
 .sidebar-item {
     display: flex;
     align-items: center;
-  justify-content: space-between;
- padding: 0.875rem 1.5rem;
+    justify-content: space-between;
+    padding: 0.875rem 1.5rem;
     color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: all 0.3s ease;
+    text-decoration: none;
+    transition: all 0.3s ease;
     cursor: pointer;
     border: none;
     background: transparent;
     width: 100%;
-  text-align: left;
+    text-align: left;
     position: relative;
 }
 
@@ -364,14 +155,14 @@ width: 6px;
         color: #02a145;
     }
 
-.sidebar-item-content span {
-  font-size: 0.95rem;
-    font-weight: 500;
-}
+    .sidebar-item-content span {
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
 
 .sidebar-item:hover {
     background: rgba(255, 193, 7, 0.1);
-color: white;
+    color: white;
 }
 
 .sidebar-item.active {
@@ -390,7 +181,7 @@ color: white;
         background: #02a145;
     }
 
-/* Notification Badge */
+/* Notification badge inside sidebar item, if used */
 .notification-badge {
     background: #dc3545;
     color: white;
@@ -401,7 +192,7 @@ color: white;
     margin-left: auto;
 }
 
-/* Dropdown Menu */
+/* Dropdowns in sidebar */
 .sidebar-dropdown {
     margin: 0;
 }
@@ -412,7 +203,7 @@ color: white;
 
 .dropdown-toggle i.bi-chevron-down {
     font-size: 0.875rem;
-  transition: transform 0.3s ease;
+    transition: transform 0.3s ease;
 }
 
 .dropdown-toggle[aria-expanded="true"] i.bi-chevron-down {
@@ -423,36 +214,36 @@ color: white;
     display: flex;
     align-items: center;
     gap: 0.75rem;
- padding: 0.75rem 1.5rem 0.75rem 3.5rem;
+    padding: 0.75rem 1.5rem 0.75rem 3.5rem;
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     transition: all 0.3s ease;
     font-size: 0.9rem;
 }
 
-.sidebar-subitem i {
-    font-size: 1rem;
-    color: #02a145;
-    opacity: 0.7;
-}
+    .sidebar-subitem i {
+        font-size: 1rem;
+        color: #02a145;
+        opacity: 0.7;
+    }
 
-.sidebar-subitem:hover {
-    background: rgba(255, 193, 7, 0.08);
-    color: white;
-    padding-left: 3.75rem;
-}
+    .sidebar-subitem:hover {
+        background: rgba(255, 193, 7, 0.08);
+        color: white;
+        padding-left: 3.75rem;
+    }
 
-.sidebar-subitem.active {
-    background: rgba(255, 193, 7, 0.12);
-    color: white;
-    font-weight: 600;
-}
+    .sidebar-subitem.active {
+        background: rgba(255, 193, 7, 0.12);
+        color: white;
+        font-weight: 600;
+    }
 
-/* Sidebar Footer */
+/* Sidebar footer */
 .sidebar-footer {
     padding: 1rem 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
- display: flex;
+    display: flex;
     align-items: center;
     justify-content: space-between;
 }
@@ -461,7 +252,7 @@ color: white;
     display: flex;
     align-items: center;
     gap: 0.75rem;
- flex: 1;
+    flex: 1;
 }
 
 .user-avatar {
@@ -482,7 +273,7 @@ color: white;
 
 .user-name {
     font-size: 0.9rem;
-  font-weight: 600;
+    font-weight: 600;
     color: white;
     margin-bottom: 0.15rem;
 }
@@ -499,24 +290,24 @@ color: white;
     background: rgba(255, 255, 255, 0.1);
     border: none;
     color: white;
-display: flex;
+    display: flex;
     align-items: center;
-  justify-content: center;
+    justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-  text-decoration: none;
+    text-decoration: none;
 }
 
-.logout-btn:hover {
-    background: rgba(220, 53, 69, 0.2);
-    color: #dc3545;
-}
+    .logout-btn:hover {
+        background: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
 
-.logout-btn i {
-    font-size: 1.125rem;
-}
+    .logout-btn i {
+        font-size: 1.125rem;
+    }
 
-/* Main Content Area */
+/* ==================== MAIN CONTENT ==================== */
 .main-content {
     margin-left: 280px;
     min-height: 100vh;
@@ -525,7 +316,7 @@ display: flex;
     transition: margin-left 0.3s ease;
 }
 
-/* Top Bar */
+/* ==================== TOPBAR ==================== */
 .topbar {
     background: white;
     padding: 1rem 1.5rem;
@@ -545,26 +336,26 @@ display: flex;
     border-radius: 8px;
     background: #f8f9fa;
     border: none;
- color: #2c3e50;
+    color: #2c3e50;
     font-size: 1.25rem;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.sidebar-toggle:hover {
-    background: #e9ecef;
-}
+    .sidebar-toggle:hover {
+        background: #e9ecef;
+    }
 
 .topbar-title {
     flex: 1;
 }
 
-.topbar-title h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0;
-}
+    .topbar-title h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
 
 .topbar-actions {
     display: flex;
@@ -585,48 +376,48 @@ display: flex;
     transition: all 0.3s ease;
 }
 
-.topbar-btn:hover {
-  background: #ffc107;
-    color: white;
-}
+    .topbar-btn:hover {
+        background: #ffc107;
+        color: white;
+    }
 
-.topbar-btn .badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background: #dc3545;
-    color: white;
-    font-size: 0.65rem;
-    padding: 0.15rem 0.4rem;
-    border-radius: 10px;
-}
+    .topbar-btn .badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #dc3545;
+        color: white;
+        font-size: 0.65rem;
+        padding: 0.15rem 0.4rem;
+        border-radius: 10px;
+    }
 
-/* Page Content */
+/* ==================== PAGE CONTENT ==================== */
 .page-content {
     flex: 1;
     padding: 2rem;
 }
 
-/* Cards */
+/* ==================== CARDS & COMPONENTS ==================== */
 .dashboard-card {
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+    transition: all 0.3s ease;
     height: 100%;
 }
 
-.dashboard-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-}
+    .dashboard-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
 
 .card-header-custom {
     display: flex;
     align-items: center;
     justify-content: space-between;
-  margin-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid #f8f9fa;
 }
@@ -655,26 +446,123 @@ display: flex;
     font-size: 1.5rem;
 }
 
-.card-icon.yellow {
-    background: rgba(255, 193, 7, 0.1);
-    color: #ffc107;
+    .card-icon.yellow {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    .card-icon.blue {
+        background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+
+    .card-icon.green {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+
+    .card-icon.red {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+/* ==================== CLASS CARD STYLES ==================== */
+.class-card {
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
 }
 
-.card-icon.blue {
-    background: rgba(13, 110, 253, 0.1);
-    color: #0d6efd;
+    .class-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+.class-header {
+    padding: 15px;
 }
 
-.card-icon.green {
-    background: rgba(25, 135, 84, 0.1);
-    color: #198754;
+.class-meta {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
 }
 
-.card-icon.red {
-background: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
+.class-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+    .info-item label {
+        font-weight: 600;
+        color: #666;
+    }
+
+    .info-item span {
+        text-align: right;
+    }
+
+.class-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* ==================== STATISTICS CARD STYLES ==================== */
+.stat-card {
+    text-align: center;
+    border-radius: 8px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card .stat-label {
+        font-weight: 500;
+        color: #666;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .stat-card .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #198754;
+        margin-bottom: 8px;
+    }
+
+/* ==================== ANNOUNCEMENTS / DETAILS ==================== */
+.announcement-item {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+    .announcement-item h6 {
+        font-weight: 600;
+        color: #333;
+    }
+
+/* ==================== BUTTONS & FORMS ==================== */
 .btn-outline-primary {
     background: #228B22;
     border: none;
@@ -695,121 +583,6 @@ background: rgba(220, 53, 69, 0.1);
     .btn-outline-primary:active {
         transform: translateY(0);
     }
-
-/* Stats Cards */
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border-left: 4px solid #ffc107;
-}
-
-.stat-label {
-    font-size: 0.875rem;
-    color: #6c757d;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-  color: #2c3e50;
-    margin-bottom: 0.25rem;
-}
-
-.stat-change {
-    font-size: 0.875rem;
-  display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.stat-change.positive {
-    color: #198754;
-}
-
-.stat-change.negative {
-    color: #dc3545;
-}
-
-/* ==================== PASSWORD INPUT STYLING ==================== */
-
-.password-field-group {
-    margin-bottom: 1rem;
-}
-
-.password-input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.password-icon {
-    position: absolute;
-    left: 1rem;
-    color: #6c757d;
-    font-size: 1.125rem;
-    z-index: 10;
-}
-
-.password-input {
- padding-left: 3rem !important;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-    transition: all 0.3s ease;
-}
-
-.password-input:focus {
-    border-color: #ffc107;
-  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
-    padding-left: 3rem !important;
-}
-
-
-.btn-update-password {
-    background: #228B22;
-    border: none;
-    color: #2c3e50;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-    .btn-update-password:hover {
-        background: #02a145;
-        color: #2c3e50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-    }
-
-.btn-update-password:active {
-    transform: translateY(0);
-}
-
-/* ==================== SETTINGS PAGE CUSTOM STYLES ==================== */
-
-.settings-account-card {
-    margin-bottom: 1.5rem !important;
-    padding: 1.5rem 1.5rem 0 1.5rem !important;
-}
-
-.settings-account-card form {
-  margin: 0 !important;
-    padding: 0 !important;
-}
-
-.settings-account-card .row.g-3 {
-    margin-bottom: 0 !important;
-    row-gap: 0.75rem !important;
-}
-
-.settings-account-card .card-header-custom {
-    margin-bottom: 1rem !important;
-    padding-bottom: 0.75rem !important;
-}
 
 .btn-primary {
     background: #228B22;
@@ -832,26 +605,129 @@ background: rgba(220, 53, 69, 0.1);
         transform: translateY(0);
     }
 
-/* Remove ALL bottom spacing from button container */
-.settings-account-card .row.g-3 > .col-12:last-child {
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
-    margin-top: 0.75rem !important;
+/* ==================== STATS (ALTERNATIVE) ==================== */
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
 }
 
-.settings-account-card .btn {
-    margin-bottom: 0 !important;
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
 }
 
-/* Responsive Design */
-@media (max-width: 992px) {
-    .sidebar {
-     transform: translateX(-100%);
+.stat-change {
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+    .stat-change.positive {
+        color: #198754;
     }
 
-    .sidebar.show {
-      transform: translateX(0);
+    .stat-change.negative {
+        color: #dc3545;
+    }
+
+/* ==================== PASSWORD INPUT STYLING ==================== */
+.password-field-group {
+    margin-bottom: 1rem;
 }
+
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-icon {
+    position: absolute;
+    left: 1rem;
+    color: #6c757d;
+    font-size: 1.125rem;
+    z-index: 10;
+}
+
+.password-input {
+    padding-left: 3rem !important;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+    .password-input:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+        padding-left: 3rem !important;
+    }
+
+.btn-update-password {
+    background: #228B22;
+    border: none;
+    color: #2c3e50;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+    .btn-update-password:hover {
+        background: #02a145;
+        color: #2c3e50;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-update-password:active {
+        transform: translateY(0);
+    }
+
+/* ==================== SETTINGS PAGE CUSTOM STYLES ==================== */
+.settings-account-card {
+    margin-bottom: 1.5rem !important;
+    padding: 1.5rem 1.5rem 0 1.5rem !important;
+}
+
+    .settings-account-card form {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .settings-account-card .row.g-3 {
+        margin-bottom: 0 !important;
+        row-gap: 0.75rem !important;
+    }
+
+    .settings-account-card .card-header-custom {
+        margin-bottom: 1rem !important;
+        padding-bottom: 0.75rem !important;
+    }
+
+    .settings-account-card .row.g-3 > .col-12:last-child {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0.75rem !important;
+    }
+
+    .settings-account-card .btn {
+        margin-bottom: 0 !important;
+    }
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+        .sidebar.show {
+            transform: translateX(0);
+        }
 
     .main-content {
         margin-left: 0;
@@ -859,18 +735,34 @@ background: rgba(220, 53, 69, 0.1);
 
     .sidebar-toggle {
         display: flex;
-   align-items: center;
-      justify-content: center;
+        align-items: center;
+        justify-content: center;
     }
 
     .topbar-title h1 {
         font-size: 1.25rem;
     }
+
+    /* mobile overlay */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
 }
 
 @media (max-width: 768px) {
     .page-content {
-     padding: 1rem;
+        padding: 1rem;
     }
 
     .topbar {
@@ -896,24 +788,6 @@ background: rgba(220, 53, 69, 0.1);
     }
 
     .card-title {
-     font-size: 1rem;
- }
-}
-
-/* Mobile Overlay */
-@media (max-width: 992px) {
-    .sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
- background: rgba(0, 0, 0, 0.5);
-        z-index: 999;
-    }
-
-    .sidebar-overlay.show {
-        display: block;
+        font-size: 1rem;
     }
 }
