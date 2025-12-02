@@ -73,7 +73,6 @@ namespace TuitionAttendanceSystem.Controllers
                 .Include(s => s.User)
                 .Include(s => s.Parent)
                 .ThenInclude(p => p.User)
-                .Include(s => s.Class)
                 .ToListAsync();
 
             return View(students);
@@ -260,7 +259,6 @@ namespace TuitionAttendanceSystem.Controllers
                 .Include(s => s.User)
                 .Include(s => s.Parent)
                 .ThenInclude(p => p.User)
-                .Include(s => s.Class)
                 .FirstOrDefaultAsync(m => m.StudentId == id);
 
             if (student == null) return NotFound();
@@ -279,7 +277,6 @@ namespace TuitionAttendanceSystem.Controllers
                 .Include(s => s.User)
                 .Include(s => s.Parent)
                 .ThenInclude(p => p.User)
-                .Include(s => s.Class)
                 .FirstOrDefaultAsync(m => m.StudentId == id);
 
             if (student == null) return NotFound();

@@ -8,7 +8,7 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
 {
     // DB Sets
     public DbSet<User> Users { get; set; }
-    // REMOVED: public DbSet<Admin> Admins { get; set; }
+    public DbSet<Admin> Admins { get; set; }
     public DbSet<Teacher> Teachers { get; set; }
     public DbSet<Student> Students { get; set; }
     public DbSet<Parent> Parents { get; set; }
@@ -110,8 +110,23 @@ public class User
     [MaxLength(20)]
     public string Status { get; set; } = "active"; // active / inactive / suspend / withdraw
 
+    public bool IsActive { get; set; } = true;
+
     // Navigation property
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+}
+
+public class Admin
+{
+    [Key]
+    [MaxLength(20)]
+    public string AdminId { get; set; } = string.Empty;
+
+    [MaxLength(20)]
+    public string UserId { get; set; } = string.Empty;
+
+    [ForeignKey(nameof(UserId))]
+    public User User { get; set; } = null!;
 }
 
 public class Teacher
@@ -125,6 +140,14 @@ public class Teacher
 
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
+
+    [MaxLength(100)]
+    public string? PhoneNumber { get; set; }
+
+    [MaxLength(100)]
+    public string? SubjectTeach { get; set; }
+
+    public DateTime? HireDate { get; set; }
 
     [MaxLength(100)]
     public string? Title { get; set; }
@@ -162,6 +185,14 @@ public class Student
     [ForeignKey(nameof(ParentId))]
     public Parent? Parent { get; set; }
 
+    [MaxLength(20)]
+    public string? ClassId { get; set; }
+
+    public DateTime? DateOfBirth { get; set; }
+
+    [MaxLength(10)]
+    public string? Gender { get; set; }
+
     // Navigation properties
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
@@ -178,6 +209,9 @@ public class Parent
 
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
+
+    [MaxLength(20)]
+    public string? PhoneNumber { get; set; }
 
     [MaxLength(200)]
     public string? Address { get; set; }
@@ -224,6 +258,9 @@ public class Class
     [MaxLength(50)]
     public string? RoomNumber { get; set; }
 
+    [MaxLength(200)]
+    public string? ScheduleInfo { get; set; }
+
     [MaxLength(20)]
     public string? Day { get; set; }
 
@@ -269,6 +306,8 @@ public class Attendance
 
     [ForeignKey(nameof(ClassId))]
     public Class Class { get; set; } = null!;
+
+    public DateTime Date { get; set; } = DateTime.Now;
 
     public DateTime TakenOn { get; set; } = DateTime.Now;
 

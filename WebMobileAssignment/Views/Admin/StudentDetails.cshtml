@@ -40,7 +40,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="small text-muted d-block">Date of Birth</label>
-                            <span>@Model.DateOfBirth.ToString("dd MMM yyyy")</span>
+                            <span>@Model.DateOfBirth?.ToString("dd MMM yyyy")</span>
                         </div>
                         <div class="mb-3">
                             <label class="small text-muted d-block">Gender</label>
@@ -62,9 +62,9 @@
 
                         <div class="mb-3">
                             <label class="small text-muted d-block">Current Class</label>
-                            @if (Model.Class != null)
+                            @if (!string.IsNullOrEmpty(Model.ClassId))
                             {
-                                <span class="badge bg-info text-dark">@Model.Class.ClassName</span>
+                                <span class="badge bg-info text-dark">@Model.ClassId</span>
                             }
                             else
                             {

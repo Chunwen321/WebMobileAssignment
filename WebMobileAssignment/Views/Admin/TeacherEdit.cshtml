@@ -81,7 +81,7 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="hireDate" class="form-label">Hire Date <span class="text-danger">*</span></label>
-                        <input type="date" id="hireDate" name="hireDate" class="form-control" value="@Model.HireDate.ToString("yyyy-MM-dd")" required />
+                        <input type="date" id="hireDate" name="hireDate" class="form-control" value="@Model.HireDate?.ToString("yyyy-MM-dd")" required />
                     </div>
                 </div>
 
