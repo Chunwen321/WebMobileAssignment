@@ -1,0 +1,293 @@
+@model WebMobileAssignment.Models.Admin
+@{
+    ViewBag.Title = "Admin Settings";
+    ViewBag.ActiveMenu = "Settings";
+    ViewBag.ActiveSubmenu = "Settings";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    
+    // Split full name into first and last name
+    var nameParts = Model.User.FullName?.Split(' ', 2) ?? new[] { "", "" };
+    var firstName = nameParts.Length > 0 ? nameParts[0] : "";
+    var lastName = nameParts.Length > 1 ? nameParts[1] : "";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>@TempData["SuccessMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>@TempData["ErrorMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row g-3">
+    <!-- Account Settings -->
+    <div class="col-lg-8">
+        <div class="dashboard-card settings-account-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-person-circle"></i>
+                    Account Settings
+                </h5>
+            </div>
+
+            <form asp-action="Settings" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="adminId" value="@Model.AdminId" />
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">First Name</label>
+                        <input type="text" class="form-control" id="firstName" value="@firstName" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Last Name</label>
+                        <input type="text" class="form-control" id="lastName" value="@lastName" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                            <input type="email" name="email" class="form-control" value="@Model.User.Email" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-phone"></i></span>
+                            <input type="tel" name="phoneNumber" class="form-control" value="N/A" placeholder="Not available">
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Address</label>
+                        <textarea name="address" class="form-control" rows="3" placeholder="Not available">N/A</textarea>
+                    </div>
+                    
+                    <!-- Hidden field for full name -->
+                    <input type="hidden" name="fullName" id="fullNameHidden" value="@Model.User.FullName" />
+                    
+                    <div class="col-12 mb-0">
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-check-circle me-2"></i>Save Changes
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4" onclick="window.location.reload();">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Profile Summary -->
+        <div class="dashboard-card profile-card">
+            <div class="text-center mb-4">
+                <div class="user-avatar mx-auto mb-3 shadow-sm" style="width: 100px; height: 100px; font-size: 2.5rem; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <h5 class="mb-1 fw-bold">@Model.User.FullName</h5>
+                <p class="text-muted mb-2 small">Administrator</p>
+                <span class="badge bg-danger px-3 py-2">Super Admin</span>
+            </div>
+            <div class="profile-info">
+                <div class="profile-info-item">
+                    <i class="bi bi-hash text-danger"></i>
+                    <div>
+                        <small class="text-muted d-block">Account ID</small>
+                        <strong class="text-dark">@Model.AdminId</strong>
+                    </div>
+                </div>
+                <div class="profile-info-item">
+                    <i class="bi bi-calendar-check text-danger"></i>
+                    <div>
+                        <small class="text-muted d-block">Member Since</small>
+                        <strong class="text-dark">@Model.User.CreatedDate.ToString("MMMM ?, yyyy")</strong>
+                    </div>
+                </div>
+                <div class="profile-info-item">
+                    <i class="bi bi-circle-fill text-success" style="font-size: 0.5rem;"></i>
+                    <div>
+                        <small class="text-muted d-block">Status</small>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">@(Model.User.IsActive ? "Active" : "Inactive")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Information Inside Profile Card -->
+            <div class="system-info-section mt-4">
+                <div class="section-divider mb-3">
+                    <h6 class="section-title mb-0 fw-bold">
+                        <i class="bi bi-info-circle-fill text-danger me-2"></i>
+                        System Information
+                    </h6>
+                </div>
+                <div class="system-info">
+                    <div class="system-info-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-clock-history text-primary"></i>
+                                <small class="text-muted">Last Login</small>
+                            </div>
+                            <strong class="text-dark" id="lastLogin">Loading...</strong>
+                        </div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-calendar-event text-success"></i>
+                                <small class="text-muted">Current Time</small>
+                            </div>
+                            <strong class="text-dark" id="currentTime">Loading...</strong>
+                        </div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-calendar3 text-warning"></i>
+                                <small class="text-muted">Current Date</small>
+                            </div>
+                            <strong class="text-dark" id="currentDate">Loading...</strong>
+                        </div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-globe text-info"></i>
+                                <small class="text-muted">Browser</small>
+                            </div>
+                            <strong class="text-dark" id="browserInfo">Loading...</strong>
+                        </div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-display text-secondary"></i>
+                                <small class="text-muted">Platform</small>
+                            </div>
+                            <strong class="text-dark" id="platformInfo">Loading...</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Update full name hidden field when first or last name changes
+        document.getElementById('firstName').addEventListener('input', updateFullName);
+        document.getElementById('lastName').addEventListener('input', updateFullName);
+        
+        function updateFullName() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const fullName = `${firstName} ${lastName}`.trim();
+            document.getElementById('fullNameHidden').value = fullName;
+        }
+        
+        // Update current time and date
+        function updateDateTime() {
+            const now = new Date();
+            
+            // Format current time
+            const timeOptions = { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true 
+            };
+            const currentTime = now.toLocaleTimeString('en-US', timeOptions);
+            document.getElementById('currentTime').textContent = currentTime;
+
+            // Format current date
+            const dateOptions = { 
+                weekday: 'short',
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric'
+            };
+            const currentDate = now.toLocaleDateString('en-US', dateOptions);
+            document.getElementById('currentDate').textContent = currentDate;
+        }
+
+        // Get browser information
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            let browserName = 'Unknown';
+            
+            // Check for Edge first (before Chrome, since Edge includes "Chrome" in UA)
+            if (ua.indexOf('Edg') > -1) {
+                browserName = 'Edge';
+            } else if (ua.indexOf('Firefox') > -1) {
+                browserName = 'Firefox';
+            } else if (ua.indexOf('SamsungBrowser') > -1) {
+                browserName = 'Samsung';
+            } else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) {
+                browserName = 'Opera';
+            } else if (ua.indexOf('Trident') > -1) {
+                browserName = 'IE';
+            } else if (ua.indexOf('Chrome') > -1) {
+                browserName = 'Chrome';
+            } else if (ua.indexOf('Safari') > -1) {
+                browserName = 'Safari';
+            }
+            
+            return browserName;
+        }
+
+        // Get platform information
+        function getPlatformInfo() {
+            const platform = navigator.platform;
+            const userAgent = navigator.userAgent;
+            
+            if (platform.indexOf('Win') > -1) return 'Windows';
+            if (platform.indexOf('Mac') > -1) return 'MacOS';
+            if (platform.indexOf('Linux') > -1) return 'Linux';
+            if (/Android/i.test(userAgent)) return 'Android';
+            if (/iPhone|iPad|iPod/i.test(userAgent)) return 'iOS';
+            
+            return platform;
+        }
+
+        // Set last login (this would normally come from server)
+        function setLastLogin() {
+            const now = new Date();
+            const lastLoginTime = new Date(now.getTime() - (15 * 60000)); // 15 minutes ago
+            
+            const timeOptions = { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            };
+            const formattedTime = lastLoginTime.toLocaleTimeString('en-US', timeOptions);
+            
+            // Check if today
+            const isToday = lastLoginTime.toDateString() === now.toDateString();
+            const displayText = isToday ? `Today, ${formattedTime}` : lastLoginTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + formattedTime;
+            
+            document.getElementById('lastLogin').textContent = displayText;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000); // Update every second
+            
+            document.getElementById('browserInfo').textContent = getBrowserInfo();
+            document.getElementById('platformInfo').textContent = getPlatformInfo();
+            setLastLogin();
+        });
+    </script>
+}

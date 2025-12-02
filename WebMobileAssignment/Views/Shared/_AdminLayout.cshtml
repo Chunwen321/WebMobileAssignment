@@ -118,14 +118,29 @@
                 </div>
             </a>
 
-            <!-- Settings -->
-            <a asp-controller="Admin" asp-action="Settings"
-               class="sidebar-item @(ViewBag.ActiveMenu == "Settings" ? "active" : "")">
-                <div class="sidebar-item-content">
-                    <i class="bi bi-gear-fill"></i>
-                    <span>Settings</span>
+            <!-- Settings Dropdown -->
+            <div class="sidebar-dropdown">
+                <button class="sidebar-item dropdown-toggle @(ViewBag.ActiveMenu == "Settings" ? "active" : "")"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#settingsMenu">
+                    <div class="sidebar-item-content">
+                        <i class="bi bi-gear-fill"></i>
+                        <span>Settings</span>
+                    </div>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse @(ViewBag.ActiveMenu == "Settings" ? "show" : "")" id="settingsMenu">
+                    <a asp-controller="Admin" asp-action="Settings"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Settings" ? "active" : "")">
+                        <i class="bi bi-sliders"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="ChangePassword"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "ChangePassword" ? "active" : "")">
+                        <i class="bi bi-key-fill"></i>
+                        <span>Change Password</span>
+                    </a>
                 </div>
-            </a>
+            </div>
         </nav>
 
         <!-- Sidebar Footer -->

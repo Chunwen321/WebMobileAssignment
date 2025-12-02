@@ -1,0 +1,132 @@
+@model WebMobileAssignment.Models.Parent
+@{
+    ViewBag.Title = "Parent Details";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-people-fill"></i> Parent Details</h5>
+            <a asp-action="ParentIndex" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>@TempData["ErrorMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="dashboard-card bg-white p-0 rounded shadow-sm overflow-hidden">
+            <!-- Header Banner -->
+            <div class="bg-light p-4 border-bottom text-center">
+                <div class="display-1 text-secondary mb-2">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <h3 class="mb-0">@Model.User.FullName</h3>
+                <span class="badge bg-danger mt-2">@Model.ParentId</span>
+            </div>
+
+            <!-- Details Body -->
+            <div class="p-4">
+                <div class="row g-4">
+                    <!-- Left Column: Contact -->
+                    <div class="col-md-6 border-end">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-3">Contact Information</h6>
+
+                        <div class="mb-3">
+                            <label class="small text-muted d-block">Email</label>
+                            <strong>@Model.User.Email</strong>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted d-block">Phone Number</label>
+                            <span>@(Model.PhoneNumber ?? "Not provided")</span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted d-block">Account Status</label>
+                            <span class="badge bg-@(Model.User.IsActive ? "success" : "secondary")">
+                                @(Model.User.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Linked Students -->
+                    <div class="col-md-6 ps-md-4">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-3">Linked Students</h6>
+
+                        @if (Model.Students != null && Model.Students.Any())
+                        {
+                            <ul class="list-unstyled">
+                                @foreach (var student in Model.Students)
+                                {
+                                    <li class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="bi bi-person-fill text-primary me-2"></i>
+                                                <strong>@student.User.FullName</strong>
+                                                <div class="text-muted small">@student.StudentId</div>
+                                            </div>
+                                            <div class="btn-group">
+                                                <a asp-controller="Admin" asp-action="StudentDetails" asp-route-id="@student.StudentId" class="btn btn-sm btn-outline-info" title="View Student">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a asp-controller="Admin" asp-action="StudentEdit" asp-route-id="@student.StudentId" class="btn btn-sm btn-outline-warning" title="Edit Student">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="text-muted">No linked students</p>
+                        }
+
+                        <div class="mt-3">
+                            <label class="small text-muted d-block">Account Created</label>
+                            <span>@Model.User.CreatedDate.ToString("dd MMM yyyy, hh:mm tt")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Info -->
+                <div class="row mt-4 pt-4 border-top">
+                    <div class="col-12">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-3">Summary</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="small text-muted d-block">Parent ID</label>
+                                <strong>@Model.ParentId</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="small text-muted d-block">Children Linked</label>
+                                <strong>@(Model.Students?.Count() ?? 0)</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="bg-light p-3 border-top text-end">
+                <a asp-action="ParentEdit" asp-route-id="@Model.ParentId" class="btn btn-warning me-2">
+                    <i class="bi bi-pencil"></i> Edit Parent
+                </a>
+                <a asp-action="ParentDelete" asp-route-id="@Model.ParentId" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Delete Parent
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
