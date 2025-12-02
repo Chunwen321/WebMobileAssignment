@@ -852,6 +852,7 @@
     font-weight: 500;
     letter-spacing: 0.3px;
 }
+
 /* Section Divider */
 .section-divider {
     border-bottom: 2px solid #e9ecef;
@@ -863,4 +864,482 @@
     font-size: 1.125rem;
     font-weight: 500;
     color: #343a40;
+}
+
+/* Enrolled Classes Cards - Horizontal Layout */
+.class-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.class-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.15);
+    border-color: #dc3545;
+}
+
+.class-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.class-card-header .badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    font-weight: 600;
+}
+
+.class-card-header small {
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+.class-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #dc3545;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+    min-height: 2.6rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.class-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+.detail-item i {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+}
+
+.detail-item span {
+    line-height: 1.4;
+}
+
+/* Responsive adjustments for class cards */
+@media (max-width: 768px) {
+    .class-card {
+        padding: 1rem;
+    }
+
+    .class-name {
+        font-size: 0.95rem;
+        min-height: auto;
+    }
+
+    .detail-item {
+        font-size: 0.8rem;
+    }
+}
+
+/* ==================== TEACHER MANAGEMENT STYLES ==================== */
+
+/* Teacher Card Grid View */
+.teacher-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px 20px;
+    text-align: center;
+    position: relative;
+    border-radius: 8px 8px 0 0;
+}
+
+.teacher-avatar {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 2.5rem;
+    color: #667eea;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.teacher-status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.teacher-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px 0;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    margin: 15px 0;
+}
+
+.teacher-stats .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.teacher-stats .stat-item i {
+    font-size: 1.5rem;
+}
+
+.teacher-stats .stat-info {
+    text-align: left;
+}
+
+.teacher-stats .stat-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.teacher-stats .stat-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.teacher-contact {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.teacher-contact p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Teacher Details Page */
+.profile-header {
+    padding: 0;
+    overflow: hidden;
+}
+
+.profile-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px 30px 30px;
+    text-align: center;
+}
+
+.profile-avatar-large {
+    width: 120px;
+    height: 120px;
+    background: white;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: #667eea;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.profile-info {
+    padding: 30px;
+    background: white;
+}
+
+.profile-quick-stats {
+    display: flex;
+    gap: 30px;
+    justify-content: flex-end;
+}
+
+.quick-stat-item {
+    text-align: center;
+}
+
+.quick-stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.quick-stat-label {
+    font-size: 0.875rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-list {
+    padding: 0;
+}
+
+.detail-item {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-label i {
+    color: #999;
+}
+
+.detail-value {
+    text-align: right;
+    color: #333;
+    flex: 1;
+    max-width: 60%;
+    word-wrap: break-word;
+}
+
+/* Responsive adjustments for teacher pages */
+@media (max-width: 768px) {
+    .profile-quick-stats {
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .detail-value {
+        text-align: left;
+        max-width: 100%;
+    }
+
+    .teacher-header {
+        padding: 20px 15px;
+    }
+
+    .teacher-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+
+    .teacher-stats {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 0;
+    }
+
+    .teacher-stats .stat-item {
+        justify-content: space-between;
+    }
+}
+
+/* ==================== STUDENT MANAGEMENT STYLES ==================== */
+
+/* Student Card Grid View */
+.student-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px 20px;
+    text-align: center;
+    position: relative;
+    border-radius: 8px 8px 0 0;
+}
+
+.student-avatar {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 2.5rem;
+    color: #667eea;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.student-avatar.male {
+    color: #0d6efd !important;
+}
+
+.student-avatar.female {
+    color: #ec4899 !important;
+}
+
+.student-status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.student-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px 0;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    margin: 15px 0;
+}
+
+.student-stats .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.student-stats .stat-item i {
+    font-size: 1.5rem;
+}
+
+.student-stats .stat-info {
+    text-align: left;
+}
+
+.student-stats .stat-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.student-stats .stat-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.student-contact {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.student-contact p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Student Details Page */
+.profile-avatar-large.male {
+    color: #0d6efd !important;
+}
+
+.profile-avatar-large.female {
+    color: #ec4899 !important;
+}
+
+/* Attendance Pie Charts */
+.attendance-pie-chart {
+    padding: 20px;
+    border-radius: 12px;
+    margin: 10px;
+    transition: all 0.3s ease;
+}
+
+.attendance-pie-chart:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.attendance-pie-chart.present {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
+    border: 2px solid #198754;
+}
+
+.attendance-pie-chart.absent {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+    border: 2px solid #dc3545;
+}
+
+.attendance-pie-chart.late {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+    border: 2px solid #ffc107;
+}
+
+.attendance-pie-chart .percentage {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.attendance-pie-chart.present .percentage {
+    color: #198754;
+}
+
+.attendance-pie-chart.absent .percentage {
+    color: #dc3545;
+}
+
+.attendance-pie-chart.late .percentage {
+    color: #ffc107;
+}
+
+.attendance-pie-chart .label {
+    font-size: 0.875rem;
+    color: #666;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive adjustments for student pages */
+@media (max-width: 768px) {
+    .student-header {
+        padding: 20px 15px;
+    }
+
+    .student-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+
+    .student-stats {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 0;
+    }
+
+    .student-stats .stat-item {
+        justify-content: space-between;
+    }
+
+    .attendance-pie-chart {
+        margin: 5px;
+        padding: 15px;
+    }
+
+    .attendance-pie-chart .percentage {
+        font-size: 1.5rem;
+    }
 }

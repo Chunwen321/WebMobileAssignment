@@ -1,0 +1,295 @@
+@model IEnumerable<WebMobileAssignment.Models.Class>
+@{
+    ViewBag.Title = "Class Management";
+    ViewBag.ActiveMenu = "ClassManagement";
+    ViewBag.ActiveSubmenu = "Classes";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>@TempData["SuccessMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="bi bi-book-fill text-danger me-2"></i>
+                    Class Management
+                </h2>
+                <p class="text-muted">Manage all classes, schedules, and assignments</p>
+            </div>
+            <div>
+                <a asp-action="ClassCreate" class="btn btn-danger">
+                    <i class="bi bi-plus-circle me-2"></i>Create New Class
+                </a>
+                <a asp-action="ScheduleIndex" class="btn btn-outline-danger">
+                    <i class="bi bi-calendar-week me-2"></i>View Schedule
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Classes</div>
+                    <div class="stat-value text-primary">@Model.Count()</div>
+                </div>
+                <div class="card-icon blue">
+                    <i class="bi bi-book"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-graph-up me-1"></i>
+                <span>Active courses</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Enrollments</div>
+                    <div class="stat-value text-success">@Model.Sum(c => c.CurrentCapacity)</div>
+                </div>
+                <div class="card-icon green">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-people me-1"></i>
+                <span>Enrolled students</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Capacity</div>
+                    <div class="stat-value text-warning">@Model.Sum(c => c.MaxCapacity)</div>
+                </div>
+                <div class="card-icon yellow">
+                    <i class="bi bi-diagram-3-fill"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-diagram-3 me-1"></i>
+                <span>Maximum seats</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Occupancy Rate</div>
+                    <div class="stat-value text-danger">
+                        @{
+                            var totalCapacity = Model.Sum(c => c.MaxCapacity);
+                            var totalEnrolled = Model.Sum(c => c.CurrentCapacity);
+                            var occupancyRate = totalCapacity > 0 ? (decimal)totalEnrolled / totalCapacity * 100 : 0;
+                        }
+                        @occupancyRate.ToString("F1")%
+                    </div>
+                </div>
+                <div class="card-icon red">
+                    <i class="bi bi-pie-chart-fill"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-arrow-up me-1"></i>
+                <span>Overall utilization</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Classes Grid -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-list-ul"></i>
+                    All Classes
+                </h5>
+            </div>
+
+            <div class="row g-3 p-3">
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var cls in Model)
+                    {
+                        var fillPercentage = cls.MaxCapacity > 0 ? (decimal)cls.CurrentCapacity / cls.MaxCapacity * 100 : 0;
+                        var statusClass = fillPercentage >= 100 ? "danger" : fillPercentage >= 90 ? "warning" : "success";
+                        var statusText = fillPercentage >= 100 ? "Full" : fillPercentage >= 90 ? "Almost Full" : "Available";
+
+                        <div class="col-lg-4 col-md-6">
+                            <div class="dashboard-card h-100">
+                                <div class="class-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="mb-0 text-white">@cls.ClassName</h5>
+                                            <small class="text-white-50">@cls.ClassId</small>
+                                        </div>
+                                        <span class="badge bg-@statusClass">@statusText</span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="class-details">
+                                        <div class="detail-row">
+                                            <span class="label">
+                                                <i class="bi bi-person me-1"></i>Teacher:
+                                            </span>
+                                            <span class="value">
+                                                @if (cls.Teacher != null)
+                                                {
+                                                    @cls.Teacher.User.FullName
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Unassigned</span>
+                                                }
+                                            </span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="label">
+                                                <i class="bi bi-calendar me-1"></i>Schedule:
+                                            </span>
+                                            <span class="value">
+                                                @if (!string.IsNullOrEmpty(cls.Day))
+                                                {
+                                                    <span>@cls.Day</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Not set</span>
+                                                }
+                                            </span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="label">
+                                                <i class="bi bi-clock me-1"></i>Time:
+                                            </span>
+                                            <span class="value">
+                                                @if (cls.StartTime.HasValue && cls.EndTime.HasValue)
+                                                {
+                                                    var start = cls.StartTime.Value.ToString("hh\\:mm");
+                                                    var end = cls.EndTime.Value.ToString("hh\\:mm");
+                                                    @($"{start} - {end}")
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Not set</span>
+                                                }
+                                            </span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="label">
+                                                <i class="bi bi-geo-alt me-1"></i>Room:
+                                            </span>
+                                            <span class="value">@(cls.RoomNumber ?? "Not assigned")</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Capacity Bar -->
+                                    <div class="mt-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small class="text-muted">Capacity</small>
+                                            <small class="fw-bold">@cls.CurrentCapacity / @cls.MaxCapacity</small>
+                                        </div>
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar bg-@statusClass" 
+                                                 role="progressbar" 
+                                                 style="width: @fillPercentage%"
+                                                 aria-valuenow="@cls.CurrentCapacity" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="@cls.MaxCapacity">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="mt-3 d-flex gap-2">
+                                        <a asp-action="ClassDetails" asp-route-id="@cls.ClassId" class="btn btn-sm btn-outline-primary flex-fill">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                        <a asp-action="ClassEdit" asp-route-id="@cls.ClassId" class="btn btn-sm btn-outline-warning flex-fill">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        <a asp-action="ClassDelete" asp-route-id="@cls.ClassId" class="btn btn-sm btn-outline-danger flex-fill">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12">
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                            <p class="mt-3">No classes found</p>
+                            <a asp-action="ClassCreate" class="btn btn-danger">
+                                <i class="bi bi-plus-circle me-2"></i>Create Your First Class
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .class-header {
+        padding: 15px;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .class-details {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        padding: 5px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-row .label {
+        font-weight: 600;
+        color: #666;
+    }
+
+    .detail-row .value {
+        text-align: right;
+        color: #333;
+    }
+</style>

@@ -1,17 +1,16 @@
-@model WebMobileAssignment.Models.Student
+@model WebMobileAssignment.Models.Teacher
 @{
-    ViewBag.Title = "Student Details";
-    ViewBag.ActiveMenu = "StudentManagement";
+    ViewBag.Title = "Teacher Details";
+    ViewBag.ActiveMenu = "TeacherManagement";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 
-    var totalEnrollments = ViewBag.TotalEnrollments ?? 0;
-    var totalAttendance = ViewBag.TotalAttendance ?? 0;
+    var totalClasses = ViewBag.TotalClassesAssigned ?? 0;
+    var totalStudents = ViewBag.TotalStudentsTeaching ?? 0;
+    var totalAttendance = ViewBag.TotalAttendanceMarked ?? 0;
     var presentCount = ViewBag.PresentCount ?? 0;
     var absentCount = ViewBag.AbsentCount ?? 0;
     var lateCount = ViewBag.LateCount ?? 0;
-    var attendanceRate = ViewBag.AttendanceRate ?? 0;
-    var yearsSinceEnrollment = ViewBag.YearsSinceEnrollment ?? 0;
-    var age = ViewBag.Age ?? 0;
+    var yearsOfService = ViewBag.YearsOfService ?? 0;
 }
 
 <!-- Header Section -->
@@ -20,16 +19,16 @@
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <h2 class="mb-2">
-                    <i class="bi bi-person-badge-fill text-danger me-2"></i>
-                    Student Details
+                    <i class="bi bi-person-badge text-danger me-2"></i>
+                    Teacher Details
                 </h2>
                 <p class="text-muted">Complete information about @Model.User.FullName</p>
             </div>
             <div>
-                <a asp-action="StudentEdit" asp-route-id="@Model.StudentId" class="btn btn-warning me-2">
+                <a asp-action="TeacherEdit" asp-route-id="@Model.TeacherId" class="btn btn-warning me-2">
                     <i class="bi bi-pencil me-2"></i>Edit Details
                 </a>
-                <a asp-action="StudentIndex" class="btn btn-outline-secondary">
+                <a asp-action="TeacherIndex" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left me-2"></i>Back to List
                 </a>
             </div>
@@ -42,7 +41,7 @@
     <div class="col-12">
         <div class="dashboard-card profile-header">
             <div class="profile-banner">
-                <div class="profile-avatar-large @(Model.Gender == "Male" ? "male" : Model.Gender == "Female" ? "female" : "")">
+                <div class="profile-avatar-large">
                     <i class="bi bi-person-fill"></i>
                 </div>
             </div>
@@ -51,32 +50,25 @@
                     <div class="col-md-8">
                         <h3 class="mb-1">@Model.User.FullName</h3>
                         <p class="text-muted mb-2">
-                            <strong>Student ID:</strong> @Model.StudentId
+                            <strong>Teacher ID:</strong> @Model.TeacherId
                         </p>
                         <div class="d-flex gap-2 flex-wrap">
                             <span class="badge bg-@(Model.User.IsActive ? "success" : "secondary") px-3 py-2">
                                 <i class="bi bi-@(Model.User.IsActive ? "check-circle" : "x-circle") me-1"></i>
                                 @(Model.User.IsActive ? "Active" : "Inactive")
                             </span>
-                            @if (!string.IsNullOrEmpty(Model.Gender))
-                            {
-                                <span class="badge bg-@Model.Gender px-3 py-2">
-                                    <i class="bi bi-@(Model.Gender == "Male" ? "person" : "person-dress") me-1"></i>
-                                    @Model.Gender
-                                </span>
-                            }
-                            @if (age > 0)
-                            {
-                                <span class="badge bg-info px-3 py-2">
-                                    <i class="bi bi-calendar-event me-1"></i>
-                                    @age Years Old
-                                </span>
-                            }
-                            @if (yearsSinceEnrollment > 0)
+                            @if (!string.IsNullOrEmpty(Model.SubjectTeach))
                             {
                                 <span class="badge bg-primary px-3 py-2">
+                                    <i class="bi bi-book me-1"></i>
+                                    @Model.SubjectTeach
+                                </span>
+                            }
+                            @if (yearsOfService > 0)
+                            {
+                                <span class="badge bg-info px-3 py-2">
                                     <i class="bi bi-calendar-check me-1"></i>
-                                    @yearsSinceEnrollment Years Enrolled
+                                    @yearsOfService Years of Service
                                 </span>
                             }
                         </div>
@@ -84,12 +76,12 @@
                     <div class="col-md-4 text-md-end mt-3 mt-md-0">
                         <div class="profile-quick-stats">
                             <div class="quick-stat-item">
-                                <div class="quick-stat-number text-primary">@totalEnrollments</div>
+                                <div class="quick-stat-number text-primary">@totalClasses</div>
                                 <div class="quick-stat-label">Classes</div>
                             </div>
                             <div class="quick-stat-item">
-                                <div class="quick-stat-number text-success">@attendanceRate%</div>
-                                <div class="quick-stat-label">Attendance</div>
+                                <div class="quick-stat-number text-success">@totalStudents</div>
+                                <div class="quick-stat-label">Students</div>
                             </div>
                         </div>
                     </div>
@@ -105,9 +97,9 @@
         <div class="stat-card" style="border-left-color: #0d6efd;">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stat-label">Total Attendance</div>
+                    <div class="stat-label">Attendance Marked</div>
                     <div class="stat-value text-primary">@totalAttendance</div>
-                    <small class="text-muted">Records</small>
+                    <small class="text-muted">Total records</small>
                 </div>
                 <div class="card-icon blue">
                     <i class="bi bi-clipboard-check"></i>
@@ -120,9 +112,9 @@
         <div class="stat-card" style="border-left-color: #198754;">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stat-label">Present</div>
+                    <div class="stat-label">Present Marked</div>
                     <div class="stat-value text-success">@presentCount</div>
-                    <small class="text-muted">Days present</small>
+                    <small class="text-muted">Students present</small>
                 </div>
                 <div class="card-icon green">
                     <i class="bi bi-check-circle"></i>
@@ -135,9 +127,9 @@
         <div class="stat-card" style="border-left-color: #dc3545;">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stat-label">Absent</div>
+                    <div class="stat-label">Absent Marked</div>
                     <div class="stat-value text-danger">@absentCount</div>
-                    <small class="text-muted">Days absent</small>
+                    <small class="text-muted">Students absent</small>
                 </div>
                 <div class="card-icon red">
                     <i class="bi bi-x-circle"></i>
@@ -150,9 +142,9 @@
         <div class="stat-card" style="border-left-color: #ffc107;">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stat-label">Late</div>
+                    <div class="stat-label">Late Marked</div>
                     <div class="stat-value text-warning">@lateCount</div>
-                    <small class="text-muted">Days late</small>
+                    <small class="text-muted">Students late</small>
                 </div>
                 <div class="card-icon yellow">
                     <i class="bi bi-clock"></i>
@@ -164,7 +156,7 @@
 
 <!-- Details Section -->
 <div class="row">
-    <!-- Left Column - Personal & Parent Info -->
+    <!-- Left Column - Personal & Professional Info -->
     <div class="col-lg-4 mb-4">
         <!-- Personal Information -->
         <div class="dashboard-card mb-3">
@@ -187,7 +179,7 @@
                         <i class="bi bi-telephone"></i>
                         Phone Number
                     </div>
-                    <div class="detail-value">@(Model.User.PhoneNumber ?? "Not provided")</div>
+                    <div class="detail-value">@(Model.PhoneNumber ?? "Not provided")</div>
                 </div>
                 <div class="detail-item">
                     <div class="detail-label">
@@ -195,9 +187,9 @@
                         Date of Birth
                     </div>
                     <div class="detail-value">
-                        @if (Model.DateOfBirth.HasValue)
+                        @if (Model.User.DateOfBirth.HasValue)
                         {
-                            @Model.DateOfBirth.Value.ToString("dd MMM yyyy")
+                            @Model.User.DateOfBirth.Value.ToString("dd MMM yyyy")
                         }
                         else
                         {
@@ -210,17 +202,66 @@
                         <i class="bi bi-gender-ambiguous"></i>
                         Gender
                     </div>
-                    <div class="detail-value">@(Model.Gender ?? "Not specified")</div>
+                    <div class="detail-value">@(Model.User.Gender ?? "Not specified")</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Information -->
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-briefcase"></i>
+                    Professional Information
+                </h5>
+            </div>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-book"></i>
+                        Subject
+                    </div>
+                    <div class="detail-value">@(Model.SubjectTeach ?? "Not assigned")</div>
                 </div>
                 <div class="detail-item">
                     <div class="detail-label">
                         <i class="bi bi-calendar-plus"></i>
-                        Enrollment Date
+                        Hire Date
                     </div>
                     <div class="detail-value">
-                        @if (Model.EnrollmentDate.HasValue)
+                        @if (Model.HireDate.HasValue)
                         {
-                            @Model.EnrollmentDate.Value.ToString("dd MMM yyyy")
+                            @Model.HireDate.Value.ToString("dd MMM yyyy")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not set</span>
+                        }
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-mortarboard"></i>
+                        Title
+                    </div>
+                    <div class="detail-value">@(Model.Title ?? "Not set")</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-award"></i>
+                        Education
+                    </div>
+                    <div class="detail-value">@(Model.Education ?? "Not set")</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-tools"></i>
+                        Skills
+                    </div>
+                    <div class="detail-value">
+                        @if (!string.IsNullOrEmpty(Model.Skill))
+                        {
+                            @Model.Skill
                         }
                         else
                         {
@@ -230,74 +271,19 @@
                 </div>
             </div>
         </div>
-
-        <!-- Parent Information -->
-        <div class="dashboard-card">
-            <div class="card-header-custom">
-                <h5 class="card-title">
-                    <i class="bi bi-person-check"></i>
-                    Parent/Guardian Information
-                </h5>
-            </div>
-            @if (Model.Parent != null)
-            {
-                <div class="detail-list">
-                    <div class="detail-item">
-                        <div class="detail-label">
-                            <i class="bi bi-person"></i>
-                            Parent Name
-                        </div>
-                        <div class="detail-value">@Model.Parent.User.FullName</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">
-                            <i class="bi bi-envelope"></i>
-                            Email
-                        </div>
-                        <div class="detail-value">@Model.Parent.User.Email</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">
-                            <i class="bi bi-telephone"></i>
-                            Phone
-                        </div>
-                        <div class="detail-value">@(Model.Parent.PhoneNumber ?? "Not provided")</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">
-                            <i class="bi bi-tag"></i>
-                            Parent ID
-                        </div>
-                        <div class="detail-value">@Model.Parent.ParentId</div>
-                    </div>
-                </div>
-                <div class="mt-3 text-center">
-                    <a asp-action="ParentDetails" asp-route-id="@Model.Parent.ParentId" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-eye me-1"></i>View Parent Details
-                    </a>
-                </div>
-            }
-            else
-            {
-                <div class="text-center py-4">
-                    <i class="bi bi-person-x" style="font-size: 3rem; color: #999;"></i>
-                    <p class="text-muted mt-2 mb-0">No parent assigned</p>
-                </div>
-            }
-        </div>
     </div>
 
-    <!-- Right Column - Classes & Account Info -->
+    <!-- Right Column - Classes & Additional Info -->
     <div class="col-lg-8">
-        <!-- Enrolled Classes -->
+        <!-- Assigned Classes -->
         <div class="dashboard-card mb-3">
             <div class="card-header-custom">
                 <h5 class="card-title">
-                    <i class="bi bi-journal-bookmark"></i>
-                    Enrolled Classes (@totalEnrollments)
+                    <i class="bi bi-collection"></i>
+                    Assigned Classes (@totalClasses)
                 </h5>
             </div>
-            @if (Model.Enrollments != null && Model.Enrollments.Any())
+            @if (Model.Classes != null && Model.Classes.Any())
             {
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
@@ -306,22 +292,22 @@
                                 <th>Class ID</th>
                                 <th>Class Name</th>
                                 <th>Subject</th>
-                                <th>Teacher</th>
                                 <th>Schedule</th>
                                 <th>Room</th>
+                                <th>Students</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var enrollment in Model.Enrollments)
+                            @foreach (var cls in Model.Classes)
                             {
                                 <tr>
-                                    <td><strong>@enrollment.Class.ClassId</strong></td>
-                                    <td>@enrollment.Class.ClassName</td>
+                                    <td><strong>@cls.ClassId</strong></td>
+                                    <td>@cls.ClassName</td>
                                     <td>
-                                        @if (enrollment.Class.Subject != null)
+                                        @if (cls.Subject != null)
                                         {
-                                            <span class="badge bg-primary">@enrollment.Class.Subject.SubjectName</span>
+                                            <span class="badge bg-primary">@cls.Subject.SubjectName</span>
                                         }
                                         else
                                         {
@@ -329,28 +315,21 @@
                                         }
                                     </td>
                                     <td>
-                                        @if (enrollment.Class.Teacher != null)
+                                        @if (!string.IsNullOrEmpty(cls.Day))
                                         {
-                                            @enrollment.Class.Teacher.User.FullName
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">TBA</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        @if (!string.IsNullOrEmpty(enrollment.Class.Day))
-                                        {
-                                            <span class="badge bg-secondary">@enrollment.Class.Day</span>
+                                            <span class="badge bg-secondary">@cls.Day</span>
                                         }
                                         else
                                         {
                                             <span class="text-muted">-</span>
                                         }
                                     </td>
-                                    <td>@(enrollment.Class.RoomNumber ?? "-")</td>
+                                    <td>@(cls.RoomNumber ?? "-")</td>
                                     <td>
-                                        <a asp-action="ClassDetails" asp-route-id="@enrollment.Class.ClassId" class="btn btn-sm btn-outline-primary">
+                                        <span class="badge bg-info">@cls.CurrentCapacity/@cls.MaxCapacity</span>
+                                    </td>
+                                    <td>
+                                        <a asp-action="ClassDetails" asp-route-id="@cls.ClassId" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                     </td>
@@ -364,44 +343,22 @@
             {
                 <div class="text-center py-5 text-muted">
                     <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                    <p class="mt-3">No classes enrolled yet</p>
-                    <a asp-action="StudentEdit" asp-route-id="@Model.StudentId" class="btn btn-sm btn-danger">
-                        <i class="bi bi-plus-circle me-1"></i>Enroll in Classes
-                    </a>
+                    <p class="mt-3">No classes assigned yet</p>
                 </div>
             }
         </div>
 
-        <!-- Attendance Chart (if data available) -->
-        @if (totalAttendance > 0)
+        <!-- Bio Section -->
+        @if (!string.IsNullOrEmpty(Model.Bio))
         {
             <div class="dashboard-card mb-3">
                 <div class="card-header-custom">
                     <h5 class="card-title">
-                        <i class="bi bi-bar-chart-line"></i>
-                        Attendance Overview
+                        <i class="bi bi-file-text"></i>
+                        Biography
                     </h5>
                 </div>
-                <div class="row text-center">
-                    <div class="col-4">
-                        <div class="attendance-pie-chart present">
-                            <div class="percentage">@Math.Round((decimal)presentCount / totalAttendance * 100, 1)%</div>
-                            <div class="label">Present</div>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="attendance-pie-chart absent">
-                            <div class="percentage">@Math.Round((decimal)absentCount / totalAttendance * 100, 1)%</div>
-                            <div class="label">Absent</div>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="attendance-pie-chart late">
-                            <div class="percentage">@Math.Round((decimal)lateCount / totalAttendance * 100, 1)%</div>
-                            <div class="label">Late</div>
-                        </div>
-                    </div>
-                </div>
+                <p class="mb-0">@Model.Bio</p>
             </div>
         }
 
@@ -457,71 +414,124 @@
 <div class="row mt-4">
     <div class="col-12">
         <div class="d-flex gap-2 justify-content-end">
-            <a asp-action="StudentIndex" class="btn btn-light">
-                <i class="bi bi-list"></i> All Students
+            <a asp-action="TeacherIndex" class="btn btn-light">
+                <i class="bi bi-list"></i> All Teachers
             </a>
-            <a asp-action="StudentEdit" asp-route-id="@Model.StudentId" class="btn btn-warning">
-                <i class="bi bi-pencil"></i> Edit Student
+            <a asp-action="TeacherEdit" asp-route-id="@Model.TeacherId" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Edit Teacher
             </a>
-            <a asp-action="StudentDelete" asp-route-id="@Model.StudentId" class="btn btn-danger">
-                <i class="bi bi-trash"></i> Delete Student
+            <a asp-action="TeacherDelete" asp-route-id="@Model.TeacherId" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Delete Teacher
             </a>
         </div>
     </div>
 </div>
 
 <style>
-    .profile-avatar-large.male {
-        color: #0d6efd !important;
+    .profile-header {
+        padding: 0;
+        overflow: hidden;
     }
 
-    .profile-avatar-large.female {
-        color: #ec4899 !important;
+    .profile-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 30px 30px;
+        text-align: center;
     }
 
-    .attendance-pie-chart {
-        padding: 20px;
-        border-radius: 12px;
-        margin: 10px;
+    .profile-avatar-large {
+        width: 120px;
+        height: 120px;
+        background: white;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        color: #667eea;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
-    .attendance-pie-chart.present {
-        background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
-        border: 2px solid #198754;
+    .profile-info {
+        padding: 30px;
+        background: white;
     }
 
-    .attendance-pie-chart.absent {
-        background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
-        border: 2px solid #dc3545;
+    .profile-quick-stats {
+        display: flex;
+        gap: 30px;
+        justify-content: flex-end;
     }
 
-    .attendance-pie-chart.late {
-        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
-        border: 2px solid #ffc107;
+    .quick-stat-item {
+        text-align: center;
     }
 
-    .attendance-pie-chart .percentage {
+    .quick-stat-number {
         font-size: 2rem;
         font-weight: 700;
-        margin-bottom: 10px;
+        line-height: 1;
+        margin-bottom: 5px;
     }
 
-    .attendance-pie-chart.present .percentage {
-        color: #198754;
-    }
-
-    .attendance-pie-chart.absent .percentage {
-        color: #dc3545;
-    }
-
-    .attendance-pie-chart.late .percentage {
-        color: #ffc107;
-    }
-
-    .attendance-pie-chart .label {
+    .quick-stat-label {
         font-size: 0.875rem;
         color: #666;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .detail-list {
+        padding: 0;
+    }
+
+    .detail-item {
+        padding: 15px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
         font-weight: 600;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .detail-label i {
+        color: #999;
+    }
+
+    .detail-value {
+        text-align: right;
+        color: #333;
+        flex: 1;
+        max-width: 60%;
+        word-wrap: break-word;
+    }
+
+    @@media (max-width: 768px) {
+        .profile-quick-stats {
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .detail-value {
+            text-align: left;
+            max-width: 100%;
+        }
     }
 </style>
