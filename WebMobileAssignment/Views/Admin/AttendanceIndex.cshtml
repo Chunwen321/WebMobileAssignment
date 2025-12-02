@@ -1,0 +1,144 @@
+﻿@* @model IEnumerable<WebMobileAssignment.Models.Attendance>
+
+@{
+    ViewBag.Title = "Attendance Report";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <h2>Attendance Report</h2>
+</  div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Class</label>
+                <select name="classId" class="form-control">
+                    <option value="">-- All Classes --</option>
+                    
+                        <option value="cls.ClassID">cls.ClassName</option>
+                    
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">From Date</label>
+                <input type="date" name="startDate" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">To Date</label>
+                <input type="date" name="endDate" class="form-control" />
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Time In</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                  
+                    
+                        <tr>
+                            <td>item.AttendanceDate.ToString("dd/MM/yyyy")</td>
+                            <td>item.Student?.Name</td>
+                            <td>item.Class?.ClassName</td>
+                            <td>item.TimeIn.ToString("hh\:mm")</td>
+                            <td>
+                                <span class="badge badge-item.Status.ToLower()">item.Status</span>
+                            </td>
+                            <td>item.Remarks</td>
+                        </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div> *@
+
+@model IEnumerable<WebMobileAssignment.Models.Attendance>
+
+@{
+    ViewData["Title"] = "Attendance Report";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="page-header">
+    <h2>Attendance Report</h2>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Class</label>
+                <select name="classId" class="form-control">
+                    <option value="">-- All Classes --</option>
+                    @foreach (var cls in ViewBag.Classes)
+                    {
+                        <option value="@cls.ClassID">@cls.ClassName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">From Date</label>
+                <input type="date" name="startDate" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">To Date</label>
+                <input type="date" name="endDate" class="form-control" />
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Time In</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Date.ToString("dd/MM/yyyy")</td>
+                            <td>@item.Student?.User.FullName</td>
+                            <td>@item.Class?.ClassName</td>
+                            <td>Time</td>
+                            <td>
+                                <span class="badge badge-@item.Status.ToLower()">@item.Status</span>
+                            </td>
+                            <td>item.Remarks</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

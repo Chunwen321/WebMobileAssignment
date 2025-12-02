@@ -1,13 +1,14 @@
-/* ==================== STUDENT PORTAL STYLES (CLEANED & REORDERED) ==================== */
+﻿/* ==================== ADMIN PORTAL STYLES ==================== */
 
 /* ==================== COLOR VARIABLES ==================== */
 :root {
     /* Primary Sidebar */
     --sidebar-bg-start: #2c3e50;
     --sidebar-bg-end: #34495e;
-    --student-accent: #198754; /* main green */
-    --student-accent-hover: rgba(25, 135, 84, 0.1);
-    --student-accent-active: rgba(25, 135, 84, 0.15);
+    /* Accent Color (Red) */
+    --admin-accent: #dc3545;
+    --admin-accent-hover: rgba(220, 53, 69, 0.1);
+    --admin-accent-active: rgba(220, 53, 69, 0.15);
     /* Status Colors */
     --color-success: #198754;
     --color-danger: #dc3545;
@@ -22,60 +23,23 @@
     --text-muted: #6c757d;
 }
 
-/* ==================== ICON COLOR REFERENCE ==================== */
-.icon-red {
-    color: #dc3545;
-}
-/* Admin */
-.icon-blue {
-    color: #0d6efd;
-}
-/* Teacher */
-.icon-green {
-    color: #02a145;
-}
-/* Student */
-.icon-yellow {
-    color: #ffc107;
-}
-/* Parent - THIS IS OUR SIDEBAR COLOR! */
-
-/* ==================== UTILITY CLASSES ==================== */
-.badge-yellow {
-    background: #198754;
-    color: #ffffff;
-}
-
-.icon-bg-yellow {
-    background: rgba(25, 135, 84, 0.1);
-    color: #198754;
-}
-
-.card-accent-yellow {
-    border-left: 4px solid #198754;
-}
-
 /* ==================== LAYOUT STRUCTURE ==================== */
-.student-layout {
+
+.admin-layout {
     margin: 0;
     padding: 0;
-    background: var(--page-bg);
+    background: #f5f7fa;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-    .student-layout main {
-        display: block;
-        min-height: auto;
-        padding: 0;
-    }
-
-/* ==================== SIDEBAR ==================== */
+/* Sidebar Styles */
 .sidebar {
     position: fixed;
     left: 0;
     top: 0;
     height: 100vh;
     width: 280px;
+    /*background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);*/
     background: #1c1a1a;
     color: white;
     display: flex;
@@ -101,9 +65,10 @@
 
     .sidebar-brand i {
         font-size: 1.75rem;
-        color: #02a145;
+        color: #dc3545;
     }
 
+/* Sidebar Navigation */
 .sidebar-nav {
     flex: 1;
     padding: 1rem 0;
@@ -111,7 +76,6 @@
     overflow-x: hidden;
 }
 
-    /* custom scrollbar */
     .sidebar-nav::-webkit-scrollbar {
         width: 6px;
     }
@@ -124,6 +88,10 @@
         background: rgba(255, 255, 255, 0.2);
         border-radius: 3px;
     }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
 
 .sidebar-item {
     display: flex;
@@ -152,23 +120,23 @@
         font-size: 1.125rem;
         width: 24px;
         flex-shrink: 0;
-        color: #02a145;
+        color: #dc3545;
     }
 
     .sidebar-item-content span {
         font-size: 0.95rem;
-        font-weight: 500;
+        font-weight: 700;
     }
 
 .sidebar-item:hover {
-    background: rgba(255, 193, 7, 0.1);
+    background: rgba(220, 53, 69, 0.1);
     color: white;
 }
 
 .sidebar-item.active {
-    background: rgba(255, 193, 7, 0.15);
+    background: rgba(220, 53, 69, 0.15);
     color: white;
-    border-left: 4px solid #02a145;
+    border-left: 4px solid #dc3545;
 }
 
     .sidebar-item.active::before {
@@ -178,21 +146,21 @@
         top: 0;
         height: 100%;
         width: 4px;
-        background: #02a145;
+        background: #dc3545;
     }
 
-/* Notification badge inside sidebar item, if used */
+/* Notification Badge */
 .notification-badge {
     background: #dc3545;
     color: white;
     font-size: 0.7rem;
-    font-weight: 600;
+    font-weight: 700;
     padding: 0.15rem 0.45rem;
     border-radius: 10px;
     margin-left: auto;
 }
 
-/* Dropdowns in sidebar */
+/* Dropdown Menu */
 .sidebar-dropdown {
     margin: 0;
 }
@@ -204,6 +172,7 @@
 .dropdown-toggle i.bi-chevron-down {
     font-size: 0.875rem;
     transition: transform 0.3s ease;
+    margin-left: auto;
 }
 
 .dropdown-toggle[aria-expanded="true"] i.bi-chevron-down {
@@ -223,23 +192,23 @@
 
     .sidebar-subitem i {
         font-size: 1rem;
-        color: #02a145;
+        color: #dc3545;
         opacity: 0.7;
     }
 
     .sidebar-subitem:hover {
-        background: rgba(255, 193, 7, 0.08);
+        background: rgba(220, 53, 69, 0.08);
         color: white;
         padding-left: 3.75rem;
     }
 
     .sidebar-subitem.active {
-        background: rgba(255, 193, 7, 0.12);
+        background: rgba(220, 53, 69, 0.12);
         color: white;
-        font-weight: 600;
+        font-weight: 700;
     }
 
-/* Sidebar footer */
+/* Sidebar Footer */
 .sidebar-footer {
     padding: 1rem 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -259,7 +228,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #02a145;
+    background: #dc3545;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -273,7 +242,7 @@
 
 .user-name {
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
     color: white;
     margin-bottom: 0.15rem;
 }
@@ -307,7 +276,7 @@
         font-size: 1.125rem;
     }
 
-/* ==================== MAIN CONTENT ==================== */
+/* Main Content Area */
 .main-content {
     margin-left: 280px;
     min-height: 100vh;
@@ -316,7 +285,7 @@
     transition: margin-left 0.3s ease;
 }
 
-/* ==================== TOPBAR ==================== */
+/* Top Bar */
 .topbar {
     background: white;
     padding: 1rem 1.5rem;
@@ -377,7 +346,7 @@
 }
 
     .topbar-btn:hover {
-        background: #ffc107;
+        background: #dc3545;
         color: white;
     }
 
@@ -392,15 +361,15 @@
         border-radius: 10px;
     }
 
-/* ==================== PAGE CONTENT ==================== */
+/* Page Content */
 .page-content {
     flex: 1;
     padding: 2rem;
 }
 
-/* ==================== CARDS & COMPONENTS ==================== */
+/* Cards */
 .dashboard-card {
-    background: var(--card-bg);
+    background: white;
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -433,7 +402,7 @@
 }
 
     .card-title i {
-        color: #02a145;
+        color: #dc3545;
     }
 
 .card-icon {
@@ -448,7 +417,7 @@
 
     .card-icon.yellow {
         background: rgba(255, 193, 7, 0.1);
-        color: #ffc107;
+        color: #dc3545;
     }
 
     .card-icon.blue {
@@ -466,156 +435,31 @@
         color: #dc3545;
     }
 
-/* ==================== CLASS CARD STYLES ==================== */
-.class-card {
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-}
-
-    .class-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    }
-
-.class-header {
-    padding: 15px;
-}
-
-.class-meta {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-
-.class-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-}
-
-    .info-item label {
-        font-weight: 600;
-        color: #666;
-    }
-
-    .info-item span {
-        text-align: right;
-    }
-
-.class-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 0.9rem;
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-}
-
-/* ==================== STATISTICS CARD STYLES ==================== */
+/* Stats Cards */
 .stat-card {
-    text-align: center;
-    border-radius: 8px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #dc3545;
+    transition: all 0.3s ease;
 }
 
     .stat-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
-    .stat-card .stat-label {
-        font-weight: 500;
-        color: #666;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 8px;
-    }
-
-    .stat-card .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #198754;
-        margin-bottom: 8px;
-    }
-
-/* ==================== ANNOUNCEMENTS / DETAILS ==================== */
-.announcement-item {
-    background: #f8f9fa;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-    .announcement-item h6 {
-        font-weight: 600;
-        color: #333;
-    }
-
-/* ==================== BUTTONS & FORMS ==================== */
-.btn-outline-primary {
-    background: #228B22;
-    border: none;
-    color: #2c3e50;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-    .btn-outline-primary:hover {
-        background: #02a145;
-        color: #2c3e50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-    }
-
-    .btn-outline-primary:active {
-        transform: translateY(0);
-    }
-
-.btn-primary {
-    background: #228B22;
-    border: none;
-    color: #2c3e50;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-    .btn-primary:hover {
-        background: #02a145;
-        color: #2c3e50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-    }
-
-    .btn-primary:active {
-        transform: translateY(0);
-    }
-
-/* ==================== STATS (ALTERNATIVE) ==================== */
 .stat-label {
     font-size: 0.875rem;
     color: #6c757d;
     margin-bottom: 0.5rem;
-    font-weight: 500;
+    font-weight: 200;
 }
 
 .stat-value {
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 200;
     color: #2c3e50;
     margin-bottom: 0.25rem;
 }
@@ -635,91 +479,120 @@
         color: #dc3545;
     }
 
-/* ==================== PASSWORD INPUT STYLING ==================== */
-.password-field-group {
-    margin-bottom: 1rem;
+/* Tables */
+.table {
+    margin-bottom: 0;
 }
 
-.password-input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.password-icon {
-    position: absolute;
-    left: 1rem;
-    color: #6c757d;
-    font-size: 1.125rem;
-    z-index: 10;
-}
-
-.password-input {
-    padding-left: 3rem !important;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-    transition: all 0.3s ease;
-}
-
-    .password-input:focus {
-        border-color: #ffc107;
-        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
-        padding-left: 3rem !important;
-    }
-
-.btn-update-password {
-    background: #228B22;
-    border: none;
-    color: #2c3e50;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-    .btn-update-password:hover {
-        background: #02a145;
+    .table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
         color: #2c3e50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+        font-weight: 200;
+        padding: 1rem;
     }
 
-    .btn-update-password:active {
-        transform: translateY(0);
+    .table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-color: #dee2e6;
     }
 
-/* ==================== SETTINGS PAGE CUSTOM STYLES ==================== */
-.settings-account-card {
-    margin-bottom: 1.5rem !important;
-    padding: 1.5rem 1.5rem 0 1.5rem !important;
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+/* Buttons */
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
 }
 
-    .settings-account-card form {
-        margin: 0 !important;
-        padding: 0 !important;
+    .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
     }
 
-    .settings-account-card .row.g-3 {
-        margin-bottom: 0 !important;
-        row-gap: 0.75rem !important;
+.btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
     }
 
-    .settings-account-card .card-header-custom {
-        margin-bottom: 1rem !important;
-        padding-bottom: 0.75rem !important;
+.btn-outline-warning {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+    .btn-outline-warning:hover {
+        background-color: #ffc107;
+        color: #2c3e50;
     }
 
-    .settings-account-card .row.g-3 > .col-12:last-child {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-        margin-top: 0.75rem !important;
+.btn-outline-info {
+    color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+    .btn-outline-info:hover {
+        background-color: #0d6efd;
+        color: white;
     }
 
-    .settings-account-card .btn {
-        margin-bottom: 0 !important;
+/* Badges */
+.badge {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.bg-success {
+    background-color: #198754 !important;
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.bg-warning {
+    background-color: #ffc107 !important;
+    color: #2c3e50 !important;
+}
+
+.bg-Male {
+    color: deepskyblue !important;
+}
+
+.bg-Female {
+    color: hotpink;
+}
+
+/* Forms */
+.form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.form-control,
+.form-select {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.75rem 0.875rem;
+}
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
     }
 
-/* ==================== RESPONSIVE DESIGN ==================== */
+/* Responsive Design */
 @media (max-width: 992px) {
     .sidebar {
         transform: translateX(-100%);
@@ -742,22 +615,6 @@
     .topbar-title h1 {
         font-size: 1.25rem;
     }
-
-    /* mobile overlay */
-    .sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 999;
-    }
-
-        .sidebar-overlay.show {
-            display: block;
-        }
 }
 
 @media (max-width: 768px) {
@@ -776,6 +633,12 @@
     .dashboard-card {
         padding: 1.25rem;
     }
+
+    .card-header-custom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
 }
 
 @media (max-width: 576px) {
@@ -790,4 +653,36 @@
     .card-title {
         font-size: 1rem;
     }
+
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .table {
+        font-size: 0.875rem;
+    }
+
+        .table thead th,
+        .table tbody td {
+            padding: 0.75rem 0.5rem;
+        }
+}
+
+/* Mobile Overlay */
+@media (max-width: 992px) {
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
 }

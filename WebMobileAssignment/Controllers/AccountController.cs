@@ -14,7 +14,7 @@ namespace WebMobileAssignment.Controllers
 
         // POST: /Account/Login
         [HttpPost]
-        public IActionResult Login(string userType, string username, string password)
+        public IActionResult Login(string userType, string email, string password)
         {
             // Placeholder authentication logic
             // In a real application, validate credentials against database

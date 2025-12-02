@@ -1,0 +1,205 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title - Admin Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="admin-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Admin Portal</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <a asp-controller="Admin" asp-action="Dashboard"
+               class="sidebar-item @(ViewBag.ActiveMenu == "Dashboard" ? "active" : "")">
+                <div class="sidebar-item-content">
+                    <i class="bi bi-house-door-fill"></i>
+                    <span>Dashboard</span>
+                </div>
+            </a>
+
+            <!-- Student Management -->
+            <a asp-controller="Admin" asp-action="StudentIndex"
+               class="sidebar-item @(ViewBag.ActiveMenu == "StudentManagement" ? "active" : "")">
+                <div class="sidebar-item-content">
+                    <i class="bi bi-person-badge-fill"></i>
+                    <span>Student Management</span>
+                </div>
+            </a>
+
+            <!-- Teacher Management -->
+            <a asp-controller="Admin" asp-action="TeacherIndex"
+               class="sidebar-item @(ViewBag.ActiveMenu == "TeacherManagement" ? "active" : "")">
+                <div class="sidebar-item-content">
+                    <i class="bi bi-person-workspace"></i>
+                    <span>Teacher Management</span>
+                </div>
+            </a>
+
+            <!-- Parent Management -->
+            <a asp-controller="Admin" asp-action="ParentIndex"
+               class="sidebar-item @(ViewBag.ActiveMenu == "ParentManagement" ? "active" : "")">
+                <div class="sidebar-item-content">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Parent Management</span>
+                </div>
+            </a>
+
+            <!-- Class Scheduling Management -->
+            <div class="sidebar-dropdown">
+                <button class="sidebar-item dropdown-toggle @(ViewBag.ActiveMenu == "ClassManagement" ? "active" : "")"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#classMenu">
+                    <div class="sidebar-item-content">
+                        <i class="bi bi-book-fill"></i>
+                        <span>Class Management</span>
+                    </div>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse @(ViewBag.ActiveMenu == "ClassManagement" ? "show" : "")" id="classMenu">
+                    <a asp-controller="Admin" asp-action="ClassIndex"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Classes" ? "active" : "")">
+                        <i class="bi bi-list-check"></i>
+                        <span>Manage Classes</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="ScheduleIndex"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Schedule" ? "active" : "")">
+                        <i class="bi bi-calendar-week-fill"></i>
+                        <span>Class Schedule</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Attendance Management -->
+            <div class="sidebar-dropdown">
+                <button class="sidebar-item dropdown-toggle @(ViewBag.ActiveMenu == "AttendanceManagement" ? "active" : "")"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#attendanceMenu">
+                    <div class="sidebar-item-content">
+                        <i class="bi bi-calendar-event-fill"></i>
+                        <span>Attendance Management</span>
+                    </div>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse @(ViewBag.ActiveMenu == "AttendanceManagement" ? "show" : "")" id="attendanceMenu">
+                    <a asp-controller="Admin" asp-action="AttendanceIndex"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Records" ? "active" : "")">
+                        <i class="bi bi-clock-history"></i>
+                        <span>View Records</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="AttendanceCreate"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Record" ? "active" : "")">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Record Attendance</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="AttendanceReport"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Report" ? "active" : "")">
+                        <i class="bi bi-bar-chart-fill"></i>
+                        <span>Reports</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Reports -->
+            <a asp-controller="Admin" asp-action="Reports"
+               class="sidebar-item @(ViewBag.ActiveMenu == "Reports" ? "active" : "")">
+                <div class="sidebar-item-content">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                    <span>Reports & Analytics</span>
+                </div>
+            </a>
+
+            <!-- Settings -->
+            <a asp-controller="Admin" asp-action="Settings"
+               class="sidebar-item @(ViewBag.ActiveMenu == "Settings" ? "active" : "")">
+                <div class="sidebar-item-content">
+                    <i class="bi bi-gear-fill"></i>
+                    <span>Settings</span>
+                </div>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">Admin</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+            </div>
+            <a href="javascript:void(0);" class="logout-btn" title="Logout" onclick="if(confirm('Are you sure?')) window.location='/Account/Login';">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="topbar-title">
+                <h1>@ViewBag.Title</h1>
+            </div>
+            <div class="topbar-actions">
+                <button class="topbar-btn" title="Notifications">
+                    <i class="bi bi-bell-fill"></i>
+                    <span class="badge">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            @RenderBody()
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sidebar Toggle for Mobile
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('show');
+                sidebarOverlay.classList.toggle('show');
+            });
+
+            sidebarOverlay.addEventListener('click', () => {
+                sidebar.classList.remove('show');
+                sidebarOverlay.classList.remove('show');
+            });
+        }
+
+        document.querySelectorAll('.sidebar-item, .sidebar-subitem').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 992) {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                }
+            });
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
