@@ -686,3 +686,181 @@
             display: block;
         }
 }
+
+/* Settings CSS */
+.settings-account-card {
+    margin-bottom: 0 !important;
+    padding: 1.5rem !important;
+    background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #e9ecef;
+}
+
+.settings-account-card form {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.settings-account-card .row.g-3 {
+    margin-bottom: 0 !important;
+    row-gap: 1rem !important;
+}
+
+.settings-account-card .card-header-custom {
+    margin-bottom: 1.5rem !important;
+    padding-bottom: 1rem !important;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.settings-account-card .form-control,
+.settings-account-card .form-select {
+    border: 1px solid #dee2e6;
+    padding: 0.6rem 0.75rem;
+    transition: all 0.3s ease;
+}
+
+    .settings-account-card .form-control:focus,
+    .settings-account-card .form-select:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+    }
+
+.settings-account-card .input-group-text {
+    border: 1px solid #dee2e6;
+}
+
+.settings-account-card .row.g-3 > .col-12:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 1rem !important;
+    padding-top: 1rem !important;
+    border-top: 1px solid #e9ecef;
+}
+
+.settings-account-card .btn {
+    margin-bottom: 0 !important;
+    font-weight: 500;
+}
+
+/* Profile Card Styling */
+.profile-card {
+    background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #e9ecef;
+    padding: 1.5rem !important;
+}
+
+.user-avatar {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border: 4px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.profile-info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #dc3545;
+}
+
+    .profile-info-item i {
+        font-size: 1.25rem;
+    }
+
+    .profile-info-item small {
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .profile-info-item strong {
+        font-size: 0.9rem;
+    }
+
+/* System Info Section Inside Profile Card */
+.system-info-section {
+    margin-top: 1.5rem !important;
+    padding-top: 1.5rem !important;
+    border-top: 2px solid #e9ecef;
+}
+
+.section-divider {
+    margin-bottom: 1rem !important;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.system-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.system-info-item {
+    padding: 0.875rem;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+    .system-info-item:hover {
+        border-color: #dc3545;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .system-info-item i {
+        font-size: 1.1rem;
+    }
+
+    .system-info-item small {
+        font-size: 0.8rem;
+    }
+
+    .system-info-item strong {
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+.card-header-custom h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.card-title {
+    margin: 0;
+}
+
+/* Badge Styling */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+/* Section Divider */
+.section-divider {
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #343a40;
+}

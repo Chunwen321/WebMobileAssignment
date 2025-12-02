@@ -17,7 +17,7 @@
 <div class="row">
     <div class="col-12">
         <div class="dashboard-card bg-white p-4 rounded shadow-sm">
-            <form asp-action="StudentCreate" method="post">
+            <form asp-action="StudentCreate" method="post" id="addStudentForm">
                 @Html.AntiForgeryToken()
                 
                 @if (!ViewData.ModelState.IsValid)
@@ -74,21 +74,57 @@
                         </select>
                     </div>
 
-                    <!-- Parent Link -->
-                    <div class="col-md-6 mb-3">
-                        <label for="parentId" class="form-label">Parent</label>
-                        <select id="parentId" name="parentId" class="form-select">
+                    <!-- Placeholder for layout -->
+                    <div class="col-md-6 mb-3"></div>
+                </div>
+
+                <h6 class="text-muted mb-3 mt-3">Parent Information</h6>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="parentSearchEmail" class="form-label">Search Parent by Email (Gmail recommended)</label>
+                        <div class="input-group">
+                            <input type="email" id="parentSearchEmail" class="form-control" placeholder="parent@example.com" />
+                            <button type="button" id="btnSearchParent" class="btn btn-outline-primary">Search</button>
+                        </div>
+                        <div id="parentSearchResult" class="mt-2"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Or select existing parent</label>
+                        <select id="parentSelect" name="parentId" class="form-select">
                             <option value="">-- Select Parent (Optional) --</option>
                             @if (ViewBag.Parents != null)
                             {
                                 @foreach (var parent in ViewBag.Parents)
                                 {
-                                    <option value="@parent.ParentId" selected="@(ViewBag.ParentId == parent.ParentId)">
-                                        @parent.User.FullName (@parent.ParentId)
-                                    </option>
+                                    <option value="@parent.ParentId" selected="@(ViewBag.ParentId == parent.ParentId)">@parent.User.FullName (@parent.ParentId)</option>
                                 }
                             }
                         </select>
+                    </div>
+                </div>
+
+                <div id="parentFields">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="parentFullName" class="form-label">Parent Full Name</label>
+                            <input type="text" id="parentFullName" name="newParentFullName" class="form-control" placeholder="e.g. Robert Doe" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parentEmail" class="form-label">Parent Email</label>
+                            <input type="email" id="parentEmail" name="newParentEmail" class="form-control" placeholder="parent@example.com" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="parentPassword" class="form-label">Parent Password</label>
+                            <input type="password" id="parentPassword" name="newParentPassword" class="form-control" placeholder="Enter a password for parent (required if creating)" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parentPhone" class="form-label">Parent Phone</label>
+                            <input type="tel" id="parentPhone" name="newParentPhone" class="form-control" placeholder="012-345-6789" />
+                        </div>
                     </div>
                 </div>
 
@@ -103,9 +139,7 @@
                             {
                                 @foreach (var cls in ViewBag.Classes)
                                 {
-                                    <option value="@cls.ClassId" selected="@(ViewBag.ClassId == cls.ClassId)">
-                                        @cls.ClassName (@cls.ClassId)
-                                    </option>
+                                    <option value="@cls.ClassId" selected="@(ViewBag.ClassId == cls.ClassId)">@cls.ClassName (@cls.ClassId)</option>
                                 }
                             }
                         </select>
@@ -127,4 +161,98 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function() {
+            const btnSearch = document.getElementById('btnSearchParent');
+            const emailInput = document.getElementById('parentSearchEmail');
+            const resultDiv = document.getElementById('parentSearchResult');
+            const parentFields = document.getElementById('parentFields');
+            const parentSelect = document.getElementById('parentSelect');
+
+            // show parent form by default (user can edit or fill)
+            parentFields.style.display = 'block';
+
+            btnSearch.addEventListener('click', async function() {
+                const email = emailInput.value.trim();
+                resultDiv.innerHTML = '';
+
+                if (!email) {
+                    resultDiv.innerHTML = '<div class="text-warning">Please enter an email to search.</div>';
+                    return;
+                }
+
+                resultDiv.innerHTML = '<div class="text-muted">Searching...</div>';
+                try {
+                    const resp = await fetch('/Admin/FindParentByEmail?email=' + encodeURIComponent(email));
+                    if (!resp.ok) throw new Error('Network error');
+                    const data = await resp.json();
+
+                    if (data && data.parentId) {
+                        // Parent found
+                        resultDiv.innerHTML = `<div class="alert alert-success p-2">Found parent: <strong>${data.fullName}</strong> (${data.parentId}) <button id="selectParentBtn" class="btn btn-sm btn-outline-primary ms-2">Select</button></div>`;
+                        document.getElementById('selectParentBtn').addEventListener('click', function() {
+                            // set parentSelect to this id if exists in options otherwise add
+                            let opt = Array.from(parentSelect.options).find(o => o.value === data.parentId);
+                            if (!opt) {
+                                const option = document.createElement('option');
+                                option.value = data.parentId;
+                                option.text = `${data.fullName} (${data.parentId})`;
+                                parentSelect.appendChild(option);
+                            }
+                            parentSelect.value = data.parentId;
+                            // populate parent fields
+                            populateParentFields(data);
+                            resultDiv.innerHTML = '<div class="text-success">Parent selected.</div>';
+                        });
+                    } else {
+                        // Not found -> show new parent entry
+                        resultDiv.innerHTML = '<div class="alert alert-info p-2">Parent not found. Fill below to create new parent.</div>';
+                        parentFields.style.display = 'block';
+                        // prefill email
+                        document.getElementById('parentEmail').value = email;
+                        document.getElementById('parentFullName').value = '';
+                        document.getElementById('parentPassword').value = '';
+                        document.getElementById('parentPhone').value = '';
+                    }
+                } catch (err) {
+                    resultDiv.innerHTML = '<div class="text-danger">Error searching parent.</div>';
+                }
+            });
+
+            parentSelect.addEventListener('change', async function() {
+                const id = parentSelect.value;
+                if (!id) {
+                    // clear fields for manual entry
+                    document.getElementById('parentFullName').value = '';
+                    document.getElementById('parentEmail').value = '';
+                    document.getElementById('parentPassword').value = '';
+                    document.getElementById('parentPhone').value = '';
+                    parentFields.style.display = 'block';
+                    return;
+                }
+
+                // fetch parent details
+                try {
+                    const resp = await fetch('/Admin/GetParentById?id=' + encodeURIComponent(id));
+                    if (!resp.ok) throw new Error('Network error');
+                    const data = await resp.json();
+                    if (data && data.success) {
+                        populateParentFields(data);
+                        parentFields.style.display = 'block';
+                        // hide password since existing parent doesn't need a password input
+                        document.getElementById('parentPassword').value = '';
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            });
+
+            function populateParentFields(data) {
+                document.getElementById('parentFullName').value = data.fullName || '';
+                document.getElementById('parentEmail').value = data.email || '';
+                document.getElementById('parentPhone').value = data.phone || '';
+            }
+        })();
+    </script>
 }

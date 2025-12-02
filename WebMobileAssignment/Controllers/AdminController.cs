@@ -88,11 +88,40 @@ namespace TuitionAttendanceSystem.Controllers
             return View();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> FindParentByEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return Json(new { success = false });
+
+            var parent = await _context.Parents.Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.User.Email.ToLower() == email.ToLower());
+
+            if (parent == null)
+                return Json(new { success = true });
+
+            return Json(new { success = true, parentId = parent.ParentId, fullName = parent.User.FullName, phone = parent.PhoneNumber });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StudentCreate(string fullName, string email, string password,
-            string parentId, string classId, DateTime? dateOfBirth, string gender)
+            string parentId, string classId, DateTime? dateOfBirth, string gender,
+            // New parent fields
+            string newParentFullName, string newParentEmail, string newParentPassword, string newParentPhone)
         {
+            // If parentId is empty and newParentEmail provided, we'll create a parent
+            if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
+            {
+                // check if parent already exists
+                var existing = await _context.Parents.Include(p => p.User)
+                    .FirstOrDefaultAsync(p => p.User.Email.ToLower() == newParentEmail.ToLower());
+                if (existing != null)
+                {
+                    parentId = existing.ParentId;
+                }
+            }
+
             // Clear ModelState for optional fields that might be empty strings
             if (string.IsNullOrEmpty(parentId))
             {
@@ -122,11 +151,54 @@ namespace TuitionAttendanceSystem.Controllers
             if (!dateOfBirth.HasValue || dateOfBirth.Value == default(DateTime))
                 ModelState.AddModelError("dateOfBirth", "Date of birth is required");
 
+            // If parentId is null and newParentEmail provided, require new parent fields
+            if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
+            {
+                if (string.IsNullOrWhiteSpace(newParentFullName))
+                    ModelState.AddModelError("newParentFullName", "Parent full name is required when creating a new parent");
+                if (string.IsNullOrWhiteSpace(newParentPassword))
+                    ModelState.AddModelError("newParentPassword", "Parent password is required when creating a new parent");
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Generate IDs
+                    // If need to create new parent
+                    if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
+                    {
+                        // create parent user and parent
+                        var parentCount = await _context.Parents.CountAsync();
+                        var parentUserId = $"PARENT{(parentCount + 1):D3}";
+                        var parentIdGen = parentUserId;
+
+                        var parentUser = new User
+                        {
+                            UserId = parentUserId,
+                            FullName = newParentFullName,
+                            Email = newParentEmail,
+                            PasswordHash = newParentPassword,
+                            UserType = "Parent",
+                            CreatedDate = DateTime.Now,
+                            IsActive = true
+                        };
+                        _context.Users.Add(parentUser);
+
+                        var parent = new Parent
+                        {
+                            ParentId = parentIdGen,
+                            UserId = parentUserId,
+                            PhoneNumber = newParentPhone
+                        };
+                        _context.Parents.Add(parent);
+
+                        // Save to get parent in DB
+                        await _context.SaveChangesAsync();
+
+                        parentId = parent.ParentId;
+                    }
+
+                    // Generate IDs for student
                     var studentCount = await _context.Students.CountAsync();
                     var userId = $"STU{(studentCount + 1):D3}";
                     var studentId = userId;
@@ -974,12 +1046,159 @@ namespace TuitionAttendanceSystem.Controllers
         }
 
         // ==================== SETTINGS ====================
-        public IActionResult Settings()
+        public async Task<IActionResult> Settings()
         {
             ViewBag.ActiveMenu = "Settings";
-            ViewBag.Title = "Settings";
+            ViewBag.ActiveSubmenu = "Settings";
+            ViewBag.Title = "Admin Settings";
+
+            // Get the first admin (or you can modify this to get the logged-in admin)
+            var admin = await _context.Admins
+                .Include(a => a.User)
+                .FirstOrDefaultAsync();
+
+            if (admin == null)
+            {
+                // If no admin exists, create a default one for demo purposes
+                TempData["ErrorMessage"] = "No admin account found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            return View(admin);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Settings(string adminId, string fullName, string email, string phoneNumber, string address)
+        {
+            var admin = await _context.Admins
+                .Include(a => a.User)
+                .FirstOrDefaultAsync(a => a.AdminId == adminId);
+
+            if (admin == null)
+            {
+                TempData["ErrorMessage"] = "Admin not found.";
+                return RedirectToAction("Settings");
+            }
+
+            try
+            {
+                // Split full name into first and last name
+                var nameParts = fullName?.Split(' ', 2) ?? new[] { "", "" };
+                
+                admin.User.FullName = fullName;
+                admin.User.Email = email;
+                
+                _context.Update(admin);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Settings updated successfully!";
+                return RedirectToAction("Settings");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error updating settings: {ex.Message}";
+                return View(admin);
+            }
+        }
+
+        public IActionResult ChangePassword()
+        {
+            ViewBag.ActiveMenu = "Settings";
+            ViewBag.ActiveSubmenu = "ChangePassword";
+            ViewBag.Title = "Change Password";
 
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            ViewBag.ActiveMenu = "Settings";
+            ViewBag.ActiveSubmenu = "ChangePassword";
+            ViewBag.Title = "Change Password";
+
+            // Validation
+            if (string.IsNullOrWhiteSpace(currentPassword))
+            {
+                TempData["ErrorMessage"] = "Current password is required.";
+                return View();
+            }
+
+            if (string.IsNullOrWhiteSpace(newPassword))
+            {
+                TempData["ErrorMessage"] = "New password is required.";
+                return View();
+            }
+
+            if (newPassword.Length < 8)
+            {
+                TempData["ErrorMessage"] = "Password must be at least 8 characters long.";
+                return View();
+            }
+
+            if (newPassword != confirmPassword)
+            {
+                TempData["ErrorMessage"] = "New password and confirmation password do not match.";
+                return View();
+            }
+
+            try
+            {
+                // Get the first admin (or modify to get logged-in admin)
+                var admin = await _context.Admins
+                    .Include(a => a.User)
+                    .FirstOrDefaultAsync();
+
+                if (admin == null)
+                {
+                    TempData["ErrorMessage"] = "Admin account not found.";
+                    return View();
+                }
+
+                // Verify current password (in production, use BCrypt to compare hashed passwords)
+                if (admin.User.PasswordHash != currentPassword)
+                {
+                    TempData["ErrorMessage"] = "Current password is incorrect.";
+                    return View();
+                }
+
+                // Update password (in production, use BCrypt.Net.BCrypt.HashPassword(newPassword))
+                admin.User.PasswordHash = newPassword;
+                _context.Update(admin);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Password changed successfully!";
+                return RedirectToAction("ChangePassword");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error changing password: {ex.Message}";
+                return View();
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetParentById(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return Json(new { success = false });
+
+            var parent = await _context.Parents.Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.ParentId == id);
+
+            if (parent == null)
+                return Json(new { success = false });
+
+            return Json(new
+            {
+                success = true,
+                parentId = parent.ParentId,
+                fullName = parent.User.FullName,
+                email = parent.User.Email,
+                phone = parent.PhoneNumber
+            });
         }
     }
 }
