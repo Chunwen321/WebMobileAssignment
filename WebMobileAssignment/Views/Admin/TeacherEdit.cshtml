@@ -1,0 +1,103 @@
+@model WebMobileAssignment.Models.Teacher
+@{
+    ViewBag.Title = "Edit Teacher";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Edit Teacher</h5>
+            <a asp-action="TeacherIndex" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>@TempData["ErrorMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card bg-white p-4 rounded shadow-sm">
+            <form asp-action="TeacherEdit" method="post">
+                @Html.AntiForgeryToken()
+                
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error!</strong> Please correct the following errors:
+                        <ul class="mb-0 mt-2">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                
+                <input type="hidden" name="teacherId" value="@Model.TeacherId" />
+
+                <!-- Header with ID display -->
+                <div class="alert alert-light border d-flex align-items-center mb-4" role="alert">
+                    <i class="bi bi-info-circle-fill text-info me-2"></i>
+                    <div>
+                        Editing details for Teacher ID: <strong>@Model.TeacherId</strong>
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-3">Personal Information</h6>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" id="fullName" name="fullName" class="form-control" value="@Model.User.FullName" required />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" id="email" name="email" class="form-control" value="@Model.User.Email" required />
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-3 mt-3">Professional Details</h6>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="phoneNumber" class="form-label">Phone Number</label>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" value="@Model.PhoneNumber" placeholder="e.g. +1234567890" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="subjectTeach" class="form-label">Subject Taught</label>
+                        <input type="text" id="subjectTeach" name="subjectTeach" class="form-control" value="@Model.SubjectTeach" placeholder="e.g. Mathematics" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="hireDate" class="form-label">Hire Date <span class="text-danger">*</span></label>
+                        <input type="date" id="hireDate" name="hireDate" class="form-control" value="@Model.HireDate?.ToString("yyyy-MM-dd")" required />
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12 text-end">
+                        <a asp-action="TeacherIndex" class="btn btn-light me-2">Cancel</a>
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-check-circle"></i> Update Teacher
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
