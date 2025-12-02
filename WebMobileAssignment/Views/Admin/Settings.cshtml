@@ -1,4 +1,4 @@
-@model WebMobileAssignment.Models.Admin
+@model WebMobileAssignment.Models.User
 @{
     ViewBag.Title = "Admin Settings";
     ViewBag.ActiveMenu = "Settings";
@@ -6,7 +6,7 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     
     // Split full name into first and last name
-    var nameParts = Model.User.FullName?.Split(' ', 2) ?? new[] { "", "" };
+    var nameParts = Model.FullName?.Split(' ', 2) ?? new[] { "", "" };
     var firstName = nameParts.Length > 0 ? nameParts[0] : "";
     var lastName = nameParts.Length > 1 ? nameParts[1] : "";
 }
@@ -42,7 +42,7 @@
 
             <form asp-action="Settings" method="post">
                 @Html.AntiForgeryToken()
-                <input type="hidden" name="adminId" value="@Model.AdminId" />
+                <input type="hidden" name="userId" value="@Model.UserId" />
                 
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -57,23 +57,19 @@
                         <label class="form-label fw-semibold">Email Address</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
-                            <input type="email" name="email" class="form-control" value="@Model.User.Email" required>
+                            <input type="email" name="email" class="form-control" value="@Model.Email" required>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Phone Number</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light"><i class="bi bi-phone"></i></span>
-                            <input type="tel" name="phoneNumber" class="form-control" value="N/A" placeholder="Not available">
+                            <input type="tel" name="phoneNumber" class="form-control" value="@Model.PhoneNumber" placeholder="Optional">
                         </div>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">Address</label>
-                        <textarea name="address" class="form-control" rows="3" placeholder="Not available">N/A</textarea>
                     </div>
                     
                     <!-- Hidden field for full name -->
-                    <input type="hidden" name="fullName" id="fullNameHidden" value="@Model.User.FullName" />
+                    <input type="hidden" name="fullName" id="fullNameHidden" value="@Model.FullName" />
                     
                     <div class="col-12 mb-0">
                         <button type="submit" class="btn btn-danger px-4">
@@ -96,7 +92,7 @@
                 <div class="user-avatar mx-auto mb-3 shadow-sm" style="width: 100px; height: 100px; font-size: 2.5rem; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
                     <i class="bi bi-person-fill"></i>
                 </div>
-                <h5 class="mb-1 fw-bold">@Model.User.FullName</h5>
+                <h5 class="mb-1 fw-bold">@Model.FullName</h5>
                 <p class="text-muted mb-2 small">Administrator</p>
                 <span class="badge bg-danger px-3 py-2">Super Admin</span>
             </div>
@@ -105,21 +101,23 @@
                     <i class="bi bi-hash text-danger"></i>
                     <div>
                         <small class="text-muted d-block">Account ID</small>
-                        <strong class="text-dark">@Model.AdminId</strong>
+                        <strong class="text-dark">@Model.UserId</strong>
                     </div>
                 </div>
                 <div class="profile-info-item">
                     <i class="bi bi-calendar-check text-danger"></i>
                     <div>
                         <small class="text-muted d-block">Member Since</small>
-                        <strong class="text-dark">@Model.User.CreatedDate.ToString("MMMM ?, yyyy")</strong>
+                        <strong class="text-dark">@Model.CreatedDate.ToString("MMMM dd, yyyy")</strong>
                     </div>
                 </div>
                 <div class="profile-info-item">
-                    <i class="bi bi-circle-fill text-success" style="font-size: 0.5rem;"></i>
+                    <i class="bi bi-circle-fill @(Model.IsActive ? "text-success" : "text-danger")" style="font-size: 0.5rem;"></i>
                     <div>
                         <small class="text-muted d-block">Status</small>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle">@(Model.User.IsActive ? "Active" : "Inactive")</span>
+                        <span class="badge @(Model.IsActive ? "bg-success-subtle text-success border border-success-subtle" : "bg-danger-subtle text-danger border border-danger-subtle")">
+                            @(Model.IsActive ? "Active" : "Inactive")
+                        </span>
                     </div>
                 </div>
             </div>

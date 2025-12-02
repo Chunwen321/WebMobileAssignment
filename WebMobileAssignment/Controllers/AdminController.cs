@@ -72,7 +72,10 @@ namespace TuitionAttendanceSystem.Controllers
             var students = await _context.Students
                 .Include(s => s.User)
                 .Include(s => s.Parent)
-                .ThenInclude(p => p.User)
+                    .ThenInclude(p => p.User)
+                .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                .OrderBy(s => s.StudentId)
                 .ToListAsync();
 
             return View(students);
@@ -98,15 +101,22 @@ namespace TuitionAttendanceSystem.Controllers
                 .FirstOrDefaultAsync(p => p.User.Email.ToLower() == email.ToLower());
 
             if (parent == null)
-                return Json(new { success = true });
+                return Json(new { success = false });
 
-            return Json(new { success = true, parentId = parent.ParentId, fullName = parent.User.FullName, phone = parent.PhoneNumber });
+            return Json(new { 
+                success = true, 
+                parentId = parent.ParentId, 
+                fullName = parent.User.FullName,
+                email = parent.User.Email,
+                phone = parent.PhoneNumber ?? ""
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StudentCreate(string fullName, string email, string password,
-            string parentId, string classId, DateTime? dateOfBirth, string gender,
+            string parentId, List<string>? classIds, DateTime? dateOfBirth, string gender,
+            string? phoneNumber, string status, bool isActive, DateTime? enrollmentDate,
             // New parent fields
             string newParentFullName, string newParentEmail, string newParentPassword, string newParentPhone)
         {
@@ -129,10 +139,10 @@ namespace TuitionAttendanceSystem.Controllers
                 parentId = null;
             }
 
-            if (string.IsNullOrEmpty(classId))
+            if (classIds == null || !classIds.Any())
             {
-                ModelState.Remove("classId");
-                classId = null;
+                ModelState.Remove("classIds");
+                classIds = new List<string>();
             }
 
             // Manual validation for required fields
@@ -145,19 +155,58 @@ namespace TuitionAttendanceSystem.Controllers
             if (string.IsNullOrWhiteSpace(password))
                 ModelState.AddModelError("password", "Password is required");
 
+            if (password != null && password.Length < 8)
+                ModelState.AddModelError("password", "Password must be at least 8 characters long");
+
             if (string.IsNullOrWhiteSpace(gender))
                 ModelState.AddModelError("gender", "Gender is required");
 
             if (!dateOfBirth.HasValue || dateOfBirth.Value == default(DateTime))
                 ModelState.AddModelError("dateOfBirth", "Date of birth is required");
 
-            // If parentId is null and newParentEmail provided, require new parent fields
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                status = "active"; // Default value
+            }
+
+            // Validate new parent fields if creating a new parent
             if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
             {
                 if (string.IsNullOrWhiteSpace(newParentFullName))
                     ModelState.AddModelError("newParentFullName", "Parent full name is required when creating a new parent");
                 if (string.IsNullOrWhiteSpace(newParentPassword))
                     ModelState.AddModelError("newParentPassword", "Parent password is required when creating a new parent");
+            }
+            else
+            {
+                // If we have a parentId (existing parent), remove validation errors for new parent fields
+                ModelState.Remove("newParentFullName");
+                ModelState.Remove("newParentEmail");
+                ModelState.Remove("newParentPassword");
+                ModelState.Remove("newParentPhone");
+            }
+
+            // Validate class capacity
+            if (classIds != null && classIds.Any())
+            {
+                var selectedClasses = await _context.Classes
+                    .Where(c => classIds.Contains(c.ClassId))
+                    .ToListAsync();
+
+                var capacityErrors = new List<string>();
+                foreach (var cls in selectedClasses)
+                {
+                    if (cls.CurrentCapacity >= cls.MaxCapacity)
+                    {
+                        capacityErrors.Add($"{cls.ClassName} is full ({cls.CurrentCapacity}/{cls.MaxCapacity})");
+                    }
+                }
+
+                if (capacityErrors.Any())
+                {
+                    foreach (var error in capacityErrors)
+                    ModelState.AddModelError("classIds", error);
+                }
             }
 
             if (ModelState.IsValid)
@@ -180,6 +229,7 @@ namespace TuitionAttendanceSystem.Controllers
                             PasswordHash = newParentPassword,
                             UserType = "Parent",
                             CreatedDate = DateTime.Now,
+                            Status = "active",
                             IsActive = true
                         };
                         _context.Users.Add(parentUser);
@@ -203,33 +253,67 @@ namespace TuitionAttendanceSystem.Controllers
                     var userId = $"STU{(studentCount + 1):D3}";
                     var studentId = userId;
 
-                    // Create User
+                    // Create User with all fields
                     var user = new User
                     {
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
                         PasswordHash = password, // TODO: Implement BCrypt.Net.BCrypt.HashPassword(password) for production
+                        PhoneNumber = phoneNumber,
+                        DateOfBirth = dateOfBirth,
+                        Gender = gender,
                         UserType = "Student",
                         CreatedDate = DateTime.Now,
-                        IsActive = true
+                        Status = status,
+                        IsActive = isActive
                     };
                     _context.Users.Add(user);
 
-                    // Create Student
+                    // Create Student with all fields
                     var student = new Student
                     {
                         StudentId = studentId,
                         UserId = userId,
                         ParentId = parentId,
-                        ClassId = classId,
+                        ClassId = null, // Don't use ClassId anymore - use Enrollments
                         DateOfBirth = dateOfBirth.Value,
-                        Gender = gender
+                        Gender = gender,
+                        EnrollmentDate = enrollmentDate ?? DateTime.Now
                     };
                     _context.Students.Add(student);
 
                     await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "Student added successfully!";
+
+                    // Create enrollment entries for all selected classes and update capacity
+                    int enrolledCount = 0;
+                    if (classIds != null && classIds.Any())
+                    {
+                        foreach (var classId in classIds)
+                        {
+                            // Create enrollment
+                            var enrollment = new Enrollment
+                            {
+                                StudentId = studentId,
+                                ClassId = classId,
+                                EnrolledDate = DateTime.Now
+                            };
+                            _context.Enrollments.Add(enrollment);
+
+                            // Update class current capacity
+                            var classToUpdate = await _context.Classes.FindAsync(classId);
+                            if (classToUpdate != null)
+                            {
+                                classToUpdate.CurrentCapacity++;
+                            }
+
+                            enrolledCount++;
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+
+                    TempData["SuccessMessage"] = $"Student '{fullName}' added successfully with {enrolledCount} class enrollment(s)!";
+
                     return RedirectToAction(nameof(StudentIndex));
                 }
                 catch (Exception ex)
@@ -243,10 +327,14 @@ namespace TuitionAttendanceSystem.Controllers
             ViewBag.Title = "Add New Student";
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
+            ViewBag.PhoneNumber = phoneNumber;
             ViewBag.DateOfBirth = dateOfBirth?.ToString("yyyy-MM-dd");
             ViewBag.Gender = gender;
+            ViewBag.Status = status;
+            ViewBag.IsActive = isActive;
+            ViewBag.EnrollmentDate = enrollmentDate?.ToString("yyyy-MM-dd");
             ViewBag.ParentId = parentId;
-            ViewBag.ClassId = classId;
+            ViewBag.ClassIds = classIds;
             ViewBag.Parents = await _context.Parents.Include(p => p.User).ToListAsync();
             ViewBag.Classes = await _context.Classes.ToListAsync();
             return View("AddStudent");
@@ -258,6 +346,8 @@ namespace TuitionAttendanceSystem.Controllers
 
             var student = await _context.Students
                 .Include(s => s.User)
+                .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
                 .FirstOrDefaultAsync(s => s.StudentId == id);
 
             if (student == null) return NotFound();
@@ -273,10 +363,13 @@ namespace TuitionAttendanceSystem.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StudentEdit(string studentId, string fullName, string email,
-            string parentId, string classId, DateTime dateOfBirth, string gender)
+            string? phoneNumber, string parentId, List<string>? classIds, string? removeClassIds, 
+            DateTime dateOfBirth, string gender, string status)
         {
             var student = await _context.Students
                 .Include(s => s.User)
+                .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
                 .FirstOrDefaultAsync(s => s.StudentId == studentId);
 
             if (student == null)
@@ -285,21 +378,131 @@ namespace TuitionAttendanceSystem.Controllers
                 return NotFound();
             }
 
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(fullName))
+                ModelState.AddModelError("fullName", "Full name is required");
+
+            if (string.IsNullOrWhiteSpace(email))
+                ModelState.AddModelError("email", "Email is required");
+
+            if (string.IsNullOrWhiteSpace(gender))
+                ModelState.AddModelError("gender", "Gender is required");
+
+            if (string.IsNullOrWhiteSpace(status))
+                ModelState.AddModelError("status", "Status is required");
+
+            // Validate class capacity for new enrollments
+            if (classIds != null && classIds.Any())
+            {
+                var selectedClasses = await _context.Classes
+                    .Where(c => classIds.Contains(c.ClassId))
+                    .ToListAsync();
+
+                var capacityErrors = new List<string>();
+                foreach (var cls in selectedClasses)
+                {
+                    if (cls.CurrentCapacity >= cls.MaxCapacity)
+                    {
+                        capacityErrors.Add($"{cls.ClassName} is full ({cls.CurrentCapacity}/{cls.MaxCapacity})");
+                    }
+                }
+
+                if (capacityErrors.Any())
+                {
+                    foreach (var error in capacityErrors)
+                    {
+                        ModelState.AddModelError("classIds", error);
+                    }
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Update user information
                     student.User.FullName = fullName;
                     student.User.Email = email;
+                    student.User.PhoneNumber = phoneNumber;
+                    student.User.Status = status;
+                    
+                    // Update student information
                     student.ParentId = string.IsNullOrEmpty(parentId) ? null : parentId;
-                    student.ClassId = string.IsNullOrEmpty(classId) ? null : classId;
                     student.DateOfBirth = dateOfBirth;
                     student.Gender = gender;
+                    
+                    // Don't set ClassId on Student anymore - use Enrollments instead
+                    student.ClassId = null;
 
                     _context.Update(student);
+                    
+                    int addedCount = 0;
+                    int removedCount = 0;
+
+                    // Handle removal of enrollments
+                    if (!string.IsNullOrEmpty(removeClassIds))
+                    {
+                        var classIdsToRemove = removeClassIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var classIdToRemove in classIdsToRemove)
+                        {
+                            var enrollmentToRemove = student.Enrollments
+                                .FirstOrDefault(e => e.ClassId == classIdToRemove);
+                            
+                            if (enrollmentToRemove != null)
+                            {
+                                _context.Enrollments.Remove(enrollmentToRemove);
+                                
+                                // Decrease class current capacity
+                                var classToUpdate = await _context.Classes.FindAsync(classIdToRemove);
+                                if (classToUpdate != null && classToUpdate.CurrentCapacity > 0)
+                                {
+                                    classToUpdate.CurrentCapacity--;
+                                }
+                                removedCount++;
+                            }
+                        }
+                    }
+
+                    // Handle addition of new enrollments
+                    if (classIds != null && classIds.Any())
+                    {
+                        foreach (var classId in classIds)
+                        {
+                            // Check if already enrolled in this class
+                            var existingEnrollment = student.Enrollments
+                                .FirstOrDefault(e => e.ClassId == classId);
+
+                            if (existingEnrollment == null)
+                            {
+                                // Add new enrollment
+                                var enrollment = new Enrollment
+                                {
+                                    StudentId = studentId,
+                                    ClassId = classId,
+                                    EnrolledDate = DateTime.Now
+                                };
+                                _context.Enrollments.Add(enrollment);
+                                
+                                // Increase class current capacity
+                                var classToUpdate = await _context.Classes.FindAsync(classId);
+                                if (classToUpdate != null)
+                                {
+                                    classToUpdate.CurrentCapacity++;
+                                }
+                                addedCount++;
+                            }
+                        }
+                    }
+
                     await _context.SaveChangesAsync();
 
-                    TempData["SuccessMessage"] = $"Student '{fullName}' updated successfully!";
+                    var message = $"Student '{fullName}' updated successfully!";
+                    if (addedCount > 0 || removedCount > 0)
+                    {
+                        message += $" Added {addedCount} enrollment(s), removed {removedCount} enrollment(s).";
+                    }
+                    
+                    TempData["SuccessMessage"] = message;
                     return RedirectToAction(nameof(StudentIndex));
                 }
                 catch (DbUpdateConcurrencyException)
@@ -330,10 +533,44 @@ namespace TuitionAttendanceSystem.Controllers
             var student = await _context.Students
                 .Include(s => s.User)
                 .Include(s => s.Parent)
-                .ThenInclude(p => p.User)
+                    .ThenInclude(p => p.User)
+                .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                    .ThenInclude(c => c.Teacher)
+                    .ThenInclude(t => t.User)
+                .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                    .ThenInclude(c => c.Subject)
+                .Include(s => s.Attendances)
                 .FirstOrDefaultAsync(m => m.StudentId == id);
 
             if (student == null) return NotFound();
+
+            // Get attendance statistics
+            var attendanceStats = await _context.Attendances
+                .Where(a => a.StudentId == id)
+                .GroupBy(a => a.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var totalAttendance = attendanceStats.Sum(s => s.Count);
+            var presentCount = attendanceStats.FirstOrDefault(s => s.Status == "Present")?.Count ?? 0;
+            var absentCount = attendanceStats.FirstOrDefault(s => s.Status == "Absent")?.Count ?? 0;
+            var lateCount = attendanceStats.FirstOrDefault(s => s.Status == "Late")?.Count ?? 0;
+            var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
+
+            ViewBag.TotalEnrollments = student.Enrollments?.Count ?? 0;
+            ViewBag.TotalAttendance = totalAttendance;
+            ViewBag.PresentCount = presentCount;
+            ViewBag.AbsentCount = absentCount;
+            ViewBag.LateCount = lateCount;
+            ViewBag.AttendanceRate = attendanceRate;
+            ViewBag.YearsSinceEnrollment = student.EnrollmentDate.HasValue
+                ? Math.Round((DateTime.Now - student.EnrollmentDate.Value).TotalDays / 365.25, 1)
+                : 0;
+            ViewBag.Age = student.DateOfBirth.HasValue
+                ? DateTime.Now.Year - student.DateOfBirth.Value.Year
+                : 0;
 
             ViewBag.ActiveMenu = "StudentManagement";
             ViewBag.Title = "Student Details";
@@ -367,12 +604,27 @@ namespace TuitionAttendanceSystem.Controllers
             {
                 var student = await _context.Students
                     .Include(s => s.User)
+                    .Include(s => s.Enrollments)
                     .FirstOrDefaultAsync(s => s.StudentId == id);
 
                 if (student != null)
                 {
                     var studentName = student.User.FullName;
-                    _context.Users.Remove(student.User); // Cascade delete will remove student
+                    
+                    // Decrease capacity for all enrolled classes before deletion
+                    if (student.Enrollments != null && student.Enrollments.Any())
+                    {
+                        foreach (var enrollment in student.Enrollments)
+                        {
+                            var classToUpdate = await _context.Classes.FindAsync(enrollment.ClassId);
+                            if (classToUpdate != null && classToUpdate.CurrentCapacity > 0)
+                            {
+                                classToUpdate.CurrentCapacity--;
+                            }
+                        }
+                    }
+                    
+                    _context.Users.Remove(student.User); // Cascade delete will remove student and enrollments
                     await _context.SaveChangesAsync();
 
                     TempData["SuccessMessage"] = $"Student '{studentName}' deleted successfully!";
@@ -550,9 +802,35 @@ namespace TuitionAttendanceSystem.Controllers
 
             var teacher = await _context.Teachers
                 .Include(t => t.User)
+                .Include(t => t.Classes)
+                    .ThenInclude(c => c.Subject)
+                .Include(t => t.Classes)
+                    .ThenInclude(c => c.Enrollments)
                 .FirstOrDefaultAsync(m => m.TeacherId == id);
 
             if (teacher == null) return NotFound();
+
+            // Get attendance statistics marked by this teacher
+            var attendanceStats = await _context.Attendances
+                .Where(a => a.MarkedByTeacherId == id)
+                .GroupBy(a => a.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var totalAttendanceMarked = attendanceStats.Sum(s => s.Count);
+            var presentCount = attendanceStats.FirstOrDefault(s => s.Status == "Present")?.Count ?? 0;
+            var absentCount = attendanceStats.FirstOrDefault(s => s.Status == "Absent")?.Count ?? 0;
+            var lateCount = attendanceStats.FirstOrDefault(s => s.Status == "Late")?.Count ?? 0;
+
+            ViewBag.TotalClassesAssigned = teacher.Classes?.Count ?? 0;
+            ViewBag.TotalStudentsTeaching = teacher.Classes?.Sum(c => c.CurrentCapacity) ?? 0;
+            ViewBag.TotalAttendanceMarked = totalAttendanceMarked;
+            ViewBag.PresentCount = presentCount;
+            ViewBag.AbsentCount = absentCount;
+            ViewBag.LateCount = lateCount;
+            ViewBag.YearsOfService = teacher.HireDate.HasValue 
+                ? Math.Round((DateTime.Now - teacher.HireDate.Value).TotalDays / 365.25, 1) 
+                : 0;
 
             ViewBag.ActiveMenu = "TeacherManagement";
             ViewBag.Title = "Teacher Details";
@@ -904,39 +1182,78 @@ namespace TuitionAttendanceSystem.Controllers
             ViewBag.ActiveSubmenu = "Classes";
             ViewBag.Title = "Create Class";
             ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
+            ViewBag.Subjects = await _context.Subjects.ToListAsync();
 
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ClassCreate(string className, string teacherId, string roomNumber, string scheduleInfo)
+        public async Task<IActionResult> ClassCreate(string className, string teacherId, string roomNumber, 
+            string day, string startTime, string endTime, string subjectId)
         {
             if (ModelState.IsValid)
             {
                 var classCount = await _context.Classes.CountAsync();
                 var classId = $"CLASS{(classCount + 1):D3}";
 
+                // Parse time strings to TimeSpan
+                TimeSpan? parsedStartTime = null;
+                TimeSpan? parsedEndTime = null;
+
+                if (!string.IsNullOrEmpty(startTime) && TimeSpan.TryParse(startTime, out var st))
+                {
+                    parsedStartTime = st;
+                }
+
+                if (!string.IsNullOrEmpty(endTime) && TimeSpan.TryParse(endTime, out var et))
+                {
+                    parsedEndTime = et;
+                }
+
                 var @class = new Class
                 {
                     ClassId = classId,
                     ClassName = className,
-                    TeacherId = teacherId,
+                    TeacherId = string.IsNullOrEmpty(teacherId) ? null : teacherId,
+                    SubjectId = string.IsNullOrEmpty(subjectId) ? null : subjectId,
                     RoomNumber = roomNumber,
-                    ScheduleInfo = scheduleInfo
+                    Day = day,
+                    StartTime = parsedStartTime,
+                    EndTime = parsedEndTime
                 };
                 _context.Classes.Add(@class);
 
                 await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Class created successfully!";
                 return RedirectToAction(nameof(ClassIndex));
             }
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
             ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
+            ViewBag.Subjects = await _context.Subjects.ToListAsync();
             return View();
         }
 
+        public async Task<IActionResult> ScheduleIndex()
+        {
+            ViewBag.ActiveMenu = "ClassManagement";
+            ViewBag.ActiveSubmenu = "Schedule";
+            ViewBag.Title = "Class Schedule";
+
+            var classes = await _context.Classes
+                .Include(c => c.Teacher)
+                .ThenInclude(t => t.User)
+                .Include(c => c.Subject)
+                .Include(c => c.Enrollments)
+                .Where(c => c.StartTime.HasValue && c.EndTime.HasValue && !string.IsNullOrEmpty(c.Day))
+                .OrderBy(c => c.Day)
+                .ThenBy(c => c.StartTime)
+                .ToListAsync();
+
+            return View(classes);
+        }
         // ==================== ATTENDANCE MANAGEMENT ====================
         public async Task<IActionResult> AttendanceIndex(string classId, DateTime? startDate, DateTime? endDate)
         {
@@ -1052,30 +1369,29 @@ namespace TuitionAttendanceSystem.Controllers
             ViewBag.ActiveSubmenu = "Settings";
             ViewBag.Title = "Admin Settings";
 
-            // Get the first admin (or you can modify this to get the logged-in admin)
-            var admin = await _context.Admins
-                .Include(a => a.User)
+            // Get admin user from Users table (filter by UserType = "Admin")
+            var adminUser = await _context.Users
+                .Where(u => u.UserType == "Admin")
                 .FirstOrDefaultAsync();
 
-            if (admin == null)
+            if (adminUser == null)
             {
-                // If no admin exists, create a default one for demo purposes
                 TempData["ErrorMessage"] = "No admin account found.";
                 return RedirectToAction("Dashboard");
             }
 
-            return View(admin);
+            return View(adminUser);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Settings(string adminId, string fullName, string email, string phoneNumber, string address)
+        public async Task<IActionResult> Settings(string userId, string fullName, string email, string? phoneNumber)
         {
-            var admin = await _context.Admins
-                .Include(a => a.User)
-                .FirstOrDefaultAsync(a => a.AdminId == adminId);
+            var adminUser = await _context.Users
+                .Where(u => u.UserId == userId && u.UserType == "Admin")
+                .FirstOrDefaultAsync();
 
-            if (admin == null)
+            if (adminUser == null)
             {
                 TempData["ErrorMessage"] = "Admin not found.";
                 return RedirectToAction("Settings");
@@ -1083,13 +1399,11 @@ namespace TuitionAttendanceSystem.Controllers
 
             try
             {
-                // Split full name into first and last name
-                var nameParts = fullName?.Split(' ', 2) ?? new[] { "", "" };
+                adminUser.FullName = fullName;
+                adminUser.Email = email;
+                adminUser.PhoneNumber = phoneNumber;
                 
-                admin.User.FullName = fullName;
-                admin.User.Email = email;
-                
-                _context.Update(admin);
+                _context.Update(adminUser);
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Settings updated successfully!";
@@ -1098,7 +1412,7 @@ namespace TuitionAttendanceSystem.Controllers
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = $"Error updating settings: {ex.Message}";
-                return View(admin);
+                return View(adminUser);
             }
         }
 
@@ -1146,27 +1460,27 @@ namespace TuitionAttendanceSystem.Controllers
 
             try
             {
-                // Get the first admin (or modify to get logged-in admin)
-                var admin = await _context.Admins
-                    .Include(a => a.User)
+                // Get admin user from Users table
+                var adminUser = await _context.Users
+                    .Where(u => u.UserType == "Admin")
                     .FirstOrDefaultAsync();
 
-                if (admin == null)
+                if (adminUser == null)
                 {
                     TempData["ErrorMessage"] = "Admin account not found.";
                     return View();
                 }
 
                 // Verify current password (in production, use BCrypt to compare hashed passwords)
-                if (admin.User.PasswordHash != currentPassword)
+                if (adminUser.PasswordHash != currentPassword)
                 {
                     TempData["ErrorMessage"] = "Current password is incorrect.";
                     return View();
                 }
 
                 // Update password (in production, use BCrypt.Net.BCrypt.HashPassword(newPassword))
-                admin.User.PasswordHash = newPassword;
-                _context.Update(admin);
+                adminUser.PasswordHash = newPassword;
+                _context.Update(adminUser);
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Password changed successfully!";

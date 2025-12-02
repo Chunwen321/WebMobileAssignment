@@ -35,6 +35,12 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Configure cascade delete behavior for User relationships
+        modelBuilder.Entity<Admin>()
+            .HasOne(a => a.User)
+            .WithMany()
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Teacher>()
             .HasOne(t => t.User)
             .WithMany()
@@ -188,6 +194,9 @@ public class Student
     [MaxLength(20)]
     public string? ClassId { get; set; }
 
+    [ForeignKey(nameof(ClassId))]
+    public Class? Class { get; set; }
+
     public DateTime? DateOfBirth { get; set; }
 
     [MaxLength(10)]
@@ -258,14 +267,17 @@ public class Class
     [MaxLength(50)]
     public string? RoomNumber { get; set; }
 
-    [MaxLength(200)]
-    public string? ScheduleInfo { get; set; }
-
     [MaxLength(20)]
     public string? Day { get; set; }
 
-    [MaxLength(20)]
-    public string? Time { get; set; }
+    public TimeSpan? StartTime { get; set; }
+
+    public TimeSpan? EndTime { get; set; }
+
+    public int MaxCapacity { get; set; }
+
+    public int CurrentCapacity { get; set; }
+
 
     // Navigation properties
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
