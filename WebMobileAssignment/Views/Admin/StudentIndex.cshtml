@@ -144,6 +144,8 @@
                         <option value="">All Status</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
+                        <option value="suspend">Suspend</option>
+                        <option value="withdraw">Withdraw</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -202,27 +204,36 @@
                              data-name="@student.User.FullName.ToLower()"
                              data-email="@student.User.Email.ToLower()"
                              data-id="@student.StudentId.ToLower()"
-                             data-status="@(student.User.IsActive ? "active" : "inactive")"
+                             data-status="@(student.User.Status?.ToLower() ?? "unknown")"
                              data-gender="@(student.Gender?.ToLower() ?? "")"
                              data-parent="@(student.ParentId != null ? "with-parent" : "no-parent")">
                             <div class="dashboard-card h-100">
                                 <div class="student-header">
-                                    <div class="student-avatar @(student.Gender == "Male" ? "male" : student.Gender == "Female" ? "female" : "")">
+                                    <div class="student-avatar @(student.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true ? "male" : student.Gender?.Equals("Female", StringComparison.OrdinalIgnoreCase) == true ? "female" : "")">
                                         <i class="bi bi-person-fill"></i>
                                     </div>
                                     <div class="student-status-badge">
-                                        <span class="badge bg-@(student.User.IsActive ? "success" : "secondary")">
-                                            @(student.User.IsActive ? "Active" : "Inactive")
-                                        </span>
+                                        @{
+                                            var statusBadgeClass = student.User.Status?.ToLower() switch
+                                            {
+                                                "active" => "success",
+                                                "inactive" => "secondary",
+                                                "suspend" => "warning",
+                                                "withdraw" => "danger",
+                                                _ => "secondary"
+                                            };
+                                            var statusText = student.User.Status ?? "Unknown";
+                                        }
+                                        <span class="badge bg-@statusBadgeClass">@statusText</span>
                                     </div>
                                 </div>
                                 <div class="card-body text-center">
                                     <h5 class="mb-1">@student.User.FullName</h5>
                                     <p class="text-muted small mb-2">@student.StudentId</p>
-                                    @if (student.Gender != null)
+                                    @if (!string.IsNullOrEmpty(student.Gender))
                                     {
                                         <p class="text-primary small mb-3">
-                                            <i class="bi bi-@(student.Gender == "Male" ? "person" : "person-dress") me-1"></i>
+                                            <i class="bi bi-@(student.Gender.Equals("Male", StringComparison.OrdinalIgnoreCase) ? "person" : "person-dress") me-1"></i>
                                             @student.Gender
                                         </p>
                                     }
@@ -235,13 +246,14 @@
                                                 <div class="stat-label">Classes</div>
                                             </div>
                                         </div>
-                                        @if (student.Parent != null)
+                                        @if (student.Parent != null && student.Parent.User != null)
                                         {
                                             <div class="stat-item">
                                                 <i class="bi bi-person-check text-info"></i>
                                                 <div class="stat-info">
-                                                    <div class="stat-number">?</div>
-                                                    <div class="stat-label">Parent</div>
+                                                    <div class="stat-number"><i class="bi bi-check-lg text-success"></i>
+                                                    </div>
+                                                    <div class="stat-label">@student.Parent.User.FullName</div>
                                                 </div>
                                             </div>
                                         }
@@ -250,7 +262,7 @@
                                             <div class="stat-item">
                                                 <i class="bi bi-person-x text-secondary"></i>
                                                 <div class="stat-info">
-                                                    <div class="stat-number">?</div>
+                                                    <div class="stat-number"><i class="bi bi-x-lg text-secondary"></i></div>
                                                     <div class="stat-label">No Parent</div>
                                                 </div>
                                             </div>
@@ -323,7 +335,7 @@
                                         data-name="@student.User.FullName.ToLower()"
                                         data-email="@student.User.Email.ToLower()"
                                         data-id="@student.StudentId.ToLower()"
-                                        data-status="@(student.User.IsActive ? "active" : "inactive")"
+                                        data-status="@(student.User.Status?.ToLower() ?? "unknown")"
                                         data-gender="@(student.Gender?.ToLower() ?? "")"
                                         data-parent="@(student.ParentId != null ? "with-parent" : "no-parent")">
                                         <td><strong>@student.StudentId</strong></td>
@@ -333,7 +345,7 @@
                                             @if (!string.IsNullOrEmpty(student.Gender))
                                             {
                                                 <span class="badge bg-@student.Gender">
-                                                    <i class="bi bi-@(student.Gender == "Male" ? "person" : "person-dress")"></i>
+                                                    <i class="bi bi-@(student.Gender.Equals("Male", StringComparison.OrdinalIgnoreCase) ? "person" : "person-dress")"></i>
                                                     @student.Gender
                                                 </span>
                                             }
@@ -343,7 +355,7 @@
                                             }
                                         </td>
                                         <td>
-                                            @if (student.Parent != null)
+                                            @if (student.Parent != null && student.Parent.User != null)
                                             {
                                                 <span class="badge bg-info">@student.Parent.User.FullName</span>
                                             }
@@ -354,9 +366,18 @@
                                         </td>
                                         <td><span class="badge bg-warning text-dark">@(student.Enrollments?.Count ?? 0)</span></td>
                                         <td>
-                                            <span class="badge bg-@(student.User.IsActive ? "success" : "secondary")">
-                                                @(student.User.IsActive ? "Active" : "Inactive")
-                                            </span>
+                                            @{
+                                                var statusBadgeClass = student.User.Status?.ToLower() switch
+                                                {
+                                                    "active" => "success",
+                                                    "inactive" => "secondary",
+                                                    "suspend" => "warning",
+                                                    "withdraw" => "danger",
+                                                    _ => "secondary"
+                                                };
+                                                var statusText = student.User.Status ?? "Unknown";
+                                            }
+                                            <span class="badge bg-@statusBadgeClass">@statusText</span>
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
