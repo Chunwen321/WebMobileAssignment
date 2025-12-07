@@ -1,0 +1,403 @@
+@{
+    ViewBag.Title = "Take Attendance";
+    ViewBag.ActiveMenu = "AttendanceManagement";
+    ViewBag.ActiveSubmenu = "Take";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    
+    var sessions = ViewBag.Sessions as List<WebMobileAssignment.Models.AttendanceSession> ?? new List<WebMobileAssignment.Models.AttendanceSession>();
+}
+
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="bi bi-qr-code-scan text-danger me-2"></i>
+                    Take Attendance with PIN & QR Code
+                </h2>
+                <p class="text-muted">Generate PIN codes for students to mark attendance during class time</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Classes List with PIN Buttons -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-clipboard-check"></i>
+                    Your Classes
+                </h5>
+            </div>
+            <div class="p-4">
+                @if (ViewBag.Classes != null && ViewBag.Classes.Count > 0)
+                {
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note:</strong> PIN can only be generated once per class and is valid during class hours only.
+                    </div>
+
+                    @foreach (var cls in ViewBag.Classes)
+                    {
+                        var session = sessions.FirstOrDefault(s => s.ClassId == cls.ClassId);
+                        var hasSession = session != null;
+                        
+                        // Store nullable TimeSpan values in local variables
+                        TimeSpan? startTime = cls.StartTime;
+                        TimeSpan? endTime = cls.EndTime;
+                        string day = cls.Day;
+                        bool hasSchedule = startTime.HasValue && endTime.HasValue && !string.IsNullOrEmpty(day);
+                        
+                        <div class="class-pin-row mb-3">
+                            <!-- Left side: Class Info -->
+                            <div class="class-info-card">
+                                <div class="class-header">
+                                    <h5 class="class-name mb-1">@cls.ClassName</h5>
+                                    <span class="class-id text-muted">@cls.ClassId</span>
+                                </div>
+                                <div class="class-details mt-2">
+                                    <div class="detail-item">
+                                        <i class="bi bi-clock text-primary"></i>
+                                        <span>@(startTime.HasValue ? startTime.Value.ToString("hh\\:mm") : "--:--") - @(endTime.HasValue ? endTime.Value.ToString("hh\\:mm") : "--:--")</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="bi bi-geo-alt text-danger"></i>
+                                        <span>@(cls.RoomNumber ?? "No venue")</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="bi bi-calendar3 text-success"></i>
+                                        <span>@(day ?? "Not scheduled")</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="bi bi-people text-warning"></i>
+                                        <span>@cls.Enrollments.Count students</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right side: PIN Button/Display -->
+                            <div class="pin-action-card">
+                                @if (hasSession)
+                                {
+                                    <!-- Show existing PIN -->
+                                    <div class="pin-display-compact">
+                                        <div class="pin-label">PIN CODE</div>
+                                        <div class="pin-code-compact">@session.PinCode</div>
+                                        <button class="btn btn-sm btn-outline-primary mt-2 view-qr-btn" 
+                                                data-class-id="@cls.ClassId"
+                                                data-class-name="@cls.ClassName"
+                                                data-pin="@session.PinCode"
+                                                data-enrolled="@cls.Enrollments.Count"
+                                                data-day="@(day ?? "")"
+                                                data-start="@(startTime.HasValue ? startTime.Value.ToString("hh\\:mm") : "")"
+                                                data-end="@(endTime.HasValue ? endTime.Value.ToString("hh\\:mm") : "")">
+                                            <i class="bi bi-qr-code"></i> View QR
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <!-- Generate PIN Button -->
+                                    <button class="btn btn-danger btn-lg generate-pin-btn" 
+                                            data-class-id="@cls.ClassId"
+                                            data-class-name="@cls.ClassName"
+                                            data-enrolled="@cls.Enrollments.Count"
+                                            data-day="@(day ?? "")"
+                                            data-start="@(startTime.HasValue ? startTime.Value.ToString("hh\\:mm") : "")"
+                                            data-end="@(endTime.HasValue ? endTime.Value.ToString("hh\\:mm") : "")"
+                                            @(!hasSchedule ? "disabled" : "")>
+                                        <i class="bi bi-key-fill me-2"></i>Generate PIN
+                                    </button>
+                                    @if (!hasSchedule)
+                                    {
+                                        <small class="text-danger d-block mt-2">
+                                            <i class="bi bi-exclamation-triangle"></i> Schedule required
+                                        </small>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                        <p class="mt-3">No classes found. Please add classes first.</p>
+                        <a href="/Admin/ClassCreate" class="btn btn-primary mt-2">
+                            <i class="bi bi-plus-circle"></i> Add Class
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Active Attendance Session
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <h4 id="modalClassName" class="fw-bold mb-3"></h4>
+
+                <div class="pin-code-display mb-4">
+                    <div class="pin-label">6-DIGIT PIN CODE</div>
+                    <div id="modalPinCode" class="pin-code"></div>
+                    <button id="copyPinBtn" class="btn btn-outline-primary btn-sm mt-2">
+                        <i class="bi bi-clipboard"></i> Copy PIN
+                    </button>
+                </div>
+
+                <div class="qr-code-display mb-4">
+                    <div class="qr-label mb-2">SCAN QR CODE</div>
+                    <div id="qrCodeContainer" class="qr-container"></div>
+                    <p class="text-muted small mt-2">Students can scan this QR code with their phone</p>
+                </div>
+
+                <div class="session-info">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="info-box">
+                                <i class="bi bi-people-fill text-primary"></i>
+                                <div class="info-value" id="modalEnrolledCount">0</div>
+                                <div class="info-label">Enrolled</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="info-box">
+                                <i class="bi bi-clock-fill text-warning"></i>
+                                <div class="info-value" id="modalClassTime">--:--</div>
+                                <div class="info-label">Class Time</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    This PIN is valid only during class hours and cannot be regenerated.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Check-ins -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-list-check"></i>
+                    Recent Check-ins <span id="checkinCount" class="badge bg-success">0</span>
+                </h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Time</th>
+                            <th>Student</th>
+                            <th>Student ID</th>
+                            <th>Class</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentCheckins">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2">No check-ins yet</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <!-- Inline styles -->
+    <link rel="stylesheet" href="data:text/css,
+        .class-pin-row { display: flex; gap: 20px; align-items: stretch; border: 2px solid %23e0e0e0; border-radius: 12px; padding: 20px; background: linear-gradient(135deg, %23f8f9fa 0%, %23ffffff 100%); transition: all 0.3s ease; }
+        .class-pin-row:hover { border-color: %23dc3545; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.1); transform: translateY(-2px); }
+        .class-info-card { flex: 1; min-width: 0; }
+        .class-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .class-name { font-size: 1.25rem; font-weight: 700; color: %232c3e50; margin: 0; }
+        .class-id { font-size: 0.875rem; background: %23e9ecef; padding: 4px 12px; border-radius: 12px; font-weight: 600; }
+        .class-details { display: flex; flex-wrap: wrap; gap: 15px; }
+        .detail-item { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; color: %23555; }
+        .detail-item i { font-size: 1.1rem; }
+        .pin-action-card { width: 200px; display: flex; align-items: center; justify-content: center; border-left: 2px solid %23e0e0e0; padding-left: 20px; }
+        .generate-pin-btn { width: 100%; height: 80px; font-size: 1.1rem; font-weight: 600; border-radius: 10px; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2); transition: all 0.3s ease; }
+        .generate-pin-btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 6px 12px rgba(220, 53, 69, 0.3); }
+        .pin-display-compact { text-align: center; background: linear-gradient(135deg, %23667eea 0%, %23764ba2 100%); border-radius: 10px; padding: 20px; color: white; width: 100%; }
+        .pin-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 2px; opacity: 0.9; margin-bottom: 8px; }
+        .pin-code-compact { font-size: 2rem; font-weight: 700; letter-spacing: 8px; font-family: 'Courier New', monospace; margin-bottom: 10px; }
+        .pin-code-display { background: linear-gradient(135deg, %23667eea 0%, %23764ba2 100%); border-radius: 15px; padding: 30px; color: white; }
+        .pin-code { font-size: 3.5rem; font-weight: 700; letter-spacing: 15px; font-family: 'Courier New', monospace; }
+        .qr-code-display { padding: 20px; background: %23f8f9fa; border-radius: 10px; }
+        .qr-label { font-weight: 600; color: %23666; font-size: 0.9rem; letter-spacing: 1px; }
+        .qr-container { display: inline-block; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .info-box { padding: 15px; background: %23f8f9fa; border-radius: 8px; text-align: center; }
+        .info-box i { font-size: 1.5rem; margin-bottom: 8px; }
+        .info-value { font-size: 1.5rem; font-weight: 700; color: %23333; }
+        .info-label { font-size: 0.8rem; color: %23666; text-transform: uppercase; }
+        @@media (max-width: 768px) { .class-pin-row { flex-direction: column; } .pin-action-card { width: 100%; border-left: none; border-top: 2px solid %23e0e0e0; padding-left: 0; padding-top: 20px; } }
+    " />
+    
+    <script>
+        let currentSessionId = null;
+        let checkInPollInterval = null;
+
+        $(document).ready(function() {
+            console.log('Attendance Take page initialized');
+
+            // Generate PIN button click
+            $('.generate-pin-btn').click(function() {
+                const btn = $(this);
+                const classId = btn.data('class-id');
+                const className = btn.data('class-name');
+                const enrolled = btn.data('enrolled');
+                const classDay = btn.data('day');
+                const startTime = btn.data('start');
+                const endTime = btn.data('end');
+
+                console.log('Generating PIN for:', className);
+
+                // Disable button and show loading
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Generating...');
+
+                $.ajax({
+                    url: '/Admin/GenerateAttendancePin',
+                    type: 'POST',
+                    data: { classId: classId },
+                    success: function(response) {
+                        console.log('Response:', response);
+                        if (response.success) {
+                            // Replace button with PIN display
+                            const pinDisplay = `
+                                <div class="pin-display-compact">
+                                    <div class="pin-label">PIN CODE</div>
+                                    <div class="pin-code-compact">${response.pinCode}</div>
+                                    <button class="btn btn-sm btn-outline-primary mt-2 view-qr-btn" 
+                                            data-class-id="${classId}"
+                                            data-class-name="${className}"
+                                            data-pin="${response.pinCode}"
+                                            data-enrolled="${enrolled}"
+                                            data-day="${classDay}"
+                                            data-start="${startTime}"
+                                            data-end="${endTime}">
+                                        <i class="bi bi-qr-code"></i> View QR
+                                    </button>
+                                </div>
+                            `;
+                            btn.closest('.pin-action-card').html(pinDisplay);
+
+                            // Show success message
+                            alert(`PIN code ${response.pinCode} generated successfully for ${className}!`);
+                        } else {
+                            alert('Error: ' + response.message);
+                            btn.prop('disabled', false).html('<i class="bi bi-key-fill me-2"></i>Generate PIN');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                        alert('Failed to generate PIN. Please try again.');
+                        btn.prop('disabled', false).html('<i class="bi bi-key-fill me-2"></i>Generate PIN');
+                    }
+                });
+            });
+
+            // View QR button click (delegated event)
+            $(document).on('click', '.view-qr-btn', function() {
+                const btn = $(this);
+                const className = btn.data('class-name');
+                const pinCode = btn.data('pin');
+                const enrolled = btn.data('enrolled');
+                const classDay = btn.data('day');
+                const startTime = btn.data('start');
+                const endTime = btn.data('end');
+
+                showQRModal(className, pinCode, enrolled, classDay, startTime, endTime);
+            });
+
+            // Copy PIN button
+            $(document).on('click', '#copyPinBtn', function() {
+                const pin = $('#modalPinCode').text();
+                navigator.clipboard.writeText(pin).then(function() {
+                    $('#copyPinBtn').html('<i class="bi bi-check"></i> Copied!');
+                    setTimeout(() => {
+                        $('#copyPinBtn').html('<i class="bi bi-clipboard"></i> Copy PIN');
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Copy failed:', err);
+                    alert('Failed to copy PIN');
+                });
+            });
+        });
+
+        function showQRModal(className, pinCode, enrolled, classDay, startTime, endTime) {
+            $('#modalClassName').text(className);
+            $('#modalPinCode').text(pinCode);
+            $('#modalEnrolledCount').text(enrolled);
+            $('#modalClassTime').text(`${classDay} ${startTime}-${endTime}`);
+
+            // Generate QR Code
+            const request = window.location;
+            const baseUrl = `${request.protocol}//${request.host}`;
+            const qrUrl = `${baseUrl}/Admin/AttendancePinEntry?pin=${pinCode}`;
+
+            try {
+                $('#qrCodeContainer').empty();
+                new QRCode(document.getElementById("qrCodeContainer"), {
+                    text: qrUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            } catch (err) {
+                console.error('QR Code generation failed:', err);
+            }
+
+            // Show modal
+            new bootstrap.Modal(document.getElementById('qrModal')).show();
+        }
+
+        function addCheckInRow(data) {
+            if ($('#recentCheckins tr td[colspan="5"]').length) {
+                $('#recentCheckins').empty();
+            }
+
+            const row = `
+                <tr class="table-success">
+                    <td>${data.time}</td>
+                    <td>${data.studentName}</td>
+                    <td>${data.studentId}</td>
+                    <td>${data.className}</td>
+                    <td><span class="badge bg-success">Present</span></td>
+                </tr>
+            `;
+            $('#recentCheckins').prepend(row);
+            
+            const count = parseInt($('#checkinCount').text()) + 1;
+            $('#checkinCount').text(count);
+        }
+    </script>
+}

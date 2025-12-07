@@ -1,0 +1,233 @@
+@model IEnumerable<WebMobileAssignment.Models.Attendance>
+@{
+    ViewBag.Title = "Manage Attendance";
+    ViewBag.ActiveMenu = "AttendanceManagement";
+    ViewBag.ActiveSubmenu = "Manage";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="bi bi-clipboard-data text-danger me-2"></i>
+                    Manage Attendance
+                </h2>
+                <p class="text-muted">View and edit attendance records for today</p>
+            </div>
+            <div>
+                <a href="@Url.Action("AttendanceTake")" class="btn btn-danger">
+                    <i class="bi bi-qr-code-scan me-2"></i>Take Attendance
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-funnel"></i>
+                    Filters
+                </h5>
+            </div>
+            <form method="get" action="@Url.Action("AttendanceManagement")">
+                <div class="row g-3 p-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" class="form-control" value="@ViewBag.SelectedDate">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Class</label>
+                        <select name="classId" class="form-select">
+                            <option value="">All Classes</option>
+                            @foreach (var cls in ViewBag.Classes)
+                            {
+                                <option value="@cls.ClassId" selected="@(ViewBag.SelectedClassId == cls.ClassId)">
+                                    @cls.ClassName
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search me-2"></i>Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-list-check"></i>
+                    Attendance Records (@Model.Count())
+                </h5>
+            </div>
+            
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Time</th>
+                                <th>Student ID</th>
+                                <th>Student Name</th>
+                                <th>Class</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var attendance in Model)
+                            {
+                                <tr id="row-@attendance.AttendanceId">
+                                    <td>@attendance.TakenOn.ToString("hh:mm tt")</td>
+                                    <td><strong>@attendance.StudentId</strong></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                <i class="bi bi-person-circle text-primary"></i>
+                                            </div>
+                                            @attendance.Student.User.FullName
+                                        </div>
+                                    </td>
+                                    <td>@attendance.Class.ClassName</td>
+                                    <td>
+                                        <span class="badge bg-@(attendance.Status == "Present" ? "success" : attendance.Status == "Absent" ? "danger" : attendance.Status == "Late" ? "warning" : "secondary")">
+                                            @attendance.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-success status-btn" 
+                                                    data-id="@attendance.AttendanceId" 
+                                                    data-status="Present"
+                                                    title="Mark Present">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger status-btn" 
+                                                    data-id="@attendance.AttendanceId" 
+                                                    data-status="Absent"
+                                                    title="Mark Absent">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                            <button class="btn btn-outline-warning status-btn" 
+                                                    data-id="@attendance.AttendanceId" 
+                                                    data-status="Late"
+                                                    title="Mark Late">
+                                                <i class="bi bi-clock"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No attendance records found for the selected filters</p>
+                    <a href="@Url.Action("AttendanceTake")" class="btn btn-danger">
+                        <i class="bi bi-qr-code-scan me-2"></i>Take Attendance
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('.status-btn').click(function() {
+                const attendanceId = $(this).data('id');
+                const status = $(this).data('status');
+                const row = $(`#row-${attendanceId}`);
+
+                $.post('/Admin/UpdateAttendanceStatus', {
+                    attendanceId: attendanceId,
+                    status: status
+                }).done(function(response) {
+                    if (response.success) {
+                        // Update badge
+                        let badgeClass = 'bg-secondary';
+                        if (status === 'Present') badgeClass = 'bg-success';
+                        else if (status === 'Absent') badgeClass = 'bg-danger';
+                        else if (status === 'Late') badgeClass = 'bg-warning';
+
+                        row.find('.badge').attr('class', `badge ${badgeClass}`).text(status);
+                        
+                        // Flash success
+                        row.addClass('table-success');
+                        setTimeout(() => row.removeClass('table-success'), 1000);
+
+                        // Show toast notification
+                        showToast('Success', 'Attendance status updated');
+                    } else {
+                        showToast('Error', response.message, 'danger');
+                    }
+                }).fail(function() {
+                    showToast('Error', 'Failed to update status', 'danger');
+                });
+            });
+        });
+
+        function showToast(title, message, type = 'success') {
+            const toastHtml = `
+                <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <strong>${title}:</strong> ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            if (!$('#toastContainer').length) {
+                $('body').append('<div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3"></div>');
+            }
+            
+            const $toast = $(toastHtml);
+            $('#toastContainer').append($toast);
+            
+            const toast = new bootstrap.Toast($toast[0]);
+            toast.show();
+            
+            $toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+    </script>
+}
+
+<style>
+    .avatar-sm i {
+        font-size: 2rem;
+    }
+
+    .status-btn {
+        transition: all 0.2s;
+    }
+
+    .status-btn:hover {
+        transform: scale(1.1);
+    }
+</style>

@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TuitionAttendanceSystem.Controllers
+namespace WebMobileAssignment.Controllers
 {
     public class AdminController : Controller
     {
@@ -1255,6 +1255,327 @@ namespace TuitionAttendanceSystem.Controllers
             return View(classes);
         }
         // ==================== ATTENDANCE MANAGEMENT ====================
+        
+        // Take Attendance with PIN Code
+        public async Task<IActionResult> AttendanceTake()
+        {
+            ViewBag.ActiveMenu = "AttendanceManagement";
+            ViewBag.ActiveSubmenu = "Take";
+            ViewBag.Title = "Take Attendance";
+            
+            // Load all classes
+            ViewBag.Classes = await _context.Classes
+                .Include(c => c.Teacher)
+                .ThenInclude(t => t.User)
+                .Include(c => c.Enrollments)
+                .OrderBy(c => c.ClassName)
+                .ToListAsync();
+            
+            // Load all existing sessions
+            ViewBag.Sessions = await _context.AttendanceSessions
+                .Where(s => s.IsActive)
+                .ToListAsync();
+            
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GenerateAttendancePin(string classId)
+        {
+            try
+            {
+                var classEntity = await _context.Classes
+                    .Include(c => c.Enrollments)
+                    .FirstOrDefaultAsync(c => c.ClassId == classId);
+
+                if (classEntity == null)
+                    return Json(new { success = false, message = "Class not found" });
+
+                // Check if class has schedule (required for time validation)
+                if (!classEntity.StartTime.HasValue || !classEntity.EndTime.HasValue || string.IsNullOrEmpty(classEntity.Day))
+                    return Json(new { success = false, message = "Class schedule not configured. Please set class day and time first." });
+
+                // Check if PIN already exists for this class
+                var existingSession = await _context.AttendanceSessions
+                    .FirstOrDefaultAsync(s => s.ClassId == classId);
+
+                if (existingSession != null)
+                    return Json(new { success = false, message = "PIN code has already been generated for this class. Each class can only have one PIN code." });
+
+                // Generate 6-digit PIN
+                var random = new Random();
+                var pinCode = random.Next(100000, 999999).ToString();
+
+                // Create session - expiry based on class end time
+                var sessionCount = await _context.AttendanceSessions.CountAsync();
+                var sessionId = $"SESSION{(sessionCount + 1):D5}";
+
+                // Calculate expiry date (class end time on the current day or next occurrence of class day)
+                var today = DateTime.Today;
+                var classEndTime = today.Add(classEntity.EndTime.Value);
+                
+                // If class end time has passed today, set expiry to next week's class
+                if (DateTime.Now > classEndTime)
+                {
+                    classEndTime = classEndTime.AddDays(7);
+                }
+
+                var session = new AttendanceSession
+                {
+                    SessionId = sessionId,
+                    PinCode = pinCode,
+                    ClassId = classId,
+                    CreatedByTeacherId = null, // Set to current teacher if auth implemented
+                    CreatedDate = DateTime.Now,
+                    ExpiryDate = classEndTime, // Valid until class end time
+                    IsActive = true,
+                    SessionType = "Class"
+                };
+
+                _context.AttendanceSessions.Add(session);
+                await _context.SaveChangesAsync();
+
+                // Get server URL for QR code
+                var request = HttpContext.Request;
+                var baseUrl = $"{request.Scheme}://{request.Host}";
+                var qrUrl = $"{baseUrl}/Admin/AttendancePinEntry?pin={pinCode}";
+
+                return Json(new
+                {
+                    success = true,
+                    sessionId = sessionId,
+                    pinCode = pinCode,
+                    qrUrl = qrUrl,
+                    expiryDate = session.ExpiryDate,
+                    className = classEntity.ClassName,
+                    enrolledCount = classEntity.Enrollments.Count,
+                    classDay = classEntity.Day,
+                    startTime = classEntity.StartTime.Value.ToString("hh\\:mm"),
+                    endTime = classEntity.EndTime.Value.ToString("hh\\:mm")
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // PIN Entry Page (Mobile-friendly)
+        public async Task<IActionResult> AttendancePinEntry(string? pin)
+        {
+            ViewBag.PrefilledPin = pin;
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SubmitAttendancePin(string pinCode, string studentId)
+        {
+            try
+            {
+                // Find active session with this PIN
+                var session = await _context.AttendanceSessions
+                    .Include(s => s.Class)
+                    .FirstOrDefaultAsync(s => s.PinCode == pinCode && s.IsActive);
+
+                if (session == null)
+                    return Json(new { success = false, message = "Invalid PIN code" });
+
+                // Validate class has schedule
+                if (!session.Class.StartTime.HasValue || !session.Class.EndTime.HasValue)
+                    return Json(new { success = false, message = "Class schedule not configured" });
+
+                // Check if current time is within class hours
+                var currentTime = DateTime.Now.TimeOfDay;
+                var classStartTime = session.Class.StartTime.Value;
+                var classEndTime = session.Class.EndTime.Value;
+
+                if (currentTime < classStartTime || currentTime > classEndTime)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = $"Attendance can only be taken during class hours ({classStartTime:hh\\:mm} - {classEndTime:hh\\:mm}). Current time: {DateTime.Now:hh\\:mm tt}" 
+                    });
+                }
+
+                // Check if today matches the class day
+                var currentDayOfWeek = DateTime.Now.DayOfWeek.ToString();
+                if (!string.IsNullOrEmpty(session.Class.Day) && !session.Class.Day.Equals(currentDayOfWeek, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = $"This class is scheduled for {session.Class.Day}, not {currentDayOfWeek}" 
+                    });
+                }
+
+                // Check if student exists and is enrolled in this class
+                var student = await _context.Students
+                    .Include(s => s.User)
+                    .Include(s => s.Enrollments)
+                    .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+                if (student == null)
+                    return Json(new { success = false, message = "Student not found" });
+
+                var isEnrolled = student.Enrollments.Any(e => e.ClassId == session.ClassId);
+                if (!isEnrolled)
+                    return Json(new { success = false, message = "Student not enrolled in this class" });
+
+                // Check if already marked attendance for today
+                var existingAttendance = await _context.Attendances
+                    .FirstOrDefaultAsync(a => a.StudentId == studentId && 
+                                              a.ClassId == session.ClassId && 
+                                              a.Date.Date == DateTime.Today);
+
+                if (existingAttendance != null)
+                    return Json(new { success = false, message = "Attendance already marked for today" });
+
+                // Create attendance record
+                var attCount = await _context.Attendances.CountAsync();
+                var attId = $"ATT{(attCount + 1):D5}";
+
+                var attendance = new Attendance
+                {
+                    AttendanceId = attId,
+                    StudentId = studentId,
+                    ClassId = session.ClassId,
+                    Date = DateTime.Now,
+                    TakenOn = DateTime.Now,
+                    Status = "Present",
+                    MarkedByTeacherId = session.CreatedByTeacherId
+                };
+
+                _context.Attendances.Add(attendance);
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Attendance marked successfully for {student.User.FullName}",
+                    studentName = student.User.FullName,
+                    className = session.Class.ClassName,
+                    time = DateTime.Now.ToString("hh:mm tt")
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Attendance Management (View/Edit Records)
+        public async Task<IActionResult> AttendanceManagement(string? classId, DateTime? date)
+        {
+            ViewBag.ActiveMenu = "AttendanceManagement";
+            ViewBag.ActiveSubmenu = "Manage";
+            ViewBag.Title = "Manage Attendance";
+
+            var selectedDate = date ?? DateTime.Today;
+            ViewBag.SelectedDate = selectedDate.ToString("yyyy-MM-dd");
+
+            var query = _context.Attendances
+                .Include(a => a.Student)
+                .ThenInclude(s => s.User)
+                .Include(a => a.Class)
+                .Where(a => a.Date.Date == selectedDate.Date);
+
+            if (!string.IsNullOrEmpty(classId))
+            {
+                query = query.Where(a => a.ClassId == classId);
+                ViewBag.SelectedClassId = classId;
+            }
+
+            var attendances = await query.OrderBy(a => a.Class.ClassName)
+                                          .ThenBy(a => a.Student.User.FullName)
+                                          .ToListAsync();
+
+            ViewBag.Classes = await _context.Classes.ToListAsync();
+
+            return View(attendances);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateAttendanceStatus(string attendanceId, string status)
+        {
+            try
+            {
+                var attendance = await _context.Attendances.FindAsync(attendanceId);
+                if (attendance == null)
+                    return Json(new { success = false, message = "Attendance record not found" });
+
+                attendance.Status = status;
+                attendance.TakenOn = DateTime.Now;
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Status updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Attendance Records/History
+        public async Task<IActionResult> AttendanceRecords(string? studentId, string? classId, DateTime? startDate, DateTime? endDate)
+        {
+            ViewBag.ActiveMenu = "AttendanceManagement";
+            ViewBag.ActiveSubmenu = "Records";
+            ViewBag.Title = "Attendance Records";
+
+            var query = _context.Attendances
+                .Include(a => a.Student)
+                .ThenInclude(s => s.User)
+                .Include(a => a.Class)
+                .Include(a => a.MarkedByTeacher)
+                .ThenInclude(t => t.User)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(studentId))
+            {
+                query = query.Where(a => a.StudentId == studentId);
+                ViewBag.SelectedStudentId = studentId;
+            }
+
+            if (!string.IsNullOrEmpty(classId))
+            {
+                query = query.Where(a => a.ClassId == classId);
+                ViewBag.SelectedClassId = classId;
+            }
+
+            if (startDate.HasValue)
+            {
+                query = query.Where(a => a.Date >= startDate.Value);
+                ViewBag.StartDate = startDate.Value.ToString("yyyy-MM-dd");
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(a => a.Date <= endDate.Value);
+                ViewBag.EndDate = endDate.Value.ToString("yyyy-MM-dd");
+            }
+
+            var records = await query.OrderByDescending(a => a.Date)
+                                     .ThenBy(a => a.Student.User.FullName)
+                                     .ToListAsync();
+
+            ViewBag.Students = await _context.Students.Include(s => s.User).ToListAsync();
+            ViewBag.Classes = await _context.Classes.ToListAsync();
+
+            // Calculate statistics
+            var totalRecords = records.Count;
+            var presentCount = records.Count(r => r.Status == "Present");
+            var absentCount = records.Count(r => r.Status == "Absent");
+            var lateCount = records.Count(r => r.Status == "Late");
+            var attendanceRate = totalRecords > 0 ? Math.Round((decimal)presentCount / totalRecords * 100, 1) : 0;
+
+            ViewBag.TotalRecords = totalRecords;
+            ViewBag.PresentCount = presentCount;
+            ViewBag.AbsentCount = absentCount;
+            ViewBag.LateCount = lateCount;
+            ViewBag.AttendanceRate = attendanceRate;
+
+            return View(records);
+        }
+
         public async Task<IActionResult> AttendanceIndex(string classId, DateTime? startDate, DateTime? endDate)
         {
             ViewBag.ActiveMenu = "AttendanceManagement";
