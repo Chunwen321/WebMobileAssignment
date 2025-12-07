@@ -1,0 +1,365 @@
+@{
+    ViewBag.Title = "Mark Attendance";
+    Layout = null; // Standalone mobile page
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>@ViewBag.Title - Attendance</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+
+        .attendance-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px 30px;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .pin-input-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .pin-digit {
+            width: 50px;
+            height: 60px;
+            font-size: 2rem;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-weight: 700;
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .pin-digit:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .student-id-input {
+            margin-bottom: 25px;
+        }
+
+        .student-id-input input {
+            font-size: 1.1rem;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+        }
+
+        .student-id-input input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            transition: transform 0.2s;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .success-icon {
+            font-size: 5rem;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        .error-alert {
+            margin-top: 20px;
+        }
+
+        .qr-scanned-badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            color: #999;
+            font-size: 0.85rem;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="attendance-container">
+        <div id="formSection">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <i class="bi bi-clipboard2-check-fill"></i>
+                </div>
+                <h1>Mark Attendance</h1>
+                <p class="subtitle">Enter your PIN code and Student ID</p>
+                
+                @if (!string.IsNullOrEmpty(ViewBag.PrefilledPin))
+                {
+                    <span class="qr-scanned-badge">
+                        <i class="bi bi-qr-code-scan"></i> QR Code Scanned
+                    </span>
+                }
+            </div>
+
+            <form id="attendanceForm">
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-center d-block mb-3">
+                        <i class="bi bi-key-fill text-primary"></i> 6-Digit PIN Code
+                    </label>
+                    <div class="pin-input-container">
+                        <input type="text" class="pin-digit" maxlength="1" id="pin1" pattern="[0-9]" inputmode="numeric">
+                        <input type="text" class="pin-digit" maxlength="1" id="pin2" pattern="[0-9]" inputmode="numeric">
+                        <input type="text" class="pin-digit" maxlength="1" id="pin3" pattern="[0-9]" inputmode="numeric">
+                        <input type="text" class="pin-digit" maxlength="1" id="pin4" pattern="[0-9]" inputmode="numeric">
+                        <input type="text" class="pin-digit" maxlength="1" id="pin5" pattern="[0-9]" inputmode="numeric">
+                        <input type="text" class="pin-digit" maxlength="1" id="pin6" pattern="[0-9]" inputmode="numeric">
+                    </div>
+                    <p class="keyboard-hint">
+                        <i class="bi bi-info-circle"></i> Tap to enter numbers
+                    </p>
+                </div>
+
+                <div class="student-id-input">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-person-badge-fill text-primary"></i> Student ID
+                    </label>
+                    <input type="text" class="form-control" id="studentId" placeholder="e.g., S0001" required>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <i class="bi bi-check-circle-fill me-2"></i>Submit Attendance
+                </button>
+
+                <div id="errorAlert" class="alert alert-danger error-alert d-none">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+            </form>
+        </div>
+
+        <div id="successSection" class="success-message">
+            <div class="success-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h2>Attendance Marked!</h2>
+            <p class="text-muted mt-3">
+                <strong id="successStudentName"></strong><br>
+                <span id="successClassName"></span><br>
+                <span id="successTime"></span>
+            </p>
+            <button class="btn btn-primary mt-4" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise me-2"></i>Mark Another
+            </button>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Auto-fill PIN if provided via QR code
+            const urlParams = new URLSearchParams(window.location.search);
+            const prefilledPin = urlParams.get('pin');
+            
+            if (prefilledPin && prefilledPin.length === 6) {
+                for (let i = 0; i < 6; i++) {
+                    $(`#pin${i + 1}`).val(prefilledPin[i]);
+                }
+                // Focus on student ID field
+                $('#studentId').focus();
+            } else {
+                // Focus on first PIN digit
+                $('#pin1').focus();
+            }
+
+            // PIN digit navigation
+            $('.pin-digit').on('input', function() {
+                const value = $(this).val();
+                
+                // Only allow numbers
+                if (!/^[0-9]$/.test(value)) {
+                    $(this).val('');
+                    return;
+                }
+
+                // Move to next input
+                const currentIndex = $('.pin-digit').index(this);
+                if (value && currentIndex < 5) {
+                    $('.pin-digit').eq(currentIndex + 1).focus();
+                } else if (currentIndex === 5) {
+                    // All PIN digits filled, move to student ID
+                    $('#studentId').focus();
+                }
+            });
+
+            // Backspace navigation
+            $('.pin-digit').on('keydown', function(e) {
+                if (e.key === 'Backspace' && !$(this).val()) {
+                    const currentIndex = $('.pin-digit').index(this);
+                    if (currentIndex > 0) {
+                        $('.pin-digit').eq(currentIndex - 1).focus();
+                    }
+                }
+            });
+
+            // Paste support
+            $('.pin-digit').first().on('paste', function(e) {
+                e.preventDefault();
+                const pastedText = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
+                const digits = pastedText.replace(/\D/g, '').substring(0, 6);
+                
+                for (let i = 0; i < digits.length; i++) {
+                    $(`#pin${i + 1}`).val(digits[i]);
+                }
+                
+                if (digits.length === 6) {
+                    $('#studentId').focus();
+                }
+            });
+
+            // Form submission
+            $('#attendanceForm').submit(function(e) {
+                e.preventDefault();
+
+                // Get PIN
+                let pinCode = '';
+                for (let i = 1; i <= 6; i++) {
+                    pinCode += $(`#pin${i}`).val();
+                }
+
+                // Validate
+                if (pinCode.length !== 6) {
+                    showError('Please enter all 6 digits of the PIN code');
+                    return;
+                }
+
+                const studentId = $('#studentId').val().trim();
+                if (!studentId) {
+                    showError('Please enter your Student ID');
+                    return;
+                }
+
+                // Disable button and show loading
+                $('#submitBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Submitting...');
+                $('#errorAlert').addClass('d-none');
+
+                // Submit
+                $.post('/Admin/SubmitAttendancePin', {
+                    pinCode: pinCode,
+                    studentId: studentId
+                }).done(function(response) {
+                    if (response.success) {
+                        showSuccess(response);
+                    } else {
+                        showError(response.message);
+                        $('#submitBtn').prop('disabled', false).html('<i class="bi bi-check-circle-fill me-2"></i>Submit Attendance');
+                    }
+                }).fail(function() {
+                    showError('Network error. Please try again.');
+                    $('#submitBtn').prop('disabled', false).html('<i class="bi bi-check-circle-fill me-2"></i>Submit Attendance');
+                });
+            });
+        });
+
+        function showError(message) {
+            $('#errorMessage').text(message);
+            $('#errorAlert').removeClass('d-none');
+            
+            // Shake animation
+            $('#errorAlert').addClass('shake');
+            setTimeout(() => $('#errorAlert').removeClass('shake'), 500);
+        }
+
+        function showSuccess(data) {
+            $('#successStudentName').text(data.studentName);
+            $('#successClassName').text(data.className);
+            $('#successTime').text('Marked at ' + data.time);
+            
+            $('#formSection').fadeOut(300, function() {
+                $('#successSection').fadeIn(300);
+            });
+        }
+    </script>
+
+    <style>
+        @@keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+    </style>
+</body>
+</html>

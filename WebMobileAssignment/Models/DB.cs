@@ -17,6 +17,7 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
     public DbSet<Enrollment> Enrollments { get; set; }
     public DbSet<Attendance> Attendances { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<AttendanceSession> AttendanceSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -355,4 +356,37 @@ public class Notification
     public string Status { get; set; } = "unread"; // read / unread
 
     public DateTime CreatedDate { get; set; } = DateTime.Now;
+}
+
+public class AttendanceSession
+{
+    [Key]
+    [MaxLength(20)]
+    public string SessionId { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(6)]
+    public string PinCode { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(20)]
+    public string ClassId { get; set; } = string.Empty;
+
+    [ForeignKey(nameof(ClassId))]
+    public Class Class { get; set; } = null!;
+
+    [MaxLength(20)]
+    public string? CreatedByTeacherId { get; set; }
+
+    [ForeignKey(nameof(CreatedByTeacherId))]
+    public Teacher? CreatedByTeacher { get; set; }
+
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+    public DateTime ExpiryDate { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    [MaxLength(20)]
+    public string SessionType { get; set; } = "Class"; // Class / Individual
 }

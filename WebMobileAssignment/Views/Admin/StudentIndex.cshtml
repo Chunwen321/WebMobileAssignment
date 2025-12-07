@@ -68,7 +68,7 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <div class="stat-label">Active Students</div>
-                    <div class="stat-value text-success">@Model.Count(s => s.User.IsActive)</div>
+                    <div class="stat-value text-success">@Model.Count(s => s.User.Status != null && s.User.Status.Equals("active", StringComparison.OrdinalIgnoreCase))</div>
                 </div>
                 <div class="card-icon green">
                     <i class="bi bi-check-circle"></i>
@@ -233,7 +233,7 @@
                                     @if (!string.IsNullOrEmpty(student.Gender))
                                     {
                                         <p class="text-primary small mb-3">
-                                            <i class="bi bi-@(student.Gender.Equals("Male", StringComparison.OrdinalIgnoreCase) ? "person" : "person-dress") me-1"></i>
+                                            <i class="bi bi-@(student.Gender.Equals("Male", StringComparison.OrdinalIgnoreCase) ? "person-standing" : "person-standing-dress") me-1"></i>
                                             @student.Gender
                                         </p>
                                     }
@@ -251,9 +251,8 @@
                                             <div class="stat-item">
                                                 <i class="bi bi-person-check text-info"></i>
                                                 <div class="stat-info">
-                                                    <div class="stat-number"><i class="bi bi-check-lg text-success"></i>
-                                                    </div>
-                                                    <div class="stat-label">@student.Parent.User.FullName</div>
+                                                    <div class="stat-number">@student.Parent.User.FullName</div>
+                                                    <div class="stat-label">Parent</div>
                                                 </div>
                                             </div>
                                         }
@@ -262,7 +261,7 @@
                                             <div class="stat-item">
                                                 <i class="bi bi-person-x text-secondary"></i>
                                                 <div class="stat-info">
-                                                    <div class="stat-number"><i class="bi bi-x-lg text-secondary"></i></div>
+                                                    <div class="stat-number">-</div>
                                                     <div class="stat-label">No Parent</div>
                                                 </div>
                                             </div>
