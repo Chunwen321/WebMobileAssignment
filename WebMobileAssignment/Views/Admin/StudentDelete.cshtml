@@ -58,7 +58,7 @@
                         </div>
                         <div class="mb-2">
                             <label class="small text-muted d-block">Date of Birth</label>
-                            <span>@Model.DateOfBirth.ToString("dd MMM yyyy")</span>
+                            <span>@Model.DateOfBirth?.ToString("dd MMM yyyy")</span>
                         </div>
                         <div class="mb-2">
                             <label class="small text-muted d-block">Gender</label>
@@ -70,7 +70,7 @@
                         <h6 class="text-uppercase text-muted small fw-bold mb-3">Academic Information</h6>
                         <div class="mb-2">
                             <label class="small text-muted d-block">Current Class</label>
-                            <span>@(Model.Class?.ClassName ?? "Not assigned")</span>
+                            <span>@(string.IsNullOrEmpty(Model.ClassId) ? "Not assigned" : Model.ClassId)</span>
                         </div>
                         <div class="mb-2">
                             <label class="small text-muted d-block">Parent</label>

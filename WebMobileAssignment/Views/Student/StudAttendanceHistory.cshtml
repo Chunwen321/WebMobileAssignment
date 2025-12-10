@@ -4,243 +4,448 @@
 }
 
 <div class="dashboard-card mb-4">
-    <div class="card-header-custom">
+    <div class="card-header-custom d-flex align-items-center justify-content-between">
         <h3 class="card-title">
-<i class="bi bi-clock-history"></i>
-  Attendance History
+            <i class="bi bi-clock-history"></i>
+            Attendance History
         </h3>
+
+        <div class="d-flex gap-2 align-items-center">
+            <!-- Search -->
+            <div class="input-group input-group-sm me-2">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input id="tableSearch" type="text" class="form-control" placeholder="Search (class, subject, remarks)" />
+            </div>
+
+            <!-- Export buttons -->
+            <button id="exportExcelBtn" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-download me-1"></i> Export Excel
+            </button>
+            <button id="exportPdfBtn" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-file-pdf me-1"></i> Export PDF
+            </button>
+        </div>
     </div>
 
     <!-- Filters -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-   <label class="form-label">Class</label>
-            <select class="form-select">
-        <option value="">All Classes</option>
-   <option>Mathematics</option>
-          <option>Science</option>
-      <option>English</option>
-    <option>History</option>
+            <label class="form-label">Class</label>
+            <select id="filterClass" class="form-select">
+                <option value="">All Classes</option>
+                <option>Form 5 Science</option>
+                <option>Mathematics</option>
+                <option>Science</option>
+                <option>English</option>
+                <option>History</option>
             </select>
         </div>
-   <div class="col-md-3">
-    <label class="form-label">Month</label>
-   <input type="month" class="form-control" value="2024-01">
-   </div>
-     <div class="col-md-3">
-   <label class="form-label">Status</label>
-         <select class="form-select">
-        <option value="">All Status</option>
-      <option>Present</option>
-   <option>Absent</option>
-        <option>Late</option>
-       </select>
- </div>
-   <div class="col-md-3">
-            <label class="form-label">&nbsp;</label>
-         <button class="btn btn-primary w-100">
-       <i class="bi bi-search me-2"></i>Search
-</button>
+
+        <div class="col-md-3">
+            <label class="form-label">Month</label>
+            <input id="filterMonth" type="month" class="form-control" value="2024-01" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select id="filterStatus" class="form-select">
+                <option value="">All Status</option>
+                <option>Present</option>
+                <option>Absent</option>
+                <option>Late</option>
+            </select>
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+            <button id="applyFilters" class="btn btn-primary w-100">
+                <i class="bi bi-search me-2"></i>Search
+            </button>
         </div>
     </div>
 
     <!-- Summary Cards -->
     <div class="row g-3 mb-4">
-<div class="col-md-3">
-    <div class="p-3 text-center" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
-       <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i>
-        <h4 class="mt-2 mb-0" style="color: #198754;">45</h4>
-        <small class="text-muted">Total Present</small>
-     </div>
-    </div>
-   <div class="col-md-3">
-    <div class="p-3 text-center" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
-      <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #dc3545;"></i>
-         <h4 class="mt-2 mb-0" style="color: #dc3545;">3</h4>
-   <small class="text-muted">Total Absent</small>
-      </div>
-        </div>
         <div class="col-md-3">
-   <div class="p-3 text-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
-     <i class="bi bi-clock-fill" style="font-size: 2rem; color: #ffc107;"></i>
-                <h4 class="mt-2 mb-0" style="color: #ffc107;">2</h4>
-  <small class="text-muted">Total Late</small>
-     </div>
+            <div class="p-3 text-center" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
+                <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i>
+                <h4 class="mt-2 mb-0" id="summaryPresent" style="color: #198754;">45</h4>
+                <small class="text-muted">Total Present</small>
+            </div>
         </div>
-   <div class="col-md-3">
-   <div class="p-3 text-center" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
-         <i class="bi bi-graph-up" style="font-size: 2rem; color: #0d6efd;"></i>
-  <h4 class="mt-2 mb-0" style="color: #0d6efd;">94%</h4>
-         <small class="text-muted">Attendance Rate</small>
+
+        <div class="col-md-3">
+            <div class="p-3 text-center" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
+                <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #dc3545;"></i>
+                <h4 class="mt-2 mb-0" id="summaryAbsent" style="color: #dc3545;">3</h4>
+                <small class="text-muted">Total Absent</small>
+            </div>
         </div>
-  </div>
+
+        <div class="col-md-3">
+            <div class="p-3 text-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
+                <i class="bi bi-clock-fill" style="font-size: 2rem; color: #ffc107;"></i>
+                <h4 class="mt-2 mb-0" id="summaryLate" style="color: #ffc107;">2</h4>
+                <small class="text-muted">Total Late</small>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="p-3 text-center" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
+                <i class="bi bi-graph-up" style="font-size: 2rem; color: #0d6efd;"></i>
+                <h4 class="mt-2 mb-0" id="summaryRate" style="color: #0d6efd;">94%</h4>
+                <small class="text-muted">Attendance Rate</small>
+            </div>
+        </div>
     </div>
 
     <!-- Attendance Table -->
     <div class="table-responsive">
-        <table class="table table-hover align-middle">
-<thead class="table-light">
-        <tr>
-         <th><input type="checkbox" class="form-check-input"></th>
-        <th>Date</th>
-           <th>Day</th>
-       <th>Class</th>
-      <th>Subject</th>
-          <th>Time In</th>
-                    <th>Time Out</th>
-      <th>Status</th>
-     <th>Remarks</th>
-            <th>Actions</th>
-      </tr>
-     </thead>
-   <tbody>
-       <tr>
-      <td><input type="checkbox" class="form-check-input"></td>
-  <td>
-    <i class="bi bi-calendar3 me-2 text-muted"></i>
- <strong>2024-01-15</strong>
-   </td>
-          <td>Monday</td>
-                  <td>Form 5 Science</td>
-         <td>Mathematics</td>
-           <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
-           <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
-     <td><span class="badge bg-success">Present</span></td>
-     <td>On time</td>
-      <td>
-     <button class="btn btn-sm btn-outline-primary" title="View Details">
-  <i class="bi bi-eye"></i>
-    </button>
-      </td>
-        </tr>
-          <tr>
-   <td><input type="checkbox" class="form-check-input"></td>
-         <td>
-       <i class="bi bi-calendar3 me-2 text-muted"></i>
-     <strong>2024-01-14</strong>
-     </td>
-    <td>Sunday</td>
-  <td>Form 5 Science</td>
-     <td>Science</td>
-      <td><i class="bi bi-clock me-1"></i>2:15 PM</td>
-         <td><i class="bi bi-clock me-1"></i>4:15 PM</td>
-        <td><span class="badge bg-warning">Late</span></td>
-<td>15 minutes late</td>
-        <td>
-      <button class="btn btn-sm btn-outline-primary" title="View Details">
-           <i class="bi bi-eye"></i>
-    </button>
-         </td>
-     </tr>
+        <table id="attendanceTable" class="table table-hover align-middle">
+            <thead class="table-light">
                 <tr>
-       <td><input type="checkbox" class="form-check-input"></td>
-          <td>
-    <i class="bi bi-calendar3 me-2 text-muted"></i>
-  <strong>2024-01-13</strong>
-   </td>
-     <td>Saturday</td>
-       <td>Form 5 Science</td>
-   <td>English</td>
-     <td>-</td>
-          <td>-</td>
-            <td><span class="badge bg-danger">Absent</span></td>
- <td>Medical leave</td>
-      <td>
-             <button class="btn btn-sm btn-outline-primary" title="View Details">
-           <i class="bi bi-eye"></i>
-    </button>
-       </td>
+                    <th style="width:36px;"><input id="chkAll" type="checkbox" class="form-check-input"></th>
+                    <th>Date</th>
+                    <th>Day</th>
+                    <th>Class</th>
+                    <th>Subject</th>
+                    <th>Time In</th>
+                    <th>Time Out</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                    <th style="width:120px;">Actions</th>
                 </tr>
-       <tr>
-      <td><input type="checkbox" class="form-check-input"></td>
-        <td>
-   <i class="bi bi-calendar3 me-2 text-muted"></i>
-      <strong>2024-01-12</strong>
-       </td>
-         <td>Friday</td>
-           <td>Form 5 Science</td>
+            </thead>
+            <tbody>
+                <!-- Example rows — replace with your server-side loop -->
+                <tr data-class="Form 5 Science" data-status="Present" data-month="2024-01">
+                    <td><input type="checkbox" class="form-check-input row-check"></td>
+                    <td><i class="bi bi-calendar3 me-2 text-muted"></i><strong>2024-01-15</strong></td>
+                    <td>Monday</td>
+                    <td>Form 5 Science</td>
                     <td>Mathematics</td>
-           <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
-       <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
-     <td><span class="badge bg-success">Present</span></td>
-        <td>On time</td>
-          <td>
-   <button class="btn btn-sm btn-outline-primary" title="View Details">
-          <i class="bi bi-eye"></i>
-             </button>
-        </td>
-      </tr>
- <tr>
-      <td><input type="checkbox" class="form-check-input"></td>
-<td>
-            <i class="bi bi-calendar3 me-2 text-muted"></i>
-        <strong>2024-01-11</strong>
-       </td>
-         <td>Thursday</td>
-   <td>Form 5 Science</td>
-       <td>Science</td>
-      <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
-  <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
+                    <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
+                    <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
                     <td><span class="badge bg-success">Present</span></td>
-      <td>On time</td>
-         <td>
-     <button class="btn btn-sm btn-outline-primary" title="View Details">
-   <i class="bi bi-eye"></i>
-         </button>
-            </td>
-         </tr>
-        <tr>
-         <td><input type="checkbox" class="form-check-input"></td>
-       <td>
-       <i class="bi bi-calendar3 me-2 text-muted"></i>
-        <strong>2024-01-10</strong>
- </td>
-               <td>Wednesday</td>
-   <td>Form 5 Science</td>
-         <td>History</td>
-   <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
-           <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
-      <td><span class="badge bg-success">Present</span></td>
-          <td>On time</td>
-  <td>
-     <button class="btn btn-sm btn-outline-primary" title="View Details">
-       <i class="bi bi-eye"></i>
-          </button>
-   </td>
-   </tr>
+                    <td>On time</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary btn-view" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+
+                <tr data-class="Form 5 Science" data-status="Late" data-month="2024-01">
+                    <td><input type="checkbox" class="form-check-input row-check"></td>
+                    <td><i class="bi bi-calendar3 me-2 text-muted"></i><strong>2024-01-14</strong></td>
+                    <td>Sunday</td>
+                    <td>Form 5 Science</td>
+                    <td>Science</td>
+                    <td><i class="bi bi-clock me-1"></i>2:15 PM</td>
+                    <td><i class="bi bi-clock me-1"></i>4:15 PM</td>
+                    <td><span class="badge bg-warning">Late</span></td>
+                    <td>15 minutes late</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary btn-view" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+
+                <tr data-class="Form 5 Science" data-status="Absent" data-month="2024-01">
+                    <td><input type="checkbox" class="form-check-input row-check"></td>
+                    <td><i class="bi bi-calendar3 me-2 text-muted"></i><strong>2024-01-13</strong></td>
+                    <td>Saturday</td>
+                    <td>Form 5 Science</td>
+                    <td>English</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td><span class="badge bg-danger">Absent</span></td>
+                    <td>Medical leave</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary btn-view" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- add more rows or render with Razor loop -->
             </tbody>
         </table>
     </div>
 
     <!-- Pagination -->
-  <div class="d-flex justify-content-between align-items-center mt-4">
-   <div class="text-muted">
-     Showing 1 to 6 of 50 entries
-   </div>
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <div class="text-muted">
+            Showing 1 to 6 of 50 entries
+        </div>
         <nav>
-      <ul class="pagination mb-0">
+            <ul class="pagination mb-0">
                 <li class="page-item disabled">
-        <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-         </li>
-         <li class="page-item active"><a class="page-link" href="#">1</a></li>
-           <li class="page-item"><a class="page-link" href="#">2</a></li>
-    <li class="page-item"><a class="page-link" href="#">3</a></li>
-       <li class="page-item"><a class="page-link" href="#">4</a></li>
-           <li class="page-item"><a class="page-link" href="#">5</a></li>
-          <li class="page-item">
-        <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-    </li>
-    </ul>
+                    <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item"><a class="page-link" href="#">4</a></li>
+                <li class="page-item"><a class="page-link" href="#">5</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+                </li>
+            </ul>
         </nav>
-</div>
-
-    <!-- Action Buttons -->
-    <div class="mt-4 d-flex gap-2">
-   <button class="btn btn-outline-primary">
-         <i class="bi bi-download me-2"></i>Export to Excel
-        </button>
-        <button class="btn btn-outline-danger">
-            <i class="bi bi-file-pdf me-2"></i>Export to PDF
-      </button>
     </div>
 </div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="rowDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Attendance Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row mb-0">
+                    <dt class="col-4">Date</dt>
+                    <dd class="col-8" id="d_date"></dd>
+                    <dt class="col-4">Class</dt>
+                    <dd class="col-8" id="d_class"></dd>
+                    <dt class="col-4">Subject</dt>
+                    <dd class="col-8" id="d_subject"></dd>
+                    <dt class="col-4">Time In</dt>
+                    <dd class="col-8" id="d_in"></dd>
+                    <dt class="col-4">Time Out</dt>
+                    <dd class="col-8" id="d_out"></dd>
+                    <dt class="col-4">Status</dt>
+                    <dd class="col-8" id="d_status"></dd>
+                    <dt class="col-4">Remarks</dt>
+                    <dd class="col-8" id="d_remarks"></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Java Script -->
+@section Scripts {
+    <!-- SheetJS for Excel (same) -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <!-- jsPDF + AutoTable for document-style PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        (function () {
+          // Helper: get rows to export (visible / selected)
+          function getRowsForExport(mode) {
+            // mode: 'visible' | 'selected'
+            const allRows = Array.from(document.querySelectorAll('#attendanceTable tbody tr'));
+            let rows = [];
+            if (mode === 'selected') {
+              rows = allRows.filter(r => r.querySelector('.row-check') && r.querySelector('.row-check').checked);
+            } else {
+              rows = allRows.filter(r => r.style.display !== 'none');
+            }
+            return rows;
+          }
+
+          // Helper: convert rows to simple array of arrays (for Excel) and objects (for PDF)
+          function rowsToArray(rows) {
+            const arr = [];
+            rows.forEach(r => {
+              // skip checkbox cell
+              const cells = Array.from(r.querySelectorAll('td')).slice(1);
+              const rowData = cells.map(c => c.textContent.trim());
+              arr.push(rowData);
+            });
+            return arr;
+          }
+
+          function rowsToObjects(rows) {
+            // produce objects with named fields for autotable columns
+            return rows.map(r => {
+              const cells = Array.from(r.querySelectorAll('td')).slice(1);
+              return {
+                Date: cells[0]?.textContent.trim() || '',
+                Day: cells[1]?.textContent.trim() || '',
+                Class: cells[2]?.textContent.trim() || '',
+                Subject: cells[3]?.textContent.trim() || '',
+                TimeIn: cells[4]?.textContent.trim() || '',
+                TimeOut: cells[5]?.textContent.trim() || '',
+                Status: cells[6]?.textContent.trim() || '',
+                Remarks: cells[7]?.textContent.trim() || ''
+              };
+            });
+          }
+
+          // ---------------- EXCEL EXPORT (SheetJS) ----------------
+          // Map toolbar top buttons (if any) to the same functions to avoid duplicates
+          const exportVisibleExcelBtn = document.getElementById('exportVisibleExcel') || document.getElementById('exportExcelBtn');
+          const exportSelectedExcelBtn = document.getElementById('exportSelectedExcel') || document.getElementById('exportSelectedExcel');
+
+          if (exportVisibleExcelBtn) exportVisibleExcelBtn.addEventListener('click', () => exportRowsToXlsx(getRowsForExport('visible'), 'attendance-visible.xlsx'));
+          if (exportSelectedExcelBtn) exportSelectedExcelBtn.addEventListener('click', () => exportRowsToXlsx(getRowsForExport('selected'), 'attendance-selected.xlsx'));
+
+          function exportRowsToXlsx(rows, filename) {
+            if (!rows.length) {
+              alert('No rows to export.');
+              return;
+            }
+            // Build data array with header
+            const header = ['Date', 'Day', 'Class', 'Subject', 'Time In', 'Time Out', 'Status', 'Remarks'];
+            const data = [header].concat(rowsToArray(rows));
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+            XLSX.writeFile(wb, filename);
+          }
+
+          // ---------------- PDF EXPORT (document-style using jsPDF + autotable) ----------------
+          const exportVisiblePdfBtn = document.getElementById('exportVisiblePdf') || document.getElementById('exportPdfBtn');
+          const exportSelectedPdfBtn = document.getElementById('exportSelectedPdf') || document.getElementById('exportSelectedPdf');
+
+          if (exportVisiblePdfBtn) exportVisiblePdfBtn.addEventListener('click', () => createDocPdf(getRowsForExport('visible'), 'attendance-visible.pdf'));
+          if (exportSelectedPdfBtn) exportSelectedPdfBtn.addEventListener('click', () => createDocPdf(getRowsForExport('selected'), 'attendance-selected.pdf'));
+
+          async function createDocPdf(rows, filename) {
+            if (!rows.length) {
+              alert('No rows to export.');
+              return;
+            }
+
+            // Format header info: you can replace these with server values via Razor if desired
+            const schoolName = document.title || 'School Name';
+            const reportTitle = 'Attendance History Report';
+            const generatedOn = new Date().toLocaleString();
+            const filters = {
+              Class: (document.getElementById('filterClass')?.value || 'All'),
+              Month: (document.getElementById('filterMonth')?.value || 'All'),
+              Status: (document.getElementById('filterStatus')?.value || 'All'),
+              Query: (document.getElementById('tableSearch')?.value || '')
+            };
+
+            // Convert to objects
+            const dataObjects = rowsToObjects(rows);
+
+            // Initialize jsPDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+              unit: 'pt',
+              format: 'a4',
+              orientation: 'portrait'
+            });
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+            // Top header
+            const margin = 40;
+            let y = 40;
+
+            // Optional: add logo (if you have), else just title
+            // if you have a logo URL and CORS allows it, you can add using doc.addImage(...)
+
+            // Title
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(schoolName, margin, y);
+            y += 18;
+
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.text(reportTitle, margin, y);
+            // right side: generated date
+            doc.setFontSize(9);
+            doc.text('Generated: ' + generatedOn, pageWidth - margin - 200, 40, { align: 'right' });
+
+            y += 20;
+
+            // Filters info line(s)
+            doc.setFontSize(9);
+            doc.setTextColor(80);
+            const filterLine = `Class: ${filters.Class}    Month: ${filters.Month}    Status: ${filters.Status}    Search: ${filters.Query}`;
+            doc.text(filterLine, margin, y);
+            y += 18;
+
+            // add a horizontal line
+            doc.setDrawColor(230);
+            doc.setLineWidth(0.5);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 12;
+
+            // Prepare table columns and rows for autoTable
+            const columns = [
+              { header: 'Date', dataKey: 'Date' },
+              { header: 'Day', dataKey: 'Day' },
+              { header: 'Class', dataKey: 'Class' },
+              { header: 'Subject', dataKey: 'Subject' },
+              { header: 'Time In', dataKey: 'TimeIn' },
+              { header: 'Time Out', dataKey: 'TimeOut' },
+              { header: 'Status', dataKey: 'Status' },
+              { header: 'Remarks', dataKey: 'Remarks' }
+            ];
+
+            // Customize styles for header / body
+            doc.autoTable({
+              startY: y,
+              head: [columns.map(c => c.header)],
+              body: dataObjects.map(o => columns.map(c => o[c.dataKey])),
+              styles: { fontSize: 9, cellPadding: 6 },
+              headStyles: { fillColor: [245, 245, 245], textColor: 40, fontStyle: 'bold' },
+              columnStyles: {
+                0: { cellWidth: 60 },  // Date
+                1: { cellWidth: 50 },  // Day
+                2: { cellWidth: 80 },  // Class
+                3: { cellWidth: 100 }, // Subject
+                4: { cellWidth: 55 },  // Time In
+                5: { cellWidth: 55 },  // Time Out
+                6: { cellWidth: 55 },  // Status
+                7: { cellWidth: 120 }  // Remarks
+              },
+              didDrawPage: function (data) {
+                // Footer
+                const str = 'Page ' + doc.internal.getNumberOfPages();
+                doc.setFontSize(9);
+                doc.text(str, pageWidth - margin, doc.internal.pageSize.getHeight() - 30, { align: 'right' });
+              },
+              margin: { left: margin, right: margin }
+            });
+
+            // Save file
+            doc.save(filename);
+          }
+
+          // ---------------- Wire top toolbar buttons (optional duplicates) ----------------
+          // If you have top toolbar buttons (e.g., exportExcelBtn, exportPdfBtn), map them to the same functions
+          const topExcelBtn = document.getElementById('exportExcelBtn');
+          if (topExcelBtn) {
+            topExcelBtn.addEventListener('click', () => exportRowsToXlsx(getRowsForExport('visible'), 'attendance-visible.xlsx'));
+          }
+          const topPdfBtn = document.getElementById('exportPdfBtn');
+          if (topPdfBtn) {
+            topPdfBtn.addEventListener('click', () => createDocPdf(getRowsForExport('visible'), 'attendance-visible.pdf'));
+          }
+
+          // ---------------- Select all checkbox behavior (keep) ----------------
+          const chkAll = document.getElementById('chkAll');
+          if (chkAll) {
+            chkAll.addEventListener('change', function () {
+              const checked = this.checked;
+              document.querySelectorAll('.row-check').forEach(cb => cb.checked = checked);
+            });
+          }
+
+          // If your page has the old bottom export buttons, attach them as well:
+          const eVisible = document.getElementById('exportVisibleExcel');
+          if (eVisible) eVisible.addEventListener('click', () => exportRowsToXlsx(getRowsForExport('visible'), 'attendance-visible.xlsx'));
+          const eSelected = document.getElementById('exportSelectedExcel');
+          if (eSelected) eSelected.addEventListener('click', () => exportRowsToXlsx(getRowsForExport('selected'), 'attendance-selected.xlsx'));
+          const pVisible = document.getElementById('exportVisiblePdf');
+          if (pVisible) pVisible.addEventListener('click', () => createDocPdf(getRowsForExport('visible'), 'attendance-visible.pdf'));
+          const pSelected = document.getElementById('exportSelectedPdf');
+          if (pSelected) pSelected.addEventListener('click', () => createDocPdf(getRowsForExport('selected'), 'attendance-selected.pdf'));
+
+        })();
+    </script>
+}
+

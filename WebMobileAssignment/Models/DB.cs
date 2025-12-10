@@ -8,7 +8,7 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
 {
     // DB Sets
     public DbSet<User> Users { get; set; }
-    // REMOVED: public DbSet<Admin> Admins { get; set; }
+    public DbSet<Admin> Admins { get; set; }
     public DbSet<Teacher> Teachers { get; set; }
     public DbSet<Student> Students { get; set; }
     public DbSet<Parent> Parents { get; set; }
@@ -17,6 +17,7 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
     public DbSet<Enrollment> Enrollments { get; set; }
     public DbSet<Attendance> Attendances { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<AttendanceSession> AttendanceSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,6 +36,12 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Configure cascade delete behavior for User relationships
+        modelBuilder.Entity<Admin>()
+            .HasOne(a => a.User)
+            .WithMany()
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Teacher>()
             .HasOne(t => t.User)
             .WithMany()
@@ -110,8 +117,23 @@ public class User
     [MaxLength(20)]
     public string Status { get; set; } = "active"; // active / inactive / suspend / withdraw
 
+    public bool IsActive { get; set; } = true;
+
     // Navigation property
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+}
+
+public class Admin
+{
+    [Key]
+    [MaxLength(20)]
+    public string AdminId { get; set; } = string.Empty;
+
+    [MaxLength(20)]
+    public string UserId { get; set; } = string.Empty;
+
+    [ForeignKey(nameof(UserId))]
+    public User User { get; set; } = null!;
 }
 
 public class Teacher
@@ -125,6 +147,14 @@ public class Teacher
 
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
+
+    [MaxLength(100)]
+    public string? PhoneNumber { get; set; }
+
+    [MaxLength(100)]
+    public string? SubjectTeach { get; set; }
+
+    public DateTime? HireDate { get; set; }
 
     [MaxLength(100)]
     public string? Title { get; set; }
@@ -162,6 +192,17 @@ public class Student
     [ForeignKey(nameof(ParentId))]
     public Parent? Parent { get; set; }
 
+    [MaxLength(20)]
+    public string? ClassId { get; set; }
+
+    [ForeignKey(nameof(ClassId))]
+    public Class? Class { get; set; }
+
+    public DateTime? DateOfBirth { get; set; }
+
+    [MaxLength(10)]
+    public string? Gender { get; set; }
+
     // Navigation properties
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
@@ -178,6 +219,9 @@ public class Parent
 
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
+
+    [MaxLength(20)]
+    public string? PhoneNumber { get; set; }
 
     [MaxLength(200)]
     public string? Address { get; set; }
@@ -227,8 +271,14 @@ public class Class
     [MaxLength(20)]
     public string? Day { get; set; }
 
-    [MaxLength(20)]
-    public string? Time { get; set; }
+    public TimeSpan? StartTime { get; set; }
+
+    public TimeSpan? EndTime { get; set; }
+
+    public int MaxCapacity { get; set; }
+
+    public int CurrentCapacity { get; set; }
+
 
     // Navigation properties
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
@@ -270,6 +320,8 @@ public class Attendance
     [ForeignKey(nameof(ClassId))]
     public Class Class { get; set; } = null!;
 
+    public DateTime Date { get; set; } = DateTime.Now;
+
     public DateTime TakenOn { get; set; } = DateTime.Now;
 
     [Required]
@@ -304,4 +356,37 @@ public class Notification
     public string Status { get; set; } = "unread"; // read / unread
 
     public DateTime CreatedDate { get; set; } = DateTime.Now;
+}
+
+public class AttendanceSession
+{
+    [Key]
+    [MaxLength(20)]
+    public string SessionId { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(6)]
+    public string PinCode { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(20)]
+    public string ClassId { get; set; } = string.Empty;
+
+    [ForeignKey(nameof(ClassId))]
+    public Class Class { get; set; } = null!;
+
+    [MaxLength(20)]
+    public string? CreatedByTeacherId { get; set; }
+
+    [ForeignKey(nameof(CreatedByTeacherId))]
+    public Teacher? CreatedByTeacher { get; set; }
+
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+    public DateTime ExpiryDate { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    [MaxLength(20)]
+    public string SessionType { get; set; } = "Class"; // Class / Individual
 }

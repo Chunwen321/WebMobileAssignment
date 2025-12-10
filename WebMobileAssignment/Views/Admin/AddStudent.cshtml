@@ -17,7 +17,7 @@
 <div class="row">
     <div class="col-12">
         <div class="dashboard-card bg-white p-4 rounded shadow-sm">
-            <form asp-action="StudentCreate" method="post">
+            <form asp-action="StudentCreate" method="post" id="addStudentForm">
                 @Html.AntiForgeryToken()
                 
                 @if (!ViewData.ModelState.IsValid)
@@ -34,9 +34,12 @@
                     </div>
                 }
 
-                <h6 class="text-muted mb-3">Student Information</h6>
+                <!-- Student Personal Information -->
+                <h6 class="text-muted mb-3 border-bottom pb-2">
+                    <i class="bi bi-person-fill text-danger me-2"></i>Student Personal Information
+                </h6>
                 <div class="row">
-                    <!-- Name -->
+                    <!-- Full Name -->
                     <div class="col-md-6 mb-3">
                         <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
                         <input type="text" id="fullName" name="fullName" class="form-control" placeholder="e.g. Alex Smith" value="@ViewBag.FullName" required />
@@ -50,16 +53,16 @@
                 </div>
 
                 <div class="row">
-                    <!-- Password -->
-                    <div class="col-md-6 mb-3">
-                        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required />
-                    </div>
-
                     <!-- Date of Birth -->
                     <div class="col-md-6 mb-3">
                         <label for="dateOfBirth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
                         <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" value="@ViewBag.DateOfBirth" required />
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div class="col-md-6 mb-3">
+                        <label for="phoneNumber" class="form-label">Phone Number</label>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="e.g. 012-345-6789" value="@ViewBag.PhoneNumber" />
                     </div>
                 </div>
 
@@ -73,51 +76,151 @@
                             <option value="Female" selected="@(ViewBag.Gender == "Female")">Female</option>
                         </select>
                     </div>
+                </div>
 
-                    <!-- Parent Link -->
+                <!-- User Account Settings -->
+                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-gear-fill text-danger me-2"></i>Account Settings
+                </h6>
+                <div class="row">
+                    <!-- Password -->
                     <div class="col-md-6 mb-3">
-                        <label for="parentId" class="form-label">Parent</label>
-                        <select id="parentId" name="parentId" class="form-select">
+                        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required />
+                        <small class="text-muted">Minimum 8 characters</small>
+                    </div>
+                    <!-- Status -->
+                    <div class="col-md-6 mb-3">
+                        <label for="status" class="form-label">Account Status <span class="text-danger">*</span></label>
+                        <select id="status" name="status" class="form-select" required>
+                            <option value="active" selected="@(ViewBag.Status == "active" || ViewBag.Status == null)">Active</option>
+                            <option value="inactive" selected="@(ViewBag.Status == "inactive")">Inactive</option>
+                            <option value="suspend" selected="@(ViewBag.Status == "suspend")">Suspend</option>
+                            <option value="withdraw" selected="@(ViewBag.Status == "withdraw")">Withdraw</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Parent Information -->
+                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-people-fill text-danger me-2"></i>Parent/Guardian Information
+                </h6>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="parentSearchEmail" class="form-label">Search Parent by Email</label>
+                        <div class="input-group">
+                            <input type="email" id="parentSearchEmail" class="form-control" placeholder="parent@example.com" />
+                            <button type="button" id="btnSearchParent" class="btn btn-outline-primary">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                        <div id="parentSearchResult" class="mt-2"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Or select existing parent</label>
+                        <select id="parentSelect" name="parentId" class="form-select">
                             <option value="">-- Select Parent (Optional) --</option>
                             @if (ViewBag.Parents != null)
                             {
                                 @foreach (var parent in ViewBag.Parents)
                                 {
-                                    <option value="@parent.ParentId" selected="@(ViewBag.ParentId == parent.ParentId)">
-                                        @parent.User.FullName (@parent.ParentId)
-                                    </option>
+                                    <option value="@parent.ParentId" selected="@(ViewBag.ParentId == parent.ParentId)">@parent.User.FullName (@parent.ParentId)</option>
                                 }
                             }
                         </select>
                     </div>
                 </div>
 
-                <h6 class="text-muted mb-3 mt-3">Academic Details</h6>
+                <div id="parentFields">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="parentFullName" class="form-label">Parent Full Name</label>
+                            <input type="text" id="parentFullName" name="newParentFullName" class="form-control" placeholder="e.g. Robert Doe" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parentEmail" class="form-label">Parent Email</label>
+                            <input type="email" id="parentEmail" name="newParentEmail" class="form-control" placeholder="parent@example.com" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="parentPassword" class="form-label">Parent Password</label>
+                            <input type="password" id="parentPassword" name="newParentPassword" class="form-control" placeholder="Enter password (required if creating new)" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parentPhone" class="form-label">Parent Phone</label>
+                            <input type="tel" id="parentPhone" name="newParentPhone" class="form-control" placeholder="012-345-6789" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Details -->
+                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-book-fill text-danger me-2"></i>Academic Details
+                </h6>
                 <div class="row">
-                    <!-- Class -->
+                    <!-- Classes (Multiple Selection) -->
                     <div class="col-md-6 mb-3">
-                        <label for="classId" class="form-label">Assigned Class</label>
-                        <select id="classId" name="classId" class="form-select">
-                            <option value="">-- Select Class (Optional) --</option>
+                        <label for="classIds" class="form-label">Assigned Classes (Multiple Selection)</label>
+                        <select id="classIds" name="classIds" class="form-select" multiple size="8">
                             @if (ViewBag.Classes != null)
                             {
                                 @foreach (var cls in ViewBag.Classes)
                                 {
-                                    <option value="@cls.ClassId" selected="@(ViewBag.ClassId == cls.ClassId)">
-                                        @cls.ClassName (@cls.ClassId)
+                                    var isSelected = ViewBag.ClassIds != null && ((List<string>)ViewBag.ClassIds).Contains(cls.ClassId);
+                                    var availableSlots = cls.MaxCapacity - cls.CurrentCapacity;
+                                    var isFull = availableSlots <= 0;
+                                    var capacityText = isFull ? "FULL" : $"{availableSlots}/{cls.MaxCapacity} available";
+                                    var capacityColor = isFull ? "text-danger" : (availableSlots <= 5 ? "text-warning" : "text-success");
+                                    
+                                    <option value="@cls.ClassId" 
+                                            selected="@isSelected"
+                                            disabled="@isFull"
+                                            data-capacity="@availableSlots"
+                                            data-max="@cls.MaxCapacity"
+                                            data-current="@cls.CurrentCapacity">
+                                        @cls.ClassName (@cls.ClassId) - @capacityText
                                     </option>
                                 }
                             }
                         </select>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>Hold Ctrl (Cmd on Mac) to select multiple classes. 
+                            <span class="text-success">Green</span> = available, 
+                            <span class="text-warning">Yellow</span> = limited, 
+                            <span class="text-danger">Red</span> = full
+                        </small>
+                    </div>
+                    
+                    <!-- Selected Classes Display & Enrollment Date -->
+                    <div class="col-md-6 mb-3">
+                        <label for="enrollmentDate" class="form-label">Enrollment Date</label>
+                        <input type="date" id="enrollmentDate" name="enrollmentDate" class="form-control mb-3" value="@(ViewBag.EnrollmentDate ?? DateTime.Now.ToString("yyyy-MM-dd"))" />
+                        
+                        <label class="form-label d-block">Selected Classes:</label>
+                        <div id="selectedClassesList" class="border rounded p-2 bg-light" style="min-height: 150px; max-height: 200px; overflow-y: auto;">
+                            <small class="text-muted">No classes selected</small>
+                        </div>
+                        <small class="text-muted mt-2 d-block">
+                            <strong id="selectedCount">0</strong> class(es) selected
+                        </small>
                     </div>
                 </div>
 
-                <div class="row mt-4">
-                    <div class="col-12 text-end">
-                        <button type="reset" class="btn btn-light me-2">Reset</button>
-                        <button type="submit" class="btn btn-danger px-4">
-                            <i class="bi bi-save"></i> Save Student
-                        </button>
+                <!-- Form Actions -->
+                <div class="row mt-4 pt-3 border-top">
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                        <small class="text-muted"><span class="text-danger">*</span> Required fields</small>
+                        <div>
+                            <button type="reset" class="btn btn-light me-2">
+                                <i class="bi bi-arrow-clockwise"></i> Reset
+                            </button>
+                            <button type="submit" class="btn btn-danger px-4">
+                                <i class="bi bi-save"></i> Save Student
+                            </button>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -127,4 +230,193 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function() {
+            const btnSearch = document.getElementById('btnSearchParent');
+            const emailInput = document.getElementById('parentSearchEmail');
+            const resultDiv = document.getElementById('parentSearchResult');
+            const parentFields = document.getElementById('parentFields');
+            const parentSelect = document.getElementById('parentSelect');
+            const parentPasswordField = document.getElementById('parentPassword');
+            const parentPasswordContainer = parentPasswordField.closest('.col-md-6');
+            const classSelect = document.getElementById('classIds');
+            const selectedClassesList = document.getElementById('selectedClassesList');
+            const selectedCount = document.getElementById('selectedCount');
+
+            // show parent form by default (user can edit or fill)
+            parentFields.style.display = 'block';
+
+            // Class selection handler
+            if (classSelect) {
+                classSelect.addEventListener('change', function() {
+                    updateSelectedClassesList();
+                });
+                
+                // Initial update
+                updateSelectedClassesList();
+                
+                // Add visual styling to options based on capacity
+                updateClassOptionsStyles();
+            }
+
+            function updateClassOptionsStyles() {
+                const options = classSelect.querySelectorAll('option');
+                options.forEach(option => {
+                    const availableSlots = parseInt(option.getAttribute('data-capacity')) || 0;
+                    const isFull = availableSlots <= 0;
+                    
+                    if (isFull) {
+                        option.style.color = '#dc3545'; // Red for full
+                        option.style.fontWeight = 'bold';
+                    } else if (availableSlots <= 5) {
+                        option.style.color = '#ffc107'; // Yellow for limited
+                    } else {
+                        option.style.color = '#198754'; // Green for available
+                    }
+                });
+            }
+
+            function updateSelectedClassesList() {
+                const selectedOptions = Array.from(classSelect.selectedOptions);
+                
+                if (selectedOptions.length === 0) {
+                    selectedClassesList.innerHTML = '<small class="text-muted">No classes selected</small>';
+                    selectedCount.textContent = '0';
+                } else {
+                    const html = selectedOptions.map((option) => {
+                        const availableSlots = option.getAttribute('data-capacity');
+                        const maxCapacity = option.getAttribute('data-max');
+                        const currentCapacity = option.getAttribute('data-current');
+                        const classText = option.text;
+                        
+                        return `<div class="mb-2 p-2 bg-white border rounded">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <i class="bi bi-book me-1 text-danger"></i>
+                                            <strong>${classText.split(' - ')[0]}</strong>
+                                        </div>
+                                        <span class="badge bg-info">${currentCapacity}/${maxCapacity}</span>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="bi bi-people me-1"></i>${availableSlots} slot(s) available
+                                    </small>
+                                </div>`;
+                    }).join('');
+                    selectedClassesList.innerHTML = html;
+                    selectedCount.textContent = selectedOptions.length;
+                }
+            }
+
+            // Parent search functionality
+            btnSearch.addEventListener('click', async function() {
+                const email = emailInput.value.trim();
+                resultDiv.innerHTML = '';
+
+                if (!email) {
+                    resultDiv.innerHTML = '<div class="text-warning">Please enter an email to search.</div>';
+                    return;
+                }
+
+                resultDiv.innerHTML = '<div class="text-muted">Searching...</div>';
+                try {
+                    const resp = await fetch('/Admin/FindParentByEmail?email=' + encodeURIComponent(email));
+                    if (!resp.ok) throw new Error('Network error');
+                    const data = await resp.json();
+
+                    if (data && data.success && data.parentId) {
+                        // Parent found
+                        resultDiv.innerHTML = `<div class="alert alert-success p-2">Found parent: <strong>${data.fullName}</strong> (${data.parentId}) <button id="selectParentBtn" class="btn btn-sm btn-outline-primary ms-2">Select</button></div>`;
+                        document.getElementById('selectParentBtn').addEventListener('click', function() {
+                            // set parentSelect to this id if exists in options otherwise add
+                            let opt = Array.from(parentSelect.options).find(o => o.value === data.parentId);
+                            if (!opt) {
+                                const option = document.createElement('option');
+                                option.value = data.parentId;
+                                option.text = `${data.fullName} (${data.parentId})`;
+                                parentSelect.appendChild(option);
+                            }
+                            parentSelect.value = data.parentId;
+                            // populate parent fields
+                            populateParentFields(data, true);
+                            resultDiv.innerHTML = '<div class="alert alert-success p-2 mb-0">Parent selected. Existing parent account will be used.</div>';
+                        });
+                    } else {
+                        // Not found -> show new parent entry
+                        resultDiv.innerHTML = '<div class="alert alert-info p-2 mb-0">Parent not found. Fill below to create new parent account.</div>';
+                        parentFields.style.display = 'block';
+                        // prefill email
+                        document.getElementById('parentEmail').value = email;
+                        document.getElementById('parentFullName').value = '';
+                        document.getElementById('parentPassword').value = '';
+                        document.getElementById('parentPhone').value = '';
+                        // Show password field for new parent
+                        parentPasswordContainer.style.display = 'block';
+                        parentPasswordField.removeAttribute('readonly');
+                        // Clear parent select
+                        parentSelect.value = '';
+                    }
+                } catch (err) {
+                    resultDiv.innerHTML = '<div class="text-danger">Error searching parent.</div>';
+                }
+            });
+
+            parentSelect.addEventListener('change', async function() {
+                const id = parentSelect.value;
+                if (!id) {
+                    // clear fields for manual entry
+                    document.getElementById('parentFullName').value = '';
+                    document.getElementById('parentEmail').value = '';
+                    document.getElementById('parentPassword').value = '';
+                    document.getElementById('parentPhone').value = '';
+                    parentFields.style.display = 'block';
+                    parentPasswordContainer.style.display = 'block';
+                    parentPasswordField.removeAttribute('readonly');
+                    resultDiv.innerHTML = '';
+                    return;
+                }
+
+                // fetch parent details
+                try {
+                    const resp = await fetch('/Admin/GetParentById?id=' + encodeURIComponent(id));
+                    if (!resp.ok) throw new Error('Network error');
+                    const data = await resp.json();
+                    if (data && data.success) {
+                        populateParentFields(data, true);
+                        parentFields.style.display = 'block';
+                        resultDiv.innerHTML = '<div class="alert alert-success p-2 mb-0 mt-2">Existing parent account will be used.</div>';
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            });
+
+            function populateParentFields(data, isExistingParent = false) {
+                document.getElementById('parentFullName').value = data.fullName || '';
+                document.getElementById('parentEmail').value = data.email || '';
+                document.getElementById('parentPhone').value = data.phone || '';
+                
+                if (isExistingParent) {
+                    // Hide and disable password field for existing parents
+                    parentPasswordContainer.style.display = 'none';
+                    parentPasswordField.value = '';
+                    parentPasswordField.setAttribute('readonly', 'readonly');
+                    
+                    // Make parent fields readonly to show they're from existing record
+                    document.getElementById('parentFullName').setAttribute('readonly', 'readonly');
+                    document.getElementById('parentEmail').setAttribute('readonly', 'readonly');
+                    document.getElementById('parentPhone').setAttribute('readonly', 'readonly');
+                } else {
+                    // Show password field for new parents
+                    parentPasswordContainer.style.display = 'block';
+                    parentPasswordField.removeAttribute('readonly');
+                    
+                    // Make fields editable for new parent
+                    document.getElementById('parentFullName').removeAttribute('readonly');
+                    document.getElementById('parentEmail').removeAttribute('readonly');
+                    document.getElementById('parentPhone').removeAttribute('readonly');
+                }
+            }
+        })();
+    </script>
 }

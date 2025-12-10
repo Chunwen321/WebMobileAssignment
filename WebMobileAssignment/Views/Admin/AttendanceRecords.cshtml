@@ -1,0 +1,360 @@
+@model IEnumerable<WebMobileAssignment.Models.Attendance>
+@{
+    ViewBag.Title = "Attendance Records";
+    ViewBag.ActiveMenu = "AttendanceManagement";
+    ViewBag.ActiveSubmenu = "Records";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="bi bi-journal-text text-danger me-2"></i>
+                    Attendance Records
+                </h2>
+                <p class="text-muted">View comprehensive attendance history and analytics</p>
+            </div>
+            <div>
+                <button class="btn btn-outline-primary" onclick="window.print()">
+                    <i class="bi bi-printer me-2"></i>Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Records</div>
+                    <div class="stat-value text-primary">@ViewBag.TotalRecords</div>
+                </div>
+                <div class="card-icon blue">
+                    <i class="bi bi-clipboard-data"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Present</div>
+                    <div class="stat-value text-success">@ViewBag.PresentCount</div>
+                </div>
+                <div class="card-icon green">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Absent</div>
+                    <div class="stat-value text-danger">@ViewBag.AbsentCount</div>
+                </div>
+                <div class="card-icon red">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Attendance Rate</div>
+                    <div class="stat-value text-warning">@ViewBag.AttendanceRate%</div>
+                </div>
+                <div class="card-icon yellow">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-funnel"></i>
+                    Filter Records
+                </h5>
+            </div>
+            <form method="get" action="@Url.Action("AttendanceRecords")">
+                <div class="row g-3 p-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Student</label>
+                        <select name="studentId" class="form-select">
+                            <option value="">All Students</option>
+                            @foreach (var student in ViewBag.Students)
+                            {
+                                <option value="@student.StudentId" selected="@(ViewBag.SelectedStudentId == student.StudentId)">
+                                    @student.User.FullName (@student.StudentId)
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Class</label>
+                        <select name="classId" class="form-select">
+                            <option value="">All Classes</option>
+                            @foreach (var cls in ViewBag.Classes)
+                            {
+                                <option value="@cls.ClassId" selected="@(ViewBag.SelectedClassId == cls.ClassId)">
+                                    @cls.ClassName
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="startDate" class="form-control" value="@ViewBag.StartDate">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">End Date</label>
+                        <input type="date" name="endDate" class="form-control" value="@ViewBag.EndDate">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search me-2"></i>Apply
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Records Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-table"></i>
+                    Attendance History
+                </h5>
+            </div>
+
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="attendanceTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Student ID</th>
+                                <th>Student Name</th>
+                                <th>Class</th>
+                                <th>Status</th>
+                                <th>Time Marked</th>
+                                <th>Marked By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var record in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <i class="bi bi-calendar3 text-muted me-1"></i>
+                                        @record.Date.ToString("MMM dd, yyyy")
+                                    </td>
+                                    <td><strong>@record.StudentId</strong></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-xs me-2">
+                                                @if (record.Student.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true)
+                                                {
+                                                    <i class="bi bi-person-fill text-primary"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-person-fill" style="color: #ec4899;"></i>
+                                                }
+                                            </div>
+                                            @record.Student.User.FullName
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            @record.Class.ClassName
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (record.Status == "Present")
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-lg me-1"></i>Present
+                                            </span>
+                                        }
+                                        else if (record.Status == "Absent")
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-lg me-1"></i>Absent
+                                            </span>
+                                        }
+                                        else if (record.Status == "Late")
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-clock me-1"></i>Late
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-info">
+                                                @record.Status
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <i class="bi bi-clock text-muted me-1"></i>
+                                        @record.TakenOn.ToString("hh:mm tt")
+                                    </td>
+                                    <td>
+                                        @if (record.MarkedByTeacher != null)
+                                        {
+                                            <span class="text-muted">
+                                                <i class="bi bi-person-badge me-1"></i>
+                                                @record.MarkedByTeacher.User.FullName
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                <i class="bi bi-qr-code-scan me-1"></i>
+                                                Self-marked
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Info -->
+                <div class="p-3 border-top">
+                    <div class="text-muted">
+                        Showing @Model.Count() records
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No attendance records found</p>
+                    <p class="small text-muted">Try adjusting your filters or take attendance first</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Add export to Excel functionality
+        function exportToExcel() {
+            const table = document.getElementById('attendanceTable');
+            const wb = XLSX.utils.table_to_book(table);
+            XLSX.writeFile(wb, `attendance_records_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        // Print styles
+        window.onbeforeprint = function() {
+            document.body.classList.add('printing');
+        };
+
+        window.onafterprint = function() {
+            document.body.classList.remove('printing');
+        };
+    </script>
+}
+
+<style>
+    .avatar-xs i {
+        font-size: 1.5rem;
+    }
+
+    @@media print {
+        .dashboard-card {
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+
+        .btn, .card-header-custom, nav, .row.mb-4:first-child .btn {
+            display: none !important;
+        }
+
+        .table {
+            font-size: 0.85rem;
+        }
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border-left: 4px solid;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .card-icon.blue {
+        background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+
+    .card-icon.green {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+
+    .card-icon.red {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    .card-icon.yellow {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+</style>

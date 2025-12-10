@@ -1,19 +1,9 @@
-﻿@model IEnumerable<WebMobileAssignment.Models.Student>
+@model IEnumerable<WebMobileAssignment.Models.Student>
 @{
     ViewBag.Title = "Student Management";
+    ViewBag.ActiveMenu = "StudentManagement";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
-
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-person-badge-fill"></i> Student List</h5>
-            <a asp-action="AddStudent" class="btn btn-danger">
-                <i class="bi bi-plus-circle"></i> Add New Student
-            </a>
-        </div>
-    </div>
-</div>
 
 @if (TempData["SuccessMessage"] != null)
 {
@@ -33,65 +23,548 @@
     </div>
 }
 
-<div class="row">
+<!-- Header Section -->
+<div class="row mb-4">
     <div class="col-12">
-        <div class="dashboard-card">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Class</th>
-                            <th>Parent</th>
-                            <th>Gender</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model?.Count() > 0)
-                        {
-                            @foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td><strong>@item.StudentId</strong></td>
-                                    <td>@item.User.FullName</td>
-                                    <td>@item.User.Email</td>
-                                    <td>phone</td>
-                                    <td>@item.Class?.ClassName</td>
-                                    <td>@item.Parent?.ParentId</td>
-                                    <td>
-                                        <span class="badge bg-@(item.Gender == "Male" ? "Male" : "Female")">
-                                            @item.Gender
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <a asp-action="StudentDetails" asp-route-id="@item.StudentId" class="btn btn-outline-info" title="View">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            <a asp-action="StudentEdit" asp-route-id="@item.StudentId" class="btn btn-outline-warning" title="Edit">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <a asp-action="StudentDelete" asp-route-id="@item.StudentId" class="btn btn-outline-danger" title="Delete">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-4">No students found</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="bi bi-people-fill text-danger me-2"></i>
+                    Student Management
+                </h2>
+                <p class="text-muted">Manage all students, enrollments, and academic information</p>
+            </div>
+            <div>
+                <a asp-action="AddStudent" class="btn btn-danger">
+                    <i class="bi bi-plus-circle me-2"></i>Add New Student
+                </a>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Quick Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Students</div>
+                    <div class="stat-value text-primary">@Model.Count()</div>
+                </div>
+                <div class="card-icon blue">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-person-check me-1"></i>
+                <span>All registered students</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Active Students</div>
+                    <div class="stat-value text-success">@Model.Count(s => s.User.Status != null && s.User.Status.Equals("active", StringComparison.OrdinalIgnoreCase))</div>
+                </div>
+                <div class="card-icon green">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-arrow-up me-1"></i>
+                <span>Currently active</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Enrollments</div>
+                    <div class="stat-value text-warning">@Model.Sum(s => s.Enrollments?.Count ?? 0)</div>
+                </div>
+                <div class="card-icon yellow">
+                    <i class="bi bi-book"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-journal-bookmark me-1"></i>
+                <span>Class enrollments</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Avg Enrollments</div>
+                    <div class="stat-value text-danger">
+                        @{
+                            var avgEnroll = Model.Any() ? (decimal)Model.Sum(s => s.Enrollments?.Count ?? 0) / Model.Count() : 0;
+                        }
+                        @avgEnroll.ToString("F1")
+                    </div>
+                </div>
+                <div class="card-icon red">
+                    <i class="bi bi-bar-chart"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-graph-up me-1"></i>
+                <span>Per student</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter and Search -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-funnel"></i>
+                    Filter Students
+                </h5>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search by name, email, or ID...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspend">Suspend</option>
+                        <option value="withdraw">Withdraw</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Gender</label>
+                    <select class="form-select" id="genderFilter">
+                        <option value="">All Genders</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Parent</label>
+                    <select class="form-select" id="parentFilter">
+                        <option value="">All Parents</option>
+                        <option value="with-parent">With Parent</option>
+                        <option value="no-parent">No Parent</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button class="btn btn-secondary w-100" onclick="clearFilters()">
+                        <i class="bi bi-x-circle me-2"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Students Grid -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-list-ul"></i>
+                    All Students
+                </h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-danger active" onclick="toggleView('grid')">
+                        <i class="bi bi-grid-3x3-gap"></i> Grid
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="toggleView('list')">
+                        <i class="bi bi-list"></i> List
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid View -->
+            <div id="gridView" class="row g-3 p-3">
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var student in Model)
+                    {
+                        <div class="col-lg-4 col-md-6 student-card"
+                             data-name="@student.User.FullName.ToLower()"
+                             data-email="@student.User.Email.ToLower()"
+                             data-id="@student.StudentId.ToLower()"
+                             data-status="@(student.User.Status?.ToLower() ?? "unknown")"
+                             data-gender="@(student.Gender?.ToLower() ?? "")"
+                             data-parent="@(student.ParentId != null ? "with-parent" : "no-parent")">
+                            <div class="dashboard-card h-100">
+                                <div class="student-header">
+                                    <div class="student-avatar @(student.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true ? "male" : student.Gender?.Equals("Female", StringComparison.OrdinalIgnoreCase) == true ? "female" : "")">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <div class="student-status-badge">
+                                        @{
+                                            var statusBadgeClass = student.User.Status?.ToLower() switch
+                                            {
+                                                "active" => "success",
+                                                "inactive" => "secondary",
+                                                "suspend" => "warning",
+                                                "withdraw" => "danger",
+                                                _ => "secondary"
+                                            };
+                                            var statusText = student.User.Status ?? "Unknown";
+                                        }
+                                        <span class="badge bg-@statusBadgeClass">@statusText</span>
+                                    </div>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h5 class="mb-1">@student.User.FullName</h5>
+                                    <p class="text-muted small mb-2">@student.StudentId</p>
+                                    @if (!string.IsNullOrEmpty(student.Gender))
+                                    {
+                                        <p class="text-primary small mb-3">
+                                            <i class="bi bi-@(student.Gender.Equals("Male", StringComparison.OrdinalIgnoreCase) ? "person-standing" : "person-standing-dress") me-1"></i>
+                                            @student.Gender
+                                        </p>
+                                    }
+
+                                    <div class="student-stats">
+                                        <div class="stat-item">
+                                            <i class="bi bi-book text-warning"></i>
+                                            <div class="stat-info">
+                                                <div class="stat-number">@(student.Enrollments?.Count ?? 0)</div>
+                                                <div class="stat-label">Classes</div>
+                                            </div>
+                                        </div>
+                                        @if (student.Parent != null && student.Parent.User != null)
+                                        {
+                                            <div class="stat-item">
+                                                <i class="bi bi-person-check text-info"></i>
+                                                <div class="stat-info">
+                                                    <div class="stat-number">@student.Parent.User.FullName</div>
+                                                    <div class="stat-label">Parent</div>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="stat-item">
+                                                <i class="bi bi-person-x text-secondary"></i>
+                                                <div class="stat-info">
+                                                    <div class="stat-number">-</div>
+                                                    <div class="stat-label">No Parent</div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="student-contact mt-3">
+                                        <p class="small mb-1">
+                                            <i class="bi bi-envelope me-1"></i>
+                                            @student.User.Email
+                                        </p>
+                                        <p class="small mb-0">
+                                            <i class="bi bi-telephone me-1"></i>
+                                            @(student.User.PhoneNumber ?? "N/A")
+                                        </p>
+                                    </div>
+
+                                    <div class="mt-3 d-flex gap-2">
+                                        <a asp-action="StudentDetails" asp-route-id="@student.StudentId" class="btn btn-sm btn-outline-primary flex-fill">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                        <a asp-action="StudentEdit" asp-route-id="@student.StudentId" class="btn btn-sm btn-outline-warning flex-fill">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        <a asp-action="StudentDelete" asp-route-id="@student.StudentId" class="btn btn-sm btn-outline-danger flex-fill">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12">
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                            <p class="mt-3">No students found</p>
+                            <a asp-action="AddStudent" class="btn btn-danger">
+                                <i class="bi bi-plus-circle me-2"></i>Add Your First Student
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- List View -->
+            <div id="listView" class="d-none">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Gender</th>
+                                <th>Parent</th>
+                                <th>Classes</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model != null && Model.Any())
+                            {
+                                @foreach (var student in Model)
+                                {
+                                    <tr class="student-row"
+                                        data-name="@student.User.FullName.ToLower()"
+                                        data-email="@student.User.Email.ToLower()"
+                                        data-id="@student.StudentId.ToLower()"
+                                        data-status="@(student.User.Status?.ToLower() ?? "unknown")"
+                                        data-gender="@(student.Gender?.ToLower() ?? "")"
+                                        data-parent="@(student.ParentId != null ? "with-parent" : "no-parent")">
+                                        <td><strong>@student.StudentId</strong></td>
+                                        <td>@student.User.FullName</td>
+                                        <td>@student.User.Email</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(student.Gender))
+                                            {
+                                                <span class="badge bg-@student.Gender">
+                                                    <i class="bi bi-@(student.Gender.Equals("Male", StringComparison.OrdinalIgnoreCase) ? "person" : "person-dress")"></i>
+                                                    @student.Gender
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">N/A</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (student.Parent != null && student.Parent.User != null)
+                                            {
+                                                <span class="badge bg-info">@student.Parent.User.FullName</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No Parent</span>
+                                            }
+                                        </td>
+                                        <td><span class="badge bg-warning text-dark">@(student.Enrollments?.Count ?? 0)</span></td>
+                                        <td>
+                                            @{
+                                                var statusBadgeClass = student.User.Status?.ToLower() switch
+                                                {
+                                                    "active" => "success",
+                                                    "inactive" => "secondary",
+                                                    "suspend" => "warning",
+                                                    "withdraw" => "danger",
+                                                    _ => "secondary"
+                                                };
+                                                var statusText = student.User.Status ?? "Unknown";
+                                            }
+                                            <span class="badge bg-@statusBadgeClass">@statusText</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a asp-action="StudentDetails" asp-route-id="@student.StudentId" class="btn btn-sm btn-outline-primary" title="View">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a asp-action="StudentEdit" asp-route-id="@student.StudentId" class="btn btn-sm btn-outline-warning" title="Edit">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <a asp-action="StudentDelete" asp-route-id="@student.StudentId" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // View Toggle
+        function toggleView(view) {
+            const gridView = document.getElementById('gridView');
+            const listView = document.getElementById('listView');
+            const buttons = document.querySelectorAll('.btn-group button');
+
+            if (view === 'grid') {
+                gridView.classList.remove('d-none');
+                listView.classList.add('d-none');
+                buttons[0].classList.add('active');
+                buttons[1].classList.remove('active');
+            } else {
+                gridView.classList.add('d-none');
+                listView.classList.remove('d-none');
+                buttons[0].classList.remove('active');
+                buttons[1].classList.add('active');
+            }
+        }
+
+        // Filter functionality
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const genderFilter = document.getElementById('genderFilter');
+        const parentFilter = document.getElementById('parentFilter');
+
+        function filterStudents() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedStatus = statusFilter.value;
+            const selectedGender = genderFilter.value.toLowerCase();
+            const selectedParent = parentFilter.value;
+
+            document.querySelectorAll('.student-card, .student-row').forEach(card => {
+                const name = card.getAttribute('data-name');
+                const email = card.getAttribute('data-email');
+                const id = card.getAttribute('data-id');
+                const status = card.getAttribute('data-status');
+                const gender = card.getAttribute('data-gender');
+                const parent = card.getAttribute('data-parent');
+
+                let show = true;
+
+                // Search filter
+                if (searchTerm && !(name.includes(searchTerm) || email.includes(searchTerm) || id.includes(searchTerm))) {
+                    show = false;
+                }
+
+                // Status filter
+                if (selectedStatus && status !== selectedStatus) {
+                    show = false;
+                }
+
+                // Gender filter
+                if (selectedGender && gender !== selectedGender) {
+                    show = false;
+                }
+
+                // Parent filter
+                if (selectedParent && parent !== selectedParent) {
+                    show = false;
+                }
+
+                card.style.display = show ? '' : 'none';
+            });
+        }
+
+        searchInput.addEventListener('input', filterStudents);
+        statusFilter.addEventListener('change', filterStudents);
+        genderFilter.addEventListener('change', filterStudents);
+        parentFilter.addEventListener('change', filterStudents);
+
+        function clearFilters() {
+            searchInput.value = '';
+            statusFilter.value = '';
+            genderFilter.value = '';
+            parentFilter.value = '';
+            filterStudents();
+        }
+    </script>
+}
+
+<style>
+    .student-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px 20px;
+        text-align: center;
+        position: relative;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .student-avatar {
+        width: 80px;
+        height: 80px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        font-size: 2.5rem;
+        color: #667eea;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .student-avatar.male {
+        color: #0d6efd;
+    }
+
+    .student-avatar.female {
+        color: #ec4899;
+    }
+
+    .student-status-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .student-stats {
+        display: flex;
+        justify-content: space-around;
+        padding: 15px 0;
+        border-top: 1px solid #e0e0e0;
+        border-bottom: 1px solid #e0e0e0;
+        margin: 15px 0;
+    }
+
+    .student-stats .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .student-stats .stat-item i {
+        font-size: 1.5rem;
+    }
+
+    .student-stats .stat-info {
+        text-align: left;
+    }
+
+    .student-stats .stat-number {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .student-stats .stat-label {
+        font-size: 0.75rem;
+        color: #666;
+        text-transform: uppercase;
+    }
+
+    .student-contact {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 6px;
+    }
+
+    .student-contact p {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>

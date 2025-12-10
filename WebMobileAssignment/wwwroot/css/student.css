@@ -1,65 +1,267 @@
-/* ==================== STUDENT PORTAL STYLES (CLEANED & REORDERED) ==================== */
+/* ==================== STUDENT PORTAL STYLES ==================== */ 
+/* ==================== COLOR VARIABLES ==================== */ 
+/* * SIDEBAR COLORS (matching login page student icon) */
 
-/* ==================== COLOR VARIABLES ==================== */
-:root {
-    /* Primary Sidebar */
+:root { /* Primary Sidebar */
     --sidebar-bg-start: #2c3e50;
     --sidebar-bg-end: #34495e;
     --student-accent: #198754; /* main green */
     --student-accent-hover: rgba(25, 135, 84, 0.1);
-    --student-accent-active: rgba(25, 135, 84, 0.15);
-    /* Status Colors */
+    --student-accent-active: rgba(25, 135, 84, 0.15); /* Status Colors */
     --color-success: #198754;
     --color-danger: #dc3545;
     --color-warning: #ffc107;
-    --color-info: #0d6efd;
-    /* Background */
+    --color-info: #0d6efd; /* Background */
     --page-bg: #f5f7fa;
-    --card-bg: #ffffff;
-    /* Text Colors */
+    --card-bg: #ffffff; /* Text Colors */
     --text-primary: #2c3e50;
     --text-secondary: #6c757d;
     --text-muted: #6c757d;
 }
+/* * ICON COLOR REFERENCE (from login page) */
 
-/* ==================== ICON COLOR REFERENCE ==================== */
 .icon-red {
     color: #dc3545;
 }
 /* Admin */
+
 .icon-blue {
     color: #0d6efd;
 }
 /* Teacher */
+
 .icon-green {
     color: #02a145;
 }
 /* Student */
+
 .icon-yellow {
     color: #ffc107;
 }
-/* Parent - THIS IS OUR SIDEBAR COLOR! */
 
-/* ==================== UTILITY CLASSES ==================== */
-.badge-yellow {
+/* Button primary green theme */
+.btn-primary-green {
+    background: #198754;
+    border-color: #198754;
+    color: #ffffff;
+}
+
+    .btn-primary-green:hover {
+        background: #14693f;
+        border-color: #14693f;
+    }
+
+/* Card accent */
+.card-accent-green {
+    border-left: 4px solid #198754;
+}
+
+/* Badge/Tag */
+.badge-green {
     background: #198754;
     color: #ffffff;
 }
 
-.icon-bg-yellow {
+/* Icon backgrounds */
+.icon-bg-green {
     background: rgba(25, 135, 84, 0.1);
     color: #198754;
 }
 
-.card-accent-yellow {
-    border-left: 4px solid #198754;
+/* * UTILITY CLASSES */ 
+/* ==================== CLASS CARD STYLES ==================== */
+
+.class-card {
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+    .class-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+.class-header {
+    padding: 15px;
+}
+
+.class-meta {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.class-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+    .info-item label {
+        font-weight: 600;
+        color: #666;
+    }
+
+    .info-item span {
+        text-align: right;
+    }
+
+.class-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* ==================== CLASS DETAIL STYLES ==================== */
+
+.announcement-item {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+    .announcement-item h6 {
+        font-weight: 600;
+        color: #333;
+        >>>>>>> Stashed changes
+    }
+/* ==================== CLASS CARD STYLES ==================== */
+
+.class-card {
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+    .class-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+.class-header {
+    padding: 15px;
+}
+
+.class-meta {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.class-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+    .info-item label {
+        font-weight: 600;
+        color: #666;
+    }
+
+    .info-item span {
+        text-align: right;
+    }
+
+.class-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+}
+/* ==================== STATISTICS CARD STYLES ==================== */
+
+.stat-card {
+    text-align: center;
+    border-radius: 8px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card .stat-label {
+        font-weight: 500;
+        color: #666;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .stat-card .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #050505;
+        margin-bottom: 8px;
+    }
+/* ==================== CLASS DETAIL STYLES ==================== */
+
+.announcement-item {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+    .announcement-item h6 {
+        font-weight: 600;
+        color: #333;
+    }
+
+/* Card accent */
+
+.card-accent-green {
+    border-left: 4px solid #02a145;
+}
+
+/* Badge/Tag */
+
+.badge-green {
+    background: #02a145;
+    color: #ffffff;
+}
+
+/* Icon backgrounds */
+
+.icon-bg-green {
+    background: rgba(2, 161, 69, 0.1);
+    color: #02a145;
 }
 
 /* ==================== LAYOUT STRUCTURE ==================== */
+
 .student-layout {
     margin: 0;
     padding: 0;
-    background: var(--page-bg);
+    background: #f5f7fa;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -68,8 +270,8 @@
         min-height: auto;
         padding: 0;
     }
+/* Sidebar Styles */
 
-/* ==================== SIDEBAR ==================== */
 .sidebar {
     position: fixed;
     left: 0;
@@ -103,6 +305,7 @@
         font-size: 1.75rem;
         color: #02a145;
     }
+/* Sidebar Navigation */
 
 .sidebar-nav {
     flex: 1;
@@ -111,7 +314,6 @@
     overflow-x: hidden;
 }
 
-    /* custom scrollbar */
     .sidebar-nav::-webkit-scrollbar {
         width: 6px;
     }
@@ -161,12 +363,13 @@
     }
 
 .sidebar-item:hover {
-    background: rgba(255, 193, 7, 0.1);
+    background: rgba(2, 161, 69, 0.10);
     color: white;
 }
 
+
 .sidebar-item.active {
-    background: rgba(255, 193, 7, 0.15);
+    background: rgba(2, 161, 69, 0.15); /* soft green highlight */
     color: white;
     border-left: 4px solid #02a145;
 }
@@ -180,10 +383,10 @@
         width: 4px;
         background: #02a145;
     }
+/* Notification Badge */
 
-/* Notification badge inside sidebar item, if used */
 .notification-badge {
-    background: #dc3545;
+    background: #02a145;
     color: white;
     font-size: 0.7rem;
     font-weight: 600;
@@ -191,8 +394,8 @@
     border-radius: 10px;
     margin-left: auto;
 }
+/* Dropdown Menu */
 
-/* Dropdowns in sidebar */
 .sidebar-dropdown {
     margin: 0;
 }
@@ -228,18 +431,19 @@
     }
 
     .sidebar-subitem:hover {
-        background: rgba(255, 193, 7, 0.08);
+        background: rgba(2, 161, 69, 0.08);
         color: white;
         padding-left: 3.75rem;
     }
 
     .sidebar-subitem.active {
-        background: rgba(255, 193, 7, 0.12);
+        background: rgba(2, 161, 69, 0.12);
         color: white;
         font-weight: 600;
     }
 
-/* Sidebar footer */
+/* Sidebar Footer */
+
 .sidebar-footer {
     padding: 1rem 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -306,8 +510,8 @@
     .logout-btn i {
         font-size: 1.125rem;
     }
+/* Main Content Area */
 
-/* ==================== MAIN CONTENT ==================== */
 .main-content {
     margin-left: 280px;
     min-height: 100vh;
@@ -315,8 +519,8 @@
     flex-direction: column;
     transition: margin-left 0.3s ease;
 }
+/* Top Bar */
 
-/* ==================== TOPBAR ==================== */
 .topbar {
     background: white;
     padding: 1rem 1.5rem;
@@ -391,16 +595,16 @@
         padding: 0.15rem 0.4rem;
         border-radius: 10px;
     }
+/* Page Content */
 
-/* ==================== PAGE CONTENT ==================== */
 .page-content {
     flex: 1;
     padding: 2rem;
 }
+/* Cards */
 
-/* ==================== CARDS & COMPONENTS ==================== */
 .dashboard-card {
-    background: var(--card-bg);
+    background: white;
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -466,105 +670,8 @@
         color: #dc3545;
     }
 
-/* ==================== CLASS CARD STYLES ==================== */
-.class-card {
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-}
-
-    .class-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    }
-
-.class-header {
-    padding: 15px;
-}
-
-.class-meta {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-
-.class-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-}
-
-    .info-item label {
-        font-weight: 600;
-        color: #666;
-    }
-
-    .info-item span {
-        text-align: right;
-    }
-
-.class-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 0.9rem;
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-}
-
-/* ==================== STATISTICS CARD STYLES ==================== */
-.stat-card {
-    text-align: center;
-    border-radius: 8px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .stat-card .stat-label {
-        font-weight: 500;
-        color: #666;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 8px;
-    }
-
-    .stat-card .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #198754;
-        margin-bottom: 8px;
-    }
-
-/* ==================== ANNOUNCEMENTS / DETAILS ==================== */
-.announcement-item {
-    background: #f8f9fa;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-    .announcement-item h6 {
-        font-weight: 600;
-        color: #333;
-    }
-
-/* ==================== BUTTONS & FORMS ==================== */
 .btn-outline-primary {
-    background: #228B22;
+    background: #02a145;
     border: none;
     color: #2c3e50;
     padding: 0.75rem 2rem;
@@ -583,29 +690,16 @@
     .btn-outline-primary:active {
         transform: translateY(0);
     }
+/* Stats Cards */
 
-.btn-primary {
-    background: #228B22;
-    border: none;
-    color: #2c3e50;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.3s ease;
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #ffc107;
 }
 
-    .btn-primary:hover {
-        background: #02a145;
-        color: #2c3e50;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-    }
-
-    .btn-primary:active {
-        transform: translateY(0);
-    }
-
-/* ==================== STATS (ALTERNATIVE) ==================== */
 .stat-label {
     font-size: 0.875rem;
     color: #6c757d;
@@ -634,8 +728,8 @@
     .stat-change.negative {
         color: #dc3545;
     }
-
 /* ==================== PASSWORD INPUT STYLING ==================== */
+
 .password-field-group {
     margin-bottom: 1rem;
 }
@@ -687,8 +781,8 @@
     .btn-update-password:active {
         transform: translateY(0);
     }
-
 /* ==================== SETTINGS PAGE CUSTOM STYLES ==================== */
+
 .settings-account-card {
     margin-bottom: 1.5rem !important;
     padding: 1.5rem 1.5rem 0 1.5rem !important;
@@ -709,17 +803,39 @@
         padding-bottom: 0.75rem !important;
     }
 
-    .settings-account-card .row.g-3 > .col-12:last-child {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-        margin-top: 0.75rem !important;
+.btn-primary {
+    background: #228B22;
+    border: none;
+    color: #2c3e50;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+    .btn-primary:hover {
+        background: #02a145;
+        color: #2c3e50;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
     }
 
-    .settings-account-card .btn {
-        margin-bottom: 0 !important;
+    .btn-primary:active {
+        transform: translateY(0);
     }
+/* Remove ALL bottom spacing from button container */
 
-/* ==================== RESPONSIVE DESIGN ==================== */
+.settings-account-card .row.g-3 > .col-12:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0.75rem !important;
+}
+
+.settings-account-card .btn {
+    margin-bottom: 0 !important;
+}
+/* Responsive Design */
+
 @media (max-width: 992px) {
     .sidebar {
         transform: translateX(-100%);
@@ -742,22 +858,6 @@
     .topbar-title h1 {
         font-size: 1.25rem;
     }
-
-    /* mobile overlay */
-    .sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 999;
-    }
-
-        .sidebar-overlay.show {
-            display: block;
-        }
 }
 
 @media (max-width: 768px) {
@@ -790,4 +890,22 @@
     .card-title {
         font-size: 1rem;
     }
+}
+/* Mobile Overlay */
+
+@media (max-width: 992px) {
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
 }
