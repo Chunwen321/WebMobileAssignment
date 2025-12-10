@@ -1,6 +1,5 @@
 @{
     ViewBag.Title = "Add New Teacher";
-    ViewBag.ActiveMenu = "TeacherManagement";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
@@ -35,23 +34,18 @@
                     </div>
                 }
 
-                <!-- Personal Information Section -->
-                <h6 class="text-muted mb-3 border-bottom pb-2">
-                    <i class="bi bi-person-circle me-2"></i>Personal Information
-                </h6>
+                <h6 class="text-muted mb-3">Teacher Information</h6>
                 <div class="row">
-                    <!-- Full Name -->
+                    <!-- Name -->
                     <div class="col-md-6 mb-3">
                         <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
-                        <input type="text" id="fullName" name="fullName" class="form-control" placeholder="e.g. Dr. John Smith" value="@ViewBag.FullName" required />
-                        <small class="text-muted">Enter full legal name</small>
+                        <input type="text" id="fullName" name="fullName" class="form-control" placeholder="e.g. John Smith" value="@ViewBag.FullName" required />
                     </div>
 
                     <!-- Email -->
                     <div class="col-md-6 mb-3">
                         <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                        <input type="email" id="email" name="email" class="form-control" placeholder="e.g. john.smith@school.com" value="@ViewBag.Email" required />
-                        <small class="text-muted">Official school email address</small>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="e.g. john.smith@teacher.com" value="@ViewBag.Email" required />
                     </div>
                 </div>
 
@@ -59,111 +53,34 @@
                     <!-- Password -->
                     <div class="col-md-6 mb-3">
                         <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                        <input type="password" id="password" name="password" class="form-control" placeholder="Minimum 8 characters" required />
-                        <small class="text-muted">Must be at least 8 characters</small>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required />
                     </div>
 
                     <!-- Phone Number -->
                     <div class="col-md-6 mb-3">
                         <label for="phoneNumber" class="form-label">Phone Number</label>
-                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="e.g. +60123456789" value="@ViewBag.PhoneNumber" />
-                        <small class="text-muted">Contact number for school communications</small>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="e.g. +1234567890" value="@ViewBag.PhoneNumber" />
                     </div>
                 </div>
 
+                <h6 class="text-muted mb-3 mt-3">Professional Details</h6>
                 <div class="row">
-                    <!-- Date of Birth -->
-                    <div class="col-md-4 mb-3">
-                        <label for="dateOfBirth" class="form-label">Date of Birth</label>
-                        <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" value="@ViewBag.DateOfBirth" />
-                    </div>
-
-                    <!-- Gender -->
-                    <div class="col-md-4 mb-3">
-                        <label for="gender" class="form-label">Gender</label>
-                        <select id="gender" name="gender" class="form-select">
-                            <option value="">-- Select Gender --</option>
-                            <option value="Male" selected="@(ViewBag.Gender == "Male")">Male</option>
-                            <option value="Female" selected="@(ViewBag.Gender == "Female")">Female</option>
-                            <option value="Other" selected="@(ViewBag.Gender == "Other")">Other</option>
-                        </select>
-                    </div>
-
-                    <!-- Status -->
-                    <div class="col-md-4 mb-3">
-                        <label for="status" class="form-label">Status</label>
-                        <select id="status" name="status" class="form-select">
-                            <option value="active" selected="@(ViewBag.Status == "active" || string.IsNullOrEmpty(ViewBag.Status))">Active</option>
-                            <option value="inactive" selected="@(ViewBag.Status == "inactive")">Inactive</option>
-                            <option value="suspend" selected="@(ViewBag.Status == "suspend")">Suspended</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Professional Details Section -->
-                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
-                    <i class="bi bi-briefcase me-2"></i>Professional Details
-                </h6>
-                <div class="row">
-                    <!-- Subject Taught -->
+                    <!-- Subject -->
                     <div class="col-md-6 mb-3">
-                        <label for="subjectTeach" class="form-label">Primary Subject Taught</label>
-                        <input type="text" id="subjectTeach" name="subjectTeach" class="form-control" placeholder="e.g. Mathematics, Science, English" value="@ViewBag.SubjectTeach" />
-                        <small class="text-muted">Main subject area of expertise</small>
+                        <label for="subjectTeach" class="form-label">Subject Taught</label>
+                        <input type="text" id="subjectTeach" name="subjectTeach" class="form-control" placeholder="e.g. Mathematics" value="@ViewBag.SubjectTeach" />
                     </div>
 
                     <!-- Hire Date -->
                     <div class="col-md-6 mb-3">
                         <label for="hireDate" class="form-label">Hire Date <span class="text-danger">*</span></label>
                         <input type="date" id="hireDate" name="hireDate" class="form-control" value="@ViewBag.HireDate" required />
-                        <small class="text-muted">Date joined the institution</small>
                     </div>
-                </div>
-
-                <div class="row">
-                    <!-- Title -->
-                    <div class="col-md-6 mb-3">
-                        <label for="title" class="form-label">Title/Position</label>
-                        <input type="text" id="title" name="title" class="form-control" placeholder="e.g. Senior Teacher, HOD, Principal" value="@ViewBag.Title" />
-                        <small class="text-muted">Official job title or position</small>
-                    </div>
-
-                    <!-- Education -->
-                    <div class="col-md-6 mb-3">
-                        <label for="education" class="form-label">Highest Education</label>
-                        <input type="text" id="education" name="education" class="form-control" placeholder="e.g. PhD in Mathematics, Master in Education" value="@ViewBag.Education" />
-                        <small class="text-muted">Highest degree or qualification</small>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <!-- Skills -->
-                    <div class="col-md-12 mb-3">
-                        <label for="skill" class="form-label">Skills & Certifications</label>
-                        <input type="text" id="skill" name="skill" class="form-control" placeholder="e.g. TESL Certified, Technology Integration Specialist" value="@ViewBag.Skill" />
-                        <small class="text-muted">Special skills, certifications, or training</small>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <!-- Bio -->
-                    <div class="col-md-12 mb-3">
-                        <label for="bio" class="form-label">Biography/Professional Summary</label>
-                        <textarea id="bio" name="bio" class="form-control" rows="4" placeholder="Brief professional background, teaching philosophy, or achievements...">@ViewBag.Bio</textarea>
-                        <small class="text-muted">Optional professional summary (max 1000 characters)</small>
-                    </div>
-                </div>
-
-                <div class="alert alert-info mt-3" role="alert">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <strong>Note:</strong> After creating the teacher account, you can assign classes to this teacher from the class management page.
                 </div>
 
                 <div class="row mt-4">
                     <div class="col-12 text-end">
-                        <button type="reset" class="btn btn-light me-2">
-                            <i class="bi bi-x-circle"></i> Reset
-                        </button>
+                        <button type="reset" class="btn btn-light me-2">Reset</button>
                         <button type="submit" class="btn btn-danger px-4">
                             <i class="bi bi-save"></i> Save Teacher
                         </button>
@@ -176,13 +93,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    
-    <script>
-        // Set default hire date to today if not set
-        $(document).ready(function() {
-            if (!$('#hireDate').val()) {
-                $('#hireDate').val(new Date().toISOString().split('T')[0]);
-            }
-        });
-    </script>
 }

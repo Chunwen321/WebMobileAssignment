@@ -662,11 +662,8 @@ namespace WebMobileAssignment.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TeacherCreate(
-            string fullName, string email, string password,
-            string? phoneNumber, string? subjectTeach, DateTime? hireDate,
-            string? title, string? education, string? skill, string? bio,
-            DateTime? dateOfBirth, string? gender, string? status)
+        public async Task<IActionResult> TeacherCreate(string fullName, string email, string password,
+            string phoneNumber, string subjectTeach, DateTime? hireDate)
         {
             // Manual validation for required fields
             if (string.IsNullOrWhiteSpace(fullName))
@@ -678,17 +675,8 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrWhiteSpace(password))
                 ModelState.AddModelError("password", "Password is required");
 
-            if (password != null && password.Length < 8)
-                ModelState.AddModelError("password", "Password must be at least 8 characters long");
-
-            if (!hireDate.HasValue)
+            if (!hireDate.HasValue || hireDate.Value == default(DateTime))
                 ModelState.AddModelError("hireDate", "Hire date is required");
-
-            // Set default status if not provided
-            if (string.IsNullOrWhiteSpace(status))
-            {
-                status = "active";
-            }
 
             if (ModelState.IsValid)
             {
@@ -698,35 +686,25 @@ namespace WebMobileAssignment.Controllers
                     var userId = $"TEACH{(teacherCount + 1):D3}";
                     var teacherId = userId;
 
-                    // Create User with all fields including optional ones
                     var user = new User
                     {
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
                         PasswordHash = password, // TODO: Implement BCrypt.Net.BCrypt.HashPassword(password)
-                        PhoneNumber = phoneNumber,
-                        DateOfBirth = dateOfBirth,
-                        Gender = gender,
                         UserType = "Teacher",
                         CreatedDate = DateTime.Now,
-                        Status = status,
-                        IsActive = status == "active"
+                        IsActive = true
                     };
                     _context.Users.Add(user);
 
-                    // Create Teacher with all professional fields
                     var teacher = new Teacher
                     {
                         TeacherId = teacherId,
                         UserId = userId,
                         PhoneNumber = phoneNumber,
                         SubjectTeach = subjectTeach,
-                        HireDate = hireDate.Value,
-                        Title = title,
-                        Education = education,
-                        Skill = skill,
-                        Bio = bio
+                        HireDate = hireDate.Value
                     };
                     _context.Teachers.Add(teacher);
 
@@ -740,7 +718,6 @@ namespace WebMobileAssignment.Controllers
                 }
             }
 
-            // If validation failed, return view with data
             ViewBag.ActiveMenu = "TeacherManagement";
             ViewBag.Title = "Create Teacher";
             ViewBag.FullName = fullName;
@@ -748,14 +725,6 @@ namespace WebMobileAssignment.Controllers
             ViewBag.PhoneNumber = phoneNumber;
             ViewBag.SubjectTeach = subjectTeach;
             ViewBag.HireDate = hireDate?.ToString("yyyy-MM-dd");
-            ViewBag.Title = title;
-            ViewBag.Education = education;
-            ViewBag.Skill = skill;
-            ViewBag.Bio = bio;
-            ViewBag.DateOfBirth = dateOfBirth?.ToString("yyyy-MM-dd");
-            ViewBag.Gender = gender;
-            ViewBag.Status = status;
-            
             return View();
         }
 
@@ -777,11 +746,8 @@ namespace WebMobileAssignment.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TeacherEdit(
-            string teacherId, string fullName, string email,
-            string? phoneNumber, string? subjectTeach, DateTime? hireDate,
-            string? title, string? education, string? skill, string? bio,
-            DateTime? dateOfBirth, string? gender, string? status)
+        public async Task<IActionResult> TeacherEdit(string teacherId, string fullName, string email,
+            string phoneNumber, string subjectTeach, DateTime hireDate)
         {
             var teacher = await _context.Teachers
                 .Include(t => t.User)
@@ -793,40 +759,15 @@ namespace WebMobileAssignment.Controllers
                 return NotFound();
             }
 
-            // Validate required fields
-            if (string.IsNullOrWhiteSpace(fullName))
-                ModelState.AddModelError("fullName", "Full name is required");
-
-            if (string.IsNullOrWhiteSpace(email))
-                ModelState.AddModelError("email", "Email is required");
-
-            if (!hireDate.HasValue)
-                ModelState.AddModelError("hireDate", "Hire date is required");
-
-            if (string.IsNullOrWhiteSpace(status))
-                ModelState.AddModelError("status", "Status is required");
-
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Update User information
                     teacher.User.FullName = fullName;
                     teacher.User.Email = email;
-                    teacher.User.PhoneNumber = phoneNumber;
-                    teacher.User.DateOfBirth = dateOfBirth;
-                    teacher.User.Gender = gender;
-                    teacher.User.Status = status;
-                    teacher.User.IsActive = status == "active";
-
-                    // Update Teacher professional information
                     teacher.PhoneNumber = phoneNumber;
                     teacher.SubjectTeach = subjectTeach;
                     teacher.HireDate = hireDate;
-                    teacher.Title = title;
-                    teacher.Education = education;
-                    teacher.Skill = skill;
-                    teacher.Bio = bio;
 
                     _context.Update(teacher);
                     await _context.SaveChangesAsync();
