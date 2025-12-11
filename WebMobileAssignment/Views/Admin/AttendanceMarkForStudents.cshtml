@@ -1,0 +1,481 @@
+@{
+    ViewBag.Title = "Mark Student Attendance";
+    ViewBag.ActiveMenu = "AttendanceManagement";
+    ViewBag.ActiveSubmenu = "Take";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    
+    var sessions = ViewBag.Sessions as List<WebMobileAssignment.Models.AttendanceSession> ?? new List<WebMobileAssignment.Models.AttendanceSession>();
+    var classes = ViewBag.Classes as List<WebMobileAssignment.Models.Class> ?? new List<WebMobileAssignment.Models.Class>();
+    var todayDay = DateTime.Now.DayOfWeek.ToString();
+}
+
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h5 class="mb-1">
+            <i class="bi bi-clipboard-check text-primary me-2"></i>
+            Mark Student Attendance - @DateTime.Now.ToString("MMMM dd, yyyy")
+        </h5>
+        <p class="text-muted small">Select a class to mark attendance for enrolled students</p>
+    </div>
+</div>
+
+<!-- Class Selection -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-book me-2"></i>Select Class
+                </h6>
+            </div>
+            <div class="p-3">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="classSelect" class="form-label fw-semibold">Class</label>
+                        <select class="form-select" id="classSelect">
+                            <option value="">-- Select a Class --</option>
+                            @if (classes != null && classes.Any())
+                            {
+                                foreach (var cls in classes.OrderBy(c => c.ClassName))
+                                {
+                                    var hasSchedule = cls.StartTime.HasValue && cls.EndTime.HasValue && !string.IsNullOrEmpty(cls.Day);
+                                    <option value="@cls.ClassId" 
+                                            data-class-name="@cls.ClassName"
+                                            data-day="@(cls.Day ?? "")"
+                                            data-start="@(cls.StartTime.HasValue ? cls.StartTime.Value.ToString(@"hh\:mm") : "")"
+                                            data-end="@(cls.EndTime.HasValue ? cls.EndTime.Value.ToString(@"hh\:mm") : "")">
+                                        @cls.ClassName (@cls.ClassId)
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="dateSelect" class="form-label fw-semibold">Date</label>
+                        <input type="date" class="form-control" id="dateSelect" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+                </div>
+                <div id="classInfo" class="alert alert-info mt-3" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <small class="text-muted">Class Day</small>
+                            <div class="fw-bold" id="infoDay">-</div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Class Time</small>
+                            <div class="fw-bold" id="infoTime">-</div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">PIN Status</small>
+                            <div class="fw-bold" id="infoPinStatus">-</div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Enrolled Students</small>
+                            <div class="fw-bold" id="infoEnrolled">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student List & Attendance Marking -->
+<div class="row" id="studentSection" style="display: none;">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-people me-2"></i>Mark Attendance
+                </h6>
+                <div>
+                    <button class="btn btn-success btn-sm" id="markAllPresentBtn">
+                        <i class="bi bi-check-all"></i> Mark All Present
+                    </button>
+                </div>
+            </div>
+            <div class="p-3">
+                <!-- PIN Entry Section -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="pinCodeInput" class="form-label fw-semibold">
+                            <i class="bi bi-key me-2"></i>6-Digit PIN Code
+                        </label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control form-control-lg pin-input" 
+                                   id="pinCodeInput" 
+                                   placeholder="Enter PIN"
+                                   maxlength="6"
+                                   pattern="\d{6}">
+                            <button class="btn btn-primary" id="verifyPinBtn" type="button">
+                                <i class="bi bi-shield-check"></i> Verify PIN
+                            </button>
+                        </div>
+                        <div class="form-text">Enter the PIN code for this class session</div>
+                        <div id="pinAlert"></div>
+                    </div>
+                </div>
+
+                <!-- Students Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover" id="studentsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="5%">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsList">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                    <p class="mt-2">Select a class to view students</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Submit Section -->
+                <div class="mt-4 text-end" id="submitSection" style="display: none;">
+                    <button class="btn btn-lg btn-success" id="submitAttendanceBtn">
+                        <i class="bi bi-check-circle me-2"></i>Submit Attendance
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .pin-input {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.5rem;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        .student-row {
+            transition: all 0.2s ease;
+        }
+
+        .student-row.marked {
+            background-color: #f0fdf4 !important;
+        }
+
+        .student-row.late {
+            background-color: #fef3c7 !important;
+        }
+
+        .student-row.absent {
+            background-color: #fee2e2 !important;
+        }
+
+        .status-badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-present {
+            background: #22c55e;
+            color: white;
+        }
+
+        .status-late {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .status-absent {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status-pending {
+            background: #94a3b8;
+            color: white;
+        }
+    </style>
+
+    <script>
+        let currentClassId = null;
+        let currentPinCode = null;
+        let pinVerified = false;
+        let studentsData = [];
+        let attendanceMarked = [];
+
+        $(document).ready(function() {
+            // Class selection change
+            $('#classSelect').change(function() {
+                const classId = $(this).val();
+                if (classId) {
+                    currentClassId = classId;
+                    loadClassInfo(classId);
+                    loadStudents(classId);
+                } else {
+                    resetView();
+                }
+            });
+
+            // PIN input formatting
+            $('#pinCodeInput').on('input', function() {
+                this.value = this.value.replace(/\D/g, '');
+                pinVerified = false;
+            });
+
+            // Verify PIN
+            $('#verifyPinBtn').click(function() {
+                const pin = $('#pinCodeInput').val().trim();
+                if (pin.length !== 6) {
+                    showPinAlert('danger', 'PIN must be exactly 6 digits');
+                    return;
+                }
+
+                if (!currentClassId) {
+                    showPinAlert('danger', 'Please select a class first');
+                    return;
+                }
+
+                verifyPin(pin);
+            });
+
+            // Select all checkbox
+            $('#selectAll').change(function() {
+                $('.student-checkbox').prop('checked', $(this).prop('checked'));
+            });
+
+            // Mark all present
+            $('#markAllPresentBtn').click(function() {
+                if (!pinVerified) {
+                    alert('Please verify the PIN first');
+                    return;
+                }
+
+                $('.student-checkbox').prop('checked', true);
+                $('.student-row').each(function() {
+                    const studentId = $(this).data('student-id');
+                    markStudentStatus(studentId, 'Present');
+                });
+            });
+
+            // Mark individual student
+            $(document).on('click', '.mark-status-btn', function() {
+                if (!pinVerified) {
+                    alert('Please verify the PIN first');
+                    return;
+                }
+
+                const studentId = $(this).data('student-id');
+                const status = $(this).data('status');
+                markStudentStatus(studentId, status);
+            });
+
+            // Submit attendance
+            $('#submitAttendanceBtn').click(function() {
+                if (!pinVerified) {
+                    alert('Please verify the PIN first');
+                    return;
+                }
+
+                if (attendanceMarked.length === 0) {
+                    alert('Please mark attendance for at least one student');
+                    return;
+                }
+
+                submitAttendance();
+            });
+        });
+
+        function loadClassInfo(classId) {
+            const option = $(`#classSelect option[value="${classId}"]`);
+            const day = option.data('day');
+            const start = option.data('start');
+            const end = option.data('end');
+            const className = option.data('class-name');
+
+            $('#infoDay').text(day || 'Not set');
+            $('#infoTime').text(start && end ? `${start} - ${end}` : 'Not set');
+            $('#classInfo').slideDown();
+
+            // Check if PIN exists for this class
+            checkPinStatus(classId);
+        }
+
+        function checkPinStatus(classId) {
+            $.get(`/Admin/GetClassPinStatus?classId=${classId}`, function(response) {
+                if (response.hasPin) {
+                    $('#infoPinStatus').html('<span class="badge bg-success">PIN Generated</span>');
+                    if (response.pinCode) {
+                        $('#pinCodeInput').val(response.pinCode);
+                    }
+                } else {
+                    $('#infoPinStatus').html('<span class="badge bg-warning">No PIN</span>');
+                }
+            });
+        }
+
+        function loadStudents(classId) {
+            $.get(`/Admin/GetClassStudents?classId=${classId}`, function(response) {
+                if (response.success && response.students.length > 0) {
+                    studentsData = response.students;
+                    displayStudents(response.students);
+                    $('#infoEnrolled').text(response.students.length);
+                    $('#studentSection').slideDown();
+                } else {
+                    $('#studentsList').html(`
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2">No students enrolled in this class</p>
+                            </td>
+                        </tr>
+                    `);
+                    $('#studentSection').slideDown();
+                }
+            });
+        }
+
+        function displayStudents(students) {
+            let html = '';
+            students.forEach(student => {
+                html += `
+                    <tr class="student-row" data-student-id="${student.studentId}">
+                        <td>
+                            <input type="checkbox" class="form-check-input student-checkbox" value="${student.studentId}">
+                        </td>
+                        <td><strong>${student.studentId}</strong></td>
+                        <td>${student.fullName}</td>
+                        <td>${student.email}</td>
+                        <td>
+                            <span class="status-badge status-pending status-${student.studentId}">
+                                Not Marked
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-success mark-status-btn" data-student-id="${student.studentId}" data-status="Present">
+                                    <i class="bi bi-check"></i> Present
+                                </button>
+                                <button class="btn btn-warning mark-status-btn" data-student-id="${student.studentId}" data-status="Late">
+                                    <i class="bi bi-clock"></i> Late
+                                </button>
+                                <button class="btn btn-danger mark-status-btn" data-student-id="${student.studentId}" data-status="Absent">
+                                    <i class="bi bi-x"></i> Absent
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#studentsList').html(html);
+        }
+
+        function verifyPin(pin) {
+            $.post('/Admin/VerifyClassPin', {
+                classId: currentClassId,
+                pinCode: pin
+            }, function(response) {
+                if (response.success) {
+                    currentPinCode = pin;
+                    pinVerified = true;
+                    showPinAlert('success', '<i class="bi bi-check-circle me-2"></i>PIN verified successfully!');
+                    $('#verifyPinBtn').html('<i class="bi bi-shield-check"></i> Verified').prop('disabled', true);
+                } else {
+                    pinVerified = false;
+                    showPinAlert('danger', response.message || 'Invalid PIN code');
+                }
+            });
+        }
+
+        function markStudentStatus(studentId, status) {
+            const row = $(`.student-row[data-student-id="${studentId}"]`);
+            row.removeClass('marked late absent').addClass(status.toLowerCase());
+            
+            $(`.status-${studentId}`).removeClass('status-pending status-present status-late status-absent')
+                .addClass(`status-${status.toLowerCase()}`)
+                .text(status);
+
+            // Add to marked list
+            const existingIndex = attendanceMarked.findIndex(a => a.studentId === studentId);
+            if (existingIndex >= 0) {
+                attendanceMarked[existingIndex].status = status;
+            } else {
+                attendanceMarked.push({ studentId, status });
+            }
+
+            $('#submitSection').slideDown();
+        }
+
+        function submitAttendance() {
+            const selectedDate = $('#dateSelect').val();
+
+            if (!confirm(`Submit attendance for ${attendanceMarked.length} student(s)?`)) {
+                return;
+            }
+
+            $('#submitAttendanceBtn').prop('disabled', true)
+                .html('<span class="spinner-border spinner-border-sm me-2"></span>Submitting...');
+
+            $.ajax({
+                url: '/Admin/SubmitBulkAttendance',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    classId: currentClassId,
+                    pinCode: currentPinCode,
+                    date: selectedDate,
+                    attendances: attendanceMarked
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        alert(`Success! ${response.marked} attendance record(s) submitted.`);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                        $('#submitAttendanceBtn').prop('disabled', false)
+                            .html('<i class="bi bi-check-circle me-2"></i>Submit Attendance');
+                    }
+                },
+                error: function() {
+                    alert('Failed to submit attendance. Please try again.');
+                    $('#submitAttendanceBtn').prop('disabled', false)
+                        .html('<i class="bi bi-check-circle me-2"></i>Submit Attendance');
+                }
+            });
+        }
+
+        function showPinAlert(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show mt-2" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            $('#pinAlert').html(alertHtml);
+        }
+
+        function resetView() {
+            currentClassId = null;
+            currentPinCode = null;
+            pinVerified = false;
+            attendanceMarked = [];
+            $('#classInfo').slideUp();
+            $('#studentSection').slideUp();
+            $('#pinCodeInput').val('');
+            $('#verifyPinBtn').html('<i class="bi bi-shield-check"></i> Verify PIN').prop('disabled', false);
+            $('#submitSection').slideUp();
+        }
+    </script>
+}

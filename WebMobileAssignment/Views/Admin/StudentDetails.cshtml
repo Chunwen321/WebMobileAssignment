@@ -453,22 +453,6 @@
     </div>
 </div>
 
-<!-- Action Buttons -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="d-flex gap-2 justify-content-end">
-            <a asp-action="StudentIndex" class="btn btn-light">
-                <i class="bi bi-list"></i> All Students
-            </a>
-            <a asp-action="StudentEdit" asp-route-id="@Model.StudentId" class="btn btn-warning">
-                <i class="bi bi-pencil"></i> Edit Student
-            </a>
-            <a asp-action="StudentDelete" asp-route-id="@Model.StudentId" class="btn btn-danger">
-                <i class="bi bi-trash"></i> Delete Student
-            </a>
-        </div>
-    </div>
-</div>
 
 <style>
     .profile-avatar-large.male {

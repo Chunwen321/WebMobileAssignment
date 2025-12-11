@@ -205,6 +205,52 @@
                     <div class="detail-value">@(Model.User.Gender ?? "Not specified")</div>
                 </div>
             </div>
+            
+            <!-- Thick black separator line with header -->
+            <div style="border-top: 4px solid #000; margin: 20px 0;"></div>
+            <div style="padding: 0 20px;">
+                <h6 class="text-uppercase text-muted small fw-bold mb-3" style="color: #000 !important;">
+                    <i class="bi bi-shield-check me-2"></i>Account Information
+                </h6>
+            </div>
+            
+            <!-- Account Information (moved here from separate card) -->
+            <div class="detail-list">
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-person-badge"></i>
+                        User ID
+                    </div>
+                    <div class="detail-value">@Model.UserId</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-tag"></i>
+                        User Type
+                    </div>
+                    <div class="detail-value">
+                        <span class="badge bg-info">@Model.User.UserType</span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-calendar-plus"></i>
+                        Account Created
+                    </div>
+                    <div class="detail-value">@Model.User.CreatedDate.ToString("dd MMM yyyy HH:mm")</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-activity"></i>
+                        Account Status
+                    </div>
+                    <div class="detail-value">
+                        <span class="badge bg-@(Model.User.Status == "active" ? "success" : "secondary")">
+                            @Model.User.Status
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Professional Information -->
@@ -361,52 +407,6 @@
                 <p class="mb-0">@Model.Bio</p>
             </div>
         }
-
-        <!-- Account Information -->
-        <div class="dashboard-card">
-            <div class="card-header-custom">
-                <h5 class="card-title">
-                    <i class="bi bi-shield-check"></i>
-                    Account Information
-                </h5>
-            </div>
-            <div class="detail-list">
-                <div class="detail-item">
-                    <div class="detail-label">
-                        <i class="bi bi-person-badge"></i>
-                        User ID
-                    </div>
-                    <div class="detail-value">@Model.UserId</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">
-                        <i class="bi bi-tag"></i>
-                        User Type
-                    </div>
-                    <div class="detail-value">
-                        <span class="badge bg-info">@Model.User.UserType</span>
-                    </div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">
-                        <i class="bi bi-calendar-plus"></i>
-                        Account Created
-                    </div>
-                    <div class="detail-value">@Model.User.CreatedDate.ToString("dd MMM yyyy HH:mm")</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">
-                        <i class="bi bi-activity"></i>
-                        Account Status
-                    </div>
-                    <div class="detail-value">
-                        <span class="badge bg-@(Model.User.Status == "active" ? "success" : "secondary")">
-                            @Model.User.Status
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
