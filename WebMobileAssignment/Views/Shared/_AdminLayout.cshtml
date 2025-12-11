@@ -73,6 +73,11 @@
                         <i class="bi bi-list-check"></i>
                         <span>Manage Classes</span>
                     </a>
+                    <a asp-controller="Admin" asp-action="SubjectIndex"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Subjects" ? "active" : "")">
+                        <i class="bi bi-journals"></i>
+                        <span>Manage Subjects</span>
+                    </a>
                     <a asp-controller="Admin" asp-action="ScheduleIndex"
                        class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Schedule" ? "active" : "")">
                         <i class="bi bi-calendar-week-fill"></i>

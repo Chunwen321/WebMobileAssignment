@@ -1,0 +1,263 @@
+@model WebMobileAssignment.Models.Subject
+@{
+    ViewBag.Title = "Subject Details";
+    ViewBag.ActiveMenu = "ClassManagement";
+    ViewBag.ActiveSubmenu = "Subjects";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var totalClasses = ViewBag.TotalClasses ?? 0;
+    var totalStudents = ViewBag.TotalStudents ?? 0;
+}
+
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="bi bi-journal-text text-danger me-2"></i>
+                    Subject Details
+                </h2>
+                <p class="text-muted">Complete information about @Model.SubjectName</p>
+            </div>
+            <div>
+                <a asp-action="SubjectEdit" asp-route-id="@Model.SubjectId" class="btn btn-warning me-2">
+                    <i class="bi bi-pencil me-2"></i>Edit Subject
+                </a>
+                <a asp-action="SubjectIndex" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Header Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card profile-header">
+            <div class="profile-banner">
+                <div class="profile-avatar-large">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+            </div>
+            <div class="profile-info">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="mb-1">@Model.SubjectName</h3>
+                        <p class="text-muted mb-2">
+                            <strong>Subject ID:</strong> @Model.SubjectId
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <div class="profile-quick-stats">
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-number text-primary">@totalClasses</div>
+                                <div class="quick-stat-label">Classes</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-number text-success">@totalStudents</div>
+                                <div class="quick-stat-label">Students</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-6 col-md-6">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Classes</div>
+                    <div class="stat-value text-primary">@totalClasses</div>
+                    <small class="text-muted">Classes teaching this subject</small>
+                </div>
+                <div class="card-icon blue">
+                    <i class="bi bi-book-half"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-md-6">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Students</div>
+                    <div class="stat-value text-success">@totalStudents</div>
+                    <small class="text-muted">Students enrolled</small>
+                </div>
+                <div class="card-icon green">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details Section -->
+<div class="row">
+    <!-- Assigned Classes -->
+    <div class="col-12">
+        <div class="dashboard-card mb-3">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-collection"></i>
+                    Classes Teaching This Subject (@totalClasses)
+                </h5>
+            </div>
+            @if (Model.Classes != null && Model.Classes.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Class ID</th>
+                                <th>Class Name</th>
+                                <th>Teacher</th>
+                                <th>Schedule</th>
+                                <th>Room</th>
+                                <th>Capacity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cls in Model.Classes)
+                            {
+                                <tr>
+                                    <td><strong>@cls.ClassId</strong></td>
+                                    <td>@cls.ClassName</td>
+                                    <td>
+                                        @if (cls.Teacher != null)
+                                        {
+                                            <a asp-action="TeacherDetails" asp-route-id="@cls.Teacher.TeacherId">
+                                                @cls.Teacher.User.FullName
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Unassigned</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(cls.Day) && cls.StartTime.HasValue && cls.EndTime.HasValue)
+                                        {
+                                            <span class="badge bg-secondary">@cls.Day @cls.StartTime.Value.ToString("hh\\:mm") - @cls.EndTime.Value.ToString("hh\\:mm")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Not scheduled</span>
+                                        }
+                                    </td>
+                                    <td>@(cls.RoomNumber ?? "-")</td>
+                                    <td>
+                                        <span class="badge bg-info">@cls.CurrentCapacity/@cls.MaxCapacity</span>
+                                    </td>
+                                    <td>
+                                        <a asp-action="ClassDetails" asp-route-id="@cls.ClassId" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-3">No classes assigned to this subject yet</p>
+                    <a asp-action="ClassCreate" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Create Class with This Subject
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex gap-2 justify-content-end">
+            <a asp-action="SubjectIndex" class="btn btn-light">
+                <i class="bi bi-list"></i> All Subjects
+            </a>
+            <a asp-action="SubjectEdit" asp-route-id="@Model.SubjectId" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Edit Subject
+            </a>
+            <a asp-action="SubjectDelete" asp-route-id="@Model.SubjectId" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Delete Subject
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-header {
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .profile-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 30px 30px;
+        text-align: center;
+    }
+
+    .profile-avatar-large {
+        width: 120px;
+        height: 120px;
+        background: white;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        color: #667eea;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .profile-info {
+        padding: 30px;
+        background: white;
+    }
+
+    .profile-quick-stats {
+        display: flex;
+        gap: 30px;
+        justify-content: flex-end;
+    }
+
+    .quick-stat-item {
+        text-align: center;
+    }
+
+    .quick-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+
+    .quick-stat-label {
+        font-size: 0.875rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    @@media (max-width: 768px) {
+        .profile-quick-stats {
+            justify-content: center;
+            margin-top: 20px;
+        }
+    }
+</style>
