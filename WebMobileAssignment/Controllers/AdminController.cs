@@ -1016,7 +1016,12 @@ namespace WebMobileAssignment.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         public async Task<IActionResult> ParentCreate(string fullName, string email, string password, string phoneNumber)
+=======
+     public async Task<IActionResult> ParentCreate(string fullName, string email, string password, 
+        string? phoneNumber, string? address, DateTime? dateOfBirth, string? gender)
+>>>>>>> Stashed changes
 =======
      public async Task<IActionResult> ParentCreate(string fullName, string email, string password, 
         string? phoneNumber, string? address, DateTime? dateOfBirth, string? gender)
@@ -1032,6 +1037,7 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrWhiteSpace(password))
                 ModelState.AddModelError("password", "Password is required");
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
             if (ModelState.IsValid)
 =======
@@ -1097,6 +1103,47 @@ namespace WebMobileAssignment.Controllers
        _context.Parents.Add(parent);
 >>>>>>> Stashed changes
 
+=======
+   if (password != null && password.Length < 8)
+        ModelState.AddModelError("password", "Password must be at least 8 characters long");
+
+          if (ModelState.IsValid)
+            {
+   try
+    {
+           // Generate proper User ID format
+            var userCount = await _context.Users.CountAsync();
+              var userId = $"U{(userCount + 1):D4}";
+        
+    var parentCount = await _context.Parents.CountAsync();
+  var parentId = $"P{(parentCount + 1):D4}";
+
+       var user = new User
+              {
+     UserId = userId,
+          FullName = fullName,
+          Email = email,
+    PasswordHash = password, // Plain text for now - hash on first login or via utility
+            PhoneNumber = phoneNumber,
+   DateOfBirth = dateOfBirth,
+        Gender = gender,
+      UserType = "Parent",
+  CreatedDate = DateTime.Now,
+           Status = "active",
+      IsActive = true
+      };
+      _context.Users.Add(user);
+
+            var parent = new Parent
+     {
+            ParentId = parentId,
+  UserId = userId,
+            PhoneNumber = phoneNumber,
+   Address = address
+            };
+       _context.Parents.Add(parent);
+
+>>>>>>> Stashed changes
      await _context.SaveChangesAsync();
   TempData["SuccessMessage"] = $"Parent '{fullName}' added successfully!";
   return RedirectToAction(nameof(ParentIndex));
@@ -1112,14 +1159,20 @@ namespace WebMobileAssignment.Controllers
   ViewBag.FullName = fullName;
             ViewBag.Email = email;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             ViewBag.PhoneNumber = phoneNumber;
             return View();
 =======
+=======
+>>>>>>> Stashed changes
          ViewBag.PhoneNumber = phoneNumber;
             ViewBag.Address = address;
        ViewBag.DateOfBirth = dateOfBirth?.ToString("yyyy-MM-dd");
          ViewBag.Gender = gender;
     return View();
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         }
 
