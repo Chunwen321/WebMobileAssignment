@@ -1,0 +1,483 @@
+@model WebMobileAssignment.Models.Class
+@{
+    ViewBag.Title = "Class Details";
+    ViewBag.ActiveMenu = "ClassManagement";
+    ViewBag.ActiveSubmenu = "Classes";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var fillPercentage = Model.MaxCapacity > 0 ? (decimal)Model.CurrentCapacity / Model.MaxCapacity * 100 : 0;
+    var availableSlots = Model.MaxCapacity - Model.CurrentCapacity;
+}
+
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="bi bi-book-fill text-danger me-2"></i>
+                    Class Details
+                </h2>
+                <p class="text-muted">Complete information about @Model.ClassName</p>
+            </div>
+            <div>
+                <a asp-action="ClassEdit" asp-route-id="@Model.ClassId" class="btn btn-warning me-2">
+                    <i class="bi bi-pencil me-2"></i>Edit Class
+                </a>
+                <a asp-action="ClassIndex" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Header Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card profile-header">
+            <div class="profile-banner">
+                <div class="profile-avatar-large">
+                    <i class="bi bi-book-fill"></i>
+                </div>
+            </div>
+            <div class="profile-info">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="mb-1">@Model.ClassName</h3>
+                        <p class="text-muted mb-2">
+                            <strong>Class ID:</strong> @Model.ClassId
+                        </p>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @if (fillPercentage >= 100)
+                            {
+                                <span class="badge bg-danger px-3 py-2">
+                                    <i class="bi bi-x-circle me-1"></i>Full
+                                </span>
+                            }
+                            else if (fillPercentage >= 90)
+                            {
+                                <span class="badge bg-warning px-3 py-2">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>Almost Full
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success px-3 py-2">
+                                    <i class="bi bi-check-circle me-1"></i>Available
+                                </span>
+                            }
+                            
+                            @if (Model.Subject != null)
+                            {
+                                <span class="badge bg-primary px-3 py-2">
+                                    <i class="bi bi-tag me-1"></i>
+                                    @Model.Subject.SubjectName
+                                </span>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(Model.Day))
+                            {
+                                <span class="badge bg-info px-3 py-2">
+                                    <i class="bi bi-calendar-week me-1"></i>
+                                    @Model.Day
+                                </span>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <div class="profile-quick-stats">
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-number text-primary">@Model.CurrentCapacity</div>
+                                <div class="quick-stat-label">Enrolled</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-number text-success">@availableSlots</div>
+                                <div class="quick-stat-label">Available</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Capacity</div>
+                    <div class="stat-value text-primary">@Model.MaxCapacity</div>
+                    <small class="text-muted">Maximum students</small>
+                </div>
+                <div class="card-icon blue">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Currently Enrolled</div>
+                    <div class="stat-value text-success">@Model.CurrentCapacity</div>
+                    <small class="text-muted">Active students</small>
+                </div>
+                <div class="card-icon green">
+                    <i class="bi bi-person-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Occupancy Rate</div>
+                    <div class="stat-value text-warning">@fillPercentage.ToString("F1")%</div>
+                    <small class="text-muted">Fill percentage</small>
+                </div>
+                <div class="card-icon yellow">
+                    <i class="bi bi-pie-chart"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Available Slots</div>
+                    <div class="stat-value text-danger">@availableSlots</div>
+                    <small class="text-muted">Remaining capacity</small>
+                </div>
+                <div class="card-icon red">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details Section -->
+<div class="row">
+    <!-- Left Column - Class Information -->
+    <div class="col-lg-4 mb-4">
+        <!-- Basic Information -->
+        <div class="dashboard-card mb-2" style="max-height: 350px">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle"></i>
+                    Class Information
+                </h5>
+            </div>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-tag"></i>
+                        Class ID
+                    </div>
+                    <div class="detail-value">@Model.ClassId</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-book"></i>
+                        Class Name
+                    </div>
+                    <div class="detail-value">@Model.ClassName</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-journals"></i>
+                        Subject
+                    </div>
+                    <div class="detail-value">
+                        @if (Model.Subject != null)
+                        {
+                            <span>@Model.Subject.SubjectName</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not assigned</span>
+                        }
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-person"></i>
+                        Teacher
+                    </div>
+                    <div class="detail-value">
+                        @if (Model.Teacher != null)
+                        {
+                            <a asp-action="TeacherDetails" asp-route-id="@Model.Teacher.TeacherId" class="text-decoration-none">
+                                @Model.Teacher.User.FullName
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Unassigned</span>
+                        }
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-geo-alt"></i>
+                        Room
+                    </div>
+                    <div class="detail-value">@(Model.RoomNumber ?? "Not set")</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Information -->
+        <div class="dashboard-card" style="max-height: 350px">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-calendar-week"></i>
+                    Schedule
+                </h5>
+            </div>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-calendar"></i>
+                        Day
+                    </div>
+                    <div class="detail-value">@(Model.Day ?? "Not scheduled")</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-clock"></i>
+                        Start Time
+                    </div>
+                    <div class="detail-value">
+                        @if (Model.StartTime.HasValue)
+                        {
+                            @Model.StartTime.Value.ToString("hh\\:mm")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not set</span>
+                        }
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-clock-history"></i>
+                        End Time
+                    </div>
+                    <div class="detail-value">
+                        @if (Model.EndTime.HasValue)
+                        {
+                            @Model.EndTime.Value.ToString("hh\\:mm")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not set</span>
+                        }
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-hourglass"></i>
+                        Duration
+                    </div>
+                    <div class="detail-value">
+                        @if (Model.StartTime.HasValue && Model.EndTime.HasValue)
+                        {
+                            var duration = Model.EndTime.Value - Model.StartTime.Value;
+                            @($"{duration.Hours}h {duration.Minutes}m")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not set</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Enrolled Students -->
+    <div class="col-lg-8">
+        <!-- Enrolled Students -->
+        <div class="dashboard-card mb-3">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-people"></i>
+                    Enrolled Students (@Model.CurrentCapacity/@Model.MaxCapacity)
+                </h5>
+                <div class="progress" style="height: 10px; width: 200px;">
+                    <div class="progress-bar bg-@(fillPercentage >= 100 ? "danger" : fillPercentage >= 90 ? "warning" : "success")" 
+                         role="progressbar" 
+                         style="width: @fillPercentage%"
+                         aria-valuenow="@Model.CurrentCapacity" 
+                         aria-valuemin="0" 
+                         aria-valuemax="@Model.MaxCapacity">
+                    </div>
+                </div>
+            </div>
+            @if (Model.Enrollments != null && Model.Enrollments.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Enrolled Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var enrollment in Model.Enrollments.OrderBy(e => e.Student.User.FullName))
+                            {
+                                <tr>
+                                    <td><strong>@enrollment.Student.StudentId</strong></td>
+                                    <td>@enrollment.Student.User.FullName</td>
+                                    <td>@enrollment.Student.User.Email</td>
+                                    <td>@enrollment.EnrolledDate.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <a asp-action="StudentDetails" asp-route-id="@enrollment.Student.StudentId" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-3">No students enrolled yet</p>
+                    <a asp-action="StudentIndex" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Enroll Students
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+
+
+<style>
+    .profile-header {
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .profile-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 30px 30px;
+        text-align: center;
+    }
+
+    .profile-avatar-large {
+        width: 120px;
+        height: 120px;
+        background: white;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        color: #667eea;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .profile-info {
+        padding: 30px;
+        background: white;
+    }
+
+    .profile-quick-stats {
+        display: flex;
+        gap: 30px;
+        justify-content: flex-end;
+    }
+
+    .quick-stat-item {
+        text-align: center;
+    }
+
+    .quick-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+
+    .quick-stat-label {
+        font-size: 0.875rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .detail-list {
+        padding: 0;
+    }
+
+    .detail-item {
+        padding: 10px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .detail-label i {
+        color: #999;
+    }
+
+    .detail-value {
+        text-align: right;
+        color: #333;
+        flex: 1;
+        max-width: 60%;
+        word-wrap: break-word;
+    }
+
+    @@media (max-width: 768px) {
+        .profile-quick-stats {
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .detail-value {
+            text-align: left;
+            max-width: 100%;
+        }
+    }
+</style>

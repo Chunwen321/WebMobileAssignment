@@ -1,0 +1,201 @@
+@{
+    ViewBag.Title = "Create New Class";
+    ViewBag.ActiveMenu = "ClassManagement";
+    ViewBag.ActiveSubmenu = "Classes";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-plus-circle-fill"></i> Create New Class</h5>
+            <a asp-action="ClassIndex" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card bg-white p-4 rounded shadow-sm">
+            <form asp-action="ClassCreate" method="post">
+                @Html.AntiForgeryToken()
+                
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error!</strong> Please correct the following errors:
+                        <ul class="mb-0 mt-2">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <!-- Basic Information -->
+                <h6 class="text-muted mb-3 border-bottom pb-2">
+                    <i class="bi bi-book text-danger me-2"></i>Basic Information
+                </h6>
+                <div class="row">
+                    <!-- Class Name -->
+                    <div class="col-md-6 mb-3">
+                        <label for="className" class="form-label">Class Name <span class="text-danger">*</span></label>
+                        <input type="text" id="className" name="className" class="form-control" placeholder="e.g. Mathematics 101" value="@ViewBag.ClassName" required />
+                        <small class="text-muted">Enter a descriptive name for the class</small>
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="col-md-6 mb-3">
+                        <label for="subjectId" class="form-label">Subject</label>
+                        <select id="subjectId" name="subjectId" class="form-select">
+                            <option value="">-- Select Subject --</option>
+                            @if (ViewBag.Subjects != null)
+                            {
+                                @foreach (var subject in ViewBag.Subjects)
+                                {
+                                    <option value="@subject.SubjectId" selected="@(ViewBag.SubjectId == subject.SubjectId)">
+                                        @subject.SubjectName (@subject.SubjectId)
+                                    </option>
+                                }
+                            }
+                        </select>
+                        <small class="text-muted">Optional: Link to a subject category</small>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Teacher Assignment -->
+                    <div class="col-md-6 mb-3">
+                        <label for="teacherId" class="form-label">Assigned Teacher</label>
+                        <select id="teacherId" name="teacherId" class="form-select">
+                            <option value="">-- No Teacher Assigned --</option>
+                            @if (ViewBag.Teachers != null)
+                            {
+                                @foreach (var teacher in ViewBag.Teachers)
+                                {
+                                    <option value="@teacher.TeacherId" selected="@(ViewBag.TeacherId == teacher.TeacherId)">
+                                        @teacher.User.FullName (@teacher.TeacherId)
+                                        @if (!string.IsNullOrEmpty(teacher.SubjectTeach))
+                                        {
+                                            <text> - @teacher.SubjectTeach</text>
+                                        }
+                                    </option>
+                                }
+                            }
+                        </select>
+                        <small class="text-muted">Teacher can be assigned later if not selected now</small>
+                    </div>
+
+                    <!-- Room Number -->
+                    <div class="col-md-6 mb-3">
+                        <label for="roomNumber" class="form-label">Room Number</label>
+                        <input type="text" id="roomNumber" name="roomNumber" class="form-control" placeholder="e.g. A101, Lab 3" value="@ViewBag.RoomNumber" />
+                        <small class="text-muted">Physical location where class is held</small>
+                    </div>
+                </div>
+
+                <!-- Schedule Information -->
+                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-calendar-week text-danger me-2"></i>Schedule Information
+                </h6>
+                <div class="row">
+                    <!-- Day of Week -->
+                    <div class="col-md-4 mb-3">
+                        <label for="day" class="form-label">Day of Week</label>
+                        <select id="day" name="day" class="form-select">
+                            <option value="">-- Select Day --</option>
+                            <option value="Monday" selected="@(ViewBag.Day == "Monday")">Monday</option>
+                            <option value="Tuesday" selected="@(ViewBag.Day == "Tuesday")">Tuesday</option>
+                            <option value="Wednesday" selected="@(ViewBag.Day == "Wednesday")">Wednesday</option>
+                            <option value="Thursday" selected="@(ViewBag.Day == "Thursday")">Thursday</option>
+                            <option value="Friday" selected="@(ViewBag.Day == "Friday")">Friday</option>
+                            <option value="Saturday" selected="@(ViewBag.Day == "Saturday")">Saturday</option>
+                            <option value="Sunday" selected="@(ViewBag.Day == "Sunday")">Sunday</option>
+                        </select>
+                        <small class="text-muted">Day when class is held</small>
+                    </div>
+
+                    <!-- Start Time -->
+                    <div class="col-md-4 mb-3">
+                        <label for="startTime" class="form-label">Start Time</label>
+                        <input type="time" id="startTime" name="startTime" class="form-control" value="@ViewBag.StartTime" />
+                        <small class="text-muted">Class start time</small>
+                    </div>
+
+                    <!-- End Time -->
+                    <div class="col-md-4 mb-3">
+                        <label for="endTime" class="form-label">End Time</label>
+                        <input type="time" id="endTime" name="endTime" class="form-control" value="@ViewBag.EndTime" />
+                        <small class="text-muted">Class end time</small>
+                    </div>
+                </div>
+
+                <!-- Capacity Information -->
+                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-people text-danger me-2"></i>Capacity Settings
+                </h6>
+                <div class="row">
+                    <!-- Max Capacity -->
+                    <div class="col-md-6 mb-3">
+                        <label for="maxCapacity" class="form-label">Maximum Capacity <span class="text-danger">*</span></label>
+                        <input type="number" id="maxCapacity" name="maxCapacity" class="form-control" min="1" max="1000" placeholder="e.g. 30" value="@ViewBag.MaxCapacity" required />
+                        <small class="text-muted">Maximum number of students allowed</small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Note:</strong> Current capacity starts at 0 and increases as students enroll in this class.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Important:</strong> After creating the class, you can enroll students from the Student Management page.
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12 text-end">
+                        <button type="reset" class="btn btn-light me-2">
+                            <i class="bi bi-x-circle"></i> Reset
+                        </button>
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-save"></i> Create Class
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        $(document).ready(function() {
+            // Set default max capacity if not set
+            if (!$('#maxCapacity').val()) {
+                $('#maxCapacity').val(30);
+            }
+
+            // Validate time range
+            $('#startTime, #endTime').on('change', function() {
+                const startTime = $('#startTime').val();
+                const endTime = $('#endTime').val();
+                
+                if (startTime && endTime) {
+                    if (startTime >= endTime) {
+                        alert('End time must be after start time');
+                        $('#endTime').val('');
+                    }
+                }
+            });
+        });
+    </script>
+}
