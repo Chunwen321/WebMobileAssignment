@@ -543,3 +543,54 @@ height: 55px;
 .login-card-horizontal {
     animation: fadeInUp 0.6s ease-out;
 }
+
+/* ==================== PASSWORD TOGGLE STYLES ==================== */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+ align-items: center;
+}
+
+.password-input-login {
+    padding-right: 3rem !important;
+}
+
+.password-toggle-btn-login {
+    position: absolute;
+    right: 0.75rem;
+    background: transparent !important;
+    border: none !important;
+    color: #2c3e50 !important;
+    cursor: pointer;
+    padding: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: color 0.3s ease;
+}
+
+.password-toggle-btn-login:hover {
+    color: #495057 !important;
+}
+
+.password-toggle-btn-login i {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: #2c3e50 !important;
+}
+
+.password-toggle-btn-login:hover i {
+    color: #495057 !important;
+}
+
+/* Ensure Bootstrap Icons are visible */
+.password-toggle-btn-login .bi,
+.password-toggle-btn-login .bi::before {
+    color: #2c3e50 !important;
+}
+
+.password-toggle-btn-login:hover .bi,
+.password-toggle-btn-login:hover .bi::before {
+    color: #495057 !important;
+}
