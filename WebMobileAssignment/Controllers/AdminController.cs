@@ -10,10 +10,12 @@ namespace WebMobileAssignment.Controllers
     public class AdminController : Controller
     {
         private readonly DB _context;
+        private readonly Helper _helper;
 
-        public AdminController(DB context)
+        public AdminController(DB context, Helper helper)
         {
             _context = context;
+            _helper = helper;
         }
 
         // ==================== DASHBOARD ====================
@@ -217,36 +219,39 @@ namespace WebMobileAssignment.Controllers
                     if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
                     {
                         // create parent user and parent
-                        var parentCount = await _context.Parents.CountAsync();
-                        var parentUserId = $"PARENT{(parentCount + 1):D3}";
-                        var parentIdGen = parentUserId;
+                        // Generate proper User ID format
+       var userCount = await _context.Users.CountAsync();
+      var parentUserId = $"U{(userCount + 1):D4}";
+    
+    var parentCount = await _context.Parents.CountAsync();
+     var parentIdGen = $"P{(parentCount + 1):D4}";
 
-                        var parentUser = new User
-                        {
-                            UserId = parentUserId,
-                            FullName = newParentFullName,
-                            Email = newParentEmail,
-                            PasswordHash = newParentPassword,
-                            UserType = "Parent",
-                            CreatedDate = DateTime.Now,
-                            Status = "active",
-                            IsActive = true
-                        };
-                        _context.Users.Add(parentUser);
+                       var parentUser = new User
+          {
+                UserId = parentUserId,
+       FullName = newParentFullName,
+         Email = newParentEmail,
+   PasswordHash = newParentPassword,
+             UserType = "Parent",
+ CreatedDate = DateTime.Now,
+        Status = "active",
+     IsActive = true
+              };
+      _context.Users.Add(parentUser);
 
-                        var parent = new Parent
-                        {
-                            ParentId = parentIdGen,
-                            UserId = parentUserId,
-                            PhoneNumber = newParentPhone
-                        };
-                        _context.Parents.Add(parent);
+        var parent = new Parent
+   {
+        ParentId = parentIdGen,
+  UserId = parentUserId,
+            PhoneNumber = newParentPhone
+            };
+     _context.Parents.Add(parent);
 
-                        // Save to get parent in DB
-                        await _context.SaveChangesAsync();
+       // Save to get parent in DB
+      await _context.SaveChangesAsync();
 
-                        parentId = parent.ParentId;
-                    }
+   parentId = parent.ParentId;
+        }
 
                     // Generate IDs for student
                     var studentCount = await _context.Students.CountAsync();
@@ -259,7 +264,7 @@ namespace WebMobileAssignment.Controllers
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-                        PasswordHash = password, // TODO: Implement BCrypt.Net.BCrypt.HashPassword(password) for production
+                        PasswordHash = password, // Plain text for now - hash on first login or via utility
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -704,7 +709,7 @@ namespace WebMobileAssignment.Controllers
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-                        PasswordHash = password, // TODO: Implement BCrypt.Net.BCrypt.HashPassword(password)
+                        PasswordHash = password, // Plain text for now - hash on first login or via utility
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -1010,26 +1015,42 @@ namespace WebMobileAssignment.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+<<<<<<< Updated upstream
         public async Task<IActionResult> ParentCreate(string fullName, string email, string password, string phoneNumber)
+=======
+     public async Task<IActionResult> ParentCreate(string fullName, string email, string password, 
+        string? phoneNumber, string? address, DateTime? dateOfBirth, string? gender)
+>>>>>>> Stashed changes
         {
             // Manual validation for required fields
-            if (string.IsNullOrWhiteSpace(fullName))
-                ModelState.AddModelError("fullName", "Full name is required");
+       if (string.IsNullOrWhiteSpace(fullName))
+       ModelState.AddModelError("fullName", "Full name is required");
 
             if (string.IsNullOrWhiteSpace(email))
-                ModelState.AddModelError("email", "Email is required");
+   ModelState.AddModelError("email", "Email is required");
 
             if (string.IsNullOrWhiteSpace(password))
                 ModelState.AddModelError("password", "Password is required");
 
+<<<<<<< Updated upstream
             if (ModelState.IsValid)
-            {
-                try
-                {
-                    var parentCount = await _context.Parents.CountAsync();
-                    var userId = $"PARENT{(parentCount + 1):D3}";
-                    var parentId = userId;
+=======
+   if (password != null && password.Length < 8)
+        ModelState.AddModelError("password", "Password must be at least 8 characters long");
 
+          if (ModelState.IsValid)
+>>>>>>> Stashed changes
+            {
+   try
+    {
+           // Generate proper User ID format
+            var userCount = await _context.Users.CountAsync();
+              var userId = $"U{(userCount + 1):D4}";
+        
+    var parentCount = await _context.Parents.CountAsync();
+  var parentId = $"P{(parentCount + 1):D4}";
+
+<<<<<<< Updated upstream
                     var user = new User
                     {
                         UserId = userId,
@@ -1049,23 +1070,57 @@ namespace WebMobileAssignment.Controllers
                         PhoneNumber = phoneNumber
                     };
                     _context.Parents.Add(parent);
+=======
+       var user = new User
+              {
+     UserId = userId,
+          FullName = fullName,
+          Email = email,
+    PasswordHash = password, // Plain text for now - hash on first login or via utility
+            PhoneNumber = phoneNumber,
+   DateOfBirth = dateOfBirth,
+        Gender = gender,
+      UserType = "Parent",
+  CreatedDate = DateTime.Now,
+           Status = "active",
+      IsActive = true
+      };
+      _context.Users.Add(user);
 
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = $"Parent '{fullName}' added successfully!";
-                    return RedirectToAction(nameof(ParentIndex));
-                }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError("", $"Error saving parent: {ex.Message}");
-                }
+            var parent = new Parent
+     {
+            ParentId = parentId,
+  UserId = userId,
+            PhoneNumber = phoneNumber,
+   Address = address
+            };
+       _context.Parents.Add(parent);
+>>>>>>> Stashed changes
+
+     await _context.SaveChangesAsync();
+  TempData["SuccessMessage"] = $"Parent '{fullName}' added successfully!";
+  return RedirectToAction(nameof(ParentIndex));
+       }
+        catch (Exception ex)
+      {
+       ModelState.AddModelError("", $"Error saving parent: {ex.Message}");
+}
             }
 
-            ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = "Create Parent";
-            ViewBag.FullName = fullName;
+        ViewBag.ActiveMenu = "ParentManagement";
+   ViewBag.Title = "Create Parent";
+  ViewBag.FullName = fullName;
             ViewBag.Email = email;
+<<<<<<< Updated upstream
             ViewBag.PhoneNumber = phoneNumber;
             return View();
+=======
+         ViewBag.PhoneNumber = phoneNumber;
+            ViewBag.Address = address;
+       ViewBag.DateOfBirth = dateOfBirth?.ToString("yyyy-MM-dd");
+         ViewBag.Gender = gender;
+    return View();
+>>>>>>> Stashed changes
         }
 
         public async Task<IActionResult> ParentEdit(string id)

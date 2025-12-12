@@ -3,246 +3,241 @@
     Layout = "~/Views/Shared/_ParentLayout.cshtml";
 }
 
+@{
+var student = ViewBag.Student as WebMobileAssignment.Models.Student;
+    var parent = ViewBag.Parent as WebMobileAssignment.Models.Parent;
+    var totalAttendance = ViewBag.TotalAttendance ?? 0;
+    var presentCount = ViewBag.PresentCount ?? 0;
+    var absentCount = ViewBag.AbsentCount ?? 0;
+var lateCount = ViewBag.LateCount ?? 0;
+    var attendanceRate = ViewBag.AttendanceRate ?? 0;
+}
+
+@if (student == null)
+{
+    <div class="alert alert-warning">
+   <i class="bi bi-exclamation-triangle me-2"></i>
+        No student information found. Please contact administrator.
+    </div>
+    return;
+}
+
 <div class="row g-3">
     <!-- Profile Card -->
     <div class="col-lg-4">
-    <div class="dashboard-card">
-          <div class="text-center mb-4">
-   <div class="user-avatar mx-auto mb-3" style="width: 120px; height: 120px; font-size: 3rem; background: #ffc107;">
-       <i class="bi bi-person-fill"></i>
+        <div class="dashboard-card">
+      <div class="text-center mb-4">
+         <div class="user-avatar mx-auto mb-3" style="width: 120px; height: 120px; font-size: 3rem; background: #ffc107;">
+            <i class="bi bi-person-fill"></i>
+           </div>
+        <h4 class="mb-1">@student.User.FullName</h4>
+         <p class="text-muted mb-2">Student ID: @student.StudentId</p>
+             <span class="badge bg-@(student.User.IsActive ? "success" : "secondary")">
+            @(student.User.IsActive ? "Active" : "Inactive")
+         </span>
      </div>
-            <h4 class="mb-1">John Doe</h4>
-     <p class="text-muted mb-2">Student ID: STU001</p>
-       <span class="badge bg-success">Active</span>
-    </div>
 
             <div class="list-group list-group-flush">
-  <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-          <span class="text-muted"><i class="bi bi-calendar3 me-2"></i>Date of Birth</span>
-     <strong>May 15, 2010</strong>
+             <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+ <span class="text-muted"><i class="bi bi-calendar3 me-2"></i>Date of Birth</span>
+   <strong>
+             @if (student.DateOfBirth.HasValue)
+  {
+       @student.DateOfBirth.Value.ToString("MMM dd, yyyy")
+          }
+ else
+             {
+     <text>Not set</text>
+       }
+   </strong>
+                </div>
+          <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                 <span class="text-muted"><i class="bi bi-gender-ambiguous me-2"></i>Gender</span>
+      <strong>@(student.Gender ?? "Not specified")</strong>
+       </div>
+<div class="list-group-item d-flex justify-content-between align-items-center px-0">
+             <span class="text-muted"><i class="bi bi-phone me-2"></i>Phone</span>
+       <strong>@(student.User.PhoneNumber ?? "Not set")</strong>
+  </div>
+           <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+           <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email</span>
+      <strong>@student.User.Email</strong>
     </div>
-        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-      <span class="text-muted"><i class="bi bi-gender-ambiguous me-2"></i>Gender</span>
-   <strong>Male</strong>
-   </div>
-     <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-    <span class="text-muted"><i class="bi bi-phone me-2"></i>Phone</span>
-              <strong>012-345-6789</strong>
-  </div>
-       <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-    <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email</span>
-    <strong>john@email.com</strong>
-  </div>
-     <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-          <span class="text-muted"><i class="bi bi-calendar-check me-2"></i>Join Date</span>
-               <strong>Jan 1, 2024</strong>
-   </div>
-         </div>
+             <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+        <span class="text-muted"><i class="bi bi-calendar-check me-2"></i>Enrollment Date</span>
+           <strong>
+       @if (student.EnrollmentDate.HasValue)
+             {
+        @student.EnrollmentDate.Value.ToString("MMM dd, yyyy")
+    }
+   else
+      {
+   <text>Not set</text>
+     }
+  </strong>
+      </div>
+            </div>
 
-       <button class="btn btn-outline-primary w-100 mt-3">
-      <i class="bi bi-pencil-fill me-2"></i>Edit Profile
-     </button>
-     </div>
+      <button class="btn btn-outline-primary w-100 mt-3" disabled>
+         <i class="bi bi-pencil-fill me-2"></i>Edit Profile (Admin Only)
+ </button>
+        </div>
     </div>
 
     <!-- Details Section -->
     <div class="col-lg-8">
-     <!-- Class Information -->
- <div class="dashboard-card mb-3">
+        <!-- Class Information -->
+        <div class="dashboard-card mb-3">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+        <i class="bi bi-book-fill"></i>
+    Enrolled Classes
+              </h5>
+        </div>
+      @if (student.Enrollments != null && student.Enrollments.Any())
+        {
+      <div class="row g-3">
+             @foreach (var enrollment in student.Enrollments)
+  {
+        <div class="col-md-6">
+            <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
+    <div class="d-flex align-items-center gap-3">
+             <div class="card-icon blue">
+        <i class="bi bi-mortarboard-fill"></i>
+              </div>
+             <div>
+       <small class="text-muted d-block">Class Name</small>
+      <strong>@enrollment.Class.ClassName</strong>
+       </div>
+           </div>
+              @if (!string.IsNullOrEmpty(enrollment.Class.Day))
+      {
+                   <div class="mt-2">
+        <small class="text-muted">Schedule:</small>
+    <span class="badge bg-info ms-1">@enrollment.Class.Day</span>
+        @if (enrollment.Class.StartTime.HasValue && enrollment.Class.EndTime.HasValue)
+{
+  <span class="ms-1">@enrollment.Class.StartTime.Value.ToString("hh\\:mm") - @enrollment.Class.EndTime.Value.ToString("hh\\:mm")</span>
+          }
+</div>
+    }
+               @if (enrollment.Class.Teacher != null)
+  {
+            <div class="mt-2">
+           <small class="text-muted">Teacher:</small>
+      <strong class="ms-1">@enrollment.Class.Teacher.User.FullName</strong>
+       </div>
+    }
+              </div>
+      </div>
+   }
+          </div>
+            }
+else
+      {
+          <div class="text-center py-4 text-muted">
+  <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+     <p class="mt-2 mb-0">Not enrolled in any classes yet</p>
+       </div>
+          }
+        </div>
+
+        <!-- Attendance Summary -->
+        <div class="dashboard-card mb-3">
+        <div class="card-header-custom">
+        <h5 class="card-title">
+      <i class="bi bi-graph-up"></i>
+     Attendance Summary
+   </h5>
+        <a asp-controller="Parent" asp-action="AttendanceHistory" class="btn btn-sm btn-outline-primary">
+        View Details
+                </a>
+  </div>
+            <div class="row g-3">
+    <div class="col-md-3">
+             <div class="text-center p-3" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
+ <h3 class="mb-0" style="color: #0d6efd;">@totalAttendance</h3>
+      <small class="text-muted">Total Records</small>
+ </div>
+      </div>
+     <div class="col-md-3">
+        <div class="text-center p-3" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
+              <h3 class="mb-0" style="color: #198754;">@presentCount</h3>
+         <small class="text-muted">Present</small>
+           </div>
+                </div>
+            <div class="col-md-3">
+             <div class="text-center p-3" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
+       <h3 class="mb-0" style="color: #dc3545;">@absentCount</h3>
+      <small class="text-muted">Absent</small>
+      </div>
+             </div>
+          <div class="col-md-3">
+   <div class="text-center p-3" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
+          <h3 class="mb-0" style="color: #ffc107;">@lateCount</h3>
+    <small class="text-muted">Late</small>
+      </div>
+       </div>
+         </div>
+   <div class="mt-3">
+  <div class="d-flex justify-content-between mb-2">
+  <span>Attendance Rate</span>
+<strong>@attendanceRate%</strong>
+     </div>
+         <div class="progress" style="height: 25px;">
+      <div class="progress-bar bg-@(attendanceRate >= 80 ? "success" : attendanceRate >= 60 ? "warning" : "danger")" 
+         role="progressbar" 
+          style="width: @attendanceRate%">
+               @attendanceRate%
+           </div>
+     </div>
+     </div>
+</div>
+
+        <!-- Contact Information -->
+        <div class="dashboard-card">
    <div class="card-header-custom">
      <h5 class="card-title">
-    <i class="bi bi-book-fill"></i>
-         Class Information
-       </h5>
+    <i class="bi bi-person-lines-fill"></i>
+          Guardian Contact Information
+      </h5>
             </div>
-      <div class="row g-3">
-       <div class="col-md-6">
-    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-         <div class="d-flex align-items-center gap-3">
- <div class="card-icon blue">
-         <i class="bi bi-mortarboard-fill"></i>
-       </div>
-          <div>
-     <small class="text-muted d-block">Current Class</small>
-     <strong>Form 5 Science</strong>
-      </div>
-          </div>
-      </div>
-  </div>
-         <div class="col-md-6">
-          <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-     <div class="d-flex align-items-center gap-3">
-     <div class="card-icon yellow">
-         <i class="bi bi-calendar-week-fill"></i>
-      </div>
-     <div>
-        <small class="text-muted d-block">Class Schedule</small>
-           <strong>Mon, Wed, Fri</strong>
-     </div>
-</div>
-   </div>
-      </div>
-       <div class="col-md-6">
-    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-     <div class="d-flex align-items-center gap-3">
-           <div class="card-icon green">
-   <i class="bi bi-clock-fill"></i>
-           </div>
-      <div>
-         <small class="text-muted d-block">Class Time</small>
-<strong>2:00 PM - 4:00 PM</strong>
-       </div>
-      </div>
-       </div>
-     </div>
-     <div class="col-md-6">
-<div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-       <div class="d-flex align-items-center gap-3">
-      <div class="card-icon red">
-   <i class="bi bi-person-video3"></i>
-         </div>
-         <div>
-          <small class="text-muted d-block">Class Teacher</small>
-     <strong>Mrs. Sarah Johnson</strong>
-     </div>
-        </div>
-        </div>
-       </div>
-   </div>
-   </div>
-
-      <!-- Attendance Summary -->
-        <div class="dashboard-card mb-3">
-   <div class="card-header-custom">
-      <h5 class="card-title">
-      <i class="bi bi-graph-up"></i>
-    Attendance Summary
-          </h5>
-     <a asp-controller="Parent" asp-action="AttendanceHistory" class="btn btn-sm btn-outline-primary">
-    View Details
-     </a>
-          </div>
+      @if (parent != null)
+            {
     <div class="row g-3">
-          <div class="col-md-3">
-      <div class="text-center p-3" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
-     <h3 class="mb-0" style="color: #0d6efd;">50</h3>
-      <small class="text-muted">Total Classes</small>
-         </div>
-      </div>
-           <div class="col-md-3">
-     <div class="text-center p-3" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
-         <h3 class="mb-0" style="color: #198754;">45</h3>
-      <small class="text-muted">Present</small>
-     </div>
-  </div>
-   <div class="col-md-3">
-          <div class="text-center p-3" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
-       <h3 class="mb-0" style="color: #dc3545;">3</h3>
-         <small class="text-muted">Absent</small>
-         </div>
-     </div>
-            <div class="col-md-3">
-  <div class="text-center p-3" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
-     <h3 class="mb-0" style="color: #ffc107;">2</h3>
-   <small class="text-muted">Late</small>
-     </div>
-   </div>
-  </div>
-     <div class="mt-3">
-    <div class="d-flex justify-content-between mb-2">
-          <span>Attendance Rate</span>
-       <strong>90%</strong>
-</div>
-  <div class="progress" style="height: 25px;">
-     <div class="progress-bar bg-success" role="progressbar" style="width: 90%">
-       90%
-     </div>
-      </div>
-            </div>
-        </div>
-
-     <!-- Contact Information -->
-        <div class="dashboard-card">
-      <div class="card-header-custom">
-                <h5 class="card-title">
-      <i class="bi bi-person-lines-fill"></i>
-        Guardian Contact Information
-     </h5>
+        <div class="col-md-12">
+        <div class="p-3" style="background: #f8f9fa; border-radius: 8px; border-left: 4px solid #0d6efd;">
+           <h6 class="mb-3"><i class="bi bi-person-fill me-2"></i>Parent/Guardian</h6>
+         <div class="mb-2">
+        <small class="text-muted d-block">Name</small>
+ <strong>@parent.User.FullName</strong>
+                </div>
+    <div class="mb-2">
+       <small class="text-muted d-block">Phone</small>
+<strong>@(parent.PhoneNumber ?? parent.User.PhoneNumber ?? "Not provided")</strong>
        </div>
-      <div class="row g-3">
-          <div class="col-md-6">
-    <div class="p-3" style="background: #f8f9fa; border-radius: 8px; border-left: 4px solid #0d6efd;">
-          <h6 class="mb-3"><i class="bi bi-person-fill me-2"></i>Primary Guardian</h6>
-   <div class="mb-2">
-<small class="text-muted d-block">Name</small>
-     <strong>Mr. Robert Doe</strong>
-    </div>
      <div class="mb-2">
-         <small class="text-muted d-block">Relationship</small>
-       <strong>Father</strong>
-      </div>
-       <div class="mb-2">
-      <small class="text-muted d-block">Phone</small>
-        <strong>012-987-6543</strong>
-    </div>
-       <div>
-     <small class="text-muted d-block">Email</small>
-         <strong>robert.doe@email.com</strong>
-       </div>
-   </div>
-            </div>
-         <div class="col-md-6">
-        <div class="p-3" style="background: #f8f9fa; border-radius: 8px; border-left: 4px solid #ffc107;">
-             <h6 class="mb-3"><i class="bi bi-person-fill me-2"></i>Secondary Guardian</h6>
-     <div class="mb-2">
-       <small class="text-muted d-block">Name</small>
-  <strong>Mrs. Jane Doe</strong>
-        </div>
-             <div class="mb-2">
-     <small class="text-muted d-block">Relationship</small>
-           <strong>Mother</strong>
-    </div>
-  <div class="mb-2">
-        <small class="text-muted d-block">Phone</small>
-        <strong>012-876-5432</strong>
-      </div>
+              <small class="text-muted d-block">Email</small>
+     <strong>@parent.User.Email</strong>
+     </div>
+    @if (!string.IsNullOrEmpty(parent.Address))
+     {
      <div>
-       <small class="text-muted d-block">Email</small>
-    <strong>jane.doe@email.com</strong>
+      <small class="text-muted d-block">Address</small>
+       <strong>@parent.Address</strong>
      </div>
+        }
        </div>
-     </div>
-      </div>
-  </div>
-    </div>
-</div>
-
-<!-- Emergency Contact -->
-<div class="dashboard-card mt-3">
-    <div class="card-header-custom">
-        <h5 class="card-title">
-     <i class="bi bi-exclamation-triangle-fill text-warning"></i>
-     Emergency Contact
-        </h5>
-    </div>
-    <div class="alert alert-warning mb-0">
-        <div class="row g-3">
-       <div class="col-md-3">
-     <small class="text-muted d-block">Name</small>
-    <strong>Dr. Emily Smith</strong>
+           </div>
+         </div>
+    }
+            else
+      {
+  <div class="text-center py-4 text-muted">
+   <i class="bi bi-person-x" style="font-size: 2rem;"></i>
+            <p class="mt-2 mb-0">No parent information available</p>
         </div>
-       <div class="col-md-3">
-  <small class="text-muted d-block">Relationship</small>
-    <strong>Family Doctor</strong>
-            </div>
-       <div class="col-md-3">
-      <small class="text-muted d-block">Phone</small>
-   <strong>012-555-0123</strong>
-       </div>
-       <div class="col-md-3">
-         <small class="text-muted d-block">Available</small>
-       <strong>24/7</strong>
-          </div>
+}
         </div>
     </div>
 </div>

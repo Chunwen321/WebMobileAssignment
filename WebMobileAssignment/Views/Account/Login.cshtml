@@ -64,18 +64,14 @@
                     <p class="form-subtitle">Please login to continue</p>
                 </div>
 
-                <form asp-controller="Account" asp-action="Login" method="post">
-                    <div class="mb-3">
-                        <label for="userType" class="form-label">User Type</label>
-                        <select class="form-select" id="userType" name="userType" required>
-                            <option value="" selected disabled hidden>Select user type...</option>
-                            <option value="admin">Admin</option>
-                            <option value="teacher">Teacher</option>
-                            <option value="student">Student</option>
-                            <option value="parent">Parent/Guardian</option>
-                        </select>
-                    </div>
+                @if (ViewBag.ErrorMessage != null)
+                {
+                <div class="alert alert-danger" role="alert">
+                    @ViewBag.ErrorMessage
+                </div>
+                }
 
+                <form asp-controller="Account" asp-action="Login" method="post">
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
                         <input type="text" class="form-control" id="email" name="email" placeholder="Enter Email" required>
@@ -83,7 +79,12 @@
 
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+                        <div class="password-input-wrapper">
+                            <input type="password" class="form-control password-input-login" id="password" name="password" placeholder="Enter password" required>
+                            <button type="button" class="password-toggle-btn-login" onclick="toggleLoginPassword()">
+                                <i class="bi bi-eye" id="password-icon"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -91,7 +92,7 @@
                             <input type="checkbox" class="form-check-input" id="rememberMe">
                             <label class="form-check-label" for="rememberMe">Remember me</label>
                         </div>
-                        <a href="#" class="forgot-link">Forgot password?</a>
+                        <a asp-controller="Account" asp-action="ForgotPassword" class="forgot-link">Forgot password?</a>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100 mb-3">
@@ -108,3 +109,22 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+  <script>
+  function toggleLoginPassword() {
+  const input = document.getElementById('password');
+     const icon = document.getElementById('password-icon');
+ 
+        if (input.type === 'password') {
+    input.type = 'text';
+icon.classList.remove('bi-eye');
+  icon.classList.add('bi-eye-slash');
+      } else {
+      input.type = 'password';
+      icon.classList.remove('bi-eye-slash');
+ icon.classList.add('bi-eye');
+      }
+   }
+    </script>
+}
