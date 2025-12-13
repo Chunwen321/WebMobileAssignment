@@ -50,11 +50,6 @@
                         <i class="bi bi-bar-chart-fill"></i>
                         <span>Monthly Summary</span>
                     </a>
-                    <a asp-controller="Parent" asp-action="DownloadReport"
-                       class="sidebar-subitem">
-                        <i class="bi bi-file-earmark-pdf-fill"></i>
-                        <span>Download Report (PDF)</span>
-                    </a>
                 </div>
             </div>
 
@@ -83,7 +78,10 @@
                     <i class="bi bi-bell-fill"></i>
                     <span>Notifications</span>
                 </div>
-                <span class="notification-badge">3</span>
+                @if (ViewBag.UnreadNotificationCount != null && ViewBag.UnreadNotificationCount > 0)
+                {
+                    <span class="notification-dot"></span>
+                }
             </a>
 
             <!-- Settings -->
@@ -124,9 +122,12 @@
                 <h1>@ViewBag.Title</h1>
             </div>
             <div class="topbar-actions">
-                <button class="topbar-btn" title="Notifications">
+                <button class="topbar-btn" title="Notifications" onclick="window.location.href='@Url.Action("Notifications", "Parent")'">
                     <i class="bi bi-bell-fill"></i>
-                    <span class="badge">3</span>
+                    @if (ViewBag.UnreadNotificationCount != null && ViewBag.UnreadNotificationCount > 0)
+                    {
+                        <span class="badge">@ViewBag.UnreadNotificationCount</span>
+                    }
                 </button>
             </div>
         </div>
