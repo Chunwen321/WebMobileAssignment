@@ -10,12 +10,10 @@ namespace WebMobileAssignment.Controllers
     public class AdminController : Controller
     {
         private readonly DB _context;
-        private readonly Helper _helper;
 
-        public AdminController(DB context, Helper helper)
+        public AdminController(DB context)
         {
             _context = context;
-            _helper = helper;
         }
 
         // ==================== DASHBOARD ====================
@@ -220,39 +218,36 @@ namespace WebMobileAssignment.Controllers
                     if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
                     {
                         // create parent user and parent
-                        // Generate proper User ID format
-       var userCount = await _context.Users.CountAsync();
-      var parentUserId = $"U{(userCount + 1):D4}";
-    
-    var parentCount = await _context.Parents.CountAsync();
-     var parentIdGen = $"P{(parentCount + 1):D4}";
+                        var parentCount = await _context.Parents.CountAsync();
+                        var parentUserId = $"PARENT{(parentCount + 1):D3}";
+                        var parentIdGen = parentUserId;
 
-                       var parentUser = new User
-          {
-                UserId = parentUserId,
-       FullName = newParentFullName,
-         Email = newParentEmail,
-   PasswordHash = newParentPassword,
-             UserType = "Parent",
- CreatedDate = DateTime.Now,
-        Status = "active",
-     IsActive = true
-              };
-      _context.Users.Add(parentUser);
+                        var parentUser = new User
+                        {
+                            UserId = parentUserId,
+                            FullName = newParentFullName,
+                            Email = newParentEmail,
+                            PasswordHash = newParentPassword,
+                            UserType = "Parent",
+                            CreatedDate = DateTime.Now,
+                            Status = "active",
+                            IsActive = true
+                        };
+                        _context.Users.Add(parentUser);
 
-        var parent = new Parent
-   {
-        ParentId = parentIdGen,
-  UserId = parentUserId,
-            PhoneNumber = newParentPhone
-            };
-     _context.Parents.Add(parent);
+                        var parent = new Parent
+                        {
+                            ParentId = parentIdGen,
+                            UserId = parentUserId,
+                            PhoneNumber = newParentPhone
+                        };
+                        _context.Parents.Add(parent);
 
-       // Save to get parent in DB
-      await _context.SaveChangesAsync();
+                        // Save to get parent in DB
+                        await _context.SaveChangesAsync();
 
-   parentId = parent.ParentId;
-        }
+                        parentId = parent.ParentId;
+                    }
 
                     // Generate IDs for student
                     var studentCount = await _context.Students.CountAsync();
@@ -265,7 +260,7 @@ namespace WebMobileAssignment.Controllers
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-                        PasswordHash = password, // Plain text for now - hash on first login or via utility
+                        PasswordHash = password, // TODO: Implement BCrypt.Net.BCrypt.HashPassword(password) for production
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -710,7 +705,7 @@ namespace WebMobileAssignment.Controllers
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-                        PasswordHash = password, // Plain text for now - hash on first login or via utility
+                        PasswordHash = password, // TODO: Implement BCrypt.Net.BCrypt.HashPassword(password)
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -1036,6 +1031,7 @@ namespace WebMobileAssignment.Controllers
             {
                 try
                 {
+
                     // Generate proper User ID format
                     var userCount = await _context.Users.CountAsync();
                     var userId = $"U{(userCount + 1):D4}";
@@ -1043,12 +1039,16 @@ namespace WebMobileAssignment.Controllers
                     var parentCount = await _context.Parents.CountAsync();
                     var parentId = $"P{(parentCount + 1):D4}";
 
+
                     var user = new User
                     {
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-                        PasswordHash = password, // Plain text for now - hash on first login or via utility
+
+                        PasswordHash = password, // TODO: Implement BCrypt.Net.BCrypt.HashPassword(password)
+
+
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -1078,7 +1078,11 @@ namespace WebMobileAssignment.Controllers
                 }
             }
 
+
             ViewBag.ActiveMenu = "ParentManagement";
+
+        ViewBag.ActiveMenu = "ParentManagement";
+
             ViewBag.Title = "Create Parent";
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
@@ -1086,7 +1090,10 @@ namespace WebMobileAssignment.Controllers
             ViewBag.Address = address;
             ViewBag.DateOfBirth = dateOfBirth?.ToString("yyyy-MM-dd");
             ViewBag.Gender = gender;
+
             return View();
+
+    return View();
         }
 
         public async Task<IActionResult> ParentEdit(string id)
