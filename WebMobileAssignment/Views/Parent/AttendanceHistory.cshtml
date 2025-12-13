@@ -3,244 +3,169 @@
     Layout = "~/Views/Shared/_ParentLayout.cshtml";
 }
 
+@{
+    var students = ViewBag.Students as List<WebMobileAssignment.Models.Student> ?? new List<WebMobileAssignment.Models.Student>();
+    var attendances = ViewBag.Attendances as List<WebMobileAssignment.Models.Attendance> ?? new List<WebMobileAssignment.Models.Attendance>();
+    var classes = ViewBag.Classes as List<WebMobileAssignment.Models.Class> ?? new List<WebMobileAssignment.Models.Class>();
+    var totalPresent = ViewBag.TotalPresent ?? 0;
+    var totalAbsent = ViewBag.TotalAbsent ?? 0;
+    var totalLate = ViewBag.TotalLate ?? 0;
+    var attendanceRate = ViewBag.AttendanceRate ?? 0;
+    var selectedClassId = ViewBag.SelectedClassId as string;
+    var selectedMonth = ViewBag.SelectedMonth as string;
+    var selectedStatus = ViewBag.SelectedStatus as string;
+}
+
 <div class="dashboard-card mb-4">
     <div class="card-header-custom">
-        <h3 class="card-title">
-<i class="bi bi-clock-history"></i>
-  Attendance History
+ <h3 class="card-title">
+      <i class="bi bi-clock-history"></i>
+            Attendance History
         </h3>
     </div>
 
     <!-- Filters -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-   <label class="form-label">Class</label>
-            <select class="form-select">
-        <option value="">All Classes</option>
-   <option>Mathematics</option>
-          <option>Science</option>
-      <option>English</option>
-    <option>History</option>
-            </select>
-        </div>
+    <form method="get" asp-controller="Parent" asp-action="AttendanceHistory">
+   <div class="row g-3 mb-4">
    <div class="col-md-3">
-    <label class="form-label">Month</label>
-   <input type="month" class="form-control" value="2024-01">
-   </div>
-     <div class="col-md-3">
-   <label class="form-label">Status</label>
-         <select class="form-select">
-        <option value="">All Status</option>
-      <option>Present</option>
-   <option>Absent</option>
-        <option>Late</option>
+          <label class="form-label">Class</label>
+ <select name="classId" class="form-select">
+            <option value="">All Classes</option>
+      @foreach (var classItem in classes)
+   {
+      <option value="@classItem.ClassId" selected="@(classItem.ClassId == selectedClassId)">
+        @classItem.ClassName (@(classItem.Subject?.SubjectName ?? "N/A"))
+              </option>
+        }
+     </select>
+       </div>
+  <div class="col-md-3">
+          <label class="form-label">Month</label>
+ <input type="month" name="month" class="form-control" value="@(selectedMonth ?? DateTime.Now.ToString("yyyy-MM"))">
+       </div>
+       <div class="col-md-3">
+<label class="form-label">Status</label>
+     <select name="status" class="form-select">
+<option value="">All Status</option>
+           <option value="Present" selected="@(selectedStatus == "Present")">Present</option>
+     <option value="Absent" selected="@(selectedStatus == "Absent")">Absent</option>
+          <option value="Late" selected="@(selectedStatus == "Late")">Late</option>
        </select>
- </div>
-   <div class="col-md-3">
-            <label class="form-label">&nbsp;</label>
-         <button class="btn btn-primary w-100">
-       <i class="bi bi-search me-2"></i>Search
-</button>
+            </div>
+         <div class="col-md-3">
+           <label class="form-label">&nbsp;</label>
+ <button type="submit" class="btn btn-primary w-100">
+   <i class="bi bi-search me-2"></i>Search
+     </button>
+            </div>
         </div>
-    </div>
+    </form>
 
-    <!-- Summary Cards -->
+  <!-- Summary Cards -->
     <div class="row g-3 mb-4">
-<div class="col-md-3">
-    <div class="p-3 text-center" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
+        <div class="col-md-3">
+        <div class="p-3 text-center" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
        <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i>
-        <h4 class="mt-2 mb-0" style="color: #198754;">45</h4>
-        <small class="text-muted">Total Present</small>
-     </div>
-    </div>
-   <div class="col-md-3">
-    <div class="p-3 text-center" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
-      <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #dc3545;"></i>
-         <h4 class="mt-2 mb-0" style="color: #dc3545;">3</h4>
-   <small class="text-muted">Total Absent</small>
-      </div>
+    <h4 class="mt-2 mb-0" style="color: #198754;">@totalPresent</h4>
+       <small class="text-muted">Total Present</small>
+</div>
         </div>
         <div class="col-md-3">
-   <div class="p-3 text-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
-     <i class="bi bi-clock-fill" style="font-size: 2rem; color: #ffc107;"></i>
-                <h4 class="mt-2 mb-0" style="color: #ffc107;">2</h4>
-  <small class="text-muted">Total Late</small>
-     </div>
+    <div class="p-3 text-center" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
+       <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #dc3545;"></i>
+              <h4 class="mt-2 mb-0" style="color: #dc3545;">@totalAbsent</h4>
+                <small class="text-muted">Total Absent</small>
+       </div>
         </div>
-   <div class="col-md-3">
-   <div class="p-3 text-center" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
-         <i class="bi bi-graph-up" style="font-size: 2rem; color: #0d6efd;"></i>
-  <h4 class="mt-2 mb-0" style="color: #0d6efd;">94%</h4>
-         <small class="text-muted">Attendance Rate</small>
+        <div class="col-md-3">
+            <div class="p-3 text-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
+       <i class="bi bi-clock-fill" style="font-size: 2rem; color: #ffc107;"></i>
+       <h4 class="mt-2 mb-0" style="color: #ffc107;">@totalLate</h4>
+         <small class="text-muted">Total Late</small>
+            </div>
         </div>
-  </div>
+        <div class="col-md-3">
+          <div class="p-3 text-center" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
+    <i class="bi bi-graph-up" style="font-size: 2rem; color: #0d6efd;"></i>
+  <h4 class="mt-2 mb-0" style="color: #0d6efd;">@attendanceRate%</h4>
+  <small class="text-muted">Attendance Rate</small>
+            </div>
+        </div>
     </div>
 
-    <!-- Attendance Table -->
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-<thead class="table-light">
-        <tr>
-         <th><input type="checkbox" class="form-check-input"></th>
-        <th>Date</th>
-           <th>Day</th>
-       <th>Class</th>
-      <th>Subject</th>
-          <th>Time In</th>
-                    <th>Time Out</th>
-      <th>Status</th>
-     <th>Remarks</th>
-            <th>Actions</th>
-      </tr>
-     </thead>
-   <tbody>
-       <tr>
-      <td><input type="checkbox" class="form-check-input"></td>
-  <td>
-    <i class="bi bi-calendar3 me-2 text-muted"></i>
- <strong>2024-01-15</strong>
-   </td>
-          <td>Monday</td>
-                  <td>Form 5 Science</td>
-         <td>Mathematics</td>
-           <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
-           <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
-     <td><span class="badge bg-success">Present</span></td>
-     <td>On time</td>
-      <td>
-     <button class="btn btn-sm btn-outline-primary" title="View Details">
-  <i class="bi bi-eye"></i>
-    </button>
-      </td>
-        </tr>
-          <tr>
-   <td><input type="checkbox" class="form-check-input"></td>
-         <td>
-       <i class="bi bi-calendar3 me-2 text-muted"></i>
-     <strong>2024-01-14</strong>
-     </td>
-    <td>Sunday</td>
-  <td>Form 5 Science</td>
-     <td>Science</td>
-      <td><i class="bi bi-clock me-1"></i>2:15 PM</td>
-         <td><i class="bi bi-clock me-1"></i>4:15 PM</td>
-        <td><span class="badge bg-warning">Late</span></td>
-<td>15 minutes late</td>
-        <td>
-      <button class="btn btn-sm btn-outline-primary" title="View Details">
-           <i class="bi bi-eye"></i>
-    </button>
-         </td>
-     </tr>
-                <tr>
-       <td><input type="checkbox" class="form-check-input"></td>
-          <td>
-    <i class="bi bi-calendar3 me-2 text-muted"></i>
-  <strong>2024-01-13</strong>
-   </td>
-     <td>Saturday</td>
-       <td>Form 5 Science</td>
-   <td>English</td>
-     <td>-</td>
-          <td>-</td>
-            <td><span class="badge bg-danger">Absent</span></td>
- <td>Medical leave</td>
-      <td>
-             <button class="btn btn-sm btn-outline-primary" title="View Details">
-           <i class="bi bi-eye"></i>
-    </button>
-       </td>
-                </tr>
-       <tr>
-      <td><input type="checkbox" class="form-check-input"></td>
-        <td>
-   <i class="bi bi-calendar3 me-2 text-muted"></i>
-      <strong>2024-01-12</strong>
-       </td>
-         <td>Friday</td>
-           <td>Form 5 Science</td>
-                    <td>Mathematics</td>
-           <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
-       <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
-     <td><span class="badge bg-success">Present</span></td>
-        <td>On time</td>
-          <td>
-   <button class="btn btn-sm btn-outline-primary" title="View Details">
-          <i class="bi bi-eye"></i>
-             </button>
-        </td>
-      </tr>
- <tr>
-      <td><input type="checkbox" class="form-check-input"></td>
-<td>
-            <i class="bi bi-calendar3 me-2 text-muted"></i>
-        <strong>2024-01-11</strong>
-       </td>
-         <td>Thursday</td>
-   <td>Form 5 Science</td>
-       <td>Science</td>
-      <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
-  <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
-                    <td><span class="badge bg-success">Present</span></td>
-      <td>On time</td>
-         <td>
-     <button class="btn btn-sm btn-outline-primary" title="View Details">
-   <i class="bi bi-eye"></i>
-         </button>
-            </td>
-         </tr>
-        <tr>
-         <td><input type="checkbox" class="form-check-input"></td>
-       <td>
-       <i class="bi bi-calendar3 me-2 text-muted"></i>
-        <strong>2024-01-10</strong>
- </td>
-               <td>Wednesday</td>
-   <td>Form 5 Science</td>
-         <td>History</td>
-   <td><i class="bi bi-clock me-1"></i>2:00 PM</td>
-           <td><i class="bi bi-clock me-1"></i>4:00 PM</td>
-      <td><span class="badge bg-success">Present</span></td>
-          <td>On time</td>
-  <td>
-     <button class="btn btn-sm btn-outline-primary" title="View Details">
-       <i class="bi bi-eye"></i>
-          </button>
-   </td>
-   </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Pagination -->
-  <div class="d-flex justify-content-between align-items-center mt-4">
-   <div class="text-muted">
-     Showing 1 to 6 of 50 entries
+    @if (!students.Any())
+    {
+   <div class="alert alert-info text-center">
+          <i class="bi bi-info-circle me-2"></i>
+       <strong>No students found.</strong> Please contact the administrator to link your children to your account.
+        </div>
+    }
+    else if (!attendances.Any())
+    {
+      <div class="alert alert-info text-center">
+          <i class="bi bi-info-circle me-2"></i>
+        <strong>No attendance records found.</strong> 
+     @if (!string.IsNullOrEmpty(selectedClassId) || !string.IsNullOrEmpty(selectedMonth) || !string.IsNullOrEmpty(selectedStatus))
+            {
+ <span>Try adjusting the filters.</span>
+  }
+        else
+   {
+<span>Attendance records will appear here once classes are assigned and attendance is taken.</span>
+            }
    </div>
-        <nav>
-      <ul class="pagination mb-0">
-                <li class="page-item disabled">
-        <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-         </li>
-         <li class="page-item active"><a class="page-link" href="#">1</a></li>
-           <li class="page-item"><a class="page-link" href="#">2</a></li>
-    <li class="page-item"><a class="page-link" href="#">3</a></li>
-       <li class="page-item"><a class="page-link" href="#">4</a></li>
-           <li class="page-item"><a class="page-link" href="#">5</a></li>
-          <li class="page-item">
-        <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-    </li>
-    </ul>
-        </nav>
-</div>
+    }
+    else
+    {
+ <!-- Attendance Table -->
+     <div class="table-responsive">
+        <table class="table table-hover align-middle">
+     <thead class="table-light">
+         <tr>
+            <th>Student</th>
+          <th>Date</th>
+     <th>Day</th>
+     <th>Class</th>
+           <th>Subject</th>
+      <th>Time Taken</th>
+   <th>Status</th>
+      <th>Marked By</th>
+       </tr>
+          </thead>
+            <tbody>
+            @foreach (var attendance in attendances)
+             {
+      var statusBadgeColor = attendance.Status == "Present" ? "success" :
+      (attendance.Status == "Late" ? "warning" :
+        (attendance.Status == "Absent" ? "danger" : "secondary"));
+          
+    <tr>
+   <td>
+  <i class="bi bi-person-circle me-2 text-muted"></i>
+              <strong>@attendance.Student.User.FullName</strong>
+       </td>
+           <td>
+    <i class="bi bi-calendar3 me-2 text-muted"></i>
+           <strong>@attendance.Date.ToString("yyyy-MM-dd")</strong>
+       </td>
+     <td>@attendance.Date.ToString("dddd")</td>
+    <td>@attendance.Class.ClassName</td>
+       <td>@(attendance.Class.Subject?.SubjectName ?? "N/A")</td>
+        <td><i class="bi bi-clock me-1"></i>@attendance.TakenOn.ToString("hh:mm tt")</td>
+         <td><span class="badge bg-@statusBadgeColor">@attendance.Status</span></td>
+        <td>@(attendance.MarkedByTeacher?.User?.FullName ?? "System")</td>
+      </tr>
+        }
+                </tbody>
+      </table>
+        </div>
 
-    <!-- Action Buttons -->
-    <div class="mt-4 d-flex gap-2">
-   <button class="btn btn-outline-primary">
-         <i class="bi bi-download me-2"></i>Export to Excel
-        </button>
-        <button class="btn btn-outline-danger">
-            <i class="bi bi-file-pdf me-2"></i>Export to PDF
-      </button>
-    </div>
+        @if (attendances.Count >= 50)
+        {
+   <div class="alert alert-info mt-3">
+        <i class="bi bi-info-circle me-2"></i>
+     Showing latest 50 records. Use filters to narrow down results.
+        </div>
+  }
+    }
 </div>
