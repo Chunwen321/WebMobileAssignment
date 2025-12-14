@@ -271,52 +271,82 @@
                             var timeSlotHour = cls.StartTime?.Hours ?? 0;
                             var gradientClass = timeSlotHour < 12 ? "morning" : (timeSlotHour < 17 ? "afternoon" : "evening");
                             
-                            <div class="col-lg-3 col-md-4 col-sm-6">
+                            <div class="col-lg-4 col-md-6 col-sm-12">
                                 <div class="daily-class-card @gradientClass">
-                                    <div class="daily-class-time">
-                                        <i class="bi bi-clock-fill"></i>
-                                        @{
-                                            // Convert TimeSpan to formatted time with AM/PM
-                                            var startHour = cls.StartTime.Value.Hours;
-                                            var startMin = cls.StartTime.Value.Minutes;
-                                            var startPeriod = startHour >= 12 ? "PM" : "AM";
-                                            var startDisplayHour = startHour > 12 ? startHour - 12 : (startHour == 0 ? 12 : startHour);
-                                            var dailyStartTime = $"{startDisplayHour:D2}:{startMin:D2} {startPeriod}";
-                                            
-                                            var endHour = cls.EndTime.Value.Hours;
-                                            var endMin = cls.EndTime.Value.Minutes;
-                                            var endPeriod = endHour >= 12 ? "PM" : "AM";
-                                            var endDisplayHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
-                                            var dailyEndTime = $"{endDisplayHour:D2}:{endMin:D2} {endPeriod}";
+                                    <div class="daily-class-header">
+                                        <div class="daily-class-time">
+                                            <i class="bi bi-clock-fill"></i>
+                                            @{
+                                                // Convert TimeSpan to formatted time with AM/PM
+                                                var startHour = cls.StartTime.Value.Hours;
+                                                var startMin = cls.StartTime.Value.Minutes;
+                                                var startPeriod = startHour >= 12 ? "PM" : "AM";
+                                                var startDisplayHour = startHour > 12 ? startHour - 12 : (startHour == 0 ? 12 : startHour);
+                                                var dailyStartTime = $"{startDisplayHour:D2}:{startMin:D2} {startPeriod}";
+                                                
+                                                var endHour = cls.EndTime.Value.Hours;
+                                                var endMin = cls.EndTime.Value.Minutes;
+                                                var endPeriod = endHour >= 12 ? "PM" : "AM";
+                                                var endDisplayHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
+                                                var dailyEndTime = $"{endDisplayHour:D2}:{endMin:D2} {endPeriod}";
+                                            }
+                                            @dailyStartTime - @dailyEndTime
+                                        </div>
+                                        @if (fillPercentage >= 90)
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-exclamation-triangle-fill"></i> Full
+                                            </span>
                                         }
-                                        @dailyStartTime - @dailyEndTime
+                                        else if (fillPercentage >= 75)
+                                        {
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-info-circle-fill"></i> Almost Full
+                                            </span>
+                                        }
                                     </div>
+                                    
                                     <div class="daily-class-name">
                                         @cls.ClassName
                                     </div>
+                                    
+                                    @if (cls.Subject != null)
+                                    {
+                                        <div class="daily-class-subject">
+                                            <i class="bi bi-book"></i>
+                                            @cls.Subject.SubjectName
+                                        </div>
+                                    }
+                                    
                                     <div class="daily-class-details">
                                         <div class="detail-item">
-                                            <i class="bi bi-person"></i>
-                                            @(cls.Teacher?.User.FullName ?? "TBA")
+                                            <i class="bi bi-person-fill"></i>
+                                            <span>@(cls.Teacher?.User.FullName ?? "TBA")</span>
                                         </div>
                                         <div class="detail-item">
-                                            <i class="bi bi-geo-alt"></i>
-                                            @(cls.RoomNumber ?? "TBA")
+                                            <i class="bi bi-geo-alt-fill"></i>
+                                            <span>@(cls.RoomNumber ?? "TBA")</span>
                                         </div>
                                         <div class="detail-item">
-                                            <i class="bi bi-people"></i>
-                                            @cls.CurrentCapacity/@cls.MaxCapacity
+                                            <i class="bi bi-people-fill"></i>
+                                            <span>@cls.CurrentCapacity/@cls.MaxCapacity students</span>
                                         </div>
                                     </div>
+                                    
                                     <div class="daily-class-progress">
-                                        <div class="progress" style="height: 6px;">
-                                            <div class="progress-bar @(fillPercentage >= 90 ? "bg-danger" : "bg-success")"
+                                        <div class="progress-label">
+                                            <small>Capacity</small>
+                                            <small><strong>@fillPercentage.ToString("F0")%</strong></small>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar @(fillPercentage >= 90 ? "bg-danger" : fillPercentage >= 75 ? "bg-warning" : "bg-success")"
                                                  style="width: @fillPercentage%"></div>
                                         </div>
                                     </div>
+                                    
                                     <div class="daily-class-actions">
-                                        <a asp-action="ClassDetails" asp-route-id="@cls.ClassId" class="btn btn-sm btn-light">
-                                            <i class="bi bi-eye"></i> Details
+                                        <a asp-action="ClassDetails" asp-route-id="@cls.ClassId" class="btn btn-sm btn-light w-100">
+                                            <i class="bi bi-eye-fill"></i> View Details
                                         </a>
                                     </div>
                                 </div>
@@ -496,58 +526,155 @@
 
     /* Daily View Styles */
     .daily-class-card {
-        padding: 15px;
-        border-radius: 10px;
-        color: white;
+        background: white;
+        border-radius: 12px;
+        padding: 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transition: transform 0.2s;
+        transition: all 0.3s ease;
         height: 100%;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #e0e0e0;
     }
 
     .daily-class-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+
+    .daily-class-card.morning {
+        border-top: 4px solid #667eea;
+    }
+
+    .daily-class-card.afternoon {
+        border-top: 4px solid #f093fb;
+    }
+
+    .daily-class-card.evening {
+        border-top: 4px solid #4facfe;
+    }
+
+    .daily-class-header {
+        padding: 15px 15px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #f0f0f0;
     }
 
     .daily-class-time {
         font-weight: 600;
-        margin-bottom: 10px;
+        font-size: 0.9rem;
+        color: #2c3e50;
         display: flex;
         align-items: center;
         gap: 6px;
-        font-size: 0.95rem;
+    }
+
+    .daily-class-time i {
+        color: #dc3545;
+        font-size: 1rem;
     }
 
     .daily-class-name {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         font-weight: 700;
-        margin-bottom: 12px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid rgba(255,255,255,0.3);
+        color: #2c3e50;
+        padding: 12px 15px;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        line-height: 1.3;
     }
 
-    .daily-class-details {
-        flex-grow: 1;
-        margin-bottom: 10px;
-    }
-
-    .detail-item {
+    .daily-class-subject {
+        padding: 0 15px 10px;
+        font-size: 0.85rem;
+        color: #6c757d;
         display: flex;
         align-items: center;
         gap: 6px;
-        margin-bottom: 6px;
-        font-size: 0.9rem;
-        opacity: 0.95;
+        font-style: italic;
+    }
+
+    .daily-class-subject i {
+        color: #dc3545;
+    }
+
+    .daily-class-details {
+        padding: 15px;
+        background: #f8f9fa;
+        flex-grow: 1;
+    }
+
+    .daily-class-details .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-size: 0.875rem;
+        color: #495057;
+    }
+
+    .daily-class-details .detail-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .daily-class-details .detail-item i {
+        color: #dc3545;
+        font-size: 1rem;
+        width: 20px;
+        flex-shrink: 0;
+    }
+
+    .daily-class-details .detail-item span {
+        flex: 1;
     }
 
     .daily-class-progress {
-        margin-bottom: 10px;
+        padding: 12px 15px 15px;
+    }
+
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .progress-label strong {
+        color: #2c3e50;
+    }
+
+    .daily-class-progress .progress {
+        border-radius: 4px;
+        background-color: #e9ecef;
+    }
+
+    .daily-class-progress .progress-bar {
+        border-radius: 4px;
+        transition: width 0.6s ease;
     }
 
     .daily-class-actions {
-        text-align: center;
+        padding: 15px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .daily-class-actions .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .daily-class-actions .btn:hover {
+        background-color: #dc3545;
+        color: white;
+        transform: scale(1.02);
     }
 
     /* Print Styles */

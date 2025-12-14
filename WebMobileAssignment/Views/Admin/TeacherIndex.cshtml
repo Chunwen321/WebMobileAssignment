@@ -130,15 +130,30 @@
             <div class="card-header-custom">
                 <h5 class="card-title">
                     <i class="bi bi-funnel"></i>
-                    Filter Teachers
+                    Filter & Sort Teachers
                 </h5>
             </div>
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Search</label>
                     <input type="text" class="form-control" id="searchInput" placeholder="Search by name, email, or ID...">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label class="form-label">Sort By</label>
+                    <select class="form-select" id="sortBy">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="id-asc">Teacher ID (Asc)</option>
+                        <option value="id-desc">Teacher ID (Desc)</option>
+                        <option value="email-asc">Email (A-Z)</option>
+                        <option value="email-desc">Email (Z-A)</option>
+                        <option value="classes-asc">Classes (Low-High)</option>
+                        <option value="classes-desc">Classes (High-Low)</option>
+                        <option value="hire-asc">Hire Date (Oldest)</option>
+                        <option value="hire-desc">Hire Date (Newest)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label">Status</label>
                     <select class="form-select" id="statusFilter">
                         <option value="">All Status</option>
@@ -158,8 +173,8 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-secondary w-100" onclick="clearFilters()">
-                        <i class="bi bi-x-circle me-2"></i>Clear
+                    <button class="btn btn-secondary w-100" onclick="clearFilters()" title="Clear Filters">
+                        <i class="bi bi-x-circle"></i>
                     </button>
                 </div>
             </div>
@@ -197,7 +212,9 @@
                              data-email="@teacher.User.Email.ToLower()"
                              data-id="@teacher.TeacherId.ToLower()"
                              data-status="@(teacher.User.IsActive ? "active" : "inactive")"
-                             data-subject="@(teacher.SubjectTeach?.ToLower() ?? "")">
+                             data-subject="@(teacher.SubjectTeach?.ToLower() ?? "")"
+                             data-classes="@(teacher.Classes?.Count ?? 0)"
+                             data-hire="@(teacher.HireDate?.ToString("yyyy-MM-dd") ?? "")">
                             <div class="dashboard-card h-100">
                                 <div class="teacher-header">
                                     <div class="teacher-avatar">
@@ -302,7 +319,9 @@
                                         data-email="@teacher.User.Email.ToLower()"
                                         data-id="@teacher.TeacherId.ToLower()"
                                         data-status="@(teacher.User.IsActive ? "active" : "inactive")"
-                                        data-subject="@(teacher.SubjectTeach?.ToLower() ?? "")">
+                                        data-subject="@(teacher.SubjectTeach?.ToLower() ?? "")"
+                                        data-classes="@(teacher.Classes?.Count ?? 0)"
+                                        data-hire="@(teacher.HireDate?.ToString("yyyy-MM-dd") ?? "")">
                                         <td><strong>@teacher.TeacherId</strong></td>
                                         <td>@teacher.User.FullName</td>
                                         <td>@teacher.User.Email</td>
@@ -360,10 +379,43 @@
             }
         }
 
-        // Filter functionality
+        // Filter and Sort functionality
         const searchInput = document.getElementById('searchInput');
+        const sortBy = document.getElementById('sortBy');
         const statusFilter = document.getElementById('statusFilter');
         const subjectFilter = document.getElementById('subjectFilter');
+
+        function sortTeachers() {
+            const sortValue = sortBy.value;
+            const [field, order] = sortValue.split('-');
+
+            const gridView = document.getElementById('gridView');
+            const listView = document.getElementById('listView').querySelector('tbody');
+            
+            const cards = Array.from(document.querySelectorAll('.teacher-card'));
+            const rows = Array.from(document.querySelectorAll('.teacher-row'));
+
+            const sortFunc = (a, b) => {
+                let aVal, bVal;
+
+                if (field === 'classes') {
+                    aVal = parseInt(a.getAttribute('data-classes'));
+                    bVal = parseInt(b.getAttribute('data-classes'));
+                } else {
+                    aVal = a.getAttribute(`data-${field}`);
+                    bVal = b.getAttribute(`data-${field}`);
+                }
+
+                if (order === 'asc') {
+                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+            };
+
+            cards.sort(sortFunc).forEach(card => gridView.appendChild(card));
+            rows.sort(sortFunc).forEach(row => listView.appendChild(row));
+        }
 
         function filterTeachers() {
             const searchTerm = searchInput.value.toLowerCase();
@@ -399,13 +451,16 @@
         }
 
         searchInput.addEventListener('input', filterTeachers);
+        sortBy.addEventListener('change', sortTeachers);
         statusFilter.addEventListener('change', filterTeachers);
         subjectFilter.addEventListener('change', filterTeachers);
 
         function clearFilters() {
             searchInput.value = '';
+            sortBy.value = 'name-asc';
             statusFilter.value = '';
             subjectFilter.value = '';
+            sortTeachers();
             filterTeachers();
         }
     </script>
