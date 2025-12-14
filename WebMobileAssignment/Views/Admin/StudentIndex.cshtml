@@ -130,13 +130,28 @@
             <div class="card-header-custom">
                 <h5 class="card-title">
                     <i class="bi bi-funnel"></i>
-                    Filter Students
+                    Filter & Sort Students
                 </h5>
             </div>
             <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label">Search</label>
                     <input type="text" class="form-control" id="searchInput" placeholder="Search by name, email, or ID...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Sort By</label>
+                    <select class="form-select" id="sortBy">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="id-asc">Student ID (Asc)</option>
+                        <option value="id-desc">Student ID (Desc)</option>
+                        <option value="email-asc">Email (A-Z)</option>
+                        <option value="email-desc">Email (Z-A)</option>
+                        <option value="classes-asc">Classes (Low-High)</option>
+                        <option value="classes-desc">Classes (High-Low)</option>
+                        <option value="status-asc">Status (A-Z)</option>
+                        <option value="status-desc">Status (Z-A)</option>
+                    </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Status</label>
@@ -156,7 +171,7 @@
                         <option value="female">Female</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Parent</label>
                     <select class="form-select" id="parentFilter">
                         <option value="">All Parents</option>
@@ -164,10 +179,10 @@
                         <option value="no-parent">No Parent</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-secondary w-100" onclick="clearFilters()">
-                        <i class="bi bi-x-circle me-2"></i>Clear
+                    <button class="btn btn-secondary w-100" onclick="clearFilters()" title="Clear Filters">
+                        <i class="bi bi-x-circle"></i>
                     </button>
                 </div>
             </div>
@@ -206,7 +221,8 @@
                              data-id="@student.StudentId.ToLower()"
                              data-status="@(student.User.Status?.ToLower() ?? "unknown")"
                              data-gender="@(student.Gender?.ToLower() ?? "")"
-                             data-parent="@(student.ParentId != null ? "with-parent" : "no-parent")">
+                             data-parent="@(student.ParentId != null ? "with-parent" : "no-parent")"
+                             data-classes="@(student.Enrollments?.Count ?? 0)">
                             <div class="dashboard-card h-100">
                                 <div class="student-header">
                                     <div class="student-avatar @(student.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true ? "male" : student.Gender?.Equals("Female", StringComparison.OrdinalIgnoreCase) == true ? "female" : "")">
@@ -222,7 +238,7 @@
                                                 "withdraw" => "danger",
                                                 _ => "secondary"
                                             };
-                                            var statusText = student.User.Status ?? "Unknown";
+                                            var statusText = student.User.Status.ToUpper() ?? "Unknown";
                                         }
                                         <span class="badge bg-@statusBadgeClass">@statusText</span>
                                     </div>
@@ -336,7 +352,8 @@
                                         data-id="@student.StudentId.ToLower()"
                                         data-status="@(student.User.Status?.ToLower() ?? "unknown")"
                                         data-gender="@(student.Gender?.ToLower() ?? "")"
-                                        data-parent="@(student.ParentId != null ? "with-parent" : "no-parent")">
+                                        data-parent="@(student.ParentId != null ? "with-parent" : "no-parent")"
+                                        data-classes="@(student.Enrollments?.Count ?? 0)">
                                         <td><strong>@student.StudentId</strong></td>
                                         <td>@student.User.FullName</td>
                                         <td>@student.User.Email</td>
@@ -423,11 +440,47 @@
             }
         }
 
-        // Filter functionality
+        // Filter and Sort functionality
         const searchInput = document.getElementById('searchInput');
+        const sortBy = document.getElementById('sortBy');
         const statusFilter = document.getElementById('statusFilter');
         const genderFilter = document.getElementById('genderFilter');
         const parentFilter = document.getElementById('parentFilter');
+
+        function sortStudents() {
+            const sortValue = sortBy.value;
+            const [field, order] = sortValue.split('-');
+
+            // Get all student cards and rows
+            const gridView = document.getElementById('gridView');
+            const listView = document.getElementById('listView').querySelector('tbody');
+            
+            const cards = Array.from(document.querySelectorAll('.student-card'));
+            const rows = Array.from(document.querySelectorAll('.student-row'));
+
+            // Sort function
+            const sortFunc = (a, b) => {
+                let aVal, bVal;
+
+                if (field === 'classes') {
+                    aVal = parseInt(a.getAttribute('data-classes'));
+                    bVal = parseInt(b.getAttribute('data-classes'));
+                } else {
+                    aVal = a.getAttribute(`data-${field}`);
+                    bVal = b.getAttribute(`data-${field}`);
+                }
+
+                if (order === 'asc') {
+                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+            };
+
+            // Sort and re-append cards
+            cards.sort(sortFunc).forEach(card => gridView.appendChild(card));
+            rows.sort(sortFunc).forEach(row => listView.appendChild(row));
+        }
 
         function filterStudents() {
             const searchTerm = searchInput.value.toLowerCase();
@@ -470,15 +523,18 @@
         }
 
         searchInput.addEventListener('input', filterStudents);
+        sortBy.addEventListener('change', sortStudents);
         statusFilter.addEventListener('change', filterStudents);
         genderFilter.addEventListener('change', filterStudents);
         parentFilter.addEventListener('change', filterStudents);
 
         function clearFilters() {
             searchInput.value = '';
+            sortBy.value = 'name-asc';
             statusFilter.value = '';
             genderFilter.value = '';
             parentFilter.value = '';
+            sortStudents();
             filterStudents();
         }
     </script>

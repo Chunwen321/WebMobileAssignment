@@ -217,10 +217,13 @@ namespace WebMobileAssignment.Controllers
                     // If need to create new parent
                     if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
                     {
-                        // create parent user and parent
+                        // create parent user with UXXXX format
+                        var userCount = await _context.Users.CountAsync();
+                        var parentUserId = $"U{(userCount + 1):D4}";
+                        
+                        // create parent ID with PXXXX format
                         var parentCount = await _context.Parents.CountAsync();
-                        var parentUserId = $"PARENT{(parentCount + 1):D3}";
-                        var parentIdGen = parentUserId;
+                        var parentIdGen = $"P{(parentCount + 1):D4}";
 
                         var parentUser = new User
                         {
@@ -249,10 +252,13 @@ namespace WebMobileAssignment.Controllers
                         parentId = parent.ParentId;
                     }
 
-                    // Generate IDs for student
+                    // Generate User ID with UXXXX format
+                    var studentUserCount = await _context.Users.CountAsync();
+                    var userId = $"U{(studentUserCount + 1):D4}";
+                    
+                    // Generate Student ID with SXXXX format
                     var studentCount = await _context.Students.CountAsync();
-                    var userId = $"STU{(studentCount + 1):D3}";
-                    var studentId = userId;
+                    var studentId = $"S{(studentCount + 1):D4}";
 
                     // Create User with all fields
                     var user = new User
@@ -695,9 +701,13 @@ namespace WebMobileAssignment.Controllers
             {
                 try
                 {
+                    // Generate User ID with UXXXX format
+                    var userCount = await _context.Users.CountAsync();
+                    var userId = $"U{(userCount + 1):D4}";
+                    
+                    // Generate Teacher ID with TXXXX format
                     var teacherCount = await _context.Teachers.CountAsync();
-                    var userId = $"TEACH{(teacherCount + 1):D3}";
-                    var teacherId = userId;
+                    var teacherId = $"T{(teacherCount + 1):D4}";
 
                     // Create User with all fields including optional ones
                     var user = new User
@@ -870,9 +880,12 @@ namespace WebMobileAssignment.Controllers
 
             if (teacher == null) return NotFound();
 
-            // Get attendance statistics marked by this teacher
+            // Get attendance statistics from ALL classes taught by this teacher
+            // (not just attendance records marked by this teacher)
+            var classIds = teacher.Classes?.Select(c => c.ClassId).ToList() ?? new List<string>();
+
             var attendanceStats = await _context.Attendances
-                .Where(a => a.MarkedByTeacherId == id)
+                .Where(a => classIds.Contains(a.ClassId))
                 .GroupBy(a => a.Status)
                 .Select(g => new { Status = g.Key, Count = g.Count() })
                 .ToListAsync();
@@ -1031,24 +1044,20 @@ namespace WebMobileAssignment.Controllers
             {
                 try
                 {
-
-                    // Generate proper User ID format
+                    // Generate User ID with UXXXX format
                     var userCount = await _context.Users.CountAsync();
                     var userId = $"U{(userCount + 1):D4}";
         
+                    // Generate Parent ID with PXXXX format
                     var parentCount = await _context.Parents.CountAsync();
                     var parentId = $"P{(parentCount + 1):D4}";
-
 
                     var user = new User
                     {
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-
                         PasswordHash = password, // TODO: Implement BCrypt.Net.BCrypt.HashPassword(password)
-
-
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -1078,11 +1087,7 @@ namespace WebMobileAssignment.Controllers
                 }
             }
 
-
             ViewBag.ActiveMenu = "ParentManagement";
-
-        ViewBag.ActiveMenu = "ParentManagement";
-
             ViewBag.Title = "Create Parent";
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
@@ -1092,8 +1097,6 @@ namespace WebMobileAssignment.Controllers
             ViewBag.Gender = gender;
 
             return View();
-
-    return View();
         }
 
         public async Task<IActionResult> ParentEdit(string id)

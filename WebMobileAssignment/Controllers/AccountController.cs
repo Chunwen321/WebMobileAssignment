@@ -136,93 +136,24 @@ namespace WebMobileAssignment.Controllers
                     return View();
                 }
 
-                // Auto-detect user type and redirect accordingly
+                // Redirect based on user type from Users table
                 string userType = user.UserType.ToLower();
 
                 switch (userType)
                 {
                     case "admin":
-                        // Verify admin record exists, create if missing
-                        var admin = await _context.Admins
-                            .FirstOrDefaultAsync(a => a.UserId == user.UserId);
-
-                        if (admin == null)
-                        {
-                            // Auto-create missing Admin record
-                            admin = new Admin
-                            {
-                                AdminId = user.UserId,
-                                UserId = user.UserId
-                            };
-                            _context.Admins.Add(admin);
-                            await _context.SaveChangesAsync();
-                        }
-
-                        // Set authentication session/cookie
                         _helper.SignIn(user.Email, "Admin", false);
                         return RedirectToAction("Dashboard", "Admin");
 
                     case "teacher":
-                        // Verify teacher record exists, create if missing
-                        var teacher = await _context.Teachers
-                            .FirstOrDefaultAsync(t => t.UserId == user.UserId);
-
-                        if (teacher == null)
-                        {
-                            // Auto-create missing Teacher record
-                            teacher = new Teacher
-                            {
-                                TeacherId = user.UserId,
-                                UserId = user.UserId
-                            };
-                            _context.Teachers.Add(teacher);
-                            await _context.SaveChangesAsync();
-                        }
-
-                        // Set authentication session/cookie
                         _helper.SignIn(user.Email, "Teacher", false);
                         return RedirectToAction("TeachDashboard", "Teacher");
 
                     case "student":
-                        // Verify student record exists, create if missing
-                        var student = await _context.Students
-                            .FirstOrDefaultAsync(s => s.UserId == user.UserId);
-
-                        if (student == null)
-                        {
-                            // Auto-create missing Student record
-                            student = new Student
-                            {
-                                StudentId = user.UserId,
-                                UserId = user.UserId,
-                                EnrollmentDate = DateTime.Now
-                            };
-                            _context.Students.Add(student);
-                            await _context.SaveChangesAsync();
-                        }
-
-                        // Set authentication session/cookie
                         _helper.SignIn(user.Email, "Student", false);
                         return RedirectToAction("StudDashboard", "Student");
 
                     case "parent":
-                        // Verify parent record exists, create if missing
-                        var parent = await _context.Parents
-                            .FirstOrDefaultAsync(p => p.UserId == user.UserId);
-
-                        if (parent == null)
-                        {
-                            // Auto-create missing Parent record
-                            parent = new Parent
-                            {
-                                ParentId = user.UserId,
-                                UserId = user.UserId
-                            };
-                            _context.Parents.Add(parent);
-                            await _context.SaveChangesAsync();
-                        }
-
-                        // Set authentication session/cookie
                         _helper.SignIn(user.Email, "Parent", false);
                         return RedirectToAction("Dashboard", "Parent");
 

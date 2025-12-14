@@ -130,15 +130,28 @@
             <div class="card-header-custom">
                 <h5 class="card-title">
                     <i class="bi bi-funnel"></i>
-                    Filter Parents
+                    Filter & Sort Parents
                 </h5>
             </div>
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Search</label>
                     <input type="text" class="form-control" id="searchInput" placeholder="Search by name, email, or ID...">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label class="form-label">Sort By</label>
+                    <select class="form-select" id="sortBy">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="id-asc">Parent ID (Asc)</option>
+                        <option value="id-desc">Parent ID (Desc)</option>
+                        <option value="email-asc">Email (A-Z)</option>
+                        <option value="email-desc">Email (Z-A)</option>
+                        <option value="children-asc">Children (Low-High)</option>
+                        <option value="children-desc">Children (High-Low)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label">Status</label>
                     <select class="form-select" id="statusFilter">
                         <option value="">All Status</option>
@@ -156,8 +169,8 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-secondary w-100" onclick="clearFilters()">
-                        <i class="bi bi-x-circle me-2"></i>Clear
+                    <button class="btn btn-secondary w-100" onclick="clearFilters()" title="Clear Filters">
+                        <i class="bi bi-x-circle"></i>
                     </button>
                 </div>
             </div>
@@ -195,7 +208,8 @@
                              data-email="@parent.User.Email.ToLower()"
                              data-id="@parent.ParentId.ToLower()"
                              data-status="@(parent.User.IsActive ? "active" : "inactive")"
-                             data-children="@(parent.Students != null && parent.Students.Any() ? "with-children" : "no-children")">
+                             data-children="@(parent.Students != null && parent.Students.Any() ? "with-children" : "no-children")"
+                             data-children-count="@(parent.Students?.Count ?? 0)">
                             <div class="dashboard-card h-100">
                                 <div class="parent-header">
                                     <div class="parent-avatar">
@@ -301,7 +315,8 @@
                                         data-email="@parent.User.Email.ToLower()"
                                         data-id="@parent.ParentId.ToLower()"
                                         data-status="@(parent.User.IsActive ? "active" : "inactive")"
-                                        data-children="@(parent.Students != null && parent.Students.Any() ? "with-children" : "no-children")">
+                                        data-children="@(parent.Students != null && parent.Students.Any() ? "with-children" : "no-children")"
+                                        data-children-count="@(parent.Students?.Count ?? 0)">
                                         <td><strong>@parent.ParentId</strong></td>
                                         <td>@parent.User.FullName</td>
                                         <td>@parent.User.Email</td>
@@ -366,10 +381,43 @@
             }
         }
 
-        // Filter functionality
+        // Filter and Sort functionality
         const searchInput = document.getElementById('searchInput');
+        const sortBy = document.getElementById('sortBy');
         const statusFilter = document.getElementById('statusFilter');
         const childrenFilter = document.getElementById('childrenFilter');
+
+        function sortParents() {
+            const sortValue = sortBy.value;
+            const [field, order] = sortValue.split('-');
+
+            const gridView = document.getElementById('gridView');
+            const listView = document.getElementById('listView').querySelector('tbody');
+            
+            const cards = Array.from(document.querySelectorAll('.parent-card'));
+            const rows = Array.from(document.querySelectorAll('.parent-row'));
+
+            const sortFunc = (a, b) => {
+                let aVal, bVal;
+
+                if (field === 'children') {
+                    aVal = parseInt(a.getAttribute('data-children-count'));
+                    bVal = parseInt(b.getAttribute('data-children-count'));
+                } else {
+                    aVal = a.getAttribute(`data-${field}`);
+                    bVal = b.getAttribute(`data-${field}`);
+                }
+
+                if (order === 'asc') {
+                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+            };
+
+            cards.sort(sortFunc).forEach(card => gridView.appendChild(card));
+            rows.sort(sortFunc).forEach(row => listView.appendChild(row));
+        }
 
         function filterParents() {
             const searchTerm = searchInput.value.toLowerCase();
@@ -405,13 +453,16 @@
         }
 
         searchInput.addEventListener('input', filterParents);
+        sortBy.addEventListener('change', sortParents);
         statusFilter.addEventListener('change', filterParents);
         childrenFilter.addEventListener('change', filterParents);
 
         function clearFilters() {
             searchInput.value = '';
+            sortBy.value = 'name-asc';
             statusFilter.value = '';
             childrenFilter.value = '';
+            sortParents();
             filterParents();
         }
     </script>
