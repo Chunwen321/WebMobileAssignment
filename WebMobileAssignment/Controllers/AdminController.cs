@@ -268,7 +268,7 @@ namespace WebMobileAssignment.Controllers
                         UserType = "Student",
                         CreatedDate = DateTime.Now,
                         Status = status,
-                        IsActive = isActive
+                        IsActive = true
                     };
                     _context.Users.Add(user);
 
@@ -871,9 +871,12 @@ namespace WebMobileAssignment.Controllers
 
             if (teacher == null) return NotFound();
 
-            // Get attendance statistics marked by this teacher
+            // Get attendance statistics from ALL classes taught by this teacher
+            // (not just attendance records marked by this teacher)
+            var classIds = teacher.Classes?.Select(c => c.ClassId).ToList() ?? new List<string>();
+
             var attendanceStats = await _context.Attendances
-                .Where(a => a.MarkedByTeacherId == id)
+                .Where(a => classIds.Contains(a.ClassId))
                 .GroupBy(a => a.Status)
                 .Select(g => new { Status = g.Key, Count = g.Count() })
                 .ToListAsync();
@@ -1310,7 +1313,7 @@ namespace WebMobileAssignment.Controllers
             if (ModelState.IsValid)
             {
                 var classCount = await _context.Classes.CountAsync();
-                var classId = $"CLASS{(classCount + 1):D3}";
+                var classId = $"C{(classCount + 1):D3}";
 
                 // Parse time strings to TimeSpan
                 TimeSpan? parsedStartTime = null;
