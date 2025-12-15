@@ -1,5 +1,6 @@
 using WebMobileAssignment;
 using WebMobileAssignment.Models;
+using WebMobileAssignment.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,9 @@ builder.Services.AddSqlServer<DB>($@"
 
 // Add Helper service
 builder.Services.AddScoped<Helper>();
+
+// Add ReCaptcha service with HttpClient
+builder.Services.AddHttpClient<ReCaptchaService>();
 
 // Add Authentication with Cookie
 builder.Services.AddAuthentication("Cookies")

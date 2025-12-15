@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebMobileAssignment.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebMobileAssignment.Controllers
 {
+  [Authorize(Roles = "Parent")]
     public class ParentController : Controller
     {
         private readonly DB _context;
@@ -297,40 +299,125 @@ namespace WebMobileAssignment.Controllers
         }
 
         // Student Profile
-        public async Task<IActionResult> StudentProfile()
+        public async Task<IActionResult> StudentProfile(string? studentId)
         {
             ViewBag.ActiveMenu = "StudentProfile";
-     
-            var parent = await GetCurrentParentAsync();
-            
-            if (parent != null && parent.Students.Any())
-            {
-                var student = parent.Students.FirstOrDefault();
-                ViewBag.Student = student;
-                ViewBag.Parent = parent;
-                
-                if (student != null)
-                {
-                    // Calculate attendance statistics
-                    var allAttendances = student.Attendances;
-                    var totalAttendance = allAttendances.Count;
-                    var presentCount = allAttendances.Count(a => a.Status == "Present");
-                    var absentCount = allAttendances.Count(a => a.Status == "Absent");
-                    var lateCount = allAttendances.Count(a => a.Status == "Late");
-                    var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
-                
-                    ViewBag.TotalAttendance = totalAttendance;
-                    ViewBag.PresentCount = presentCount;
-                    ViewBag.AbsentCount = absentCount;
-                    ViewBag.LateCount = lateCount;
-                    ViewBag.AttendanceRate = attendanceRate;
-                }
-            }
-      
-            return View();
-        }
+  
+    var parent = await GetCurrentParentAsync();
+   
+    if (parent == null || !parent.Students.Any())
+    {
+ViewBag.Student = null;
+        ViewBag.Parent = parent;
+      ViewBag.AllStudents = new List<Student>();
+        return View();
+    }
 
-        // Classes
+    // Get all students for the dropdown selector
+    ViewBag.AllStudents = parent.Students.ToList();
+
+    // If studentId is not provided, use the first student
+    Student? student = null;
+    if (!string.IsNullOrEmpty(studentId))
+    {
+        student = parent.Students.FirstOrDefault(s => s.StudentId == studentId);
+    }
+      
+    // If still null, default to first student
+    if (student == null)
+    {
+        student = parent.Students.FirstOrDefault();
+    }
+
+    ViewBag.Student = student;
+    ViewBag.Parent = parent;
+            
+    if (student != null)
+    {
+        // Calculate attendance statistics
+     var allAttendances = student.Attendances;
+        var totalAttendance = allAttendances.Count;
+        var presentCount = allAttendances.Count(a => a.Status == "Present");
+        var absentCount = allAttendances.Count(a => a.Status == "Absent");
+        var lateCount = allAttendances.Count(a => a.Status == "Late");
+        var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
+       
+  ViewBag.TotalAttendance = totalAttendance;
+    ViewBag.PresentCount = presentCount;
+        ViewBag.AbsentCount = absentCount;
+        ViewBag.LateCount = lateCount;
+        ViewBag.AttendanceRate = attendanceRate;
+    }
+    
+    return View();
+}
+
+// AJAX endpoint to get student profile content
+[HttpGet]
+public async Task<IActionResult> GetStudentProfileContent(string studentId)
+{
+    var parent = await GetCurrentParentAsync();
+   
+    if (parent == null || !parent.Students.Any())
+    {
+        return Json(new { success = false, message = "No students found" });
+    }
+
+    // Get all students
+    var allStudents = parent.Students.ToList();
+    
+    // Find the requested student
+    var student = allStudents.FirstOrDefault(s => s.StudentId == studentId);
+    
+    if (student == null)
+    {
+        return Json(new { success = false, message = "Student not found" });
+    }
+
+    // Get current student index for navigation
+    var currentIndex = allStudents.FindIndex(s => s.StudentId == studentId);
+    var totalChildren = allStudents.Count;
+    var hasPrevious = currentIndex > 0;
+    var hasNext = currentIndex < totalChildren - 1;
+    var previousStudentId = hasPrevious ? allStudents[currentIndex - 1].StudentId : null;
+    var nextStudentId = hasNext ? allStudents[currentIndex + 1].StudentId : null;
+
+    // Calculate attendance statistics
+    var allAttendances = student.Attendances;
+    var totalAttendance = allAttendances.Count;
+    var presentCount = allAttendances.Count(a => a.Status == "Present");
+  var absentCount = allAttendances.Count(a => a.Status == "Absent");
+ var lateCount = allAttendances.Count(a => a.Status == "Late");
+    var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
+    
+    ViewBag.Student = student;
+    ViewBag.TotalAttendance = totalAttendance;
+    ViewBag.PresentCount = presentCount;
+    ViewBag.AbsentCount = absentCount;
+    ViewBag.LateCount = lateCount;
+    ViewBag.AttendanceRate = attendanceRate;
+
+    // Render partial view to string
+    var htmlContent = await this.RenderViewAsync("_StudentProfileContent", student, true);
+
+    return Json(new
+    {
+        success = true,
+        html = htmlContent,
+     navigation = new
+        {
+            studentName = student.User.FullName,
+            currentIndex = currentIndex + 1,
+            totalChildren = totalChildren,
+   hasPrevious = hasPrevious,
+ hasNext = hasNext,
+    previousStudentId = previousStudentId,
+          nextStudentId = nextStudentId
+        }
+    });
+}
+
+// Classes
         public async Task<IActionResult> ParentClasses()
         {
             ViewBag.ActiveMenu = "Classes";
