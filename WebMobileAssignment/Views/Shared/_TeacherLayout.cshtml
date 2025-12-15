@@ -124,16 +124,26 @@
 
         <!-- Sidebar Footer -->
         <div class="sidebar-footer">
+            @{
+                var displayName = "Teacher";
+                var displayRole = "Instructor";
+                
+                if (ViewBag.Teacher != null && ViewBag.Teacher.User != null)
+                {
+                    displayName = ViewBag.Teacher.User.FullName ?? "Teacher";
+                    displayRole = ViewBag.Teacher.Title ?? "Instructor";
+                }
+            }
             <div class="user-info">
                 <div class="user-avatar">
                     <i class="bi bi-person-fill"></i>
                 </div>
                 <div class="user-details">
-                    <div class="user-name">Teacher Name</div>
-                    <div class="user-role">Instructor</div>
+                    <div class="user-name">@displayName</div>
+                    <div class="user-role">@displayRole</div>
                 </div>
             </div>
-            <a asp-controller="Account" asp-action="Login" class="logout-btn" title="Logout">
+            <a asp-controller="Account" asp-action="Logout" class="logout-btn" title="Logout">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </div>

@@ -31,6 +31,31 @@
 }
 
 /* ==================== PARENT CLASSES STYLES ==================== */
+/* Child Selector Styling */
+.child-selector-card {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.child-selector-card .form-select {
+    border: 2px solid #ffc107;
+  font-weight: 600;
+    font-size: 1rem;
+    padding: 0.625rem 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.child-selector-card .form-select:hover {
+  border-color: #ffb300;
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.15);
+}
+
+.child-selector-card .form-select:focus {
+    border-color: #ffc107;
+    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+}
+
 .detail-row {
     display: flex;
     justify-content: space-between;
@@ -258,6 +283,28 @@ color: white;
     padding: 0.15rem 0.45rem;
     border-radius: 10px;
     margin-left: auto;
+}
+
+/* Notification Dot - Red dot indicator for unread notifications */
+.notification-dot {
+    width: 8px;
+    height: 8px;
+    background: #dc3545;
+  border-radius: 50%;
+    margin-left: auto;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+}
+    70% {
+     box-shadow: 0 0 0 6px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
 }
 
 /* Dropdown Menu */
@@ -594,6 +641,7 @@ background: rgba(220, 53, 69, 0.1);
 
 .password-input {
  padding-left: 3rem !important;
+    padding-right: 3rem !important;
     border-radius: 8px;
     border: 1px solid #dee2e6;
     transition: all 0.3s ease;
@@ -602,9 +650,32 @@ background: rgba(220, 53, 69, 0.1);
 .password-input:focus {
     border-color: #ffc107;
   box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
-    padding-left: 3rem !important;
+  padding-left: 3rem !important;
+    padding-right: 3rem !important;
 }
 
+.password-toggle-btn {
+    position: absolute;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: color 0.3s ease;
+}
+
+.password-toggle-btn:hover {
+    color: #ffc107;
+}
+
+.password-toggle-btn i {
+    font-size: 1.125rem;
+}
 
 .btn-update-password {
     background: #ffc107;
@@ -630,12 +701,13 @@ background: rgba(220, 53, 69, 0.1);
 /* ==================== SETTINGS PAGE CUSTOM STYLES ==================== */
 
 .settings-account-card {
-    margin-bottom: 1.5rem !important;
-    padding: 1.5rem 1.5rem 0 1.5rem !important;
+    margin-bottom: 1rem !important;
+    padding: 1.5rem !important;
+    height: auto !important;
 }
 
 .settings-account-card form {
-  margin: 0 !important;
+    margin: 0 !important;
     padding: 0 !important;
 }
 
@@ -652,85 +724,252 @@ background: rgba(220, 53, 69, 0.1);
 /* Remove ALL bottom spacing from button container */
 .settings-account-card .row.g-3 > .col-12:last-child {
     margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
+ padding-bottom: 0 !important;
     margin-top: 0.75rem !important;
 }
 
 .settings-account-card .btn {
-    margin-bottom: 0 !important;
+  margin-bottom: 0 !important;
 }
 
-/* Responsive Design */
-@media (max-width: 992px) {
-    .sidebar {
-     transform: translateX(-100%);
-    }
-
-    .sidebar.show {
-      transform: translateX(0);
+/* Make the gap between cards even smaller on settings page */
+.page-content .col-lg-8 > .dashboard-card + .dashboard-card {
+    margin-top: 0 !important;
 }
 
-    .main-content {
-        margin-left: 0;
-    }
+/* Remove height: 100% from dashboard cards on settings page */
+.page-content .dashboard-card {
+    height: auto !important;
+}
 
-    .sidebar-toggle {
-        display: flex;
-   align-items: center;
-      justify-content: center;
-    }
+/* Display Mode Styles */
+.display-value {
+    padding: 0.75rem 0;
+    font-size: 1rem;
+  font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 1px solid #f0f0f0;
+    min-height: 48px;
+    display: flex;
+  align-items: center;
+}
 
-    .topbar-title h1 {
-        font-size: 1.25rem;
+#displayMode .form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+#displayMode .col-md-6,
+#displayMode .col-12 {
+    margin-bottom: 0.5rem;
+}
+
+/* Edit button in header */
+.card-header-custom .btn-sm {
+    padding: 0.375rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.card-header-custom .btn-outline-primary:hover {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #2c3e50;
+}
+
+/* ==================== PARENT CLASSES STYLES ==================== */
+/* Child Navigation Styling */
+.child-navigation-card {
+ background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
+    border: 2px solid rgba(255, 193, 7, 0.3);
+    padding: 1.25rem 1.5rem !important;
+    margin-bottom: 1.5rem;
+    animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
+.child-nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.child-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: #ffc107;
+    color: #2c3e50;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    position: relative;
+  overflow: hidden;
+}
+
+.child-nav-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.child-nav-btn:hover:not(.disabled)::before {
+    width: 300px;
+    height: 300px;
+}
+
+.child-nav-btn:hover:not(.disabled) {
+    background: #ffb300;
+    transform: translateX(0) scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+}
+
+.child-nav-prev:hover:not(.disabled) {
+    transform: translateX(-3px) scale(1.05);
+}
+
+.child-nav-next:hover:not(.disabled) {
+    transform: translateX(3px) scale(1.05);
+}
+
+.child-nav-btn:active:not(.disabled) {
+    transform: scale(0.98);
+}
+
+.child-nav-btn.disabled {
+    background: #e9ecef;
+    color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.child-nav-btn i {
+    font-size: 1.125rem;
+  position: relative;
+    z-index: 1;
+}
+
+.child-nav-btn span {
+    position: relative;
+    z-index: 1;
+}
+
+.child-info {
+  display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.child-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #ffc107;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2c3e50;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+    animation: fadeIn 0.5s ease-out 0.2s both;
+}
+
+@keyframes fadeIn {
+  from {
+     opacity: 0;
+    transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+   transform: scale(1);
+    }
+}
+
+.child-details {
+    text-align: center;
+    animation: fadeIn 0.5s ease-out 0.3s both;
+}
+
+.child-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+color: #2c3e50;
+    margin: 0 0 0.25rem 0;
+}
+
+.child-meta {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+.child-meta .separator {
+ margin: 0 0.5rem;
+    color: #dee2e6;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .page-content {
-     padding: 1rem;
+    .child-nav-container {
+    flex-direction: column;
+  gap: 1rem;
     }
-
-    .topbar {
-        padding: 0.75rem 1rem;
-    }
-
-    .topbar-title h1 {
-        font-size: 1.125rem;
-    }
-
-    .dashboard-card {
-        padding: 1.25rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .sidebar {
-        width: 260px;
-    }
-
-    .stat-value {
-        font-size: 1.75rem;
-    }
-
-    .card-title {
-     font-size: 1rem;
- }
-}
-
-/* Mobile Overlay */
-@media (max-width: 992px) {
-    .sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
+    
+    .child-info {
+ order: -1;
         width: 100%;
-        height: 100%;
- background: rgba(0, 0, 0, 0.5);
-        z-index: 999;
     }
+    
+    .child-nav-btn {
+        width: 100%;
+     justify-content: center;
+    }
+    
+    .child-nav-prev {
+        order: 1;
+    }
+    
+    .child-nav-next {
+        order: 2;
+  }
+    
+  .child-nav-prev:hover:not(.disabled),
+    .child-nav-next:hover:not(.disabled) {
+      transform: scale(1.05);
+    }
+}
 
-    .sidebar-overlay.show {
-        display: block;
-    }
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 5px 0;
 }

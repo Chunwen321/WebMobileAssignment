@@ -68,6 +68,9 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<DateTime>("TakenOn")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("AttendanceId");
 
                     b.HasIndex("ClassId");
@@ -90,13 +93,29 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("CurrentCapacity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Day")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<TimeSpan?>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("MaxCapacity")
+                        .HasColumnType("int");
+
                     b.Property<string>("RoomNumber")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("ScheduleInfo")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<TimeSpan?>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("SubjectId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("TeacherId")
                         .HasMaxLength(20)
@@ -104,9 +123,62 @@ namespace WebMobileAssignment.Migrations
 
                     b.HasKey("ClassId");
 
+                    b.HasIndex("SubjectId");
+
                     b.HasIndex("TeacherId");
 
                     b.ToTable("Classes");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.Enrollment", b =>
+                {
+                    b.Property<string>("StudentId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ClassId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("EnrolledDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("StudentId", "ClassId");
+
+                    b.HasIndex("ClassId");
+
+                    b.ToTable("Enrollments");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.Notification", b =>
+                {
+                    b.Property<string>("NotificationId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("NotificationId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Parent", b =>
@@ -114,6 +186,10 @@ namespace WebMobileAssignment.Migrations
                     b.Property<string>("ParentId")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(20)
@@ -141,7 +217,10 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<DateTime>("DateOfBirth")
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EnrollmentDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Gender")
@@ -168,20 +247,52 @@ namespace WebMobileAssignment.Migrations
                     b.ToTable("Students");
                 });
 
+            modelBuilder.Entity("WebMobileAssignment.Models.Subject", b =>
+                {
+                    b.Property<string>("SubjectId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("SubjectName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("SubjectId");
+
+                    b.ToTable("Subjects");
+                });
+
             modelBuilder.Entity("WebMobileAssignment.Models.Teacher", b =>
                 {
                     b.Property<string>("TeacherId")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<DateTime>("HireDate")
+                    b.Property<string>("Bio")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Education")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("HireDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Skill")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("SubjectTeach")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Title")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -206,6 +317,9 @@ namespace WebMobileAssignment.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -216,6 +330,10 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("Gender")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -223,6 +341,15 @@ namespace WebMobileAssignment.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("UserType")
                         .IsRequired()
@@ -275,11 +402,47 @@ namespace WebMobileAssignment.Migrations
 
             modelBuilder.Entity("WebMobileAssignment.Models.Class", b =>
                 {
+                    b.HasOne("WebMobileAssignment.Models.Subject", "Subject")
+                        .WithMany("Classes")
+                        .HasForeignKey("SubjectId");
+
                     b.HasOne("WebMobileAssignment.Models.Teacher", "Teacher")
                         .WithMany("Classes")
                         .HasForeignKey("TeacherId");
 
+                    b.Navigation("Subject");
+
                     b.Navigation("Teacher");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.Enrollment", b =>
+                {
+                    b.HasOne("WebMobileAssignment.Models.Class", "Class")
+                        .WithMany("Enrollments")
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebMobileAssignment.Models.Student", "Student")
+                        .WithMany("Enrollments")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Class");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.Notification", b =>
+                {
+                    b.HasOne("WebMobileAssignment.Models.User", "User")
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Parent", b =>
@@ -296,7 +459,7 @@ namespace WebMobileAssignment.Migrations
             modelBuilder.Entity("WebMobileAssignment.Models.Student", b =>
                 {
                     b.HasOne("WebMobileAssignment.Models.Class", "Class")
-                        .WithMany("Students")
+                        .WithMany()
                         .HasForeignKey("ClassId");
 
                     b.HasOne("WebMobileAssignment.Models.Parent", "Parent")
@@ -332,7 +495,7 @@ namespace WebMobileAssignment.Migrations
                 {
                     b.Navigation("Attendances");
 
-                    b.Navigation("Students");
+                    b.Navigation("Enrollments");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Parent", b =>
@@ -343,11 +506,23 @@ namespace WebMobileAssignment.Migrations
             modelBuilder.Entity("WebMobileAssignment.Models.Student", b =>
                 {
                     b.Navigation("Attendances");
+
+                    b.Navigation("Enrollments");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.Subject", b =>
+                {
+                    b.Navigation("Classes");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Teacher", b =>
                 {
                     b.Navigation("Classes");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.User", b =>
+                {
+                    b.Navigation("Notifications");
                 });
 #pragma warning restore 612, 618
         }

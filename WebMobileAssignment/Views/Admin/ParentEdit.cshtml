@@ -54,7 +54,7 @@
                     </div>
                 </div>
 
-                <h6 class="text-muted mb-3">Parent Information</h6>
+                <h6 class="text-muted mb-3"><i class="bi bi-person-badge"></i> Basic Information</h6>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
@@ -69,21 +69,63 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="phoneNumber" class="form-label">Phone Number</label>
-                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" value="@Model.PhoneNumber" placeholder="e.g. +1234567890" />
+                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" value="@Model.PhoneNumber" placeholder="e.g. +60123456789" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="status" class="form-label">Account Status <span class="text-danger">*</span></label>
+                        <select id="status" name="status" class="form-select" required>
+                            <option value="active" selected="@(Model.User.Status == "active")">Active</option>
+                            <option value="inactive" selected="@(Model.User.Status == "inactive")">Inactive</option>
+                            <option value="suspend" selected="@(Model.User.Status == "suspend")">Suspended</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-3 mt-4"><i class="bi bi-person-lines-fill"></i> Personal Details</h6>
+                <div class="row">
+                    <!-- Date of Birth -->
+                    <div class="col-md-6 mb-3">
+                        <label for="dateOfBirth" class="form-label">Date of Birth</label>
+                        <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" value="@(Model.User.DateOfBirth?.ToString("yyyy-MM-dd"))" />
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="col-md-6 mb-3">
+                        <label for="gender" class="form-label">Gender</label>
+                        <select id="gender" name="gender" class="form-select">
+                            <option value="">Select Gender</option>
+                            <option value="Male" selected="@(Model.User.Gender == "Male")">Male</option>
+                            <option value="Female" selected="@(Model.User.Gender == "Female")">Female</option>
+                            <option value="Other" selected="@(Model.User.Gender == "Other")">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Address -->
+                    <div class="col-12 mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea id="address" name="address" class="form-control" rows="3" placeholder="Enter full address">@Model.Address</textarea>
+                        <small class="text-muted">Street address, city, state, postal code</small>
                     </div>
                 </div>
 
                 @if (Model.Students != null && Model.Students.Any())
                 {
                     <div class="mt-3">
-                        <h6 class="text-muted mb-3">Linked Students</h6>
+                        <h6 class="text-muted mb-3"><i class="bi bi-people-fill"></i> Linked Students</h6>
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle me-2"></i>
                             This parent has <strong>@Model.Students.Count()</strong> linked student(s):
                             <ul class="mb-0 mt-2">
                                 @foreach (var student in Model.Students)
                                 {
-                                    <li>@student.User.FullName (@student.StudentId)</li>
+                                    <li>
+                                        @student.User.FullName (@student.StudentId)
+                                        <a asp-action="StudentDetails" asp-route-id="@student.StudentId" class="ms-2 text-primary" title="View Student">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </li>
                                 }
                             </ul>
                         </div>

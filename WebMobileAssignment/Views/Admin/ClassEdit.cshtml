@@ -1,0 +1,234 @@
+@model WebMobileAssignment.Models.Class
+@{
+    ViewBag.Title = "Edit Class";
+    ViewBag.ActiveMenu = "ClassManagement";
+    ViewBag.ActiveSubmenu = "Classes";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Edit Class</h5>
+            <a asp-action="ClassIndex" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>@TempData["ErrorMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card bg-white p-4 rounded shadow-sm">
+            <form asp-action="ClassEdit" method="post">
+                @Html.AntiForgeryToken()
+                
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error!</strong> Please correct the following errors:
+                        <ul class="mb-0 mt-2">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                
+                <input type="hidden" name="classId" value="@Model.ClassId" />
+
+                <!-- Header with ID display -->
+                <div class="alert alert-light border d-flex align-items-center mb-4" role="alert">
+                    <i class="bi bi-info-circle-fill text-info me-2"></i>
+                    <div>
+                        Editing details for Class ID: <strong>@Model.ClassId</strong>
+                        | Current Enrollments: <span class="badge bg-info">@Model.CurrentCapacity/@Model.MaxCapacity</span>
+                    </div>
+                </div>
+
+                <!-- Basic Information -->
+                <h6 class="text-muted mb-3 border-bottom pb-2">
+                    <i class="bi bi-book text-danger me-2"></i>Basic Information
+                </h6>
+                <div class="row">
+                    <!-- Class Name -->
+                    <div class="col-md-6 mb-3">
+                        <label for="className" class="form-label">Class Name <span class="text-danger">*</span></label>
+                        <input type="text" id="className" name="className" class="form-control" value="@Model.ClassName" required />
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="col-md-6 mb-3">
+                        <label for="subjectId" class="form-label">Subject</label>
+                        <select id="subjectId" name="subjectId" class="form-select">
+                            <option value="">-- No Subject --</option>
+                            @if (ViewBag.Subjects != null)
+                            {
+                                @foreach (var subject in ViewBag.Subjects)
+                                {
+                                    <option value="@subject.SubjectId" selected="@(Model.SubjectId == subject.SubjectId)">
+                                        @subject.SubjectName (@subject.SubjectId)
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Teacher Assignment -->
+                    <div class="col-md-6 mb-3">
+                        <label for="teacherId" class="form-label">Assigned Teacher</label>
+                        <select id="teacherId" name="teacherId" class="form-select">
+                            <option value="">-- No Teacher Assigned --</option>
+                            @if (ViewBag.Teachers != null)
+                            {
+                                @foreach (var teacher in ViewBag.Teachers)
+                                {
+                                    <option value="@teacher.TeacherId" selected="@(Model.TeacherId == teacher.TeacherId)">
+                                        @teacher.User.FullName (@teacher.TeacherId)
+                                        @if (!string.IsNullOrEmpty(teacher.SubjectTeach))
+                                        {
+                                            <text> - @teacher.SubjectTeach</text>
+                                        }
+                                    </option>
+                                }
+                            }
+                        </select>
+                        @if (Model.Teacher != null)
+                        {
+                            <small class="text-muted">Current: @Model.Teacher.User.FullName</small>
+                        }
+                    </div>
+
+                    <!-- Room Number -->
+                    <div class="col-md-6 mb-3">
+                        <label for="roomNumber" class="form-label">Room Number</label>
+                        <input type="text" id="roomNumber" name="roomNumber" class="form-control" value="@Model.RoomNumber" />
+                    </div>
+                </div>
+
+                <!-- Schedule Information -->
+                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-calendar-week text-danger me-2"></i>Schedule Information
+                </h6>
+                <div class="row">
+                    <!-- Day of Week -->
+                    <div class="col-md-4 mb-3">
+                        <label for="day" class="form-label">Day of Week</label>
+                        <select id="day" name="day" class="form-select">
+                            <option value="">-- No Day Set --</option>
+                            <option value="Monday" selected="@(Model.Day == "Monday")">Monday</option>
+                            <option value="Tuesday" selected="@(Model.Day == "Tuesday")">Tuesday</option>
+                            <option value="Wednesday" selected="@(Model.Day == "Wednesday")">Wednesday</option>
+                            <option value="Thursday" selected="@(Model.Day == "Thursday")">Thursday</option>
+                            <option value="Friday" selected="@(Model.Day == "Friday")">Friday</option>
+                            <option value="Saturday" selected="@(Model.Day == "Saturday")">Saturday</option>
+                            <option value="Sunday" selected="@(Model.Day == "Sunday")">Sunday</option>
+                        </select>
+                    </div>
+
+                    <!-- Start Time -->
+                    <div class="col-md-4 mb-3">
+                        <label for="startTime" class="form-label">Start Time</label>
+                        <input type="time" id="startTime" name="startTime" class="form-control" 
+                               value="@(Model.StartTime?.ToString("hh\\:mm"))" />
+                    </div>
+
+                    <!-- End Time -->
+                    <div class="col-md-4 mb-3">
+                        <label for="endTime" class="form-label">End Time</label>
+                        <input type="time" id="endTime" name="endTime" class="form-control" 
+                               value="@(Model.EndTime?.ToString("hh\\:mm"))" />
+                    </div>
+                </div>
+
+                <!-- Capacity Information -->
+                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-people text-danger me-2"></i>Capacity Settings
+                </h6>
+                <div class="row">
+                    <!-- Max Capacity -->
+                    <div class="col-md-6 mb-3">
+                        <label for="maxCapacity" class="form-label">Maximum Capacity <span class="text-danger">*</span></label>
+                        <input type="number" id="maxCapacity" name="maxCapacity" class="form-control" 
+                               min="@Model.CurrentCapacity" max="1000" value="@Model.MaxCapacity" required />
+                        <small class="text-muted">
+                            Must be at least <strong>@Model.CurrentCapacity</strong> (current enrollments)
+                        </small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="alert alert-info mb-0">
+                            <strong>Current Status:</strong><br />
+                            Enrolled: <span class="badge bg-primary">@Model.CurrentCapacity</span><br />
+                            Max Capacity: <span class="badge bg-secondary">@Model.MaxCapacity</span><br />
+                            Available: <span class="badge bg-success">@(Model.MaxCapacity - Model.CurrentCapacity)</span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.CurrentCapacity > 0)
+                {
+                    <div class="alert alert-warning mt-3" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> This class has @Model.CurrentCapacity enrolled student(s). 
+                        You cannot reduce max capacity below the current enrollment count.
+                    </div>
+                }
+
+                <div class="row mt-4">
+                    <div class="col-12 text-end">
+                        <a asp-action="ClassIndex" class="btn btn-light me-2">Cancel</a>
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-check-circle"></i> Update Class
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        $(document).ready(function() {
+            const currentCapacity = @Model.CurrentCapacity;
+            
+            // Validate max capacity
+            $('#maxCapacity').on('change', function() {
+                const maxCap = parseInt($(this).val());
+                if (maxCap < currentCapacity) {
+                    alert(`Maximum capacity cannot be less than current enrollment (${currentCapacity})`);
+                    $(this).val(currentCapacity);
+                }
+            });
+
+            // Validate time range
+            $('#startTime, #endTime').on('change', function() {
+                const startTime = $('#startTime').val();
+                const endTime = $('#endTime').val();
+                
+                if (startTime && endTime) {
+                    if (startTime >= endTime) {
+                        alert('End time must be after start time');
+                        $('#endTime').val('');
+                    }
+                }
+            });
+        });
+    </script>
+}

@@ -1,5 +1,6 @@
 using WebMobileAssignment;
 using WebMobileAssignment.Models;
+using WebMobileAssignment.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,13 +16,18 @@ builder.Services.AddSqlServer<DB>($@"
 // Add Helper service
 builder.Services.AddScoped<Helper>();
 
+// Add ReCaptcha service with HttpClient
+builder.Services.AddHttpClient<ReCaptchaService>();
+
 // Add Authentication with Cookie
-builder.Services.AddAuthentication()
-    .AddCookie(options =>
+builder.Services.AddAuthentication("Cookies")
+    .AddCookie("Cookies", options =>
     {
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromHours(24);
+        options.SlidingExpiration = true;
     });
 
 // Add HttpContextAccessor for accessing HttpContext in services

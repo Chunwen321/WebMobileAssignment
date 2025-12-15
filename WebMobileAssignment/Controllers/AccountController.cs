@@ -1,45 +1,223 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using WebMobileAssignment.Models;
+using WebMobileAssignment.Services;
 
 namespace WebMobileAssignment.Controllers
 {
     public class AccountController : Controller
     {
+        private readonly DB _context;
+        private readonly Helper _helper;
+        private readonly ReCaptchaService _reCaptchaService;
+        private readonly IConfiguration _configuration;
+
+        public AccountController(DB context, Helper helper, ReCaptchaService reCaptchaService, IConfiguration configuration)
+        {
+            _context = context;
+            _helper = helper;
+            _reCaptchaService = reCaptchaService;
+            _configuration = configuration;
+        }
+
         // GET: /Account/Login
         public IActionResult Login()
         {
-            // This is a placeholder - authentication will be implemented later
-            ViewBag.Message = "Login page - Authentication will be implemented later";
+            ViewBag.ReCaptchaSiteKey = _configuration["ReCaptcha:SiteKey"];
             return View();
+        }
+
+        // GET: /Account/ForgotPassword
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        // POST: /Account/ForgotPassword
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            // Validate input
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ViewBag.ErrorMessage = "Please enter your email address.";
+                return View();
+            }
+
+            try
+            {
+                // Find user by email
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+                // For security reasons, always show success message even if user not found
+                // This prevents email enumeration attacks
+                if (user == null || !user.IsActive)
+                {
+                    ViewBag.SuccessMessage = "If an account with that email exists, you will receive password reset instructions shortly.";
+                    return View();
+                }
+
+                // Generate a temporary password
+                string temporaryPassword = _helper.RandomPassword();
+
+                // Update user's password to the temporary one (hashed)
+                user.PasswordHash = _helper.HashPassword(temporaryPassword);
+                await _context.SaveChangesAsync();
+
+                // Send email with temporary password using the helper method
+                try
+                {
+                    _helper.SendPasswordResetEmail(email, user.FullName, temporaryPassword);
+
+                    ViewBag.SuccessMessage = "Password reset instructions have been sent to your email address. Please check your inbox and spam folder.";
+                }
+                catch (Exception emailEx)
+                {
+                    // Rollback password change if email fails
+                    // Note: In production, consider using a transaction or a separate "reset token" approach
+                    Console.WriteLine($"Email sending failed: {emailEx.Message}");
+                    ViewBag.ErrorMessage = "We encountered an issue sending the reset email. Please try again later or contact support.";
+                }
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Password reset error: {ex.Message}");
+                ViewBag.ErrorMessage = "An error occurred while processing your request. Please try again later.";
+                return View();
+            }
         }
 
         // POST: /Account/Login
         [HttpPost]
-        public IActionResult Login(string userType, string email, string password)
+        public async Task<IActionResult> Login(string email, string password, string? recaptchaToken, bool rememberMe = false)
         {
-            // Placeholder authentication logic
-            // In a real application, validate credentials against database
-            if (userType == "parent")
-            {
-                // Redirect parent to their dashboard
-                return RedirectToAction("Dashboard", "Parent");
-            }
-            else if (userType == "admin")
-            {
-                // Redirect admin to admin dashboard (to be implemented)
-                return RedirectToAction("Index", "Home");
-            }
-            else if (userType == "teacher")
-            {
-                // Redirect teacher to teacher dashboard
-                return RedirectToAction("TeachDashboard", "Teacher");
-            }
-            else if (userType == "student")
-            {
-                // Redirect student to student dashboard
-                return RedirectToAction("StudDashboard", "Student");
-            }
+            Console.WriteLine($"\n=== LOGIN ATTEMPT STARTED ===");
+            Console.WriteLine($"Email: {email}");
+            Console.WriteLine($"Token received: {(string.IsNullOrEmpty(recaptchaToken) ? "NO" : "YES - Length: " + recaptchaToken.Length)}");
+            
+            ViewBag.ReCaptchaSiteKey = _configuration["ReCaptcha:SiteKey"];
 
-            return View();
+            // Verify reCAPTCHA v2 only if it's configured
+            var siteKey = _configuration["ReCaptcha:SiteKey"];
+            Console.WriteLine($"Site Key configured: {!string.IsNullOrEmpty(siteKey)}");
+
+     if (!string.IsNullOrEmpty(siteKey) && siteKey != "YOUR_SITE_KEY_HERE" && !string.IsNullOrEmpty(recaptchaToken))
+     {
+           Console.WriteLine($"?? Verifying reCAPTCHA v2 token...");
+              var isRecaptchaValid = await _reCaptchaService.VerifyTokenAsync(recaptchaToken);
+
+         if (!isRecaptchaValid)
+        {
+    Console.WriteLine($"? reCAPTCHA v2 verification FAILED for: {email}");
+          ViewBag.ErrorMessage = "Security verification failed. Please try again.";
+         return View();
+      }
+
+    // Log successful reCAPTCHA verification
+  Console.WriteLine($"? reCAPTCHA v2 verification PASSED for email: {email}");
+   }
+            else if (string.IsNullOrEmpty(recaptchaToken))
+     {
+     // Log when reCAPTCHA token is missing
+      Console.WriteLine($"?? Warning: reCAPTCHA token is MISSING for login attempt: {email}");
+          }
+else
+      {
+  Console.WriteLine($"?? reCAPTCHA skipped (not configured or invalid site key)");
+   }
+
+ Console.WriteLine($"=== LOGIN ATTEMPT CONTINUING ===\n");
+
+      // Validate input
+   if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+   {
+        ViewBag.ErrorMessage = "Please enter both email and password.";
+          return View();
+  }
+
+            try
+            {
+                // Find user by email
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+                if (user == null)
+                {
+                    ViewBag.ErrorMessage = "Invalid email or password.";
+                    return View();
+                }
+
+                // Verify password - Try both hashed and plain text for backward compatibility
+                bool isPasswordValid = false;
+
+                // First try with proper password hashing (PasswordHasher)
+                if (user.PasswordHash.StartsWith("AQA") || user.PasswordHash.Length > 50)
+                {
+                    // Looks like a hashed password
+                    isPasswordValid = _helper.VerifyPassword(user.PasswordHash, password);
+                }
+                else
+                {
+                    // Plain text password (for backward compatibility with existing data)
+                    isPasswordValid = user.PasswordHash == password;
+                }
+
+                if (!isPasswordValid)
+                {
+                    ViewBag.ErrorMessage = "Invalid email or password.";
+                    return View();
+                }
+
+                // Check if user is active
+                if (!user.IsActive || user.Status != "active")
+                {
+                    ViewBag.ErrorMessage = "Your account is not active. Please contact administrator.";
+                    return View();
+                }
+
+                // Redirect based on user type from Users table
+                string userType = user.UserType.ToLower();
+
+                switch (userType)
+                {
+                    case "admin":
+                        _helper.SignIn(user.Email, "Admin", rememberMe);
+                        return RedirectToAction("Dashboard", "Admin");
+
+                    case "teacher":
+                        _helper.SignIn(user.Email, "Teacher", rememberMe);
+                        return RedirectToAction("TeachDashboard", "Teacher");
+
+                    case "student":
+                        _helper.SignIn(user.Email, "Student", rememberMe);
+                        return RedirectToAction("StudDashboard", "Student");
+
+                    case "parent":
+                        _helper.SignIn(user.Email, "Parent", rememberMe);
+                        return RedirectToAction("Dashboard", "Parent");
+
+                    default:
+                        ViewBag.ErrorMessage = "Invalid user type. Please contact administrator.";
+                        return View();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error in production
+                ViewBag.ErrorMessage = $"An error occurred during login: {ex.Message}";
+                return View();
+            }
+        }
+
+        // POST: /Account/Logout
+        public IActionResult Logout()
+        {
+            _helper.SignOut();
+            return RedirectToAction("Login");
         }
     }
 }

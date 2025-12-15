@@ -1,0 +1,544 @@
+@model IEnumerable<WebMobileAssignment.Models.Attendance>
+@{
+    ViewBag.Title = "Admin Dashboard";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="mb-2">
+            <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+        </h1>
+        <p class="text-muted">Welcome back! Here's what's happening in your institution today.</p>
+    </div>
+</div>
+
+<!-- Quick Stats Cards -->
+<div class="row g-3 mb-4">
+    <!-- Total Students -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Students</div>
+                    <div class="stat-value text-primary">@ViewBag.TotalStudents</div>
+                </div>
+                <div class="card-icon blue">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-graph-up me-1"></i>
+                <span>All enrolled students</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Teachers -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Teachers</div>
+                    <div class="stat-value text-success">@ViewBag.TotalTeachers</div>
+                </div>
+                <div class="card-icon green">
+                    <i class="bi bi-person-workspace"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-people me-1"></i>
+                <span>Active teaching staff</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Classes -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Classes</div>
+                    <div class="stat-value text-warning">@ViewBag.TotalClasses</div>
+                </div>
+                <div class="card-icon yellow">
+                    <i class="bi bi-book-fill"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-calendar3 me-1"></i>
+                <span>Available courses</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Parents -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Parents</div>
+                    <div class="stat-value text-danger">@ViewBag.TotalParents</div>
+                </div>
+                <div class="card-icon red">
+                    <i class="bi bi-person-hearts"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-house me-1"></i>
+                <span>Registered guardians</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Attendance Overview -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-calendar-check"></i>
+                    Today's Attendance Overview
+                </h5>
+                <small class="text-muted">@DateTime.Today.ToString("MMMM dd, yyyy")</small>
+            </div>
+            
+            <div class="row g-3">
+                <!-- Total Records Today -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="bi bi-clipboard-data" style="font-size: 2.5rem; color: white;"></i>
+                        <h3 class="mt-2 mb-0 text-white">@ViewBag.AttendanceToday</h3>
+                        <small class="text-white">Total Records</small>
+                    </div>
+                </div>
+
+                <!-- Present -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                        <i class="bi bi-check-circle-fill" style="font-size: 2.5rem; color: white;"></i>
+                        <h3 class="mt-2 mb-0 text-white">@ViewBag.PresentToday</h3>
+                        <small class="text-white">Present</small>
+                        @if (ViewBag.AttendanceToday > 0)
+                        {
+                            <div class="text-white mt-1">
+                                <strong>@(((decimal)ViewBag.PresentToday / ViewBag.AttendanceToday * 100).ToString("F1"))%</strong>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Absent -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);">
+                        <i class="bi bi-x-circle-fill" style="font-size: 2.5rem; color: white;"></i>
+                        <h3 class="mt-2 mb-0 text-white">@ViewBag.AbsentToday</h3>
+                        <small class="text-white">Absent</small>
+                        @if (ViewBag.AttendanceToday > 0)
+                        {
+                            <div class="text-white mt-1">
+                                <strong>@(((decimal)ViewBag.AbsentToday / ViewBag.AttendanceToday * 100).ToString("F1"))%</strong>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Late -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="bi bi-clock-fill" style="font-size: 2.5rem; color: white;"></i>
+                        <h3 class="mt-2 mb-0 text-white">@ViewBag.LateToday</h3>
+                        <small class="text-white">Late</small>
+                        @if (ViewBag.AttendanceToday > 0)
+                        {
+                            <div class="text-white mt-1">
+                                <strong>@(((decimal)ViewBag.LateToday / ViewBag.AttendanceToday * 100).ToString("F1"))%</strong>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity and Quick Actions -->
+<div class="row g-3 mb-4">
+    <!-- Recent Attendance Records -->
+    <div class="col-lg-8">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-clock-history"></i>
+                    Recent Attendance Records
+                </h5>
+                <a asp-action="AttendanceIndex" class="btn btn-sm btn-outline-danger">
+                    View All <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Student</th>
+                            <th>Class</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var attendance in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                <div class="user-avatar" style="width: 35px; height: 35px; font-size: 0.9rem;">
+                                                    <i class="bi bi-person-fill"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <strong>@attendance.Student?.User.FullName</strong>
+                                                <br />
+                                                <small class="text-muted">@attendance.StudentId</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong>@attendance.Class?.ClassName</strong>
+                                        <br />
+                                        <small class="text-muted">@attendance.ClassId</small>
+                                    </td>
+                                    <td>
+                                        <i class="bi bi-calendar3 me-1 text-muted"></i>
+                                        @attendance.Date.ToString("MMM dd, yyyy")
+                                        <br />
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock me-1"></i>@attendance.TakenOn.ToString("hh:mm tt")
+                                        </small>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var statusClass = attendance.Status?.ToLower() switch
+                                            {
+                                                "present" => "success",
+                                                "absent" => "danger",
+                                                "late" => "warning",
+                                                _ => "secondary"
+                                            };
+                                            var statusIcon = attendance.Status?.ToLower() switch
+                                            {
+                                                "present" => "bi-check-circle-fill",
+                                                "absent" => "bi-x-circle-fill",
+                                                "late" => "bi-clock-fill",
+                                                _ => "bi-question-circle-fill"
+                                            };
+                                        }
+                                        <span class="badge bg-@statusClass">
+                                            <i class="bi @statusIcon me-1"></i>
+                                            @attendance.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                    <p class="mb-0 mt-2">No recent attendance records</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-4">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-lightning-fill"></i>
+                    Quick Actions
+                </h5>
+            </div>
+
+            <div class="d-flex flex-column gap-2">
+                <a asp-action="AddStudent" class="btn btn-outline-primary w-100 text-start">
+                    <i class="bi bi-person-plus-fill me-2"></i>
+                    Add New Student
+                </a>
+                <a asp-action="TeacherCreate" class="btn btn-outline-success w-100 text-start">
+                    <i class="bi bi-person-workspace me-2"></i>
+                    Add New Teacher
+                </a>
+                <a asp-action="ParentCreate" class="btn btn-outline-info w-100 text-start">
+                    <i class="bi bi-person-hearts me-2"></i>
+                    Add New Parent
+                </a>
+                <a asp-action="ClassCreate" class="btn btn-outline-warning w-100 text-start">
+                    <i class="bi bi-book-fill me-2"></i>
+                    Create New Class
+                </a>
+                <a asp-action="AttendanceCreate" class="btn btn-outline-danger w-100 text-start">
+                    <i class="bi bi-clipboard-check me-2"></i>
+                    Record Attendance
+                </a>
+                <a asp-action="Reports" class="btn btn-outline-secondary w-100 text-start">
+                    <i class="bi bi-graph-up me-2"></i>
+                    View Reports
+                </a>
+            </div>
+
+            <hr class="my-3" />
+
+            <!-- System Info -->
+            <div class="mt-3">
+                <h6 class="mb-3">
+                    <i class="bi bi-info-circle me-2"></i>System Information
+                </h6>
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar-event me-1"></i>Current Date
+                        </small>
+                        <strong id="currentDate">@DateTime.Today.ToString("MMM dd, yyyy")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>Current Time
+                        </small>
+                        <strong id="currentTime">@DateTime.Now.ToString("hh:mm:ss tt")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar-week me-1"></i>Day
+                        </small>
+                        <strong>@DateTime.Today.ToString("dddd")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Class Capacity Overview -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-pie-chart-fill"></i>
+                    System Statistics
+                </h5>
+            </div>
+
+            <div class="row g-3">
+                <!-- Active Users -->
+                <div class="col-md-3">
+                    <div class="text-center p-3 border rounded">
+                        <i class="bi bi-person-check-fill text-success" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-0">@(ViewBag.TotalStudents + ViewBag.TotalTeachers + ViewBag.TotalParents)</h4>
+                        <small class="text-muted">Total Active Users</small>
+                    </div>
+                </div>
+
+                <!-- Student-Teacher Ratio -->
+                <div class="col-md-3">
+                    <div class="text-center p-3 border rounded">
+                        <i class="bi bi-calculator text-info" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-0">
+                            @if (ViewBag.TotalTeachers > 0)
+                            {
+                                @(((decimal)ViewBag.TotalStudents / ViewBag.TotalTeachers).ToString("F1"))
+                            }
+                            else
+                            {
+                                <span>N/A</span>
+                            }
+                        </h4>
+                        <small class="text-muted">Student-Teacher Ratio</small>
+                    </div>
+                </div>
+
+                <!-- Avg Students per Class -->
+                <div class="col-md-3">
+                    <div class="text-center p-3 border rounded">
+                        <i class="bi bi-people-fill text-warning" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-0">
+                            @if (ViewBag.TotalClasses > 0)
+                            {
+                                @(((decimal)ViewBag.TotalStudents / ViewBag.TotalClasses).ToString("F1"))
+                            }
+                            else
+                            {
+                                <span>N/A</span>
+                            }
+                        </h4>
+                        <small class="text-muted">Avg Students/Class</small>
+                    </div>
+                </div>
+
+                <!-- Attendance Rate (Today) -->
+                <div class="col-md-3">
+                    <div class="text-center p-3 border rounded">
+                        <i class="bi bi-graph-up-arrow text-primary" style="font-size: 2rem;"></i>
+                        <h4 class="mt-2 mb-0">
+                            @if (ViewBag.AttendanceToday > 0)
+                            {
+                                @(((decimal)ViewBag.PresentToday / ViewBag.AttendanceToday * 100).ToString("F1"))<span style="font-size: 1rem;">%</span>
+                            }
+                            else
+                            {
+                                <span>N/A</span>
+                            }
+                        </h4>
+                        <small class="text-muted">Today's Attendance Rate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities Timeline -->
+<div class="row g-3">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-activity"></i>
+                    Recent System Activities
+                </h5>
+            </div>
+
+            <div class="activity-timeline">
+                <div class="activity-item">
+                    <div class="activity-icon bg-success">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6 class="mb-1">New Students Registered</h6>
+                        <p class="mb-1 text-muted">@ViewBag.TotalStudents students are currently enrolled in the system</p>
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>Active Records
+                        </small>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon bg-primary">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6 class="mb-1">Attendance Records</h6>
+                        <p class="mb-1 text-muted">@ViewBag.AttendanceToday attendance records marked today</p>
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>@DateTime.Today.ToString("MMMM dd, yyyy")
+                        </small>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon bg-warning">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6 class="mb-1">Classes Available</h6>
+                        <p class="mb-1 text-muted">@ViewBag.TotalClasses classes are currently active</p>
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>Active Classes
+                        </small>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon bg-info">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6 class="mb-1">Teaching Staff</h6>
+                        <p class="mb-1 text-muted">@ViewBag.TotalTeachers teachers are actively teaching</p>
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>Active Teachers
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Update current time every second
+        function updateTime() {
+            const now = new Date();
+            const timeOptions = { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true 
+            };
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+        }
+
+        // Update time immediately and then every second
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+}
+
+<style>
+    /* Activity Timeline Styles */
+    .activity-timeline {
+        position: relative;
+        padding-left: 0;
+    }
+
+    .activity-item {
+        position: relative;
+        padding-left: 60px;
+        padding-bottom: 30px;
+        border-left: 2px solid #e9ecef;
+        margin-left: 20px;
+    }
+
+    .activity-item:last-child {
+        border-left: 0;
+        padding-bottom: 0;
+    }
+
+    .activity-icon {
+        position: absolute;
+        left: -20px;
+        top: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .activity-content h6 {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .activity-content p {
+        font-size: 0.9rem;
+    }
+</style>

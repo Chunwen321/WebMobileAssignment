@@ -3,126 +3,286 @@
     Layout = "~/Views/Shared/_ParentLayout.cshtml";
 }
 
+@{
+  var parent = ViewBag.Parent as WebMobileAssignment.Models.Parent;
+}
+
+@if (parent == null)
+{
+ <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        No parent information found. Please log in again.
+    </div>
+    return;
+}
+
+<!-- Success/Error Messages -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+    @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-circle me-2"></i>
+        @TempData["Error"]
+ <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <div class="row g-3">
     <!-- Account Settings -->
     <div class="col-lg-8">
-  <div class="dashboard-card settings-account-card">
-<div class="card-header-custom">
-    <h5 class="card-title">
-   <i class="bi bi-person-circle"></i>
-Account Settings
-  </h5>
-       </div>
-
-    <form>
- <div class="row g-3">
- <div class="col-md-6">
-     <label class="form-label">First Name</label>
- <input type="text" class="form-control" value="Robert" required>
+   <div class="dashboard-card settings-account-card mb-3">
+            <div class="card-header-custom">
+          <h5 class="card-title">
+         <i class="bi bi-person-circle"></i>
+   Account Settings
+     </h5>
+         <button type="button" class="btn btn-outline-primary btn-sm" id="editProfileBtn" onclick="toggleEditMode()">
+       <i class="bi bi-pencil-square me-1"></i>
+      <span id="editBtnText">Edit Profile</span>
+                </button>
    </div>
-    <div class="col-md-6">
-  <label class="form-label">Last Name</label>
-<input type="text" class="form-control" value="Doe" required>
-     </div>
-      <div class="col-md-6">
-       <label class="form-label">Email Address</label>
-    <div class="input-group">
-      <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-    <input type="email" class="form-control" value="robert.doe@email.com" required>
-        </div>
- </div>
-    <div class="col-md-6">
-    <label class="form-label">Phone Number</label>
-     <div class="input-group">
-<span class="input-group-text"><i class="bi bi-phone"></i></span>
-    <input type="tel" class="form-control" value="012-987-6543" required>
- </div>
-     </div>
-   <div class="col-12">
-      <label class="form-label">Address</label>
-<textarea class="form-control" rows="2">123 Main Street, Kuala Lumpur, Malaysia</textarea>
-     </div>
-<div class="col-12 mb-0">
- <button type="submit" class="btn btn-primary">
-  <i class="bi bi-check-circle me-2"></i>Save Changes
-</button>
-     <button type="button" class="btn btn-outline-secondary">
-     <i class="bi bi-x-circle me-2"></i>Cancel
- </button>
-    </div>
-</div>
-  </form>
- </div>
 
-   <!-- Change Password -->
-<div class="dashboard-card mb-3">
-   <div class="card-header-custom">
-       <h5 class="card-title">
-<i class="bi bi-shield-lock"></i>
-     Change Password
-   </h5>
-    </div>
-
-  <form>
-     <div class="password-field-group mb-3">
-  <label class="form-label fw-semibold">Current Password</label>
-<div class="password-input-wrapper">
-<i class="bi bi-lock-fill password-icon"></i>
-    <input type="password" class="form-control password-input" placeholder="Enter current password" required>
+     <!-- Display Mode -->
+            <div id="displayMode">
+          <div class="row g-3">
+       <div class="col-md-6">
+    <label class="form-label text-muted">Full Name</label>
+         <div class="display-value">@parent.User.FullName</div>
+             </div>
+   <div class="col-md-6">
+        <label class="form-label text-muted">Email Address</label>
+            <div class="display-value">@parent.User.Email</div>
+     </div>
+     <div class="col-md-6">
+          <label class="form-label text-muted">Phone Number</label>
+         <div class="display-value">@(parent.PhoneNumber ?? parent.User.PhoneNumber ?? "Not provided")</div>
+     </div>
+  <div class="col-md-6">
+     <label class="form-label text-muted">Date of Birth</label>
+      <div class="display-value">
+ @if (parent.User.DateOfBirth.HasValue)
+          {
+               @parent.User.DateOfBirth.Value.ToString("MMMM dd, yyyy")
+}
+     else
+        {
+     <span class="text-muted">Not set</span>
+               }
+            </div>
         </div>
-       </div>
-   
-       <div class="password-field-group mb-3">
- <label class="form-label fw-semibold">New Password</label>
- <div class="password-input-wrapper">
-  <i class="bi bi-lock-fill password-icon"></i>
-  <input type="password" class="form-control password-input" placeholder="Enter new password" required>
-  </div>
-     <small class="form-text text-muted d-block mt-1">
-   <i class="bi bi-info-circle me-1"></i>Password must be at least 8 characters long
-         </small>
+                    <div class="col-md-6">
+      <label class="form-label text-muted">Gender</label>
+      <div class="display-value">@(parent.User.Gender ?? "Not specified")</div>
       </div>
-         
-    <div class="password-field-group mb-3">
+     <div class="col-12">
+              <label class="form-label text-muted">Address</label>
+       <div class="display-value">@(parent.Address ?? "Not provided")</div>
+    </div>
+         </div>
+   </div>
+
+       <!-- Edit Mode -->
+     <form method="post" asp-action="UpdateProfile" asp-controller="Parent" id="editMode" style="display: none;">
+   @Html.AntiForgeryToken()
+            <div class="row g-3">
+         <div class="col-md-6">
+         <label class="form-label">Full Name</label>
+   <input type="text" class="form-control" name="fullName" value="@parent.User.FullName" required>
+           </div>
+    <div class="col-md-6">
+<label class="form-label">Email Address</label>
+     <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+    <input type="email" class="form-control" name="email" value="@parent.User.Email" required readonly>
+ </div>
+       <small class="text-muted">Email cannot be changed</small>
+        </div>
+        <div class="col-md-6">
+         <label class="form-label">Phone Number</label>
+          <div class="input-group">
+    <span class="input-group-text"><i class="bi bi-phone"></i></span>
+            <input type="tel" class="form-control" name="phoneNumber" value="@(parent.PhoneNumber ?? parent.User.PhoneNumber)" placeholder="Enter phone number">
+           </div>
+     </div>
+        <div class="col-md-6">
+    <label class="form-label">Date of Birth</label>
+        <input type="date" class="form-control" name="dateOfBirth" 
+      value="@(parent.User.DateOfBirth?.ToString("yyyy-MM-dd"))">
+         </div>
+       <div class="col-md-6">
+          <label class="form-label">Gender</label>
+            <select class="form-select" name="gender">
+     <option value="">Select Gender</option>
+   <option value="Male" selected="@(parent.User.Gender == "Male")">Male</option>
+   <option value="Female" selected="@(parent.User.Gender == "Female")">Female</option>
+    <option value="Other" selected="@(parent.User.Gender == "Other")">Other</option>
+        </select>
+        </div>
+    <div class="col-12">
+        <label class="form-label">Address</label>
+         <textarea class="form-control" name="address" rows="2" placeholder="Enter your address">@(parent.Address)</textarea>
+        </div>
+    <div class="col-12 mb-0">
+   <button type="submit" class="btn btn-primary">
+       <i class="bi bi-check-circle me-2"></i>Save Changes
+                 </button>
+      <button type="button" class="btn btn-outline-secondary" onclick="cancelEdit()">
+       <i class="bi bi-x-circle me-2"></i>Cancel
+              </button>
+    </div>
+  </div>
+       </form>
+</div>
+
+        <!-- Change Password -->
+        <div class="dashboard-card">
+      <div class="card-header-custom">
+ <h5 class="card-title">
+         <i class="bi bi-shield-lock"></i>
+    Change Password
+                </h5>
+     </div>
+
+         <form method="post" asp-action="ChangePassword" asp-controller="Parent">
+   @Html.AntiForgeryToken()
+  <div class="password-field-group mb-3">
+               <label class="form-label fw-semibold">Current Password</label>
+        <div class="password-input-wrapper">
+        <i class="bi bi-lock-fill password-icon"></i>
+     <input type="password" name="currentPassword" id="currentPassword" class="form-control password-input" placeholder="Enter current password" required>
+  <button type="button" class="password-toggle-btn" onclick="togglePassword('currentPassword')">
+        <i class="bi bi-eye" id="currentPassword-icon"></i>
+ </button>
+        </div>
+  </div>
+    
+      <div class="password-field-group mb-3">
+      <label class="form-label fw-semibold">New Password</label>
+  <div class="password-input-wrapper">
+    <i class="bi bi-lock-fill password-icon"></i>
+      <input type="password" name="newPassword" id="newPassword" class="form-control password-input" placeholder="Enter new password" required>
+            <button type="button" class="password-toggle-btn" onclick="togglePassword('newPassword')">
+        <i class="bi bi-eye" id="newPassword-icon"></i>
+            </button>
+    </div>
+      <small class="form-text text-muted d-block mt-1">
+  <i class="bi bi-info-circle me-1"></i>Password must be at least 8 characters long
+  </small>
+    </div>
+
+        <div class="password-field-group mb-3">
  <label class="form-label fw-semibold">Confirm New Password</label>
     <div class="password-input-wrapper">
     <i class="bi bi-lock-fill password-icon"></i>
-    <input type="password" class="form-control password-input" placeholder="Confirm new password" required>
+       <input type="password" name="confirmPassword" id="confirmPassword" class="form-control password-input" placeholder="Confirm new password" required>
+            <button type="button" class="password-toggle-btn" onclick="togglePassword('confirmPassword')">
+         <i class="bi bi-eye" id="confirmPassword-icon"></i>
+            </button>
      </div>
- </div>
+</div>
     
-   <button type="submit" class="btn btn-update-password">
-      <i class="bi bi-key-fill me-2"></i>Update Password
-  </button>
- </form>
-        </div>
+       <button type="submit" class="btn btn-update-password">
+         <i class="bi bi-key-fill me-2"></i>Update Password
+    </button>
+         </form>
+  </div>
     </div>
 
     <!-- Sidebar -->
- <div class="col-lg-4">
+    <div class="col-lg-4">
      <!-- Profile Summary -->
-   <div class="dashboard-card">
-  <div class="text-center mb-3">
-      <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;">
+        <div class="dashboard-card">
+       <div class="text-center mb-3">
+   <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;">
  <i class="bi bi-person-fill"></i>
-       </div>
-     <h5 class="mb-1">Robert Doe</h5>
-      <p class="text-muted mb-0">Parent/Guardian</p>
-   </div>
-      <div class="list-group list-group-flush">
-   <div class="list-group-item px-0">
-   <small class="text-muted d-block">Account ID</small>
-     <strong>PAR001</strong>
-     </div>
+           </div>
+     <h5 class="mb-1">@parent.User.FullName</h5>
+ <p class="text-muted mb-0">Parent/Guardian</p>
+          </div>
+            <div class="list-group list-group-flush">
      <div class="list-group-item px-0">
- <small class="text-muted d-block">Member Since</small>
-  <strong>January 1, 2024</strong>
-    </div>
-  <div class="list-group-item px-0">
-     <small class="text-muted d-block">Status</small>
-   <span class="badge bg-success">Active</span>
-    </div>
-  </div>
- </div>
+        <small class="text-muted d-block">Parent ID</small>
+    <strong>@parent.ParentId</strong>
+      </div>
+           <div class="list-group-item px-0">
+         <small class="text-muted d-block">Member Since</small>
+       <strong>@parent.User.CreatedDate.ToString("MMMM dd, yyyy")</strong>
+                </div>
+       <div class="list-group-item px-0">
+            <small class="text-muted d-block">Account Status</small>
+                    <span class="badge bg-@(parent.User.IsActive ? "success" : "secondary")">
+   @(parent.User.IsActive ? "Active" : "Inactive")
+           </span>
+        </div>
+        <div class="list-group-item px-0">
+     <small class="text-muted d-block">Children Linked</small>
+          <strong>@(parent.Students?.Count ?? 0)</strong>
+         </div>
+            </div>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function toggleEditMode() {
+const displayMode = document.getElementById('displayMode');
+            const editMode = document.getElementById('editMode');
+    const editBtn = document.getElementById('editProfileBtn');
+    const editBtnText = document.getElementById('editBtnText');
+      
+            if (displayMode.style.display === 'none') {
+    // Switch to display mode
+          displayMode.style.display = 'block';
+      editMode.style.display = 'none';
+         editBtn.className = 'btn btn-outline-primary btn-sm';
+       editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i><span id="editBtnText">Edit Profile</span>';
+   } else {
+   // Switch to edit mode
+        displayMode.style.display = 'none';
+      editMode.style.display = 'block';
+       editBtn.className = 'btn btn-outline-secondary btn-sm';
+                editBtn.innerHTML = '<i class="bi bi-eye me-1"></i><span id="editBtnText">View Mode</span>';
+            }
+        }
+
+        function cancelEdit() {
+ toggleEditMode();
+        }
+
+        // Password visibility toggle function
+        function togglePassword(inputId) {
+         const input = document.getElementById(inputId);
+       const icon = document.getElementById(inputId + '-icon');
+   
+ if (input.type === 'password') {
+  input.type = 'text';
+      icon.classList.remove('bi-eye');
+     icon.classList.add('bi-eye-slash');
+    } else {
+  input.type = 'password';
+     icon.classList.remove('bi-eye-slash');
+       icon.classList.add('bi-eye');
+         }
+  }
+
+   // Auto-dismiss alerts after 5 seconds
+        window.addEventListener('DOMContentLoaded', (event) => {
+   setTimeout(function() {
+const alerts = document.querySelectorAll('.alert');
+       alerts.forEach(alert => {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+});
+            }, 5000);
+});
+    </script>
+}

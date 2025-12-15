@@ -34,7 +34,7 @@
                     </div>
                 }
 
-                <h6 class="text-muted mb-3">Parent Information</h6>
+                <h6 class="text-muted mb-3"><i class="bi bi-person-badge"></i> Basic Information</h6>
                 <div class="row">
                     <!-- Name -->
                     <div class="col-md-6 mb-3">
@@ -53,14 +53,44 @@
                     <!-- Password -->
                     <div class="col-md-6 mb-3">
                         <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required />
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Minimum 8 characters" required />
+                        <small class="text-muted">Must be at least 8 characters long</small>
                     </div>
 
                     <!-- Phone Number -->
                     <div class="col-md-6 mb-3">
                         <label for="phoneNumber" class="form-label">Phone Number</label>
-                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="e.g. +1234567890" value="@ViewBag.PhoneNumber" />
+                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="e.g. +60123456789" value="@ViewBag.PhoneNumber" />
                         <small class="text-muted">Used for notifications and emergency contact</small>
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-3 mt-4"><i class="bi bi-person-lines-fill"></i> Personal Details</h6>
+                <div class="row">
+                    <!-- Date of Birth -->
+                    <div class="col-md-6 mb-3">
+                        <label for="dateOfBirth" class="form-label">Date of Birth</label>
+                        <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" value="@ViewBag.DateOfBirth" />
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="col-md-6 mb-3">
+                        <label for="gender" class="form-label">Gender</label>
+                        <select id="gender" name="gender" class="form-select">
+                            <option value="">Select Gender</option>
+                            <option value="Male" selected="@(ViewBag.Gender == "Male")">Male</option>
+                            <option value="Female" selected="@(ViewBag.Gender == "Female")">Female</option>
+                            <option value="Other" selected="@(ViewBag.Gender == "Other")">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Address -->
+                    <div class="col-12 mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea id="address" name="address" class="form-control" rows="3" placeholder="Enter full address">@ViewBag.Address</textarea>
+                        <small class="text-muted">Street address, city, state, postal code</small>
                     </div>
                 </div>
 

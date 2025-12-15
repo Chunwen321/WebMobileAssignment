@@ -6,11 +6,23 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WebMobileAssignment.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Subjects",
+                columns: table => new
+                {
+                    SubjectId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    SubjectName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Subjects", x => x.SubjectId);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
@@ -19,8 +31,12 @@ namespace WebMobileAssignment.Migrations
                     PasswordHash = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Gender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
                     UserType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -47,12 +63,34 @@ namespace WebMobileAssignment.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    NotificationId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.NotificationId);
+                    table.ForeignKey(
+                        name: "FK_Notifications_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Parents",
                 columns: table => new
                 {
                     ParentId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
+                    PhoneNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -71,9 +109,13 @@ namespace WebMobileAssignment.Migrations
                 {
                     TeacherId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     SubjectTeach = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    HireDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    HireDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Education = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Skill = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Bio = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -87,44 +129,20 @@ namespace WebMobileAssignment.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Classes",
-                columns: table => new
-                {
-                    ClassId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    ClassName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    TeacherId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    RoomNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    ScheduleInfo = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Classes", x => x.ClassId);
-                    table.ForeignKey(
-                        name: "FK_Classes_Teachers_TeacherId",
-                        column: x => x.TeacherId,
-                        principalTable: "Teachers",
-                        principalColumn: "TeacherId");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Students",
                 columns: table => new
                 {
                     StudentId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    ClassId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    EnrollmentDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ParentId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ClassId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Gender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Students", x => x.StudentId);
-                    table.ForeignKey(
-                        name: "FK_Students_Classes_ClassId",
-                        column: x => x.ClassId,
-                        principalTable: "Classes",
-                        principalColumn: "ClassId");
                     table.ForeignKey(
                         name: "FK_Students_Parents_ParentId",
                         column: x => x.ParentId,
@@ -140,6 +158,34 @@ namespace WebMobileAssignment.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Classes",
+                columns: table => new
+                {
+                    ClassId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    ClassName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    TeacherId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    SubjectId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    RoomNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    ScheduleInfo = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Day = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Time = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Classes", x => x.ClassId);
+                    table.ForeignKey(
+                        name: "FK_Classes_Subjects_SubjectId",
+                        column: x => x.SubjectId,
+                        principalTable: "Subjects",
+                        principalColumn: "SubjectId");
+                    table.ForeignKey(
+                        name: "FK_Classes_Teachers_TeacherId",
+                        column: x => x.TeacherId,
+                        principalTable: "Teachers",
+                        principalColumn: "TeacherId");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Attendances",
                 columns: table => new
                 {
@@ -147,6 +193,7 @@ namespace WebMobileAssignment.Migrations
                     StudentId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     ClassId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TakenOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     MarkedByTeacherId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
                 },
@@ -172,6 +219,31 @@ namespace WebMobileAssignment.Migrations
                         principalColumn: "TeacherId");
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Enrollments",
+                columns: table => new
+                {
+                    StudentId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    ClassId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    EnrolledDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Enrollments", x => new { x.StudentId, x.ClassId });
+                    table.ForeignKey(
+                        name: "FK_Enrollments_Classes_ClassId",
+                        column: x => x.ClassId,
+                        principalTable: "Classes",
+                        principalColumn: "ClassId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Enrollments_Students_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Students",
+                        principalColumn: "StudentId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Admins_UserId",
                 table: "Admins",
@@ -193,19 +265,29 @@ namespace WebMobileAssignment.Migrations
                 column: "StudentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Classes_SubjectId",
+                table: "Classes",
+                column: "SubjectId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Classes_TeacherId",
                 table: "Classes",
                 column: "TeacherId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Parents_UserId",
-                table: "Parents",
+                name: "IX_Enrollments_ClassId",
+                table: "Enrollments",
+                column: "ClassId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_UserId",
+                table: "Notifications",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Students_ClassId",
-                table: "Students",
-                column: "ClassId");
+                name: "IX_Parents_UserId",
+                table: "Parents",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Students_ParentId",
@@ -239,16 +321,25 @@ namespace WebMobileAssignment.Migrations
                 name: "Attendances");
 
             migrationBuilder.DropTable(
-                name: "Students");
+                name: "Enrollments");
+
+            migrationBuilder.DropTable(
+                name: "Notifications");
 
             migrationBuilder.DropTable(
                 name: "Classes");
 
             migrationBuilder.DropTable(
-                name: "Parents");
+                name: "Students");
+
+            migrationBuilder.DropTable(
+                name: "Subjects");
 
             migrationBuilder.DropTable(
                 name: "Teachers");
+
+            migrationBuilder.DropTable(
+                name: "Parents");
 
             migrationBuilder.DropTable(
                 name: "Users");

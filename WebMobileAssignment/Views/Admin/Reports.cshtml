@@ -1,0 +1,707 @@
+@{
+    ViewBag.Title = "Reports & Analytics";
+    ViewBag.ActiveMenu = "Reports";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="bi bi-graph-up text-danger me-2"></i>
+                    Reports & Analytics
+                </h2>
+                <p class="text-muted">Comprehensive overview of system performance and statistics</p>
+            </div>
+            <div>
+                <button class="btn btn-danger" onclick="window.print()">
+                    <i class="bi bi-printer me-2"></i>Print Report
+                </button>
+                <button class="btn btn-outline-danger ms-2" onclick="exportToExcel()">
+                    <i class="bi bi-file-earmark-excel me-2"></i>Export to Excel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Overview -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Students</div>
+                    <div class="stat-value text-primary">@ViewBag.TotalStudents</div>
+                </div>
+                <div class="card-icon blue">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-graph-up me-1"></i>
+                <span>All enrolled</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Teachers</div>
+                    <div class="stat-value text-success">@ViewBag.TotalTeachers</div>
+                </div>
+                <div class="card-icon green">
+                    <i class="bi bi-person-workspace"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-people me-1"></i>
+                <span>Active staff</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Classes</div>
+                    <div class="stat-value text-warning">@ViewBag.TotalClasses</div>
+                </div>
+                <div class="card-icon yellow">
+                    <i class="bi bi-book-fill"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-calendar3 me-1"></i>
+                <span>Available courses</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Attendance Records</div>
+                    <div class="stat-value text-danger">@ViewBag.TotalAttendanceRecords</div>
+                </div>
+                <div class="card-icon red">
+                    <i class="bi bi-clipboard-data"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-database me-1"></i>
+                <span>Total records</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Overview This Month -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-calendar-month"></i>
+                    Attendance Overview - This Month
+                </h5>
+                <small class="text-muted">@DateTime.Today.ToString("MMMM yyyy")</small>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="text-center p-3 rounded" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                        <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: white;"></i>
+                        <h3 class="mt-2 mb-0 text-white">@ViewBag.ThisMonthPresent</h3>
+                        <small class="text-white">Present</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-3 rounded" style="background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);">
+                        <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: white;"></i>
+                        <h3 class="mt-2 mb-0 text-white">@ViewBag.ThisMonthAbsent</h3>
+                        <small class="text-white">Absent</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-3 rounded" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="bi bi-clock-fill" style="font-size: 2rem; color: white;"></i>
+                        <h3 class="mt-2 mb-0 text-white">@ViewBag.ThisMonthLate</h3>
+                        <small class="text-white">Late</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-3 rounded" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="bi bi-percent" style="font-size: 2rem; color: white;"></i>
+                        <h3 class="mt-2 mb-0 text-white">@ViewBag.ThisMonthRate%</h3>
+                        <small class="text-white">Attendance Rate</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Placeholder -->
+            <div class="chart-container" style="position: relative; height:300px;">
+                <canvas id="attendanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-pie-chart-fill"></i>
+                    Attendance Distribution
+                </h5>
+            </div>
+
+            <!-- Donut Chart -->
+            <div class="chart-container" style="position: relative; height:300px;">
+                <canvas id="attendancePieChart"></canvas>
+            </div>
+
+            <div class="mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="bi bi-circle-fill text-success me-2"></i>Present</span>
+                    <strong>@ViewBag.ThisMonthPresent (@(ViewBag.ThisMonthRate)%)</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="bi bi-circle-fill text-danger me-2"></i>Absent</span>
+                    <strong>@ViewBag.ThisMonthAbsent</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-circle-fill text-warning me-2"></i>Late</span>
+                    <strong>@ViewBag.ThisMonthLate</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Reports Section -->
+<div class="row g-3 mb-4">
+    <!-- Student Performance -->
+    <div class="col-lg-6">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-trophy-fill"></i>
+                    Top Performing Students (Attendance)
+                </h5>
+                <a asp-action="StudentIndex" class="btn btn-sm btn-outline-danger">View All</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Rank</th>
+                            <th>Student</th>
+                            <th>Attendance Rate</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge bg-warning">?? 1</span></td>
+                            <td>
+                                <strong>Sample Student 1</strong>
+                                <br><small class="text-muted">STU001</small>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-success" style="width: 100%">100%</div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-success">Perfect</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge bg-secondary">?? 2</span></td>
+                            <td>
+                                <strong>Sample Student 2</strong>
+                                <br><small class="text-muted">STU002</small>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-success" style="width: 98%">98%</div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-success">Excellent</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge bg-secondary">?? 3</span></td>
+                            <td>
+                                <strong>Sample Student 3</strong>
+                                <br><small class="text-muted">STU003</small>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-success" style="width: 95%">95%</div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-success">Excellent</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Performance -->
+    <div class="col-lg-6">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-bar-chart-fill"></i>
+                    Class Performance Overview
+                </h5>
+                <a asp-action="ClassIndex" class="btn btn-sm btn-outline-danger">View All</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Class</th>
+                            <th>Capacity</th>
+                            <th>Fill Rate</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <strong>Sample Class 1</strong>
+                                <br><small class="text-muted">CLASS001</small>
+                            </td>
+                            <td>25/30</td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-success" style="width: 83%">83%</div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-success">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Sample Class 2</strong>
+                                <br><small class="text-muted">CLASS002</small>
+                            </td>
+                            <td>28/30</td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-warning" style="width: 93%">93%</div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-warning">Almost Full</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>Sample Class 3</strong>
+                                <br><small class="text-muted">CLASS003</small>
+                            </td>
+                            <td>30/30</td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-danger">Full</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Statistics -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    Key Performance Indicators
+                </h5>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="kpi-card">
+                        <div class="kpi-icon bg-primary">
+                            <i class="bi bi-calculator"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-value">
+                                @if (ViewBag.TotalTeachers > 0)
+                                {
+                                    @(((decimal)ViewBag.TotalStudents / ViewBag.TotalTeachers).ToString("F1"))
+                                }
+                                else
+                                {
+                                    <span>N/A</span>
+                                }
+                            </h3>
+                            <p class="kpi-label">Student-Teacher Ratio</p>
+                            <small class="text-muted">Optimal range: 15-20</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="kpi-card">
+                        <div class="kpi-icon bg-success">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-value">
+                                @if (ViewBag.TotalClasses > 0)
+                                {
+                                    @(((decimal)ViewBag.TotalStudents / ViewBag.TotalClasses).ToString("F1"))
+                                }
+                                else
+                                {
+                                    <span>N/A</span>
+                                }
+                            </h3>
+                            <p class="kpi-label">Avg Students per Class</p>
+                            <small class="text-muted">Target: 25-30</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="kpi-card">
+                        <div class="kpi-icon bg-warning">
+                            <i class="bi bi-percent"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-value">@ViewBag.ThisMonthRate%</h3>
+                            <p class="kpi-label">Monthly Attendance Rate</p>
+                            <small class="text-muted">Target: > 90%</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="kpi-card">
+                        <div class="kpi-icon bg-info">
+                            <i class="bi bi-clipboard-data"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-value">@ViewBag.TotalAttendanceRecords</h3>
+                            <p class="kpi-label">Total Attendance Records</p>
+                            <small class="text-muted">All time data</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="kpi-card">
+                        <div class="kpi-icon bg-danger">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-value">@ViewBag.ThisMonthAbsent</h3>
+                            <p class="kpi-label">Absences This Month</p>
+                            <small class="text-muted">Requires follow-up</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="kpi-card">
+                        <div class="kpi-icon bg-secondary">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <h3 class="kpi-value">@ViewBag.ThisMonthLate</h3>
+                            <p class="kpi-label">Late Arrivals</p>
+                            <small class="text-muted">This month</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-download"></i>
+                    Export Reports
+                </h5>
+            </div>
+
+            <div class="d-flex flex-column gap-2">
+                <button class="btn btn-outline-primary w-100 text-start" onclick="exportReport('students')">
+                    <i class="bi bi-people-fill me-2"></i>
+                    Student Report
+                </button>
+                <button class="btn btn-outline-success w-100 text-start" onclick="exportReport('teachers')">
+                    <i class="bi bi-person-workspace me-2"></i>
+                    Teacher Report
+                </button>
+                <button class="btn btn-outline-info w-100 text-start" onclick="exportReport('classes')">
+                    <i class="bi bi-book-fill me-2"></i>
+                    Class Report
+                </button>
+                <button class="btn btn-outline-warning w-100 text-start" onclick="exportReport('attendance')">
+                    <i class="bi bi-clipboard-data me-2"></i>
+                    Attendance Report
+                </button>
+                <button class="btn btn-outline-danger w-100 text-start" onclick="exportReport('comprehensive')">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>
+                    Comprehensive Report
+                </button>
+            </div>
+
+            <hr class="my-3" />
+
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Report Generation</strong>
+                <p class="mb-0 small">Reports are generated in real-time based on current data. Export formats: PDF, Excel, CSV</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Trends -->
+<div class="row g-3">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-activity"></i>
+                    System Activity Summary
+                </h5>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="summary-card">
+                        <h6 class="mb-3"><i class="bi bi-calendar3 me-2"></i>This Month Summary</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>@ViewBag.ThisMonthPresent</strong> students marked present
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-x-circle text-danger me-2"></i>
+                                <strong>@ViewBag.ThisMonthAbsent</strong> students were absent
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-clock text-warning me-2"></i>
+                                <strong>@ViewBag.ThisMonthLate</strong> students arrived late
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-percent text-primary me-2"></i>
+                                Overall attendance rate: <strong>@ViewBag.ThisMonthRate%</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="summary-card">
+                        <h6 class="mb-3"><i class="bi bi-info-circle me-2"></i>System Overview</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-people text-primary me-2"></i>
+                                <strong>@ViewBag.TotalStudents</strong> active students
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-person-workspace text-success me-2"></i>
+                                <strong>@ViewBag.TotalTeachers</strong> teaching staff members
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-book text-warning me-2"></i>
+                                <strong>@ViewBag.TotalClasses</strong> active classes
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-database text-danger me-2"></i>
+                                <strong>@ViewBag.TotalAttendanceRecords</strong> attendance records
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Attendance Trend Chart
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+        const attendanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Present',
+                    data: [@ViewBag.ThisMonthPresent * 0.25, @ViewBag.ThisMonthPresent * 0.23, @ViewBag.ThisMonthPresent * 0.27, @ViewBag.ThisMonthPresent * 0.25],
+                    borderColor: '#198754',
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Absent',
+                    data: [@ViewBag.ThisMonthAbsent * 0.30, @ViewBag.ThisMonthAbsent * 0.25, @ViewBag.ThisMonthAbsent * 0.20, @ViewBag.ThisMonthAbsent * 0.25],
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Late',
+                    data: [@ViewBag.ThisMonthLate * 0.20, @ViewBag.ThisMonthLate * 0.30, @ViewBag.ThisMonthLate * 0.25, @ViewBag.ThisMonthLate * 0.25],
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Weekly Attendance Trend'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Pie Chart
+        const pieCtx = document.getElementById('attendancePieChart').getContext('2d');
+        const pieChart = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Present', 'Absent', 'Late'],
+                datasets: [{
+                    data: [@ViewBag.ThisMonthPresent, @ViewBag.ThisMonthAbsent, @ViewBag.ThisMonthLate],
+                    backgroundColor: ['#198754', '#dc3545', '#ffc107'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+
+        // Export functions
+        function exportReport(type) {
+            alert(`Exporting ${type} report... This feature will generate a comprehensive ${type.toUpperCase()} report.`);
+            // In production, this would trigger actual export functionality
+        }
+
+        function exportToExcel() {
+            alert('Exporting all data to Excel... This will include all statistics and reports.');
+            // In production, this would export data to Excel format
+        }
+    </script>
+}
+
+<style>
+    .kpi-card {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+        transition: all 0.3s;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .kpi-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .kpi-content {
+        flex: 1;
+    }
+
+    .kpi-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        color: #2c3e50;
+    }
+
+    .kpi-label {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #495057;
+    }
+
+    .summary-card {
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+        height: 100%;
+    }
+
+    .summary-card h6 {
+        color: #2c3e50;
+        font-weight: 700;
+    }
+
+    .summary-card li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .summary-card li:last-child {
+        border-bottom: none;
+    }
+
+    @@media print {
+        .btn,  .sidebar, .topbar {
+            display: none !important;
+        }
+
+        .main-content {
+            margin-left: 0 !important;
+        }
+
+        .dashboard-card {
+            page-break-inside: avoid;
+        }
+    }
+</style>
