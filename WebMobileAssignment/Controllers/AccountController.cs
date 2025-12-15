@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebMobileAssignment.Models;
+using WebMobileAssignment.Services;
 
 namespace WebMobileAssignment.Controllers
 {
@@ -8,16 +9,21 @@ namespace WebMobileAssignment.Controllers
     {
         private readonly DB _context;
         private readonly Helper _helper;
+        private readonly ReCaptchaService _reCaptchaService;
+        private readonly IConfiguration _configuration;
 
-        public AccountController(DB context, Helper helper)
+        public AccountController(DB context, Helper helper, ReCaptchaService reCaptchaService, IConfiguration configuration)
         {
             _context = context;
             _helper = helper;
+            _reCaptchaService = reCaptchaService;
+            _configuration = configuration;
         }
 
         // GET: /Account/Login
         public IActionResult Login()
         {
+            ViewBag.ReCaptchaSiteKey = _configuration["ReCaptcha:SiteKey"];
             return View();
         }
 
@@ -87,14 +93,51 @@ namespace WebMobileAssignment.Controllers
 
         // POST: /Account/Login
         [HttpPost]
-        public async Task<IActionResult> Login(string email, string password)
+        public async Task<IActionResult> Login(string email, string password, string? recaptchaToken, bool rememberMe = false)
         {
-            // Validate input
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-            {
-                ViewBag.ErrorMessage = "Please enter both email and password.";
-                return View();
-            }
+            Console.WriteLine($"\n=== LOGIN ATTEMPT STARTED ===");
+            Console.WriteLine($"Email: {email}");
+            Console.WriteLine($"Token received: {(string.IsNullOrEmpty(recaptchaToken) ? "NO" : "YES - Length: " + recaptchaToken.Length)}");
+            
+            ViewBag.ReCaptchaSiteKey = _configuration["ReCaptcha:SiteKey"];
+
+            // Verify reCAPTCHA v2 only if it's configured
+            var siteKey = _configuration["ReCaptcha:SiteKey"];
+            Console.WriteLine($"Site Key configured: {!string.IsNullOrEmpty(siteKey)}");
+
+     if (!string.IsNullOrEmpty(siteKey) && siteKey != "YOUR_SITE_KEY_HERE" && !string.IsNullOrEmpty(recaptchaToken))
+     {
+           Console.WriteLine($"?? Verifying reCAPTCHA v2 token...");
+              var isRecaptchaValid = await _reCaptchaService.VerifyTokenAsync(recaptchaToken);
+
+         if (!isRecaptchaValid)
+        {
+    Console.WriteLine($"? reCAPTCHA v2 verification FAILED for: {email}");
+          ViewBag.ErrorMessage = "Security verification failed. Please try again.";
+         return View();
+      }
+
+    // Log successful reCAPTCHA verification
+  Console.WriteLine($"? reCAPTCHA v2 verification PASSED for email: {email}");
+   }
+            else if (string.IsNullOrEmpty(recaptchaToken))
+     {
+     // Log when reCAPTCHA token is missing
+      Console.WriteLine($"?? Warning: reCAPTCHA token is MISSING for login attempt: {email}");
+          }
+else
+      {
+  Console.WriteLine($"?? reCAPTCHA skipped (not configured or invalid site key)");
+   }
+
+ Console.WriteLine($"=== LOGIN ATTEMPT CONTINUING ===\n");
+
+      // Validate input
+   if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+   {
+        ViewBag.ErrorMessage = "Please enter both email and password.";
+          return View();
+  }
 
             try
             {
@@ -142,19 +185,19 @@ namespace WebMobileAssignment.Controllers
                 switch (userType)
                 {
                     case "admin":
-                        _helper.SignIn(user.Email, "Admin", false);
+                        _helper.SignIn(user.Email, "Admin", rememberMe);
                         return RedirectToAction("Dashboard", "Admin");
 
                     case "teacher":
-                        _helper.SignIn(user.Email, "Teacher", false);
+                        _helper.SignIn(user.Email, "Teacher", rememberMe);
                         return RedirectToAction("TeachDashboard", "Teacher");
 
                     case "student":
-                        _helper.SignIn(user.Email, "Student", false);
+                        _helper.SignIn(user.Email, "Student", rememberMe);
                         return RedirectToAction("StudDashboard", "Student");
 
                     case "parent":
-                        _helper.SignIn(user.Email, "Parent", false);
+                        _helper.SignIn(user.Email, "Parent", rememberMe);
                         return RedirectToAction("Dashboard", "Parent");
 
                     default:

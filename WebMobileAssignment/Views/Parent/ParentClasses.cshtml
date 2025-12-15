@@ -25,15 +25,15 @@
    {
 <div class="row mb-5">
    <div class="col-12">
-   <h4 class="mb-3">
-      <i class="bi bi-person-circle"></i> @student.User.FullName (ID: @student.StudentId)
-        </h4>
+ <h4 class="mb-3">
+      <i class="bi bi-person-circle"></i> @student.User.FullName
+    </h4>
        </div>
 
          @foreach (var enrollment in enrollments)
      {
    var classItem = enrollment.Class;
-            var teacher = classItem.Teacher;
+       var teacher = classItem.Teacher;
          var subject = classItem.Subject;
          
 // Calculate attendance statistics for this class
@@ -43,7 +43,7 @@ var presentCount = classAttendances.Count(a => a.Status == "Present");
      var absentCount = classAttendances.Count(a => a.Status == "Absent");
    var lateCount = classAttendances.Count(a => a.Status == "Late");
          var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 0) : 0;
-          
+      
 // Determine class status badge
         var statusBadge = attendanceRate >= 80 ? "success" : (attendanceRate >= 70 ? "warning" : "danger");
    var statusText = attendanceRate >= 80 ? "Good Standing" : (attendanceRate >= 70 ? "Needs Improvement" : "At Risk");
@@ -58,68 +58,44 @@ var presentCount = classAttendances.Count(a => a.Status == "Present");
           };
           var gradientIndex = Math.Abs((classItem.ClassId ?? "").GetHashCode()) % gradients.Length;
   var gradient = gradients[gradientIndex];
-            
+   
     <div class="col-lg-4 col-md-6 mb-4">
-             <div class="dashboard-card">
+       <div class="dashboard-card">
     <div class="class-header" style="background: @gradient;">
          <h5 class="mb-0 text-white">@classItem.ClassName</h5>
 </div>
      <div class="card-body">
-             <div class="class-meta mb-3">
-     <span class="badge bg-light text-dark">@(subject?.SubjectName ?? "N/A")</span>
-          <span class="badge bg-@statusBadge">@statusText</span>
-        </div>
-                 <div class="class-details">
+      <div class="class-details">
    <div class="detail-row">
           <span class="label">Instructor:</span>
-              <span class="value">@(teacher?.User?.FullName ?? "Not Assigned")</span>
+  <span class="value">@(teacher?.User?.FullName ?? "Not Assigned")</span>
  </div>
-        <div class="detail-row">
-  <span class="label">Schedule:</span>
-             <span class="value">
-    @if (!string.IsNullOrEmpty(classItem.Day) && classItem.StartTime.HasValue)
-        {
-      @($"{classItem.Day} - {classItem.StartTime.Value:hh\\:mm}")
-               }
-   else
-      {
-@("TBA")
-      }
-             </span>
-    </div>
-         <div class="detail-row">
-                 <span class="label">Room:</span>
-       <span class="value">@(classItem.RoomNumber ?? "TBA")</span>
-            </div>
-               <div class="detail-row">
-        <span class="label">Capacity:</span>
-                 <span class="value">@classItem.CurrentCapacity / @classItem.MaxCapacity</span>
-  </div>
-   </div>
-   <div class="performance-section mt-3 pt-3 border-top">
-     <h6 class="mb-2">Performance</h6>
-      <div class="perf-row">
-         <span>Attendance:</span>
-    <strong class="text-@(attendanceRate >= 80 ? "success" : attendanceRate >= 70 ? "warning" : "danger")">
+   <div class="detail-row">
+          <span class="label">Subject:</span>
+  <span class="value">@(subject?.SubjectName ?? "N/A")</span>
+ </div>
+  <div class="detail-row">
+          <span class="label">Attendance Rate:</span>
+  <span class="value text-@(attendanceRate >= 80 ? "success" : attendanceRate >= 70 ? "warning" : "danger")">
       @attendanceRate%
-        </strong>
-      </div>
-       <div class="perf-row">
-      <span>Total Classes:</span>
-       <strong>@totalAttendance</strong>
-     </div>
-   <div class="perf-row">
-  <span>Present:</span>
-       <strong class="text-success">@presentCount</strong>
-      </div>
-        <div class="perf-row">
-    <span>Absent:</span>
-              <strong class="text-danger">@absentCount</strong>
-     </div>
- <div class="perf-row">
-       <span>Late:</span>
-          <strong class="text-warning">@lateCount</strong>
-           </div>
+    </span>
+ </div>
+  <div class="detail-row">
+          <span class="label">Total Classes:</span>
+  <span class="value">@totalAttendance</span>
+ </div>
+   <div class="detail-row">
+  <span class="label">Present:</span>
+  <span class="value text-success">@presentCount</span>
+ </div>
+  <div class="detail-row">
+  <span class="label">Absent:</span>
+  <span class="value text-danger">@absentCount</span>
+ </div>
+ <div class="detail-row">
+  <span class="label">Late:</span>
+  <span class="value text-warning">@lateCount</span>
+ </div>
        </div>
     <a href="@Url.Action("ParentClassDetail", "Parent", new { classId = classItem.ClassId, studentId = student.StudentId })" 
           class="btn btn-@statusBadge btn-sm mt-3 w-100">
@@ -135,10 +111,10 @@ var presentCount = classAttendances.Count(a => a.Status == "Present");
  {
     <div class="row mb-5">
          <div class="col-12">
-         <h4 class="mb-3">
-        <i class="bi bi-person-circle"></i> @student.User.FullName (ID: @student.StudentId)
-        </h4>
-    <div class="alert alert-info">
+  <h4 class="mb-3">
+     <i class="bi bi-person-circle"></i> @student.User.FullName
+  </h4>
+  <div class="alert alert-info">
     <i class="bi bi-info-circle me-2"></i>No classes enrolled yet.
   </div>
 </div>
@@ -165,52 +141,58 @@ var presentCount = classAttendances.Count(a => a.Status == "Present");
   padding: 15px;
     }
 
-    .class-meta {
-        display: flex;
-        gap: 5px;
-  flex-wrap: wrap;
-    }
-
     .class-details {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+    display: flex;
+   flex-direction: column;
+     gap: 8px;
     }
 
   .detail-row {
-        display: flex;
+     display: flex;
         justify-content: space-between;
-        font-size: 0.9rem;
+     font-size: 0.9rem;
         padding: 5px 0;
  }
 
-    .detail-row .label {
+  .detail-row .label {
       font-weight: 600;
-        color: #666;
+      color: #666;
     }
 
     .detail-row .value {
-        text-align: right;
+ text-align: right;
     }
 
 .performance-section h6 {
         font-weight: 700;
-        color: #333;
-     font-size: 0.95rem;
+      color: #333;
+  font-size: 0.95rem;
+    }
+    
+    .class-meta-inline {
+        display: flex;
+        gap: 8px;
+   align-items: center;
+    }
+    
+.class-meta-inline .badge {
+      font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+    font-weight: 600;
     }
 
     .perf-row {
-        display: flex;
+   display: flex;
  justify-content: space-between;
-        font-size: 0.9rem;
+   font-size: 0.9rem;
         padding: 5px 0;
-    }
+  }
 
     .perf-row span:first-child {
         color: #666;
     }
 
     .perf-row strong {
-        font-weight: 700;
+   font-weight: 700;
     }
 </style>
