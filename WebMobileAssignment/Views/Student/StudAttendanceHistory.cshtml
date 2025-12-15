@@ -1,6 +1,16 @@
+@model IEnumerable<WebMobileAssignment.Models.Attendance>
+
 @{
     ViewBag.Title = "Student Attendance History";
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
+
+    // Prepare distinct classes for the Class filter
+    var classNames = Model?
+        .Select(a => a.Class?.ClassName ?? string.Empty)
+        .Where(n => !string.IsNullOrEmpty(n))
+        .Distinct()
+        .OrderBy(n => n)
+        .ToList() ?? new List<string>();
 }
 
 <div class="dashboard-card mb-4">
@@ -35,13 +45,16 @@
             <label class="form-label">Class</label>
             <select id="filterClass" class="form-select">
                 <option value="">All Classes</option>
-                <option>Form 5 Science</option>
+                @foreach (var cn in classNames)
+                {
+                    <option value="@cn">@cn</option>
+                }
             </select>
         </div>
 
         <div class="col-md-3">
             <label class="form-label">Month</label>
-            <input id="filterMonth" type="month" class="form-control" value="2024-01" />
+            <input id="filterMonth" type="month" class="form-control" value="@DateTime.Now.ToString("yyyy-MM")" />
         </div>
 
         <div class="col-md-3">
@@ -51,11 +64,12 @@
                 <option>Present</option>
                 <option>Late</option>
                 <option>Absent</option>
+                <option>Leave</option>
             </select>
         </div>
 
         <div class="col-md-3 d-flex align-items-end">
-            <button class="btn btn-primary w-100">
+            <button id="applyFiltersBtn" class="btn btn-primary w-100">
                 <i class="bi bi-search"></i> Search
             </button>
         </div>
@@ -76,37 +90,50 @@
                 </tr>
             </thead>
             <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var a in Model.OrderByDescending(x => x.Date))
+                    {
+                        var dateStr = a.Date.ToString("yyyy-MM-dd");
+                        var dayStr = a.Date.DayOfWeek.ToString();
+                        var className = a.Class?.ClassName ?? "-";
+                        var subjectName = a.Class?.Subject?.SubjectName ?? "-";
+                        var timeIn = a.TakenOn != default ? a.TakenOn.ToString("hh:mm tt") : "-";
+                        string timeOut = "-";
+                        if (a.Class?.EndTime != null)
+                        {
+                            try
+                            {
+                                timeOut = DateTime.Today.Add(a.Class.EndTime.Value).ToString("hh:mm tt");
+                            }
+                            catch { timeOut = "-"; }
+                        }
 
-                <tr>
-                    <td><strong>2024-01-15</strong></td>
-                    <td>Monday</td>
-                    <td>Form 5 Science</td>
-                    <td>Mathematics</td>
-                    <td>2:00 PM</td>
-                    <td>4:00 PM</td>
-                    <td><span class="badge bg-success">Present</span></td>
+                        string badgeClass = a.Status switch
+                        {
+                            "Present" => "bg-success",
+                            "Late" => "bg-warning text-dark",
+                            "Absent" => "bg-danger",
+                            "Leave" => "bg-secondary",
+                            _ => "bg-light text-dark"
+                        };
+                <tr data-date="@a.Date.ToString("yyyy-MM")" data-class="@className" data-status="@a.Status">
+                    <td><strong>@dateStr</strong></td>
+                    <td>@dayStr</td>
+                    <td>@className</td>
+                    <td>@subjectName</td>
+                    <td>@timeIn</td>
+                    <td>@timeOut</td>
+                    <td><span class="badge @badgeClass">@a.Status</span></td>
                 </tr>
-
-                <tr>
-                    <td><strong>2024-01-14</strong></td>
-                    <td>Sunday</td>
-                    <td>Form 5 Science</td>
-                    <td>Science</td>
-                    <td>2:15 PM</td>
-                    <td>4:15 PM</td>
-                    <td><span class="badge bg-warning">Late</span></td>
-                </tr>
-
-                <tr>
-                    <td><strong>2024-01-13</strong></td>
-                    <td>Saturday</td>
-                    <td>Form 5 Science</td>
-                    <td>English</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td><span class="badge bg-danger">Absent</span></td>
-                </tr>
-
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center">No attendance records found.</td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
@@ -122,6 +149,59 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <script>
+        // -------- CLIENT FILTERING --------
+        function applyFilters() {
+            const search = document.getElementById("tableSearch").value.trim().toLowerCase();
+            const classFilter = document.getElementById("filterClass").value;
+            const monthFilter = document.getElementById("filterMonth").value; // yyyy-MM
+            const statusFilter = document.getElementById("filterStatus").value;
+
+            const rows = document.querySelectorAll("#attendanceTable tbody tr");
+            rows.forEach(row => {
+                // If this is the "no records" row keep it for later
+                if (row.querySelectorAll("td").length === 1) {
+                    row.style.display = "none";
+                    return;
+                }
+
+                const rowClass = (row.dataset.class || "").toLowerCase();
+                const rowStatus = (row.dataset.status || "");
+                const rowDate = row.dataset.date || ""; // yyyy-MM
+                const rowText = row.innerText.toLowerCase();
+
+                let visible = true;
+
+                if (search && !rowText.includes(search)) visible = false;
+                if (classFilter && rowClass !== classFilter.toLowerCase()) visible = false;
+                if (monthFilter && rowDate !== monthFilter) visible = false;
+                if (statusFilter && rowStatus !== statusFilter) visible = false;
+
+                row.style.display = visible ? "" : "none";
+            });
+
+            // show "no records" row if none visible
+            const anyVisible = Array.from(document.querySelectorAll("#attendanceTable tbody tr"))
+                .some(r => r.style.display !== "none" && r.querySelectorAll("td").length > 1);
+
+            let noRow = document.querySelector("#attendanceTable tbody tr.no-records");
+            if (!noRow) {
+                noRow = document.createElement("tr");
+                noRow.classList.add("no-records");
+                noRow.innerHTML = '<td colspan="7" class="text-center">No attendance records found.</td>';
+                document.querySelector("#attendanceTable tbody").appendChild(noRow);
+            }
+            noRow.style.display = anyVisible ? "none" : "";
+        }
+
+        document.getElementById("applyFiltersBtn").addEventListener("click", applyFilters);
+        document.getElementById("tableSearch").addEventListener("input", applyFilters);
+        document.getElementById("filterClass").addEventListener("change", applyFilters);
+        document.getElementById("filterMonth").addEventListener("change", applyFilters);
+        document.getElementById("filterStatus").addEventListener("change", applyFilters);
+
+        // initial filter pass
+        applyFilters();
+
         // -------- EXCEL EXPORT --------
         document.getElementById("exportExcelBtn").addEventListener("click", function () {
             const table = document.getElementById("attendanceTable");

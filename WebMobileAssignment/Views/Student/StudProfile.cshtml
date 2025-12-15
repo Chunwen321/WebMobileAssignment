@@ -1,113 +1,157 @@
-﻿@{
+﻿@model WebMobileAssignment.Models.Student
+
+@{
+    // Quick demo fallback when Model is null (for preview in dev)
+    var demoStudent = new WebMobileAssignment.Models.Student
+    {
+        StudentId = "S0001",
+        Gender = "Female",
+        EnrollmentDate = DateTime.Now.AddYears(-1),
+        User = new WebMobileAssignment.Models.User
+        {
+            FullName = "Demo Student",
+            IsActive = true,
+            DateOfBirth = new DateTime(2006,5,12),
+            PhoneNumber = "0123456789",
+            Email = "demo@student.local"
+        },
+        Class = new WebMobileAssignment.Models.Class
+        {
+            ClassName = "Form 3A",
+            RoomNumber = "A101",
+            Day = "Mon",
+            StartTime = TimeSpan.FromHours(9),
+            EndTime = TimeSpan.FromHours(10),
+            Subject = new WebMobileAssignment.Models.Subject { SubjectName = "Mathematics" },
+            Teacher = new WebMobileAssignment.Models.Teacher { User = new WebMobileAssignment.Models.User { FullName = "Mr. Demo" } }
+        },
+        Attendances = new List<WebMobileAssignment.Models.Attendance>
+        {
+            new WebMobileAssignment.Models.Attendance { Date = DateTime.Today.AddDays(-1), TakenOn = DateTime.Now.AddHours(-2), Status = "Present", Class = new WebMobileAssignment.Models.Class { ClassName = "Form 3A" } }
+        }
+    };
+
+    // Use Model when available, otherwise use demo data
+    var student = Model ?? demoStudent;
+
+    // view helpers
     ViewBag.Title = "Student Profile";
+    ViewBag.ActiveMenu = "StudProfile";
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
+
+    var user = student?.User;
+    var enroll = student?.Enrollments?.FirstOrDefault();
+    var cls = enroll?.Class ?? student?.Class;
+    var attendances = student?.Attendances ?? Enumerable.Empty<WebMobileAssignment.Models.Attendance>();
+    var presentCount = attendances.Count(a => string.Equals(a.Status, "Present", StringComparison.OrdinalIgnoreCase));
+    var absentCount = attendances.Count(a => string.Equals(a.Status, "Absent", StringComparison.OrdinalIgnoreCase));
+    var leaveCount = attendances.Count(a => string.Equals(a.Status, "Leave", StringComparison.OrdinalIgnoreCase) || string.Equals(a.Status, "Medical", StringComparison.OrdinalIgnoreCase));
+    var totalAttendance = presentCount + absentCount + leaveCount;
+    var attendanceRate = totalAttendance > 0 ? Math.Round((presentCount / (double)totalAttendance) * 100) : 0;
+    var recent = attendances.OrderByDescending(a => a.Date).Take(5).ToList();
+
+    // Build a safe subject entry list from enrollments (SubjectName, ClassName, TeacherName)
+    var subjectEntries = student?.Enrollments?
+        .Where(e => e.Class?.Subject != null)
+        .Select(e => (
+            SubjectName: e.Class.Subject?.SubjectName ?? "",
+            ClassName: e.Class.ClassName ?? "",
+            TeacherName: e.Class.Teacher?.User?.FullName ?? ""
+        ))
+        .Distinct()
+        .ToList() ?? new List<(string SubjectName, string ClassName, string TeacherName)>();
 }
 
 <div class="row g-3">
-    <!-- Profile Card -->
+    <!-- Left column: Profile Card (original size) -->
     <div class="col-lg-4">
         <div class="dashboard-card">
-            <div class="text-center mb-4">
-                <div class="user-avatar mx-auto mb-3" style="width: 120px; height: 120px; font-size: 3rem; background: #198754;">
+            <div class="text-center mb-3">
+                <div class="user-avatar mx-auto mb-3"
+                     style="width: 120px; height: 120px; font-size: 3rem; background: #198754;">
                     <i class="bi bi-person-fill"></i>
                 </div>
-                <h4 class="mb-1">John Doe</h4>
-                <p class="text-muted mb-2">Student ID: STU001</p>
-                <span class="badge bg-success">Active</span>
+
+                <h4 class="mb-1">@((user?.FullName) ?? "N/A")</h4>
+                <p class="text-muted mb-1">Student ID: <strong>@(student?.StudentId ?? "N/A")</strong></p>
+                <span class="badge bg-success">@((user != null && user.IsActive == true) ? "Active" : "Inactive")</span>
             </div>
 
             <div class="list-group list-group-flush">
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-calendar3 me-2"></i>Date of Birth</span>
-                    <strong>May 15, 2010</strong>
+                    <strong>@(user?.DateOfBirth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—")</strong>
                 </div>
+
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-gender-ambiguous me-2"></i>Gender</span>
-                    <strong>Male</strong>
+                    <strong>@(student?.Gender ?? "—")</strong>
                 </div>
+
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-phone me-2"></i>Phone</span>
-                    <strong>012-345-6789</strong>
+                    <strong>@(user?.PhoneNumber ?? "—")</strong>
                 </div>
+
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email</span>
-                    <strong>john@email.com</strong>
+                    <strong>@(user?.Email ?? "—")</strong>
                 </div>
+
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                    <span class="text-muted"><i class="bi bi-calendar-check me-2"></i>Join Date</span>
-                    <strong>Jan 1, 2024</strong>
+                    <span class="text-muted"><i class="bi bi-calendar-check me-2"></i>Enrolled</span>
+                    <strong>@(student?.EnrollmentDate?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—")</strong>
                 </div>
             </div>
 
-            <button class="btn btn-outline-primary w-100 mt-3">
-                <i class="bi bi-pencil-fill me-2"></i>Edit Profile
-            </button>
+            <div class="d-grid gap-2 mt-3">
+                <a asp-controller="Student" asp-action="StudSettings" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil-fill me-2"></i>Edit Profile
+                </a>
+                <a asp-controller="Student" asp-action="StudApplyMedicalLeave" class="btn btn-outline-primary">
+                    <i class="bi bi-journal-medical me-2"></i>Apply Medical Leave
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Details Section -->
+    <!-- Right column: Subjects the student is taking -->
     <div class="col-lg-8">
-        <!-- Class Information -->
-        <div class="dashboard-card mb-3">
-            <div class="card-header-custom">
-                <h5 class="card-title">
-                    <i class="bi bi-book-fill"></i>
-                    Class Information
-                </h5>
+        <div class="dashboard-card">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <h5 class="card-title"><i class="bi bi-book"></i> Subjects</h5>
+                <small class="text-muted">Enrolled subjects</small>
             </div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="card-icon blue">
-                                <i class="bi bi-mortarboard-fill"></i>
-                            </div>
-                            <div>
-                                <small class="text-muted d-block">Current Class</small>
-                                <strong>Form 5 Science</strong>
-                            </div>
-                        </div>
+
+            <div class="p-3">
+                @if (subjectEntries.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Class</th>
+                                    <th>Teacher</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var s in subjectEntries)
+                                {
+                                    <tr>
+                                        <td>@(string.IsNullOrEmpty(s.SubjectName) ? "—" : s.SubjectName)</td>
+                                        <td>@(string.IsNullOrEmpty(s.ClassName) ? "—" : s.ClassName)</td>
+                                        <td>@(string.IsNullOrEmpty(s.TeacherName) ? "—" : s.TeacherName)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="card-icon yellow">
-                                <i class="bi bi-calendar-week-fill"></i>
-                            </div>
-                            <div>
-                                <small class="text-muted d-block">Class Schedule</small>
-                                <strong>Mon, Wed, Fri</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="card-icon green">
-                                <i class="bi bi-clock-fill"></i>
-                            </div>
-                            <div>
-                                <small class="text-muted d-block">Class Time</small>
-                                <strong>2:00 PM - 4:00 PM</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="card-icon red">
-                                <i class="bi bi-person-video3"></i>
-                            </div>
-                            <div>
-                                <small class="text-muted d-block">Class Teacher</small>
-                                <strong>Mrs. Sarah Johnson</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted">No subjects found</div>
+                }
             </div>
         </div>
     </div>
