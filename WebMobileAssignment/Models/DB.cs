@@ -107,6 +107,9 @@ public class User
     [MaxLength(10)]
     public string? Gender { get; set; }
 
+    [MaxLength(1000)]
+    public string? ProfilePicture { get; set; } = "/images/default-avatar.png";
+
     [Required]
     [MaxLength(20)]
     public string UserType { get; set; } = string.Empty; // Admin / Teacher / Student / Parent

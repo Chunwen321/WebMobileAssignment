@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebMobileAssignment.Models;
+using WebMobileAssignment.Services;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,11 +12,13 @@ namespace WebMobileAssignment.Controllers
     {
         private readonly DB _context;
         private readonly Helper _helper;
+        private readonly S3Service _s3Service;
 
-        public AdminController(DB context, Helper helper)
+        public AdminController(DB context, Helper helper, S3Service s3Service)
         {
             _context = context;
           _helper = helper;
+          _s3Service = s3Service;
         }
 
         // ==================== DASHBOARD ====================
@@ -117,7 +120,7 @@ namespace WebMobileAssignment.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> StudentCreate(string fullName, string email, string password,
+        public async Task<IActionResult> StudentCreate(string fullName, string email,
             string parentId, List<string>? classIds, DateTime? dateOfBirth, string gender,
             string? phoneNumber, string status, bool isActive, DateTime? enrollmentDate,
             // New parent fields
@@ -155,12 +158,6 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrWhiteSpace(email))
                 ModelState.AddModelError("email", "Email is required");
 
-            if (string.IsNullOrWhiteSpace(password))
-                ModelState.AddModelError("password", "Password is required");
-
-            if (password != null && password.Length < 8)
-                ModelState.AddModelError("password", "Password must be at least 8 characters long");
-
             if (string.IsNullOrWhiteSpace(gender))
                 ModelState.AddModelError("gender", "Gender is required");
 
@@ -177,8 +174,8 @@ namespace WebMobileAssignment.Controllers
             {
                 if (string.IsNullOrWhiteSpace(newParentFullName))
                     ModelState.AddModelError("newParentFullName", "Parent full name is required when creating a new parent");
-                if (string.IsNullOrWhiteSpace(newParentPassword))
-                    ModelState.AddModelError("newParentPassword", "Parent password is required when creating a new parent");
+                // Remove password validation for new parent
+                ModelState.Remove("newParentPassword");
             }
             else
             {
@@ -216,6 +213,9 @@ namespace WebMobileAssignment.Controllers
             {
                 try
                 {
+                    // Default password for all new users
+                    const string defaultPassword = "WkCwSbZx123@";
+
                     // If need to create new parent
                     if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
                     {
@@ -229,7 +229,7 @@ namespace WebMobileAssignment.Controllers
                             UserId = parentUserId,
                             FullName = newParentFullName,
                             Email = newParentEmail,
-                            PasswordHash = _helper.HashPassword(newParentPassword),
+                            PasswordHash = _helper.HashPassword(defaultPassword),
                             UserType = "Parent",
                             CreatedDate = DateTime.Now,
                             Status = "active",
@@ -255,13 +255,13 @@ namespace WebMobileAssignment.Controllers
                     var userId = IdGenerator.GenerateUserId(_context);
                     var studentId = IdGenerator.GenerateStudentId(_context);
 
-                    // Create User with all fields
+                    // Create User with all fields - using default password
                     var user = new User
                     {
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-                        PasswordHash = _helper.HashPassword(password),
+                        PasswordHash = _helper.HashPassword(defaultPassword),
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -314,7 +314,7 @@ namespace WebMobileAssignment.Controllers
                         await _context.SaveChangesAsync();
                     }
 
-                    TempData["SuccessMessage"] = $"Student '{fullName}' added successfully with {enrolledCount} class enrollment(s)!";
+                    TempData["SuccessMessage"] = $"Student '{fullName}' added successfully with {enrolledCount} class enrollment(s)! Default password: WkCwSbZx123@";
 
                     return RedirectToAction(nameof(StudentIndex));
                 }
@@ -665,7 +665,7 @@ namespace WebMobileAssignment.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TeacherCreate(
-            string fullName, string email, string password,
+            string fullName, string email,
             string? phoneNumber, string? subjectTeach, DateTime? hireDate,
             string? title, string? education, string? skill, string? bio,
             DateTime? dateOfBirth, string? gender, string? status)
@@ -676,12 +676,6 @@ namespace WebMobileAssignment.Controllers
 
             if (string.IsNullOrWhiteSpace(email))
                 ModelState.AddModelError("email", "Email is required");
-
-            if (string.IsNullOrWhiteSpace(password))
-                ModelState.AddModelError("password", "Password is required");
-
-            if (password != null && password.Length < 8)
-                ModelState.AddModelError("password", "Password must be at least 8 characters long");
 
             if (!hireDate.HasValue)
                 ModelState.AddModelError("hireDate", "Hire date is required");
@@ -696,17 +690,20 @@ namespace WebMobileAssignment.Controllers
             {
                 try
                 {
+                    // Default password for all new users
+                    const string defaultPassword = "WkCwSbZx123@";
+
                     var teacherCount = await _context.Teachers.CountAsync();
                     var userId = $"TEACH{(teacherCount + 1):D3}";
                     var teacherId = userId;
 
-                    // Create User with all fields including optional ones
+                    // Create User with all fields including optional ones - using default password
                     var user = new User
                     {
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-                        PasswordHash = _helper.HashPassword(password),
+                        PasswordHash = _helper.HashPassword(defaultPassword),
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -733,7 +730,7 @@ namespace WebMobileAssignment.Controllers
                     _context.Teachers.Add(teacher);
 
                     await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = $"Teacher '{fullName}' added successfully!";
+                    TempData["SuccessMessage"] = $"Teacher '{fullName}' added successfully! Default password: WkCwSbZx123@";
                     return RedirectToAction(nameof(TeacherIndex));
                 }
                 catch (Exception ex)
@@ -1015,7 +1012,7 @@ namespace WebMobileAssignment.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ParentCreate(string fullName, string email, string password, 
+        public async Task<IActionResult> ParentCreate(string fullName, string email, 
             string? phoneNumber, string? address, DateTime? dateOfBirth, string? gender)
         {
             // Manual validation for required fields
@@ -1025,16 +1022,12 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrWhiteSpace(email))
                 ModelState.AddModelError("email", "Email is required");
 
-            if (string.IsNullOrWhiteSpace(password))
-                ModelState.AddModelError("password", "Password is required");
-
-            if (password != null && password.Length < 8)
-                ModelState.AddModelError("password", "Password must be at least 8 characters long");
-
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Default password for all new users
+                    const string defaultPassword = "WkCwSbZx123@";
 
                     // Generate proper User ID format
                     var userCount = await _context.Users.CountAsync();
@@ -1049,10 +1042,7 @@ namespace WebMobileAssignment.Controllers
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-
-                        PasswordHash = _helper.HashPassword(password), // TODO: Implement BCrypt.Net.BCrypt.HashPassword(password)
-
-
+                        PasswordHash = _helper.HashPassword(defaultPassword),
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -1073,7 +1063,7 @@ namespace WebMobileAssignment.Controllers
                     _context.Parents.Add(parent);
 
                     await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = $"Parent '{fullName}' added successfully!";
+                    TempData["SuccessMessage"] = $"Parent '{fullName}' added successfully! Default password: WkCwSbZx123@";
                     return RedirectToAction(nameof(ParentIndex));
                 }
                 catch (Exception ex)
@@ -1085,8 +1075,6 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ParentManagement";
 
-        ViewBag.ActiveMenu = "ParentManagement";
-
             ViewBag.Title = "Create Parent";
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
@@ -1096,8 +1084,6 @@ namespace WebMobileAssignment.Controllers
             ViewBag.Gender = gender;
 
             return View();
-
-    return View();
         }
 
         public async Task<IActionResult> ParentEdit(string id)
@@ -1781,9 +1767,7 @@ namespace WebMobileAssignment.Controllers
             return RedirectToAction(nameof(SubjectIndex));
         }
 
-        // ==================== ATTENDANCE MANAGEMENT ====================
-
-        // Take Attendance with PIN Code
+        // ==================== ATTENDANCE MANAGEMENT ====================        // Take Attendance with PIN Code
         public async Task<IActionResult> AttendanceTake()
         {
             ViewBag.ActiveMenu = "AttendanceManagement";
@@ -2406,6 +2390,125 @@ namespace WebMobileAssignment.Controllers
 
             return View();
         }
+
+        // ==================== ATTENDANCE MANAGEMENT ====================
+
+        // ==================== PROFILE PICTURE MANAGEMENT ====================
+        
+        [HttpPost]
+        public async Task<IActionResult> UploadProfilePicture(IFormFile file, string userId)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return Json(new { success = false, message = "No file uploaded" });
+
+                // Find user
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                    return Json(new { success = false, message = "User not found" });
+
+                // Delete old profile picture from S3 (if not default)
+                if (!string.IsNullOrEmpty(user.ProfilePicture) && 
+                    !user.ProfilePicture.StartsWith("/images/"))
+                {
+                    await _s3Service.DeleteFileAsync(user.ProfilePicture);
+                }
+
+                // Upload new picture to S3
+                var s3Url = await _s3Service.UploadFileAsync(file, userId);
+
+                // Update user record
+                user.ProfilePicture = s3Url;
+                await _context.SaveChangesAsync();
+
+                return Json(new 
+                { 
+                    success = true, 
+                    message = "Profile picture uploaded successfully",
+                    url = s3Url
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Upload failed: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProfilePicture(string userId)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                    return Json(new { success = false, message = "User not found" });
+
+                // Delete from S3 (if not default)
+                if (!string.IsNullOrEmpty(user.ProfilePicture) && 
+                    !user.ProfilePicture.StartsWith("/images/"))
+                {
+                    await _s3Service.DeleteFileAsync(user.ProfilePicture);
+                }
+
+                // Reset to default
+                user.ProfilePicture = "/images/default-avatar.png";
+                await _context.SaveChangesAsync();
+
+                return Json(new 
+                { 
+                    success = true, 
+                    message = "Profile picture deleted successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Delete failed: {ex.Message}" });
+            }
+        }
+
+        // Reports & Analytics
+        public async Task<IActionResult> Reports()
+        {
+            ViewBag.ActiveMenu = "Reports";
+            ViewBag.Title = "Reports & Analytics";
+
+            // Get total counts
+            var totalStudents = await _context.Students.CountAsync();
+            var totalTeachers = await _context.Teachers.CountAsync();
+            var totalClasses = await _context.Classes.CountAsync();
+            var totalAttendanceRecords = await _context.Attendances.CountAsync();
+
+            // Get this month's data
+            var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+            var thisMonthAttendances = await _context.Attendances
+                .Where(a => a.Date >= startOfMonth && a.Date <= endOfMonth)
+                .ToListAsync();
+
+            var thisMonthPresent = thisMonthAttendances.Count(a => a.Status == "Present");
+            var thisMonthAbsent = thisMonthAttendances.Count(a => a.Status == "Absent");
+            var thisMonthLate = thisMonthAttendances.Count(a => a.Status == "Late");
+            var thisMonthTotal = thisMonthAttendances.Count;
+            var thisMonthRate = thisMonthTotal > 0 ? Math.Round((decimal)thisMonthPresent / thisMonthTotal * 100, 1) : 0;
+
+            // Set ViewBag data
+            ViewBag.TotalStudents = totalStudents;
+            ViewBag.TotalTeachers = totalTeachers;
+            ViewBag.TotalClasses = totalClasses;
+            ViewBag.TotalAttendanceRecords = totalAttendanceRecords;
+            ViewBag.TheseMonthPresent = thisMonthPresent;
+            ViewBag.ThisMonthAbsent = thisMonthAbsent;
+            ViewBag.ThisMonthLate = thisMonthLate;
+            ViewBag.ThisMonthRate = thisMonthRate;
+
+            return View();
+        }
     }
 
     // Request models for bulk operations
@@ -2413,7 +2516,7 @@ namespace WebMobileAssignment.Controllers
     {
         public string ClassId { get; set; }
         public string PinCode { get; set; }
-     public string Date { get; set; }
+        public string Date { get; set; }
         public List<AttendanceItem> Attendances { get; set; }
     }
 
