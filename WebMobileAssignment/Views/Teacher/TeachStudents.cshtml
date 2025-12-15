@@ -1,3 +1,4 @@
+@using WebMobileAssignment.Models;
 @{
     ViewBag.Title = "Students";
     Layout = "~/Views/Shared/_TeacherLayout.cshtml";
@@ -16,22 +17,12 @@
             <!-- Filters -->
             <div class="row mb-4">
                 <div class="col-md-4">
-                    <label class="form-label">Filter by Class</label>
-                    <select class="form-select">
-                        <option selected>All Classes</option>
-                        <option>Form 5 Science</option>
-                        <option>Form 5 Mathematics</option>
-                        <option>Form 4 English</option>
-                        <option>Form 4 Science</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
                     <label class="form-label">Search by Name</label>
-                    <input type="text" class="form-control" placeholder="Enter student name..." />
+                    <input type="text" class="form-control" placeholder="Enter student name..." id="searchName" />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Search by ID</label>
-                    <input type="text" class="form-control" placeholder="Enter student ID..." />
+                    <input type="text" class="form-control" placeholder="Enter student ID..." id="searchId" />
                 </div>
             </div>
 
@@ -42,112 +33,76 @@
                         <tr>
                             <th>Student ID</th>
                             <th>Name</th>
-                            <th>Class</th>
+                            <th>Classes Enrolled</th>
+                            <th>Parent Name</th>
                             <th>Attendance Rate</th>
                             <th>Status</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>STU001</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="user-avatar me-2" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
-                                    <span>John Doe</span>
-                                </div>
-                            </td>
-                            <td>Form 5 Science</td>
-                            <td><span class="badge bg-success">95%</span></td>
-                            <td><span class="badge bg-info">Active</span></td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>STU002</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="user-avatar me-2" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
-                                    <span>Jane Smith</span>
-                                </div>
-                            </td>
-                            <td>Form 5 Science</td>
-                            <td><span class="badge bg-success">92%</span></td>
-                            <td><span class="badge bg-info">Active</span></td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>STU003</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="user-avatar me-2" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
-                                    <span>Michael Johnson</span>
-                                </div>
-                            </td>
-                            <td>Form 5 Mathematics</td>
-                            <td><span class="badge bg-success">88%</span></td>
-                            <td><span class="badge bg-info">Active</span></td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>STU004</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="user-avatar me-2" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
-                                    <span>Sarah Williams</span>
-                                </div>
-                            </td>
-                            <td>Form 4 English</td>
-                            <td><span class="badge bg-warning">79%</span></td>
-                            <td><span class="badge bg-info">Active</span></td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>STU005</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="user-avatar me-2" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
-                                    <span>David Brown</span>
-                                </div>
-                            </td>
-                            <td>Form 4 Science</td>
-                            <td><span class="badge bg-success">91%</span></td>
-                            <td><span class="badge bg-info">Active</span></td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
-                            </td>
-                        </tr>
+                        @if (ViewBag.Students != null && ((List<Student>)ViewBag.Students).Count > 0)
+                        {
+                            @foreach (var student in (List<Student>)ViewBag.Students)
+                            {
+                                var classCount = student.Enrollments?.Count ?? 0;
+                                var totalAttendance = student.Enrollments?.SelectMany(e => e.Class.Attendances)
+                                    .Where(a => a.StudentId == student.StudentId).ToList() ?? new List<Attendance>();
+                                var attendanceRate = totalAttendance.Count > 0
+                                    ? Math.Round((decimal)(totalAttendance.Count(a => a.Status == "Present") * 100) / totalAttendance.Count(), 2)
+                                    : 0;
+                                var badgeClass = attendanceRate >= 90 ? "bg-success" : attendanceRate >= 80 ? "bg-warning" : "bg-danger";
+                                
+                                <tr>
+                                    <td>@student.StudentId</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="user-avatar me-2" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person-fill"></i>
+                                            </div>
+                                            <span>@student.User?.FullName</span>
+                                        </div>
+                                    </td>
+                                    <td>@classCount</td>
+                                    <td>@(student.Parent?.User?.FullName ?? "N/A")</td>
+                                    <td><span class="badge @badgeClass">@attendanceRate%</span></td>
+                                    <td><span class="badge bg-info">Active</span></td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No students assigned to your classes</td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
-
-            <!-- Pagination -->
-            <nav class="mt-4">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item"><a class="page-link" href="#">Previous</a></li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
-                </ul>
-            </nav>
         </div>
     </div>
 </div>
+
+<script>
+    // Simple client-side filtering
+    document.getElementById('searchName').addEventListener('keyup', filterTable);
+    document.getElementById('searchId').addEventListener('keyup', filterTable);
+
+    function filterTable() {
+        const nameFilter = document.getElementById('searchName').value.toLowerCase();
+        const idFilter = document.getElementById('searchId').value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 0) {
+                const studentId = cells[0].textContent.toLowerCase();
+                const studentName = cells[1].textContent.toLowerCase();
+
+                const nameMatch = studentName.includes(nameFilter);
+                const idMatch = studentId.includes(idFilter);
+
+                row.style.display = (nameMatch && idMatch) ? '' : 'none';
+            }
+        });
+    }
+</script>

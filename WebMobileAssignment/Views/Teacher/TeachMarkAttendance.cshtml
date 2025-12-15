@@ -1,3 +1,4 @@
+@using WebMobileAssignment.Models;
 @{
     ViewBag.Title = "Mark Attendance";
     Layout = "~/Views/Shared/_TeacherLayout.cshtml";
@@ -13,26 +14,53 @@
                 </h3>
             </div>
 
-            <!-- Class Selection -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <label class="form-label">Select Class</label>
-                    <select class="form-select">
-                        <option selected>Choose a class...</option>
-                        <option>Form 5 Science</option>
-                        <option>Form 5 Mathematics</option>
-                        <option>Form 4 English</option>
-                        <option>Form 4 Science</option>
-                    </select>
+            <!-- Class Selection Grid -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">Select a Class</label>
+                <div class="row g-2" id="classGrid">
+                    @if (ViewBag.Classes != null && ((List<Class>)ViewBag.Classes).Count > 0)
+                    {
+                        @foreach (var cls in (List<Class>)ViewBag.Classes)
+                        {
+                            var studentCount = cls.Enrollments?.Count ?? 0;
+                            <div class="col-md-4 col-lg-3">
+                                <button type="button" class="class-selection-btn w-100 p-3 text-start" 
+                                        data-class-id="@cls.ClassId" 
+                                        data-class-name="@cls.ClassName">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">@cls.ClassName</h6>
+                                            <small class="text-muted">@studentCount students</small>
+                                        </div>
+                                        <i class="bi bi-check-lg" style="display: none;"></i>
+                                    </div>
+                                </button>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0">No classes assigned</div>
+                        </div>
+                    }
                 </div>
-                <div class="col-md-6">
+            </div>
+
+            <!-- Date Selection -->
+            <div class="row mb-4">
+                <div class="col-md-4">
                     <label class="form-label">Date</label>
-                    <input type="date" class="form-control" />
+                    <input type="date" class="form-control" id="attendanceDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Selected Class</label>
+                    <input type="text" class="form-control" id="selectedClassName" readonly placeholder="Select a class..." />
                 </div>
             </div>
 
             <!-- Student Attendance List -->
-            <div class="table-responsive">
+            <div class="table-responsive" id="attendanceTableContainer" style="display: none;">
                 <table class="table align-middle">
                     <thead>
                         <tr>
@@ -42,124 +70,315 @@
                             <th>Remarks</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>STU001</td>
-                            <td>John Doe</td>
-                            <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <input type="radio" class="btn-check" name="status1" id="present1" checked />
-                                    <label class="btn btn-outline-success" for="present1">Present</label>
-
-                                    <input type="radio" class="btn-check" name="status1" id="absent1" />
-                                    <label class="btn btn-outline-danger" for="absent1">Absent</label>
-
-                                    <input type="radio" class="btn-check" name="status1" id="late1" />
-                                    <label class="btn btn-outline-warning" for="late1">Late</label>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="text" class="form-control form-control-sm" placeholder="Notes..." />
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>STU002</td>
-                            <td>Jane Smith</td>
-                            <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <input type="radio" class="btn-check" name="status2" id="present2" checked />
-                                    <label class="btn btn-outline-success" for="present2">Present</label>
-
-                                    <input type="radio" class="btn-check" name="status2" id="absent2" />
-                                    <label class="btn btn-outline-danger" for="absent2">Absent</label>
-
-                                    <input type="radio" class="btn-check" name="status2" id="late2" />
-                                    <label class="btn btn-outline-warning" for="late2">Late</label>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="text" class="form-control form-control-sm" placeholder="Notes..." />
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>STU003</td>
-                            <td>Michael Johnson</td>
-                            <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <input type="radio" class="btn-check" name="status3" id="present3" />
-                                    <label class="btn btn-outline-success" for="present3">Present</label>
-
-                                    <input type="radio" class="btn-check" name="status3" id="absent3" checked />
-                                    <label class="btn btn-outline-danger" for="absent3">Absent</label>
-
-                                    <input type="radio" class="btn-check" name="status3" id="late3" />
-                                    <label class="btn btn-outline-warning" for="late3">Late</label>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="text" class="form-control form-control-sm" placeholder="Medical leave..." />
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>STU004</td>
-                            <td>Sarah Williams</td>
-                            <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <input type="radio" class="btn-check" name="status4" id="present4" />
-                                    <label class="btn btn-outline-success" for="present4">Present</label>
-
-                                    <input type="radio" class="btn-check" name="status4" id="absent4" />
-                                    <label class="btn btn-outline-danger" for="absent4">Absent</label>
-
-                                    <input type="radio" class="btn-check" name="status4" id="late4" checked />
-                                    <label class="btn btn-outline-warning" for="late4">Late</label>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="text" class="form-control form-control-sm" placeholder="10 minutes late..." />
-                            </td>
-                        </tr>
+                    <tbody id="studentTableBody">
+                        <!-- Populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
 
+            <!-- No Class Selected Message -->
+            <div id="noClassMessage" class="alert alert-info text-center py-5">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Select a class to begin marking attendance</strong>
+            </div>
+
             <!-- Summary -->
-            <div class="row mt-4">
+            <div class="row mt-4" id="summaryContainer" style="display: none;">
                 <div class="col-md-3">
                     <div class="p-3" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px; text-align: center;">
-                        <h5 class="mb-0" style="color: #198754;">2</h5>
+                        <h5 class="mb-0" style="color: #198754;" id="presentCount">0</h5>
                         <small class="text-muted">Present</small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="p-3" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px; text-align: center;">
-                        <h5 class="mb-0" style="color: #dc3545;">1</h5>
+                        <h5 class="mb-0" style="color: #dc3545;" id="absentCount">0</h5>
                         <small class="text-muted">Absent</small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="p-3" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px; text-align: center;">
-                        <h5 class="mb-0" style="color: #ffc107;">1</h5>
+                        <h5 class="mb-0" style="color: #ffc107;" id="lateCount">0</h5>
                         <small class="text-muted">Late</small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="p-3" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px; text-align: center;">
-                        <h5 class="mb-0" style="color: #0d6efd;">50%</h5>
+                        <h5 class="mb-0" style="color: #0d6efd;" id="attendanceRate">0%</h5>
                         <small class="text-muted">Attendance Rate</small>
                     </div>
                 </div>
             </div>
 
             <!-- Actions -->
-            <div class="mt-4">
-                <button class="btn btn-primary">
+            <div class="mt-4" id="actionsContainer" style="display: none;">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
                     <i class="bi bi-check-circle me-2"></i>Submit Attendance
                 </button>
-                <button class="btn btn-outline-secondary">
+                <button type="button" class="btn btn-outline-secondary" id="resetBtn">
                     <i class="bi bi-arrow-clockwise me-2"></i>Reset
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Styles for Class Selection Buttons -->
+<style>
+    .class-selection-btn {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        background: white;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .class-selection-btn:hover {
+        border-color: #0d6efd;
+        background: #f8f9fa;
+    }
+
+    .class-selection-btn.selected {
+        border-color: #0d6efd;
+        background: #0d6efd;
+        color: white;
+    }
+
+    .class-selection-btn.selected h6,
+    .class-selection-btn.selected small {
+        color: white;
+    }
+
+    .class-selection-btn.selected .bi {
+        display: inline !important;
+    }
+</style>
+
+<script>
+    // Data from server - simplified to avoid circular references
+    const classesData = @Html.Raw(Json.Serialize(
+        ((List<Class>)ViewBag.Classes ?? new List<Class>()).Select(c => new {
+            classId = c.ClassId,
+            className = c.ClassName,
+            enrollments = (c.Enrollments ?? new List<Enrollment>()).Select(e => new {
+                student = new {
+                    studentId = e.Student?.StudentId,
+                    user = new { fullName = e.Student?.User?.FullName }
+                }
+            }).ToList()
+        }).ToList()
+    ));
+    let selectedClass = null;
+
+    // Class selection
+    document.querySelectorAll('.class-selection-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove selected class from all buttons
+            document.querySelectorAll('.class-selection-btn').forEach(b => b.classList.remove('selected'));
+            
+            // Add selected to clicked button
+            this.classList.add('selected');
+            
+            const classId = this.getAttribute('data-class-id');
+            const className = this.getAttribute('data-class-name');
+            
+            // Find class data
+            selectedClass = classesData.find(c => c.classId === classId);
+            
+            if (selectedClass) {
+                // Update selected class display
+                document.getElementById('selectedClassName').value = className;
+                
+                // Show table and summary
+                document.getElementById('attendanceTableContainer').style.display = 'table-responsive';
+                document.getElementById('noClassMessage').style.display = 'none';
+                document.getElementById('summaryContainer').style.display = 'flex';
+                document.getElementById('actionsContainer').style.display = 'block';
+                
+                // Populate student table
+                const tbody = document.getElementById('studentTableBody');
+                tbody.innerHTML = '';
+                
+                if (selectedClass.enrollments && selectedClass.enrollments.length > 0) {
+                    selectedClass.enrollments.forEach((enrollment, index) => {
+                        const student = enrollment.student;
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${student.studentId}</td>
+                            <td>${student.user?.fullName || 'Unknown'}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check attendance-status" 
+                                           name="status_${index}" id="present_${index}" 
+                                           value="Present" checked data-index="${index}" />
+                                    <label class="btn btn-outline-success" for="present_${index}">Present</label>
+                                    
+                                    <input type="radio" class="btn-check attendance-status" 
+                                           name="status_${index}" id="absent_${index}" 
+                                           value="Absent" data-index="${index}" />
+                                    <label class="btn btn-outline-danger" for="absent_${index}">Absent</label>
+                                    
+                                    <input type="radio" class="btn-check attendance-status" 
+                                           name="status_${index}" id="late_${index}" 
+                                           value="Late" data-index="${index}" />
+                                    <label class="btn btn-outline-warning" for="late_${index}">Late</label>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm remarks-input" 
+                                       placeholder="Notes..." data-index="${index}" />
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    
+                    // Add event listeners for status changes
+                    document.querySelectorAll('.attendance-status').forEach(radio => {
+                        radio.addEventListener('change', updateSummary);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No students enrolled in this class</td></tr>';
+                }
+                
+                updateSummary();
+            }
+        });
+    });
+
+    // Update summary statistics
+    function updateSummary() {
+        const radios = document.querySelectorAll('.attendance-status');
+        let present = 0, absent = 0, late = 0;
+        
+        radios.forEach(radio => {
+            if (radio.checked) {
+                if (radio.value === 'Present') present++;
+                else if (radio.value === 'Absent') absent++;
+                else if (radio.value === 'Late') late++;
+            }
+        });
+        
+        const total = present + absent + late;
+        const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+        
+        document.getElementById('presentCount').textContent = present;
+        document.getElementById('absentCount').textContent = absent;
+        document.getElementById('lateCount').textContent = late;
+        document.getElementById('attendanceRate').textContent = rate + '%';
+    }
+
+    // Store initial state when class is selected
+    let initialState = null;
+    
+    function captureInitialState() {
+        initialState = {
+            statuses: [],
+            remarks: []
+        };
+        
+        document.querySelectorAll('.attendance-status:checked').forEach(radio => {
+            initialState.statuses.push(radio.value);
+        });
+        
+        document.querySelectorAll('.remarks-input').forEach(input => {
+            initialState.remarks.push(input.value);
+        });
+    }
+    
+    function hasChanges() {
+        if (!initialState) return false;
+        
+        const currentStatuses = [];
+        const currentRemarks = [];
+        
+        document.querySelectorAll('.attendance-status:checked').forEach(radio => {
+            currentStatuses.push(radio.value);
+        });
+        
+        document.querySelectorAll('.remarks-input').forEach(input => {
+            currentRemarks.push(input.value);
+        });
+        
+        // Compare statuses
+        if (JSON.stringify(initialState.statuses) !== JSON.stringify(currentStatuses)) {
+            return true;
+        }
+        
+        // Compare remarks
+        if (JSON.stringify(initialState.remarks) !== JSON.stringify(currentRemarks)) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Update initial state when class selection changes
+    document.querySelectorAll('.class-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            setTimeout(() => captureInitialState(), 100);
+        });
+    });
+
+    // Reset button
+    document.getElementById('resetBtn').addEventListener('click', function() {
+        if (!selectedClass) {
+            alert('Please select a class first');
+            return;
+        }
+        
+        if (confirm('Are you sure you want to reset all attendance to defaults?')) {
+            document.querySelectorAll('.attendance-status').forEach((radio, index) => {
+                if (radio.value === 'Present') {
+                    radio.checked = true;
+                }
+            });
+            document.querySelectorAll('.remarks-input').forEach(input => {
+                input.value = '';
+            });
+            updateSummary();
+            captureInitialState();
+            alert('Attendance reset to defaults');
+        }
+    });
+
+    // Submit button
+    document.getElementById('submitBtn').addEventListener('click', function() {
+        if (!selectedClass) {
+            alert('Please select a class');
+            return;
+        }
+        
+        if (!hasChanges()) {
+            alert('No changes have been made to submit');
+            return;
+        }
+        
+        const date = document.getElementById('attendanceDate').value;
+        if (!date) {
+            alert('Please select a date');
+            return;
+        }
+        
+        const attendanceData = [];
+        
+        document.querySelectorAll('tbody tr').forEach((row, index) => {
+            const statusRadio = row.querySelector('.attendance-status:checked');
+            const remarks = row.querySelector('.remarks-input').value;
+            
+            if (statusRadio && selectedClass.enrollments[index]) {
+                const enrollment = selectedClass.enrollments[index];
+                attendanceData.push({
+                    studentId: enrollment.student.studentId,
+                    status: statusRadio.value,
+                    remarks: remarks,
+                    date: date
+                });
+            }
+        });
+        
+        // TODO: Send to server endpoint
+        console.log('Attendance data:', attendanceData);
+        alert('Attendance submitted successfully!');
+        captureInitialState(); // Reset to current state after submission
+    });
+</script>
