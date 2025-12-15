@@ -43,7 +43,16 @@
         <div class="dashboard-card profile-header">
             <div class="profile-banner">
                 <div class="profile-avatar-large @(Model.Gender == "Male" ? "male" : Model.Gender == "Female" ? "female" : "")">
-                    <i class="bi bi-person-fill"></i>
+                    @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && Model.User.ProfilePicture != "/images/default-avatar.png")
+                    {
+                        <img src="@Model.User.ProfilePicture" 
+                             alt="@Model.User.FullName" 
+                             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    }
+                    else
+                    {
+                        <i class="bi bi-person-fill"></i>
+                    }
                 </div>
             </div>
             <div class="profile-info">
@@ -174,6 +183,18 @@
                     Personal Information
                 </h5>
             </div>
+            
+            <!-- Profile Picture Display -->
+            <div class="text-center py-3 border-bottom">
+                <img src="@(Model.User.ProfilePicture ?? "/images/default-avatar.png")" 
+                     alt="@Model.User.FullName" 
+                     class="img-thumbnail rounded-circle" 
+                     style="width: 150px; height: 150px; object-fit: cover;">
+                <div class="mt-2">
+                    <small class="text-muted">Profile Picture</small>
+                </div>
+            </div>
+            
             <div class="detail-list">
                 <div class="detail-item">
                     <div class="detail-label">

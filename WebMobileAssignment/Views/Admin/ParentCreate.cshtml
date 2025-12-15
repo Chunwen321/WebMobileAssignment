@@ -50,18 +50,21 @@
                 </div>
 
                 <div class="row">
-                    <!-- Password -->
-                    <div class="col-md-6 mb-3">
-                        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                        <input type="password" id="password" name="password" class="form-control" placeholder="Minimum 8 characters" required />
-                        <small class="text-muted">Must be at least 8 characters long</small>
-                    </div>
-
                     <!-- Phone Number -->
                     <div class="col-md-6 mb-3">
                         <label for="phoneNumber" class="form-label">Phone Number</label>
                         <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="e.g. +60123456789" value="@ViewBag.PhoneNumber" />
                         <small class="text-muted">Used for notifications and emergency contact</small>
+                    </div>
+
+                    <!-- Default Password Info -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Login Password</label>
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-lock-fill me-2"></i>
+                            <strong>Default Password:</strong> WkCwSbZx123@@<br />
+                            <small class="text-muted">Parent will use this to login initially</small>
+                        </div>
                     </div>
                 </div>
 

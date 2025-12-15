@@ -83,12 +83,6 @@
                     <i class="bi bi-gear-fill text-danger me-2"></i>Account Settings
                 </h6>
                 <div class="row">
-                    <!-- Password -->
-                    <div class="col-md-6 mb-3">
-                        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required />
-                        <small class="text-muted">Minimum 8 characters</small>
-                    </div>
                     <!-- Status -->
                     <div class="col-md-6 mb-3">
                         <label for="status" class="form-label">Account Status <span class="text-danger">*</span></label>
@@ -98,6 +92,14 @@
                             <option value="suspend" selected="@(ViewBag.Status == "suspend")">Suspend</option>
                             <option value="withdraw" selected="@(ViewBag.Status == "withdraw")">Withdraw</option>
                         </select>
+                    </div>
+                    <!-- Default Password Info -->
+                    <div class="col-md-6 mb-3">
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <small><strong>Default Password:</strong> WkCwSbZx123@@</small><br />
+                            <small class="text-muted">Student will receive this password to login</small>
+                        </div>
                     </div>
                 </div>
 
@@ -146,12 +148,14 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="parentPassword" class="form-label">Parent Password</label>
-                            <input type="password" id="parentPassword" name="newParentPassword" class="form-control" placeholder="Enter password (required if creating new)" />
-                        </div>
-                        <div class="col-md-6 mb-3">
                             <label for="parentPhone" class="form-label">Parent Phone</label>
                             <input type="tel" id="parentPhone" name="newParentPhone" class="form-control" placeholder="012-345-6789" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <small><strong>New Parent Default Password:</strong> WkCwSbZx123@@</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -238,8 +242,6 @@
             const resultDiv = document.getElementById('parentSearchResult');
             const parentFields = document.getElementById('parentFields');
             const parentSelect = document.getElementById('parentSelect');
-            const parentPasswordField = document.getElementById('parentPassword');
-            const parentPasswordContainer = parentPasswordField.closest('.col-md-6');
             const classSelect = document.getElementById('classIds');
             const selectedClassesList = document.getElementById('selectedClassesList');
             const selectedCount = document.getElementById('selectedCount');
@@ -343,16 +345,12 @@
                         });
                     } else {
                         // Not found -> show new parent entry
-                        resultDiv.innerHTML = '<div class="alert alert-info p-2 mb-0">Parent not found. Fill below to create new parent account.</div>';
+                        resultDiv.innerHTML = '<div class="alert alert-info p-2 mb-0">Parent not found. Fill below to create new parent account (default password will be set).</div>';
                         parentFields.style.display = 'block';
                         // prefill email
                         document.getElementById('parentEmail').value = email;
                         document.getElementById('parentFullName').value = '';
-                        document.getElementById('parentPassword').value = '';
                         document.getElementById('parentPhone').value = '';
-                        // Show password field for new parent
-                        parentPasswordContainer.style.display = 'block';
-                        parentPasswordField.removeAttribute('readonly');
                         // Clear parent select
                         parentSelect.value = '';
                     }
@@ -367,11 +365,8 @@
                     // clear fields for manual entry
                     document.getElementById('parentFullName').value = '';
                     document.getElementById('parentEmail').value = '';
-                    document.getElementById('parentPassword').value = '';
                     document.getElementById('parentPhone').value = '';
                     parentFields.style.display = 'block';
-                    parentPasswordContainer.style.display = 'block';
-                    parentPasswordField.removeAttribute('readonly');
                     resultDiv.innerHTML = '';
                     return;
                 }
@@ -397,20 +392,11 @@
                 document.getElementById('parentPhone').value = data.phone || '';
                 
                 if (isExistingParent) {
-                    // Hide and disable password field for existing parents
-                    parentPasswordContainer.style.display = 'none';
-                    parentPasswordField.value = '';
-                    parentPasswordField.setAttribute('readonly', 'readonly');
-                    
                     // Make parent fields readonly to show they're from existing record
                     document.getElementById('parentFullName').setAttribute('readonly', 'readonly');
                     document.getElementById('parentEmail').setAttribute('readonly', 'readonly');
                     document.getElementById('parentPhone').setAttribute('readonly', 'readonly');
                 } else {
-                    // Show password field for new parents
-                    parentPasswordContainer.style.display = 'block';
-                    parentPasswordField.removeAttribute('readonly');
-                    
                     // Make fields editable for new parent
                     document.getElementById('parentFullName').removeAttribute('readonly');
                     document.getElementById('parentEmail').removeAttribute('readonly');
