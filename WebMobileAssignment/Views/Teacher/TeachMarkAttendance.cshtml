@@ -14,53 +14,77 @@
                 </h3>
             </div>
 
-            <!-- Class Selection Grid -->
+            <!-- Step 1: Date Selection -->
             <div class="mb-4">
-                <label class="form-label fw-bold">Select a Class</label>
-                <div class="row g-2" id="classGrid">
+                <h5 class="mb-3"><span class="badge bg-primary">Step 1</span> Select a Date</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="date" class="form-control form-control-lg" id="dateSelector" value="@ViewBag.SelectedDate" />
+                        <small class="text-muted mt-2 d-block">
+                            <i class="bi bi-info-circle"></i> Classes for <strong>@ViewBag.DayOfWeek</strong> will be shown below
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <!-- Step 2: Class Selection Grid -->
+            <div class="mb-4">
+                <h5 class="mb-3"><span class="badge bg-primary">Step 2</span> Select a Class</h5>
+                <div id="noClassesMessage" class="alert alert-info" style="display: none;">
+                    <i class="bi bi-info-circle"></i> No classes scheduled for <strong id="messageDayOfWeek">today</strong>. Please select a different date.
+                </div>
+                <div class="row g-3" id="classGrid">
                     @if (ViewBag.Classes != null && ((List<Class>)ViewBag.Classes).Count > 0)
                     {
                         @foreach (var cls in (List<Class>)ViewBag.Classes)
                         {
                             var studentCount = cls.Enrollments?.Count ?? 0;
-                            <div class="col-md-4 col-lg-3">
-                                <button type="button" class="class-selection-btn w-100 p-3 text-start" 
+                            <div class="col-md-6 col-lg-4">
+                                <button type="button" class="class-btn w-100 p-4 text-start border-2 rounded-3" 
                                         data-class-id="@cls.ClassId" 
-                                        data-class-name="@cls.ClassName">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">@cls.ClassName</h6>
-                                            <small class="text-muted">@studentCount students</small>
-                                        </div>
-                                        <i class="bi bi-check-lg" style="display: none;"></i>
+                                        data-class-name="@cls.ClassName"
+                                        style="border: 2px solid #e9ecef; background: #fff; transition: all 0.3s;">
+                                    <div>
+                                        <h6 class="mb-2 fw-bold">@cls.ClassName</h6>
+                                        <small class="text-muted d-block">
+                                            <i class="bi bi-clock"></i> @cls.StartTime?.ToString(@"hh\:mm") - @cls.EndTime?.ToString(@"hh\:mm")
+                                        </small>
+                                        <small class="text-muted d-block">
+                                            <i class="bi bi-geo-alt"></i> @(string.IsNullOrEmpty(cls.RoomNumber) ? "Not Set" : cls.RoomNumber)
+                                        </small>
+                                        <small class="text-muted d-block mt-2">
+                                            <i class="bi bi-people"></i> @studentCount students
+                                        </small>
                                     </div>
+                                    <i class="bi bi-check-circle" style="display: none; float: right; color: #0d6efd; font-size: 1.5rem;"></i>
                                 </button>
                             </div>
                         }
                     }
-                    else
-                    {
-                        <div class="col-12">
-                            <div class="alert alert-info mb-0">No classes assigned</div>
-                        </div>
-                    }
                 </div>
             </div>
 
-            <!-- Date Selection -->
-            <div class="row mb-4">
+            <!-- Date and Selected Class Info -->
+            <div class="row mb-4" id="selectionInfo" style="display: none;">
                 <div class="col-md-4">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control" id="attendanceDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    <label class="form-label">Selected Date</label>
+                    <input type="text" class="form-control" id="attendanceDate" readonly />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Selected Class</label>
-                    <input type="text" class="form-control" id="selectedClassName" readonly placeholder="Select a class..." />
+                    <input type="text" class="form-control" id="selectedClassName" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Day of Week</label>
+                    <input type="text" class="form-control" id="selectedDayOfWeek" readonly />
                 </div>
             </div>
 
             <!-- Student Attendance List -->
-            <div class="table-responsive" id="attendanceTableContainer" style="display: none;">
+            <div class="table-responsive" id="attendanceTableContainer" style="display: none; margin-top: 3rem;">
+                <h5 class="mb-3"><span class="badge bg-primary">Step 3</span> Mark Attendance</h5>
                 <table class="table align-middle">
                     <thead>
                         <tr>
@@ -77,9 +101,9 @@
             </div>
 
             <!-- No Class Selected Message -->
-            <div id="noClassMessage" class="alert alert-info text-center py-5">
+            <div id="noClassMessage" class="alert alert-info text-center py-5" style="margin-top: 3rem;">
                 <i class="bi bi-info-circle me-2"></i>
-                <strong>Select a class to begin marking attendance</strong>
+                <strong>Select a date first, then choose a class to begin marking attendance</strong>
             </div>
 
             <!-- Summary -->
@@ -125,7 +149,7 @@
 
 <!-- Styles for Class Selection Buttons -->
 <style>
-    .class-selection-btn {
+    .class-btn {
         border: 2px solid #e0e0e0;
         border-radius: 8px;
         background: white;
@@ -133,24 +157,25 @@
         cursor: pointer;
     }
 
-    .class-selection-btn:hover {
+    .class-btn:hover {
         border-color: #0d6efd;
         background: #f8f9fa;
     }
 
-    .class-selection-btn.selected {
+    .class-btn.selected {
         border-color: #0d6efd;
         background: #0d6efd;
         color: white;
     }
 
-    .class-selection-btn.selected h6,
-    .class-selection-btn.selected small {
+    .class-btn.selected h6,
+    .class-btn.selected small {
         color: white;
     }
 
-    .class-selection-btn.selected .bi {
+    .class-btn.selected .bi-check-circle {
         display: inline !important;
+        color: white;
     }
 </style>
 
@@ -160,6 +185,10 @@
         ((List<Class>)ViewBag.Classes ?? new List<Class>()).Select(c => new {
             classId = c.ClassId,
             className = c.ClassName,
+            day = c.Day,
+            startTime = c.StartTime?.ToString(@"hh\:mm"),
+            endTime = c.EndTime?.ToString(@"hh\:mm"),
+            roomNumber = c.RoomNumber,
             enrollments = (c.Enrollments ?? new List<Enrollment>()).Select(e => new {
                 student = new {
                     studentId = e.Student?.StudentId,
@@ -168,13 +197,22 @@
             }).ToList()
         }).ToList()
     ));
+    
     let selectedClass = null;
+    const selectedDate = '@ViewBag.SelectedDate';
+    const dayOfWeek = '@ViewBag.DayOfWeek';
+    
+    // Handle date change - reload page with new date
+    document.getElementById('dateSelector').addEventListener('change', function() {
+        const selectedDate = this.value;
+        window.location.href = '@Url.Action("TeachMarkAttendance")' + '?selectedDate=' + selectedDate;
+    });
 
     // Class selection
-    document.querySelectorAll('.class-selection-btn').forEach(btn => {
+    document.querySelectorAll('.class-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             // Remove selected class from all buttons
-            document.querySelectorAll('.class-selection-btn').forEach(b => b.classList.remove('selected'));
+            document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('selected'));
             
             // Add selected to clicked button
             this.classList.add('selected');
@@ -187,10 +225,13 @@
             
             if (selectedClass) {
                 // Update selected class display
-                document.getElementById('selectedClassName').value = className;
+                document.getElementById('selectedClassName').value = selectedClass.className;
+                document.getElementById('attendanceDate').value = selectedDate;
+                document.getElementById('selectedDayOfWeek').value = dayOfWeek;
+                document.getElementById('selectionInfo').style.display = 'flex';
                 
                 // Show table and summary
-                document.getElementById('attendanceTableContainer').style.display = 'table-responsive';
+                document.getElementById('attendanceTableContainer').style.display = 'block';
                 document.getElementById('noClassMessage').style.display = 'none';
                 document.getElementById('summaryContainer').style.display = 'flex';
                 document.getElementById('actionsContainer').style.display = 'block';
@@ -241,6 +282,7 @@
                 }
                 
                 updateSummary();
+                captureInitialState();
             }
         });
     });
@@ -311,13 +353,6 @@
         
         return false;
     }
-    
-    // Update initial state when class selection changes
-    document.querySelectorAll('.class-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            setTimeout(() => captureInitialState(), 100);
-        });
-    });
 
     // Reset button
     document.getElementById('resetBtn').addEventListener('click', function() {
@@ -353,12 +388,6 @@
             return;
         }
         
-        const date = document.getElementById('attendanceDate').value;
-        if (!date) {
-            alert('Please select a date');
-            return;
-        }
-        
         const attendanceData = [];
         
         document.querySelectorAll('tbody tr').forEach((row, index) => {
@@ -371,7 +400,7 @@
                     studentId: enrollment.student.studentId,
                     status: statusRadio.value,
                     remarks: remarks,
-                    date: date
+                    date: selectedDate
                 });
             }
         });

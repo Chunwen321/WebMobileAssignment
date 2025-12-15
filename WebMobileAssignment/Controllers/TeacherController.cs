@@ -99,7 +99,7 @@ namespace WebMobileAssignment.Controllers
         }
 
         // Attendance - Mark Attendance
-        public async Task<IActionResult> TeachMarkAttendance()
+        public async Task<IActionResult> TeachMarkAttendance(string selectedDate = null)
         {
             ViewBag.ActiveMenu = "Attendance";
             ViewBag.ActiveSubmenu = "MarkAttendance";
@@ -117,14 +117,27 @@ namespace WebMobileAssignment.Controllers
                 .Select(t => t.TeacherId)
                 .FirstOrDefaultAsync();
             
+            // Default to today's date if not provided
+            DateTime dateToCheck = string.IsNullOrEmpty(selectedDate) 
+                ? DateTime.Now 
+                : DateTime.Parse(selectedDate);
+            
+            // Get the day of week (Monday, Tuesday, etc.)
+            string dayOfWeek = dateToCheck.ToString("dddd");
+            
+            // Get all classes for today's day of week
             var classes = await _db.Classes
                 .Include(c => c.Enrollments)
                     .ThenInclude(e => e.Student)
                         .ThenInclude(s => s.User)
-                .Where(c => c.TeacherId == teacherId)
+                .Include(c => c.Subject)
+                .Where(c => c.TeacherId == teacherId && c.Day == dayOfWeek)
+                .OrderBy(c => c.StartTime)
                 .ToListAsync();
             
             ViewBag.Classes = classes;
+            ViewBag.SelectedDate = dateToCheck.ToString("yyyy-MM-dd");
+            ViewBag.DayOfWeek = dayOfWeek;
             await GetCurrentTeacherAsync();
             return View("TeachMarkAttendance");
         }
