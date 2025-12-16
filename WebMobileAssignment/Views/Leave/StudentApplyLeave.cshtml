@@ -1,0 +1,215 @@
+@{
+    ViewBag.Title = "Apply for Leave";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-calendar-plus"></i> Apply for Leave
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong><i class="bi bi-exclamation-triangle"></i> Please correct the following errors:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="StudentApplyLeave" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Important:</strong> Please submit your leave application at least 3 days in advance, except for emergency situations.
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="startDate" class="form-label">
+                                    Start Date <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" 
+                                       id="startDate" 
+                                       name="startDate" 
+                                       class="form-control" 
+                                       min="@DateTime.Today.ToString("yyyy-MM-dd")" 
+                                       required 
+                                       onchange="calculateDays()" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="endDate" class="form-label">
+                                    End Date <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" 
+                                       id="endDate" 
+                                       name="endDate" 
+                                       class="form-control" 
+                                       min="@DateTime.Today.ToString("yyyy-MM-dd")" 
+                                       required 
+                                       onchange="calculateDays()" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Total Days</label>
+                            <div class="input-group">
+                                <input type="text" id="totalDaysDisplay" class="form-control" readonly placeholder="Select dates above" />
+                                <span class="input-group-text">day(s)</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">
+                                Reason for Leave <span class="text-danger">*</span>
+                            </label>
+                            <textarea id="reason" 
+                                      name="reason" 
+                                      class="form-control" 
+                                      rows="5" 
+                                      placeholder="Please provide a detailed reason for your leave application..." 
+                                      required 
+                                      maxlength="1000"></textarea>
+                            <small class="text-muted">Be specific about why you need leave. Medical leave requires supporting documents.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="documents" class="form-label">
+                                Supporting Documents (Optional)
+                                <i class="bi bi-info-circle" title="Upload medical certificates, letters, or other supporting documents"></i>
+                            </label>
+                            <input type="file" 
+                                   id="documents" 
+                                   name="documents" 
+                                   class="form-control" 
+                                   multiple 
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" 
+                                   onchange="previewFiles()" />
+                            <small class="text-muted d-block mt-1">
+                                Accepted formats: PDF, JPG, PNG, DOC, DOCX. Maximum 5MB per file, up to 3 files.
+                            </small>
+                            <div id="filePreview" class="mt-2"></div>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Note:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Medical certificates are required for medical leave exceeding 3 days</li>
+                                <li>Emergency leave will be reviewed on a case-by-case basis</li>
+                                <li>You will be notified via email once your application is reviewed</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-send"></i> Submit Leave Application
+                            </button>
+                            <a asp-action="StudentLeaveIndex" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Guidelines Card -->
+            <div class="card mt-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-list-check text-danger me-2"></i>
+                        Leave Application Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li class="mb-2">Submit your application at least <strong>3 days in advance</strong> (except emergencies)</li>
+                        <li class="mb-2">Provide a clear and valid reason for your leave</li>
+                        <li class="mb-2">Attach supporting documents (medical certificates, letters, etc.)</li>
+                        <li class="mb-2">You will receive an email notification once your application is reviewed</li>
+                        <li class="mb-2">Approved leave will be reflected in your attendance record</li>
+                        <li>For urgent matters, contact the administration office directly</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function calculateDays() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const display = document.getElementById('totalDaysDisplay');
+
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                if (end >= start) {
+                    const diffTime = Math.abs(end - start);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    display.value = diffDays;
+                    display.classList.remove('text-danger');
+                    display.classList.add('fw-bold', 'text-success');
+                } else {
+                    display.value = 'End date must be after start date';
+                    display.classList.add('text-danger');
+                    display.classList.remove('fw-bold', 'text-success');
+                }
+            } else {
+                display.value = '';
+            }
+        }
+
+        function previewFiles() {
+            const input = document.getElementById('documents');
+            const preview = document.getElementById('filePreview');
+            preview.innerHTML = '';
+
+            if (input.files.length > 3) {
+                alert('Maximum 3 files allowed');
+                input.value = '';
+                return;
+            }
+
+            for (let i = 0; i < input.files.length; i++) {
+                const file = input.files[i];
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`File "${file.name}" exceeds 5MB limit`);
+                    input.value = '';
+                    preview.innerHTML = '';
+                    return;
+                }
+
+                const div = document.createElement('div');
+                div.className = 'alert alert-secondary py-2 px-3 mb-2';
+                div.innerHTML = `
+                    <i class="bi bi-file-earmark-text me-2"></i>
+                    <strong>${file.name}</strong>
+                    <small class="text-muted ms-2">(${(file.size / 1024).toFixed(2)} KB)</small>
+                `;
+                preview.appendChild(div);
+            }
+        }
+
+        // Set min date to today
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').min = today;
+            document.getElementById('endDate').min = today;
+        });
+    </script>
+}

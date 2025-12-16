@@ -97,8 +97,7 @@
                     <div class="col-md-6 mb-3">
                         <div class="alert alert-info mb-0">
                             <i class="bi bi-info-circle me-2"></i>
-                            <small><strong>Default Password:</strong> WkCwSbZx123@@</small><br />
-                            <small class="text-muted">Student will receive this password to login</small>
+                            <small><strong>Automatic Password:</strong> A secure temporary password will be generated and sent to the parent's email.</small>
                         </div>
                     </div>
                 </div>
@@ -109,52 +108,126 @@
                 </h6>
 
                 <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Parent Options:</strong> You can either select an existing parent from the dropdown below, search for a parent by email, or create a new parent by filling in all the fields.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="parentSearchEmail" class="form-label">Search Parent by Email</label>
+                        <label class="form-label">Select Existing Parent</label>
+                        <select id="parentSelect" name="parentId" class="form-select">
+                            <option value="">-- Create New Parent or Search --</option>
+                            @if (ViewBag.Parents != null)
+                            {
+                                @foreach (var parent in ViewBag.Parents)
+                                {
+                                    <option value="@parent.ParentId" 
+                                            data-fullname="@parent.User.FullName"
+                                            data-email="@parent.User.Email" 
+                                            data-phone="@(parent.PhoneNumber ?? "")"
+                                            data-address="@(parent.Address ?? "")"
+                                            data-dob="@(parent.User.DateOfBirth?.ToString("yyyy-MM-dd") ?? "")"
+                                            data-gender="@(parent.User.Gender ?? "")"
+                                            selected="@(ViewBag.ParentId == parent.ParentId)">
+                                        @parent.User.FullName (@parent.User.Email)
+                                    </option>
+                                }
+                            }
+                        </select>
+                        <small class="text-muted">
+                            <i class="bi bi-arrow-right me-1"></i>Select a parent to use their existing account
+                        </small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="parentSearchEmail" class="form-label">Or Search Parent by Email</label>
                         <div class="input-group">
                             <input type="email" id="parentSearchEmail" class="form-control" placeholder="parent@example.com" />
                             <button type="button" id="btnSearchParent" class="btn btn-outline-primary">
                                 <i class="bi bi-search"></i> Search
                             </button>
                         </div>
-                        <div id="parentSearchResult" class="mt-2"></div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Or select existing parent</label>
-                        <select id="parentSelect" name="parentId" class="form-select">
-                            <option value="">-- Select Parent (Optional) --</option>
-                            @if (ViewBag.Parents != null)
-                            {
-                                @foreach (var parent in ViewBag.Parents)
-                                {
-                                    <option value="@parent.ParentId" selected="@(ViewBag.ParentId == parent.ParentId)">@parent.User.FullName (@parent.ParentId)</option>
-                                }
-                            }
-                        </select>
+                        <small id="searchResult" class="form-text text-muted"></small>
                     </div>
                 </div>
 
                 <div id="parentFields">
+                    <div class="alert alert-warning mb-3" id="newParentIndicator" style="display: none;">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        <strong>Creating New Parent:</strong> Fill in all the details below. A temporary password will be automatically generated and sent to the parent's email.
+                    </div>
+                    
+                    <div class="alert alert-success mb-3" id="existingParentIndicator" style="display: none;">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>Using Existing Parent:</strong> The selected parent's information is shown below (read-only).
+                    </div>
+
+                    <!-- Basic Information -->
+                    <h6 class="text-muted mb-2 mt-3"><i class="bi bi-person-badge"></i> Parent Basic Information</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="parentFullName" class="form-label">Parent Full Name</label>
+                            <label for="parentFullName" class="form-label">
+                                Parent Full Name
+                                <span class="text-danger" id="parentNameRequired" style="display: none;">*</span>
+                            </label>
                             <input type="text" id="parentFullName" name="newParentFullName" class="form-control" placeholder="e.g. Robert Doe" />
+                            <small class="text-muted">Full legal name as per IC/Passport</small>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="parentEmail" class="form-label">Parent Email</label>
+                            <label for="parentEmail" class="form-label">
+                                Parent Email
+                                <span class="text-danger" id="parentEmailRequired" style="display: none;">*</span>
+                            </label>
                             <input type="email" id="parentEmail" name="newParentEmail" class="form-control" placeholder="parent@example.com" />
+                            <small class="text-muted">Used for login and notifications</small>
                         </div>
                     </div>
+
+                    <!-- Contact Information -->
+                    <h6 class="text-muted mb-2 mt-3"><i class="bi bi-telephone"></i> Contact Information</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="parentPhone" class="form-label">Parent Phone</label>
-                            <input type="tel" id="parentPhone" name="newParentPhone" class="form-control" placeholder="012-345-6789" />
+                            <label for="parentPhone" class="form-label">Parent Phone Number</label>
+                            <input type="tel" id="parentPhone" name="newParentPhone" class="form-control" placeholder="e.g. +60123456789" />
+                            <small class="text-muted">For emergency contact and SMS notifications</small>
                         </div>
                         <div class="col-md-6 mb-3">
+                            <label for="parentAddress" class="form-label">Residential Address</label>
+                            <textarea id="parentAddress" name="newParentAddress" class="form-control" rows="2" placeholder="Street address, city, state, postal code"></textarea>
+                            <small class="text-muted">Current residential address</small>
+                        </div>
+                    </div>
+
+                    <!-- Personal Details -->
+                    <h6 class="text-muted mb-2 mt-3"><i class="bi bi-person-lines-fill"></i> Personal Details</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="parentDateOfBirth" class="form-label">Parent Date of Birth</label>
+                            <input type="date" id="parentDateOfBirth" name="newParentDateOfBirth" class="form-control" />
+                            <small class="text-muted">Optional - for age verification if needed</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parentGender" class="form-label">Parent Gender</label>
+                            <select id="parentGender" name="newParentGender" class="form-select">
+                                <option value="">-- Select Gender --</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <small class="text-muted">Optional - for record purposes</small>
+                        </div>
+                    </div>
+
+                    <!-- Password Information -->
+                    <div class="row">
+                        <div class="col-12 mb-3">
                             <div class="alert alert-info mb-0">
-                                <i class="bi bi-info-circle me-2"></i>
-                                <small><strong>New Parent Default Password:</strong> WkCwSbZx123@@</small>
+                                <i class="bi bi-lock-fill me-2"></i>
+                                <strong>Login Credentials:</strong> A secure temporary password will be automatically generated and sent to the parent's email address. The parent will be prompted to change it upon first login.
                             </div>
                         </div>
                     </div>
@@ -239,14 +312,28 @@
         (function() {
             const btnSearch = document.getElementById('btnSearchParent');
             const emailInput = document.getElementById('parentSearchEmail');
-            const resultDiv = document.getElementById('parentSearchResult');
+            const searchResult = document.getElementById('searchResult');
             const parentFields = document.getElementById('parentFields');
             const parentSelect = document.getElementById('parentSelect');
             const classSelect = document.getElementById('classIds');
             const selectedClassesList = document.getElementById('selectedClassesList');
             const selectedCount = document.getElementById('selectedCount');
+            const newParentIndicator = document.getElementById('newParentIndicator');
+            const existingParentIndicator = document.getElementById('existingParentIndicator');
 
-            // show parent form by default (user can edit or fill)
+            // Parent input fields - matching database columns
+            const parentFullName = document.getElementById('parentFullName');
+            const parentEmail = document.getElementById('parentEmail');
+            const parentPhone = document.getElementById('parentPhone');
+            const parentAddress = document.getElementById('parentAddress');
+            const parentDateOfBirth = document.getElementById('parentDateOfBirth');
+            const parentGender = document.getElementById('parentGender');
+
+            // Required field indicators
+            const parentNameRequired = document.getElementById('parentNameRequired');
+            const parentEmailRequired = document.getElementById('parentEmailRequired');
+
+            // Show parent form by default (user can edit or fill)
             parentFields.style.display = 'block';
 
             // Class selection handler
@@ -310,99 +397,226 @@
                 }
             }
 
-            // Parent search functionality
-            btnSearch.addEventListener('click', async function() {
-                const email = emailInput.value.trim();
-                resultDiv.innerHTML = '';
+            // Function to set parent fields (editable or readonly) - now includes all fields
+            function setParentFields(data, isExisting) {
+                parentFullName.value = data.fullName || '';
+                parentEmail.value = data.email || '';
+                parentPhone.value = data.phone || '';
+                parentAddress.value = data.address || '';
+                parentDateOfBirth.value = data.dob || '';
+                parentGender.value = data.gender || '';
 
-                if (!email) {
-                    resultDiv.innerHTML = '<div class="text-warning">Please enter an email to search.</div>';
+                if (isExisting) {
+                    // Existing parent - make fields readonly
+                    parentFullName.setAttribute('readonly', 'readonly');
+                    parentEmail.setAttribute('readonly', 'readonly');
+                    parentPhone.setAttribute('readonly', 'readonly');
+                    parentAddress.setAttribute('readonly', 'readonly');
+                    parentDateOfBirth.setAttribute('readonly', 'readonly');
+                    parentGender.setAttribute('disabled', 'disabled');
+
+                    parentFullName.classList.add('bg-light');
+                    parentEmail.classList.add('bg-light');
+                    parentPhone.classList.add('bg-light');
+                    parentAddress.classList.add('bg-light');
+                    parentDateOfBirth.classList.add('bg-light');
+                    parentGender.classList.add('bg-light');
+
+                    newParentIndicator.style.display = 'none';
+                    existingParentIndicator.style.display = 'block';
+                    parentNameRequired.style.display = 'none';
+                    parentEmailRequired.style.display = 'none';
+                } else {
+                    // New parent - make fields editable
+                    parentFullName.removeAttribute('readonly');
+                    parentEmail.removeAttribute('readonly');
+                    parentPhone.removeAttribute('readonly');
+                    parentAddress.removeAttribute('readonly');
+                    parentDateOfBirth.removeAttribute('readonly');
+                    parentGender.removeAttribute('disabled');
+
+                    parentFullName.classList.remove('bg-light');
+                    parentEmail.classList.remove('bg-light');
+                    parentPhone.classList.remove('bg-light');
+                    parentAddress.classList.remove('bg-light');
+                    parentDateOfBirth.classList.remove('bg-light');
+                    parentGender.classList.remove('bg-light');
+
+                    newParentIndicator.style.display = 'block';
+                    existingParentIndicator.style.display = 'none';
+                    
+                    // Show required indicators if creating new parent with data
+                    if (data.fullName || data.email) {
+                        parentNameRequired.style.display = 'inline';
+                        parentEmailRequired.style.display = 'inline';
+                    }
+                }
+            }
+
+            // Function to clear parent fields
+            function clearParentFields() {
+                parentFullName.value = '';
+                parentEmail.value = '';
+                parentPhone.value = '';
+                parentAddress.value = '';
+                parentDateOfBirth.value = '';
+                parentGender.value = '';
+
+                parentFullName.removeAttribute('readonly');
+                parentEmail.removeAttribute('readonly');
+                parentPhone.removeAttribute('readonly');
+                parentAddress.removeAttribute('readonly');
+                parentDateOfBirth.removeAttribute('readonly');
+                parentGender.removeAttribute('disabled');
+
+                parentFullName.classList.remove('bg-light');
+                parentEmail.classList.remove('bg-light');
+                parentPhone.classList.remove('bg-light');
+                parentAddress.classList.remove('bg-light');
+                parentDateOfBirth.classList.remove('bg-light');
+                parentGender.classList.remove('bg-light');
+
+                newParentIndicator.style.display = 'none';
+                existingParentIndicator.style.display = 'none';
+                parentNameRequired.style.display = 'none';
+                parentEmailRequired.style.display = 'none';
+                searchResult.innerHTML = '';
+            }
+
+            // Parent dropdown change handler
+            parentSelect.addEventListener('change', async function() {
+                const selectedOption = parentSelect.options[parentSelect.selectedIndex];
+                const parentId = parentSelect.value;
+
+                if (!parentId) {
+                    // No selection - clear and allow new parent creation
+                    clearParentFields();
+                    emailInput.value = '';
                     return;
                 }
 
-                resultDiv.innerHTML = '<div class="text-muted">Searching...</div>';
+                // Get data from option data attributes (faster than AJAX)
+                const fullName = selectedOption.getAttribute('data-fullname');
+                const email = selectedOption.getAttribute('data-email');
+                const phone = selectedOption.getAttribute('data-phone');
+                const address = selectedOption.getAttribute('data-address');
+                const dob = selectedOption.getAttribute('data-dob');
+                const gender = selectedOption.getAttribute('data-gender');
+
+                if (fullName && email) {
+                    // Use data attributes
+                    setParentFields({ fullName, email, phone, address, dob, gender }, true);
+                    searchResult.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Existing parent selected';
+                } else {
+                    // Fallback to AJAX if data attributes not available
+                    try {
+                        const resp = await fetch('/Admin/GetParentById?id=' + encodeURIComponent(parentId));
+                        if (!resp.ok) throw new Error('Network error');
+                        const data = await resp.json();
+                        
+                        if (data && data.success) {
+                            setParentFields(data, true);
+                            searchResult.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Existing parent selected';
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        searchResult.innerHTML = '<i class="bi bi-exclamation-circle text-danger me-1"></i>Error loading parent details';
+                    }
+                }
+
+                // Clear search input
+                emailInput.value = '';
+            });
+
+            // Parent search functionality
+            btnSearch.addEventListener('click', async function() {
+                const email = emailInput.value.trim();
+
+                if (!email) {
+                    searchResult.innerHTML = '<i class="bi bi-exclamation-triangle text-warning me-1"></i>Please enter an email to search';
+                    return;
+                }
+
+                searchResult.innerHTML = '<i class="bi bi-hourglass-split text-muted me-1"></i>Searching...';
+                
                 try {
                     const resp = await fetch('/Admin/FindParentByEmail?email=' + encodeURIComponent(email));
                     if (!resp.ok) throw new Error('Network error');
                     const data = await resp.json();
 
                     if (data && data.success && data.parentId) {
-                        // Parent found
-                        resultDiv.innerHTML = `<div class="alert alert-success p-2">Found parent: <strong>${data.fullName}</strong> (${data.parentId}) <button id="selectParentBtn" class="btn btn-sm btn-outline-primary ms-2">Select</button></div>`;
-                        document.getElementById('selectParentBtn').addEventListener('click', function() {
-                            // set parentSelect to this id if exists in options otherwise add
-                            let opt = Array.from(parentSelect.options).find(o => o.value === data.parentId);
-                            if (!opt) {
-                                const option = document.createElement('option');
-                                option.value = data.parentId;
-                                option.text = `${data.fullName} (${data.parentId})`;
-                                parentSelect.appendChild(option);
+                        // Parent found - select in dropdown if exists, or add if not
+                        let optionExists = false;
+                        for (let i = 0; i < parentSelect.options.length; i++) {
+                            if (parentSelect.options[i].value === data.parentId) {
+                                parentSelect.selectedIndex = i;
+                                optionExists = true;
+                                break;
                             }
-                            parentSelect.value = data.parentId;
-                            // populate parent fields
-                            populateParentFields(data, true);
-                            resultDiv.innerHTML = '<div class="alert alert-success p-2 mb-0">Parent selected. Existing parent account will be used.</div>';
-                        });
+                        }
+
+                        if (!optionExists) {
+                            // Add to dropdown with all data attributes
+                            const option = document.createElement('option');
+                            option.value = data.parentId;
+                            option.textContent = `${data.fullName} (${data.email})`;
+                            option.setAttribute('data-fullname', data.fullName);
+                            option.setAttribute('data-email', data.email);
+                            option.setAttribute('data-phone', data.phone || '');
+                            option.setAttribute('data-address', data.address || '');
+                            option.setAttribute('data-dob', data.dob || '');
+                            option.setAttribute('data-gender', data.gender || '');
+                            option.selected = true;
+                            parentSelect.appendChild(option);
+                        }
+
+                        // Fill and lock fields
+                        setParentFields(data, true);
+                        searchResult.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Parent found and selected!';
                     } else {
-                        // Not found -> show new parent entry
-                        resultDiv.innerHTML = '<div class="alert alert-info p-2 mb-0">Parent not found. Fill below to create new parent account (default password will be set).</div>';
-                        parentFields.style.display = 'block';
-                        // prefill email
-                        document.getElementById('parentEmail').value = email;
-                        document.getElementById('parentFullName').value = '';
-                        document.getElementById('parentPhone').value = '';
-                        // Clear parent select
+                        // Not found - prepare for new parent creation
                         parentSelect.value = '';
-                    }
-                } catch (err) {
-                    resultDiv.innerHTML = '<div class="text-danger">Error searching parent.</div>';
-                }
-            });
-
-            parentSelect.addEventListener('change', async function() {
-                const id = parentSelect.value;
-                if (!id) {
-                    // clear fields for manual entry
-                    document.getElementById('parentFullName').value = '';
-                    document.getElementById('parentEmail').value = '';
-                    document.getElementById('parentPhone').value = '';
-                    parentFields.style.display = 'block';
-                    resultDiv.innerHTML = '';
-                    return;
-                }
-
-                // fetch parent details
-                try {
-                    const resp = await fetch('/Admin/GetParentById?id=' + encodeURIComponent(id));
-                    if (!resp.ok) throw new Error('Network error');
-                    const data = await resp.json();
-                    if (data && data.success) {
-                        populateParentFields(data, true);
-                        parentFields.style.display = 'block';
-                        resultDiv.innerHTML = '<div class="alert alert-success p-2 mb-0 mt-2">Existing parent account will be used.</div>';
+                        setParentFields({ fullName: '', email: email, phone: '', address: '', dob: '', gender: '' }, false);
+                        searchResult.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Parent not found. You can create a new parent account by filling in the details below.';
                     }
                 } catch (err) {
                     console.error(err);
+                    searchResult.innerHTML = '<i class="bi bi-exclamation-circle text-danger me-1"></i>Error searching parent';
                 }
             });
 
-            function populateParentFields(data, isExistingParent = false) {
-                document.getElementById('parentFullName').value = data.fullName || '';
-                document.getElementById('parentEmail').value = data.email || '';
-                document.getElementById('parentPhone').value = data.phone || '';
-                
-                if (isExistingParent) {
-                    // Make parent fields readonly to show they're from existing record
-                    document.getElementById('parentFullName').setAttribute('readonly', 'readonly');
-                    document.getElementById('parentEmail').setAttribute('readonly', 'readonly');
-                    document.getElementById('parentPhone').setAttribute('readonly', 'readonly');
-                } else {
-                    // Make fields editable for new parent
-                    document.getElementById('parentFullName').removeAttribute('readonly');
-                    document.getElementById('parentEmail').removeAttribute('readonly');
-                    document.getElementById('parentPhone').removeAttribute('readonly');
+            // Allow pressing Enter in search field
+            emailInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    btnSearch.click();
                 }
-            }
+            });
+
+            // Detect manual changes to parent fields to show new parent indicator
+            [parentFullName, parentEmail, parentPhone, parentAddress].forEach(field => {
+                field.addEventListener('input', function() {
+                    if (!field.hasAttribute('readonly')) {
+                        const hasData = parentFullName.value || parentEmail.value || parentPhone.value || parentAddress.value;
+                        if (hasData && parentSelect.value === '') {
+                            newParentIndicator.style.display = 'block';
+                            existingParentIndicator.style.display = 'none';
+                            parentNameRequired.style.display = 'inline';
+                            parentEmailRequired.style.display = 'inline';
+                        }
+                    }
+                });
+            });
+
+            // Clear parent selection when manually editing email field
+            parentEmail.addEventListener('focus', function() {
+                if (!parentEmail.hasAttribute('readonly') && parentSelect.value !== '') {
+                    if (confirm('Do you want to clear the selected parent and create a new one instead?')) {
+                        parentSelect.value = '';
+                        clearParentFields();
+                    }
+                }
+            });
         })();
     </script>
 }

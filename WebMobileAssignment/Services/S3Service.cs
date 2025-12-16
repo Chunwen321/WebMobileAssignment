@@ -1,6 +1,7 @@
 using Amazon.S3;
 using Amazon.S3.Transfer;
 using Amazon.Runtime;
+using Amazon.S3.Model;
 
 namespace WebMobileAssignment.Services;
 
@@ -48,15 +49,57 @@ public class S3Service
         // Generate unique filename
         var fileName = $"profiles/{userId}_{Guid.NewGuid()}{extension}";
 
-        // Upload to S3
+        // Upload to S3 with public-read ACL
         using var stream = file.OpenReadStream();
         var uploadRequest = new TransferUtilityUploadRequest
         {
             InputStream = stream,
             Key = fileName,
             BucketName = _bucketName,
-            ContentType = file.ContentType
-            // Removed CannedACL - using bucket policy instead
+            ContentType = file.ContentType,
+            CannedACL = S3CannedACL.PublicRead // Make file publicly readable
+        };
+
+        var transferUtility = new TransferUtility(_s3Client);
+        await transferUtility.UploadAsync(uploadRequest);
+
+        // Return public URL
+        return $"https://{_bucketName}.s3.ap-southeast-1.amazonaws.com/{fileName}";
+    }
+
+    /// <summary>
+    /// Upload a document file (PDF, DOC, images) to S3 and return the public URL
+    /// For leave applications and other document uploads
+    /// </summary>
+    public async Task<string> UploadDocumentAsync(IFormFile file, string folderPath)
+    {
+        // Validate file
+        if (file == null || file.Length == 0)
+            throw new ArgumentException("File is empty");
+
+        // Validate file type (images and documents)
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        
+        if (!allowedExtensions.Contains(extension))
+            throw new ArgumentException($"Invalid file type. Allowed: {string.Join(", ", allowedExtensions.Select(e => e.TrimStart('.')))}");
+
+        // Validate file size (max 5 MB)
+        if (file.Length > 5 * 1024 * 1024)
+            throw new ArgumentException("File size must not exceed 5 MB");
+
+        // Generate unique filename
+        var fileName = $"{folderPath}/{Guid.NewGuid()}{extension}";
+
+        // Upload to S3 with public-read ACL
+        using var stream = file.OpenReadStream();
+        var uploadRequest = new TransferUtilityUploadRequest
+        {
+            InputStream = stream,
+            Key = fileName,
+            BucketName = _bucketName,
+            ContentType = file.ContentType,
+            CannedACL = S3CannedACL.PublicRead // Make file publicly readable
         };
 
         var transferUtility = new TransferUtility(_s3Client);

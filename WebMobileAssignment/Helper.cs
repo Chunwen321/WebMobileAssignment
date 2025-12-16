@@ -179,7 +179,7 @@ public class Helper(IWebHostEnvironment en,
              <li>Create a new secure password</li>
          <li>Keep your new password safe and secure</li>
     </ol>
-     <div style='background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0'>
+     <div style='background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px, margin: 20px 0'>
            <p style='margin: 0; color: #721c24'><strong>🔒 Security Reminder:</strong></p>
    <p style='margin: 5px 0 0 0; color: #721c24'>If you did not request this password reset, please contact the administrator immediately at {cf["Smtp:User"]}.</p>
     </div>
@@ -187,7 +187,7 @@ public class Helper(IWebHostEnvironment en,
           <p style='color: #6c757d; font-size: 12px; margin: 0'>
          This is an automated email from the Tuition Attendance System. Please do not reply to this email.
                 </p>
-   <p style='color: #6c757d; font-size: 12px; margin: 5px 0 0 0'>
+   <p style='color: #6c757d; font-size: 12px, margin: 5px 0 0 0'>
           © {DateTime.Now.Year} Tuition Attendance System. All rights reserved.
                 </p>
             </div>
@@ -195,6 +195,182 @@ public class Helper(IWebHostEnvironment en,
     </body>
 </html>",
                 IsBodyHtml = true
+        };
+
+        SendEmail(mailMessage);
+    }
+
+    public void SendPasswordChangeConfirmationEmail(string toEmail, string userName)
+    {
+        var baseUrl = cf["AppBaseUrl"];
+        
+        if (!string.IsNullOrEmpty(baseUrl))
+        {
+            Console.WriteLine($"✅ Using configured AppBaseUrl: {baseUrl}");
+        }
+        
+        // If not in config, try to get from HTTP context
+        if (string.IsNullOrEmpty(baseUrl) && ct.HttpContext != null)
+        {
+            var request = ct.HttpContext.Request;
+            baseUrl = $"{request.Scheme}://{request.Host}";
+            Console.WriteLine($"✅ Auto-detected URL from HTTP context: {baseUrl}");
+        }
+        
+        // Fallback to localhost with HTTPS (port 7106 is default for .NET HTTPS)
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            baseUrl = "https://localhost:7106";
+            Console.WriteLine($"⚠️ Using fallback URL: {baseUrl}");
+        }
+        
+        var loginUrl = $"{baseUrl}/Account/Login";
+        
+        var mailMessage = new MailMessage
+        {
+            To = { toEmail },
+            Subject = "Password Changed - Tuition Attendance System",
+            Body = $@"
+<html>
+  <body style='font-family: Arial, sans-serif;'>
+    <div style='max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+      <div style='background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1)'>
+        <h2 style='color: #495057; margin-bottom: 20px;'>Password Changed Successfully</h2>
+        <p>Hello <strong>{userName}</strong>,</p>
+        <p>Your password has been successfully changed for the Tuition Attendance System.</p>
+        
+        <div style='background-color: #d1ecf1; border-left: 4px solid #0c5460; padding: 15px; margin: 20px 0'>
+          <p style='margin: 0; color: #0c5460'><strong>✓ Confirmation:</strong></p>
+          <p style='margin: 5px 0 0 0; color: #0c5460'>Your password was updated on {DateTime.Now:MMMM dd, yyyy} at {DateTime.Now:hh:mm tt}.</p>
+        </div>
+
+        <div style='background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0'>
+          <p style='margin: 0; color: #721c24'><strong>🔒 Security Notice:</strong></p>
+          <p style='margin: 5px 0 0 0; color: #721c24'>If you did not make this change, please contact the administrator immediately at {cf["Smtp:User"]}.</p>
+        </div>
+
+        <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;'>
+          <a href='{loginUrl}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;'>
+            Login Now
+          </a>
+        </div>
+
+        <hr style='margin: 30px 0; border: none; border-top: 1px solid #dee2e6'>
+        <p style='color: #6c757d; font-size: 12px; margin: 0; text-align: center;'>
+          This is an automated email from the Tuition Attendance System. Please do not reply to this email.
+        </p>
+        <p style='color: #6c757d; font-size: 12px; margin: 5px 0 0 0; text-align: center;'>
+          © {DateTime.Now.Year} Tuition Attendance System. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>",
+            IsBodyHtml = true
+        };
+
+        SendEmail(mailMessage);
+    }
+
+    public void SendWelcomeEmail(string toEmail, string userName, string userType, string defaultPassword)
+    {
+        // Try to get base URL from configuration, or construct from HTTP context
+        var baseUrl = cf["AppBaseUrl"];
+        
+        if (!string.IsNullOrEmpty(baseUrl))
+        {
+            Console.WriteLine($"✅ Using configured AppBaseUrl: {baseUrl}");
+        }
+        
+        // If not in config, try to get from HTTP context
+        if (string.IsNullOrEmpty(baseUrl) && ct.HttpContext != null)
+        {
+            var request = ct.HttpContext.Request;
+            baseUrl = $"{request.Scheme}://{request.Host}";
+            Console.WriteLine($"✅ Auto-detected URL from HTTP context: {baseUrl}");
+        }
+        
+        // Fallback to localhost with HTTPS (port 7106 is default for .NET HTTPS)
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            baseUrl = "https://localhost:7106";
+            Console.WriteLine($"⚠️ Using fallback URL: {baseUrl}");
+        }
+        
+        var resetPasswordUrl = $"{baseUrl}/Account/SetNewPassword";
+        var loginUrl = $"{baseUrl}/Account/Login";
+        
+        var mailMessage = new MailMessage
+        {
+            To = { toEmail },
+            Subject = $"Welcome to Tuition Attendance System - {userType} Account Created",
+            Body = $@"
+<html>
+  <body style='font-family: Arial, sans-serif;'>
+    <div style='max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+      <div style='background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1)'>
+        <div style='text-align: center; margin-bottom: 30px;'>
+          <h1 style='color: #495057; margin-bottom: 10px;'>Welcome to Tuition Attendance System!</h1>
+          <p style='color: #6c757d; font-size: 14px; margin: 0;'>Your {userType} account has been successfully created</p>
+        </div>
+        
+        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; margin: 20px 0;'>
+          <p style='color: white; margin: 0 0 10px 0; font-size: 14px;'>Hello <strong>{userName}</strong>,</p>
+          <p style='color: white; margin: 0; font-size: 14px;'>Your account credentials have been set up. Please find your login information below.</p>
+        </div>
+
+        <div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+          <h3 style='color: #495057; margin: 0 0 15px 0; font-size: 16px;'>Login Credentials</h3>
+          <table style='width: 100%; border-collapse: collapse;'>
+            <tr>
+              <td style='padding: 8px 0; color: #6c757d; font-size: 14px;'><strong>Email:</strong></td>
+              <td style='padding: 8px 0; color: #495057; font-size: 14px;'>{toEmail}</td>
+            </tr>
+            <tr>
+              <td style='padding: 8px 0; color: #6c757d; font-size: 14px;'><strong>Temporary Password:</strong></td>
+              <td style='padding: 8px 0;'>
+                <code style='background-color: #e9ecef; padding: 5px 10px; border-radius: 4px; font-family: monospace; color: #dc3545; font-size: 14px;'>{defaultPassword}</code>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div style='background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;'>
+          <p style='margin: 0; color: #856404; font-size: 14px;'><strong>⚠️ Important Security Notice:</strong></p>
+          <p style='margin: 5px 0 0 0; color: #856404; font-size: 13px;'>For your security, we strongly recommend changing your password immediately after your first login.</p>
+        </div>
+
+        <h3 style='color: #495057; margin-top: 30px; font-size: 16px;'>How to Get Started:</h3>
+        <ol style='line-height: 1.8; color: #495057; font-size: 14px;'>
+          <li>Visit the login page: <a href='{loginUrl}' style='color: #667eea; text-decoration: none;'>{loginUrl}</a></li>
+          <li>Log in using your email and the temporary password above</li>
+          <li>Navigate to your profile settings to change your password</li>
+          <li>Or use the Forgot Password link below to set a new password immediately</li>
+        </ol>
+
+        <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;'>
+          <a href='{resetPasswordUrl}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;'>
+            Reset Password Now
+          </a>
+        </div>
+
+        <div style='background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px, margin: 30px 0 20px 0'>
+          <p style='margin: 0; color: #721c24; font-size: 13px;'><strong>🔒 Security Reminder:</strong></p>
+          <p style='margin: 5px 0 0 0; color: #721c24; font-size: 12px;'>Never share your password with anyone. If you did not expect this email, please contact the administrator immediately at {cf["Smtp:User"]}.</p>
+        </div>
+
+        <hr style='margin: 30px 0; border: none; border-top: 1px solid #dee2e6;'>
+        <p style='color: #6c757d; font-size: 12px; margin: 0; text-align: center;'>
+          This is an automated email from the Tuition Attendance System. Please do not reply to this email.
+        </p>
+        <p style='color: #6c757d; font-size: 12px; margin: 5px 0 0 0; text-align: center;'>
+          © {DateTime.Now.Year} Tuition Attendance System. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>",
+            IsBodyHtml = true
         };
 
         SendEmail(mailMessage);

@@ -43,21 +43,80 @@ namespace WebMobileAssignment.Controllers
             return View("StudDashboard", student);
         }
 
+<<<<<<< Updated upstream
         // Attendance History
         public async Task<IActionResult> StudAttendanceHistory()
+=======
+        public async Task<IActionResult> StudAttendanceHistory(string filterClass, string filterMonth, string filterStatus, string tableSearch)
+>>>>>>> Stashed changes
         {
             var student = await GetCurrentStudent();
             if (student == null)
                 return RedirectToAction("Login", "Account");
 
+<<<<<<< Updated upstream
             var attendances = await _context.Attendances
                 .Include(a => a.Class)
                 .Where(a => a.StudentId == student.StudentId)
+=======
+            // Base query for current student's attendance with related Class and Subject
+            var query = _context.Attendances
+                .Include(a => a.Class)
+                    .ThenInclude(c => c.Subject)
+                .Where(a => a.StudentId == student.StudentId)
+                .AsQueryable();
+
+            // Filter by class name
+            if (!string.IsNullOrWhiteSpace(filterClass))
+            {
+                var fc = filterClass.Trim();
+                query = query.Where(a => a.Class != null && a.Class.ClassName == fc);
+            }
+
+            // Filter by status
+            if (!string.IsNullOrWhiteSpace(filterStatus))
+            {
+                var fs = filterStatus.Trim();
+                query = query.Where(a => a.Status == fs);
+            }
+
+            // Filter by month (expecting "yyyy-MM")
+            if (!string.IsNullOrWhiteSpace(filterMonth))
+            {
+                // parse using yyyy-MM by appending -01
+                if (DateTime.TryParseExact(filterMonth + "-01", "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out var firstOfMonth))
+                {
+                    var start = new DateTime(firstOfMonth.Year, firstOfMonth.Month, 1);
+                    var end = start.AddMonths(1);
+                    query = query.Where(a => a.Date >= start && a.Date < end);
+                }
+            }
+
+            // Free-text search against class name or subject name
+            if (!string.IsNullOrWhiteSpace(tableSearch))
+            {
+                var s = tableSearch.Trim();
+                query = query.Where(a =>
+                    (a.Class != null && a.Class.ClassName.Contains(s)) ||
+                    (a.Class != null && a.Class.Subject != null && a.Class.Subject.SubjectName.Contains(s)) ||
+                    a.Status.Contains(s));
+            }
+
+            var attendances = await query
+>>>>>>> Stashed changes
                 .OrderByDescending(a => a.Date)
                 .ToListAsync();
 
             ViewBag.ActiveMenu = "Attendance";
+<<<<<<< Updated upstream
             ViewBag.ActiveSubmenu = "History";
+=======
+            ViewBag.ActiveSubmenu = "StudAttendanceHistory";
+            return View("StudAttendanceHistory", attendances);
+>>>>>>> Stashed changes
             return View("StudAttendanceHistory", attendances);
         }
 

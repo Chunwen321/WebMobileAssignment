@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebMobileAssignment.Models;
 
@@ -11,13 +12,15 @@ using WebMobileAssignment.Models;
 namespace WebMobileAssignment.Migrations
 {
     [DbContext(typeof(DB))]
-    partial class DBModelSnapshot : ModelSnapshot
+    [Migration("20251216165701_remark")]
+    partial class remark
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.11")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -80,6 +83,49 @@ namespace WebMobileAssignment.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("Attendances");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.AttendanceSession", b =>
+                {
+                    b.Property<string>("SessionId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ClassId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("CreatedByTeacherId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PinCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
+
+                    b.Property<string>("SessionType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("SessionId");
+
+                    b.HasIndex("ClassId");
+
+                    b.HasIndex("CreatedByTeacherId");
+
+                    b.ToTable("AttendanceSessions");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Class", b =>
@@ -394,6 +440,10 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("ProfilePicture")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -446,6 +496,23 @@ namespace WebMobileAssignment.Migrations
                     b.Navigation("MarkedByTeacher");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.AttendanceSession", b =>
+                {
+                    b.HasOne("WebMobileAssignment.Models.Class", "Class")
+                        .WithMany()
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebMobileAssignment.Models.Teacher", "CreatedByTeacher")
+                        .WithMany()
+                        .HasForeignKey("CreatedByTeacherId");
+
+                    b.Navigation("Class");
+
+                    b.Navigation("CreatedByTeacher");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Class", b =>

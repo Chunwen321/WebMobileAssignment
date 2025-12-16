@@ -114,7 +114,36 @@ namespace WebMobileAssignment.Controllers
                 parentId = parent.ParentId,
                 fullName = parent.User.FullName,
                 email = parent.User.Email,
-                phone = parent.PhoneNumber ?? ""
+                phone = parent.PhoneNumber ?? "",
+                address = parent.Address ?? "",
+                dob = parent.User.DateOfBirth?.ToString("yyyy-MM-dd") ?? "",
+                gender = parent.User.Gender ?? ""
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetParentById(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return Json(new { success = false });
+
+            var parent = await _context.Parents
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.ParentId == id);
+
+            if (parent == null)
+                return Json(new { success = false });
+
+            return Json(new
+            {
+                success = true,
+                parentId = parent.ParentId,
+                fullName = parent.User.FullName,
+                email = parent.User.Email,
+                phone = parent.PhoneNumber ?? "",
+                address = parent.Address ?? "",
+                dob = parent.User.DateOfBirth?.ToString("yyyy-MM-dd") ?? "",
+                gender = parent.User.Gender ?? ""
             });
         }
 
@@ -123,8 +152,9 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> StudentCreate(string fullName, string email,
             string parentId, List<string>? classIds, DateTime? dateOfBirth, string gender,
             string? phoneNumber, string status, bool isActive, DateTime? enrollmentDate,
-            // New parent fields
-            string newParentFullName, string newParentEmail, string newParentPassword, string newParentPhone)
+            // New parent fields - matching database columns
+            string newParentFullName, string newParentEmail, string newParentPhone, 
+            string newParentAddress, DateTime? newParentDateOfBirth, string newParentGender)
         {
             // If parentId is empty and newParentEmail provided, we'll create a parent
             if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
@@ -174,16 +204,22 @@ namespace WebMobileAssignment.Controllers
             {
                 if (string.IsNullOrWhiteSpace(newParentFullName))
                     ModelState.AddModelError("newParentFullName", "Parent full name is required when creating a new parent");
-                // Remove password validation for new parent
-                ModelState.Remove("newParentPassword");
+                
+                // Remove validation for optional parent fields
+                ModelState.Remove("newParentPhone");
+                ModelState.Remove("newParentAddress");
+                ModelState.Remove("newParentDateOfBirth");
+                ModelState.Remove("newParentGender");
             }
             else
             {
                 // If we have a parentId (existing parent), remove validation errors for new parent fields
                 ModelState.Remove("newParentFullName");
                 ModelState.Remove("newParentEmail");
-                ModelState.Remove("newParentPassword");
                 ModelState.Remove("newParentPhone");
+                ModelState.Remove("newParentAddress");
+                ModelState.Remove("newParentDateOfBirth");
+                ModelState.Remove("newParentGender");
             }
 
             // Validate class capacity
@@ -213,23 +249,28 @@ namespace WebMobileAssignment.Controllers
             {
                 try
                 {
-                    // Default password for all new users
-                    const string defaultPassword = "WkCwSbZx123@";
+                    // Generate random temporary password for new user
+                    var temporaryPassword = _helper.RandomPassword();
 
                     // If need to create new parent
                     if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
                     {
-                        // create parent user and parent
+                        // create parent user and parent with all fields
                         var parentCount = await _context.Parents.CountAsync();
                         var parentUserId = $"PARENT{(parentCount + 1):D3}";
                         var parentIdGen = parentUserId;
+
+                        var parentTempPassword = _helper.RandomPassword();
 
                         var parentUser = new User
                         {
                             UserId = parentUserId,
                             FullName = newParentFullName,
                             Email = newParentEmail,
-                            PasswordHash = _helper.HashPassword(defaultPassword),
+                            PasswordHash = _helper.HashPassword(parentTempPassword),
+                            PhoneNumber = newParentPhone, // Include phone in User table
+                            DateOfBirth = newParentDateOfBirth, // Include date of birth
+                            Gender = newParentGender, // Include gender
                             UserType = "Parent",
                             CreatedDate = DateTime.Now,
                             Status = "active",
@@ -241,12 +282,24 @@ namespace WebMobileAssignment.Controllers
                         {
                             ParentId = parentIdGen,
                             UserId = parentUserId,
-                            PhoneNumber = newParentPhone
+                            PhoneNumber = newParentPhone, // Also store in Parent table
+                            Address = newParentAddress // Store address in Parent table
                         };
                         _context.Parents.Add(parent);
 
                         // Save to get parent in DB
                         await _context.SaveChangesAsync();
+
+                        // Send welcome email to new parent
+                        try
+                        {
+                            _helper.SendWelcomeEmail(newParentEmail, newParentFullName, "Parent", parentTempPassword);
+                        }
+                        catch (Exception emailEx)
+                        {
+                            Console.WriteLine($"Warning: Failed to send welcome email to {newParentEmail}: {emailEx.Message}");
+                            // Don't fail the operation if email fails
+                        }
 
                         parentId = parent.ParentId;
                     }
@@ -255,13 +308,13 @@ namespace WebMobileAssignment.Controllers
                     var userId = IdGenerator.GenerateUserId(_context);
                     var studentId = IdGenerator.GenerateStudentId(_context);
 
-                    // Create User with all fields - using default password
+                    // Create User with all fields - using random temporary password
                     var user = new User
                     {
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-                        PasswordHash = _helper.HashPassword(defaultPassword),
+                        PasswordHash = _helper.HashPassword(temporaryPassword),
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -286,6 +339,17 @@ namespace WebMobileAssignment.Controllers
                     _context.Students.Add(student);
 
                     await _context.SaveChangesAsync();
+
+                    // Send welcome email to student
+                    try
+                    {
+                        _helper.SendWelcomeEmail(email, fullName, "Student", temporaryPassword);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        Console.WriteLine($"Warning: Failed to send welcome email to {email}: {emailEx.Message}");
+                        // Don't fail the operation if email fails
+                    }
 
                     // Create enrollment entries for all selected classes and update capacity
                     int enrolledCount = 0;
@@ -314,7 +378,7 @@ namespace WebMobileAssignment.Controllers
                         await _context.SaveChangesAsync();
                     }
 
-                    TempData["SuccessMessage"] = $"Student '{fullName}' added successfully with {enrolledCount} class enrollment(s)! Default password: WkCwSbZx123@";
+                    TempData["SuccessMessage"] = $"Student '{fullName}' added successfully with {enrolledCount} class enrollment(s)! A temporary password has been sent to {email}.";
 
                     return RedirectToAction(nameof(StudentIndex));
                 }
@@ -690,20 +754,20 @@ namespace WebMobileAssignment.Controllers
             {
                 try
                 {
-                    // Default password for all new users
-                    const string defaultPassword = "WkCwSbZx123@";
+                    // Generate random temporary password for new teacher
+                    var temporaryPassword = _helper.RandomPassword();
 
                     var teacherCount = await _context.Teachers.CountAsync();
                     var userId = $"TEACH{(teacherCount + 1):D3}";
                     var teacherId = userId;
 
-                    // Create User with all fields including optional ones - using default password
+                    // Create User with all fields including optional ones - using random temporary password
                     var user = new User
                     {
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-                        PasswordHash = _helper.HashPassword(defaultPassword),
+                        PasswordHash = _helper.HashPassword(temporaryPassword),
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -730,7 +794,19 @@ namespace WebMobileAssignment.Controllers
                     _context.Teachers.Add(teacher);
 
                     await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = $"Teacher '{fullName}' added successfully! Default password: WkCwSbZx123@";
+                    
+                    // Send welcome email to teacher
+                    try
+                    {
+                        _helper.SendWelcomeEmail(email, fullName, "Teacher", temporaryPassword);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        Console.WriteLine($"Warning: Failed to send welcome email to {email}: {emailEx.Message}");
+                        // Don't fail the operation if email fails
+                    }
+                    
+                    TempData["SuccessMessage"] = $"Teacher '{fullName}' added successfully! A temporary password has been sent to {email}.";
                     return RedirectToAction(nameof(TeacherIndex));
                 }
                 catch (Exception ex)
@@ -1026,8 +1102,8 @@ namespace WebMobileAssignment.Controllers
             {
                 try
                 {
-                    // Default password for all new users
-                    const string defaultPassword = "WkCwSbZx123@";
+                    // Generate random temporary password for new parent
+                    var temporaryPassword = _helper.RandomPassword();
 
                     // Generate proper User ID format
                     var userCount = await _context.Users.CountAsync();
@@ -1042,7 +1118,7 @@ namespace WebMobileAssignment.Controllers
                         UserId = userId,
                         FullName = fullName,
                         Email = email,
-                        PasswordHash = _helper.HashPassword(defaultPassword),
+                        PasswordHash = _helper.HashPassword(temporaryPassword),
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
@@ -1063,7 +1139,19 @@ namespace WebMobileAssignment.Controllers
                     _context.Parents.Add(parent);
 
                     await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = $"Parent '{fullName}' added successfully! Default password: WkCwSbZx123@";
+                    
+                    // Send welcome email to parent
+                    try
+                    {
+                        _helper.SendWelcomeEmail(email, fullName, "Parent", temporaryPassword);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        Console.WriteLine($"Warning: Failed to send welcome email to {email}: {emailEx.Message}");
+                        // Don't fail the operation if email fails
+                    }
+                    
+                    TempData["SuccessMessage"] = $"Parent '{fullName}' added successfully! A temporary password has been sent to {email}.";
                     return RedirectToAction(nameof(ParentIndex));
                 }
                 catch (Exception ex)

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebMobileAssignment.Models;
 
@@ -11,13 +12,15 @@ using WebMobileAssignment.Models;
 namespace WebMobileAssignment.Migrations
 {
     [DbContext(typeof(DB))]
-    partial class DBModelSnapshot : ModelSnapshot
+    [Migration("20251216160849_addLeave")]
+    partial class addLeave
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.11")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -80,6 +83,49 @@ namespace WebMobileAssignment.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("Attendances");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.AttendanceSession", b =>
+                {
+                    b.Property<string>("SessionId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ClassId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("CreatedByTeacherId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PinCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
+
+                    b.Property<string>("SessionType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("SessionId");
+
+                    b.HasIndex("ClassId");
+
+                    b.HasIndex("CreatedByTeacherId");
+
+                    b.ToTable("AttendanceSessions");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Class", b =>
@@ -152,26 +198,52 @@ namespace WebMobileAssignment.Migrations
 
             modelBuilder.Entity("WebMobileAssignment.Models.LeaveApplication", b =>
                 {
-                    b.Property<string>("LeaveId")
+                    b.Property<string>("LeaveApplicationId")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("ApplicationDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DocumentPaths")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                    b.Property<string>("EmergencyContact")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("EmergencyPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsNotified")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LeaveType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ProofDocument")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<string>("Remarks")
+                    b.Property<string>("ReviewedBy")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("ReviewedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewerRemarks")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -186,16 +258,102 @@ namespace WebMobileAssignment.Migrations
                     b.Property<int>("TotalDays")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.HasKey("LeaveId");
+                    b.Property<string>("UserType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("LeaveApplicationId");
+
+                    b.HasIndex("ReviewedBy");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("LeaveApplications");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.LeaveBalance", b =>
+                {
+                    b.Property<string>("LeaveBalanceId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RemainingLeave")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalLeave")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsedLeave")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("LeaveBalanceId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("LeaveBalances");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.LeaveDocument", b =>
+                {
+                    b.Property<string>("DocumentId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("LeaveApplicationId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UploadedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("DocumentId");
+
+                    b.HasIndex("LeaveApplicationId");
+
+                    b.ToTable("LeaveDocuments");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Notification", b =>
@@ -394,6 +552,10 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("ProfilePicture")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -448,6 +610,23 @@ namespace WebMobileAssignment.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("WebMobileAssignment.Models.AttendanceSession", b =>
+                {
+                    b.HasOne("WebMobileAssignment.Models.Class", "Class")
+                        .WithMany()
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebMobileAssignment.Models.Teacher", "CreatedByTeacher")
+                        .WithMany()
+                        .HasForeignKey("CreatedByTeacherId");
+
+                    b.Navigation("Class");
+
+                    b.Navigation("CreatedByTeacher");
+                });
+
             modelBuilder.Entity("WebMobileAssignment.Models.Class", b =>
                 {
                     b.HasOne("WebMobileAssignment.Models.Subject", "Subject")
@@ -484,13 +663,42 @@ namespace WebMobileAssignment.Migrations
 
             modelBuilder.Entity("WebMobileAssignment.Models.LeaveApplication", b =>
                 {
+                    b.HasOne("WebMobileAssignment.Models.User", "Reviewer")
+                        .WithMany()
+                        .HasForeignKey("ReviewedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("WebMobileAssignment.Models.User", "User")
                         .WithMany("LeaveApplications")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Reviewer");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.LeaveBalance", b =>
+                {
+                    b.HasOne("WebMobileAssignment.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.LeaveDocument", b =>
+                {
+                    b.HasOne("WebMobileAssignment.Models.LeaveApplication", "LeaveApplication")
+                        .WithMany("Documents")
+                        .HasForeignKey("LeaveApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LeaveApplication");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Notification", b =>
@@ -555,6 +763,11 @@ namespace WebMobileAssignment.Migrations
                     b.Navigation("Attendances");
 
                     b.Navigation("Enrollments");
+                });
+
+            modelBuilder.Entity("WebMobileAssignment.Models.LeaveApplication", b =>
+                {
+                    b.Navigation("Documents");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Parent", b =>
