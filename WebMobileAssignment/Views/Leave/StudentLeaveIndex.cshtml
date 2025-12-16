@@ -1,0 +1,163 @@
+@model IEnumerable<WebMobileAssignment.Models.LeaveApplication>
+@{
+    ViewBag.Title = "My Leave Applications";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>@TempData["SuccessMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3><i class="bi bi-calendar-check text-danger me-2"></i> My Leave Applications</h3>
+                    <p class="text-muted">View and manage your leave requests</p>
+                </div>
+                <a asp-action="StudentApplyLeave" class="btn btn-danger">
+                    <i class="bi bi-plus-circle"></i> Apply for Leave
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h3 class="text-primary mb-0">@Model.Count()</h3>
+                    <small class="text-muted">Total Applications</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h3 class="text-warning mb-0">@Model.Count(l => l.Status == "Pending")</h3>
+                    <small class="text-muted">Pending</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h3 class="text-success mb-0">@Model.Count(l => l.Status == "Approved")</h3>
+                    <small class="text-muted">Approved</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h3 class="text-danger mb-0">@Model.Count(l => l.Status == "Rejected")</h3>
+                    <small class="text-muted">Rejected</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave Applications List -->
+    <div class="row">
+        @if (Model.Any())
+        {
+            @foreach (var leave in Model)
+            {
+                var statusBadge = leave.Status switch
+                {
+                    "Approved" => "success",
+                    "Rejected" => "danger",
+                    "Pending" => "warning",
+                    _ => "secondary"
+                };
+
+                var statusIcon = leave.Status switch
+                {
+                    "Approved" => "check-circle-fill",
+                    "Rejected" => "x-circle-fill",
+                    "Pending" => "hourglass-split",
+                    _ => "question-circle-fill"
+                };
+
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-@statusBadge text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="bi bi-@statusIcon me-2"></i>
+                                    <strong>@leave.Status</strong>
+                                </span>
+                                <span class="badge bg-light text-dark">@leave.LeaveId</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-calendar-range text-danger me-2"></i>
+                                @leave.StartDate.ToString("dd MMM yyyy") - @leave.EndDate.ToString("dd MMM yyyy")
+                            </h6>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-clock me-1"></i>
+                                <strong>@leave.TotalDays day(s)</strong>
+                            </p>
+                            
+                            <div class="mb-3">
+                                <strong>Reason:</strong>
+                                <p class="mb-0">
+                                    @if (leave.Reason.Length > 100)
+                                    {
+                                        @leave.Reason.Substring(0, 100)<text>...</text>
+                                    }
+                                    else
+                                    {
+                                        @leave.Reason
+                                    }
+                                </p>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(leave.DocumentPaths))
+                            {
+                                <p class="mb-2">
+                                    <i class="bi bi-paperclip text-success me-1"></i>
+                                    <strong>Documents attached</strong>
+                                </p>
+                            }
+
+                            <hr />
+
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>
+                                Applied on @leave.CreatedDate.ToString("dd MMM yyyy, hh:mm tt")
+                            </small>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a asp-action="StudentLeaveDetails" asp-route-id="@leave.LeaveId" class="btn btn-sm btn-outline-primary w-100">
+                                <i class="bi bi-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+                        <h5 class="mt-3 text-muted">No Leave Applications Yet</h5>
+                        <p class="text-muted">You haven't submitted any leave applications.</p>
+                        <a asp-action="StudentApplyLeave" class="btn btn-danger mt-2">
+                            <i class="bi bi-plus-circle"></i> Apply for Leave Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

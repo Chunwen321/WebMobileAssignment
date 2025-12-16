@@ -91,6 +91,84 @@ namespace WebMobileAssignment.Controllers
             }
         }
 
+        // GET: /Account/SetNewPassword
+        public IActionResult SetNewPassword()
+        {
+            return View();
+        }
+
+        // POST: /Account/SetNewPassword
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetNewPassword(string email, string newPassword, string confirmPassword)
+        {
+            // Validate input
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ViewBag.ErrorMessage = "Please enter your email address.";
+                return View();
+            }
+
+            if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
+            {
+                ViewBag.ErrorMessage = "Please enter both password fields.";
+                return View();
+            }
+
+            // Verify passwords match
+            if (newPassword != confirmPassword)
+            {
+                ViewBag.ErrorMessage = "Passwords do not match.";
+                return View();
+            }
+
+            // Verify password length
+            if (newPassword.Length < 8)
+            {
+                ViewBag.ErrorMessage = "Password must be at least 8 characters long.";
+                return View();
+            }
+
+            try
+            {
+                // Find user by email
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+                // For security reasons, show generic message even if user not found
+                if (user == null || !user.IsActive)
+                {
+                    ViewBag.ErrorMessage = "Unable to update password. Please verify your email address or contact support.";
+                    return View();
+                }
+
+                // Hash and update new password
+                user.PasswordHash = _helper.HashPassword(newPassword);
+                await _context.SaveChangesAsync();
+
+                ViewBag.SuccessMessage = "Password has been set successfully! You can now login with your new password.";
+                
+                // Optionally, send a confirmation email
+                try
+                {
+                    _helper.SendPasswordChangeConfirmationEmail(email, user.FullName);
+                }
+                catch (Exception emailEx)
+                {
+                    Console.WriteLine($"Confirmation email failed: {emailEx.Message}");
+                    // Don't show error to user since password was changed successfully
+                }
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Set password error: {ex.Message}");
+                ViewBag.ErrorMessage = "An error occurred while setting your password. Please try again later.";
+                return View();
+            }
+        }
+
         // POST: /Account/Login
         [HttpPost]
         public async Task<IActionResult> Login(string email, string password, string? recaptchaToken, bool rememberMe = false)

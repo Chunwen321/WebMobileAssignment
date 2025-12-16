@@ -1,0 +1,376 @@
+@model IEnumerable<WebMobileAssignment.Models.LeaveApplication>
+@{
+    ViewBag.Title = "Leave Management";
+    ViewBag.ActiveMenu = "LeaveManagement";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>@TempData["SuccessMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>@TempData["ErrorMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="bi bi-calendar-x text-danger me-2"></i>
+                    Leave Management
+                </h2>
+                <p class="text-muted">Manage student leave applications</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Total Applications</div>
+                    <div class="stat-value text-primary">@ViewBag.TotalApplications</div>
+                </div>
+                <div class="card-icon blue">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-inbox me-1"></i>
+                <span>All leave requests</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Pending Review</div>
+                    <div class="stat-value text-warning">@ViewBag.PendingCount</div>
+                </div>
+                <div class="card-icon yellow">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-clock-history me-1"></i>
+                <span>Awaiting action</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Approved</div>
+                    <div class="stat-value text-success">@ViewBag.ApprovedCount</div>
+                </div>
+                <div class="card-icon green">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-arrow-up me-1"></i>
+                <span>Approved requests</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="stat-label">Rejected</div>
+                    <div class="stat-value text-danger">@ViewBag.RejectedCount</div>
+                </div>
+                <div class="card-icon red">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+            </div>
+            <div class="stat-change">
+                <i class="bi bi-arrow-down me-1"></i>
+                <span>Rejected requests</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter and Search -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-funnel"></i>
+                    Filter Leave Applications
+                </h5>
+            </div>
+            <form asp-action="LeaveIndex" method="get">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Search</label>
+                        <input type="text" name="search" class="form-control" placeholder="Student name, ID, Leave ID..." value="@ViewBag.SearchTerm">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="Pending" selected="@(ViewBag.SelectedStatus == "Pending")">Pending</option>
+                            <option value="Approved" selected="@(ViewBag.SelectedStatus == "Approved")">Approved</option>
+                            <option value="Rejected" selected="@(ViewBag.SelectedStatus == "Rejected")">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="startDate" class="form-control" value="@ViewBag.StartDate">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">End Date</label>
+                        <input type="date" name="endDate" class="form-control" value="@ViewBag.EndDate">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger flex-fill">
+                                <i class="bi bi-search"></i> Filter
+                            </button>
+                            <a asp-action="LeaveIndex" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Leave Applications Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-list-ul"></i>
+                    Leave Applications
+                </h5>
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Leave ID</th>
+                                <th>Student Name</th>
+                                <th>Student ID</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Total Days</th>
+                                <th>Reason</th>
+                                <th>Applied On</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var leave in Model)
+                            {
+                                var statusBadge = leave.Status switch
+                                {
+                                    "Approved" => "success",
+                                    "Rejected" => "danger",
+                                    "Pending" => "warning",
+                                    _ => "secondary"
+                                };
+
+                                var statusIcon = leave.Status switch
+                                {
+                                    "Approved" => "check-circle",
+                                    "Rejected" => "x-circle",
+                                    "Pending" => "hourglass-split",
+                                    _ => "question-circle"
+                                };
+
+                                <tr>
+                                    <td><strong>@leave.LeaveId</strong></td>
+                                    <td>@leave.User?.FullName</td>
+                                    <td>@leave.UserId</td>
+                                    <td>@leave.StartDate.ToString("dd MMM yyyy")</td>
+                                    <td>@leave.EndDate.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <span class="badge bg-info">@leave.TotalDays day(s)</span>
+                                    </td>
+                                    <td>
+                                        @if (leave.Reason.Length > 50)
+                                        {
+                                            <span title="@leave.Reason">@(leave.Reason.Substring(0, 50))...</span>
+                                        }
+                                        else
+                                        {
+                                            @leave.Reason
+                                        }
+                                    </td>
+                                    <td>@leave.CreatedDate.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <span class="badge bg-@statusBadge">
+                                            <i class="bi bi-@statusIcon me-1"></i>@leave.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="LeaveDetails" asp-route-id="@leave.LeaveId" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            @if (leave.Status == "Pending")
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-success" onclick="showApproveModal('@leave.LeaveId', '@leave.User?.FullName')" title="Approve">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="showRejectModal('@leave.LeaveId', '@leave.User?.FullName')" title="Reject">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            }
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteLeave('@leave.LeaveId', '@leave.User?.FullName')" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-3">No leave applications found</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Approve Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="approveForm" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="approveLeaveId" name="leaveId" />
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-check-circle me-2"></i>Approve Leave Application
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to approve the leave application for <strong id="approveStudentName"></strong>?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Remarks (Optional)</label>
+                        <textarea name="remarks" class="form-control" rows="3" placeholder="Add any comments or notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i>Approve
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="rejectForm" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="rejectLeaveId" name="leaveId" />
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="bi bi-x-circle me-2"></i>Reject Leave Application
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to reject the leave application for <strong id="rejectStudentName"></strong>?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Rejection (Optional)</label>
+                        <textarea name="remarks" class="form-control" rows="3" placeholder="Explain why the leave is being rejected..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-x-circle me-1"></i>Reject
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showApproveModal(leaveId, studentName) {
+            document.getElementById('approveLeaveId').value = leaveId;
+            document.getElementById('approveStudentName').textContent = studentName;
+            document.getElementById('approveForm').action = '@Url.Action("ApproveLeave", "Leave")';
+            new bootstrap.Modal(document.getElementById('approveModal')).show();
+        }
+
+        function showRejectModal(leaveId, studentName) {
+            document.getElementById('rejectLeaveId').value = leaveId;
+            document.getElementById('rejectStudentName').textContent = studentName;
+            document.getElementById('rejectForm').action = '@Url.Action("RejectLeave", "Leave")';
+            new bootstrap.Modal(document.getElementById('rejectModal')).show();
+        }
+
+        function deleteLeave(leaveId, studentName) {
+            if (confirm(`Are you sure you want to delete the leave application for ${studentName}? This action cannot be undone.`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '@Url.Action("LeaveDelete", "Leave")';
+                
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = leaveId;
+                
+                form.appendChild(tokenInput);
+                form.appendChild(idInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+}

@@ -1,0 +1,269 @@
+@using System.IO
+@using System.Linq
+@model WebMobileAssignment.Models.LeaveApplication
+@{
+    ViewBag.Title = "Leave Application Details";
+    
+    var documentUrls = ViewBag.DocumentUrls as List<string> ?? new List<string>();
+    
+    var statusBadge = Model.Status switch
+    {
+        "Approved" => "success",
+        "Rejected" => "danger",
+        "Pending" => "warning",
+        _ => "secondary"
+    };
+    
+    var statusIcon = Model.Status switch
+    {
+        "Approved" => "check-circle-fill",
+        "Rejected" => "x-circle-fill",
+        "Pending" => "hourglass-split",
+        _ => "question-circle-fill"
+    };
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="StudentLeaveIndex">My Leave</a></li>
+                    <li class="breadcrumb-item active">@Model.LeaveId</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <h3><i class="bi bi-calendar-event text-danger me-2"></i> Leave Application Details</h3>
+                <a asp-action="StudentLeaveIndex" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Status Card -->
+            <div class="card shadow mb-4 border-@statusBadge">
+                <div class="card-header bg-@statusBadge text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-@statusIcon me-2"></i>
+                        Application Status: @Model.Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Status == "Pending")
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Your application is being reviewed.</strong> You will be notified via email once a decision is made.
+                        </div>
+                    }
+                    else if (Model.Status == "Approved")
+                    {
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <strong>Your leave has been approved!</strong> This will be reflected in your attendance record.
+                        </div>
+                    }
+                    else if (Model.Status == "Rejected")
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-x-circle me-2"></i>
+                            <strong>Your leave application has been rejected.</strong> Please contact the administration for more information.
+                        </div>
+                    }
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Leave ID</label>
+                            <div class="fw-bold">@Model.LeaveId</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Application Date</label>
+                            <div class="fw-bold">@Model.CreatedDate.ToString("dd MMMM yyyy, hh:mm tt")</div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="text-muted small">Start Date</label>
+                            <div class="fw-bold">
+                                <i class="bi bi-calendar-event text-danger me-1"></i>
+                                @Model.StartDate.ToString("dd MMM yyyy")
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small">End Date</label>
+                            <div class="fw-bold">
+                                <i class="bi bi-calendar-event text-danger me-1"></i>
+                                @Model.EndDate.ToString("dd MMM yyyy")
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted small">Total Days</label>
+                            <div>
+                                <span class="badge bg-info fs-6">@Model.TotalDays day(s)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="mb-3">
+                        <label class="text-muted small">Reason for Leave</label>
+                        <div class="p-3 bg-light rounded">
+                            @Model.Reason
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Remarks))
+                    {
+                        <div class="mb-3">
+                            <label class="text-muted small">
+                                <i class="bi bi-chat-left-text me-1"></i>
+                                Admin Remarks
+                            </label>
+                            <div class="alert alert-@(Model.Status == "Approved" ? "success" : "warning") mb-0">
+                                <i class="bi bi-@(Model.Status == "Approved" ? "check-circle" : "info-circle") me-2"></i>
+                                <strong>@(Model.Status == "Approved" ? "Approved" : "Rejected"):</strong> @Model.Remarks
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Supporting Documents -->
+            @if (documentUrls.Any())
+            {
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-paperclip text-danger me-2"></i>
+                            Supporting Documents
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @for (int i = 0; i < documentUrls.Count; i++)
+                            {
+                                var docUrl = documentUrls[i];
+                                var fileName = docUrl.Split('/').Last();
+                                var extension = fileName.Contains('.') ? fileName.Substring(fileName.LastIndexOf('.')).ToLower() : "";
+                                var isImage = extension == ".jpg" || extension == ".jpeg" || extension == ".png";
+                                
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            @if (isImage)
+                                            {
+                                                <a href="@docUrl" target="_blank">
+                                                    <img src="@docUrl" class="img-fluid rounded mb-2" alt="Document @(i+1)" style="max-height: 150px; object-fit: cover;" />
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a href="@docUrl" target="_blank">
+                                                    <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 4rem;"></i>
+                                                </a>
+                                            }
+                                            <div class="mt-2">
+                                                <small class="text-muted d-block text-truncate" title="@fileName">
+                                                    Document @(i + 1)
+                                                </small>
+                                                <a href="@docUrl" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                                    <i class="bi bi-download"></i> View/Download
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Timeline -->
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history text-danger me-2"></i>
+                        Application Timeline
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Application Submitted</h6>
+                                <small class="text-muted">@Model.CreatedDate.ToString("dd MMM yyyy, hh:mm tt")</small>
+                                <p class="mb-0 mt-1">Your leave application was successfully submitted.</p>
+                            </div>
+                        </div>
+
+                        @if (Model.Status != "Pending")
+                        {
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-@statusBadge"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Application @Model.Status</h6>
+                                    <small class="text-muted">Reviewed by Administration</small>
+                                    <p class="mb-0 mt-1">
+                                        Your application has been @Model.Status.ToLower().
+                                    </p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 30px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -24px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+
+        .timeline-content {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+    </style>
+}
