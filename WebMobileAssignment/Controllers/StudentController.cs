@@ -43,22 +43,13 @@ namespace WebMobileAssignment.Controllers
             return View("StudDashboard", student);
         }
 
-<<<<<<< Updated upstream
         // Attendance History
-        public async Task<IActionResult> StudAttendanceHistory()
-=======
         public async Task<IActionResult> StudAttendanceHistory(string filterClass, string filterMonth, string filterStatus, string tableSearch)
->>>>>>> Stashed changes
         {
             var student = await GetCurrentStudent();
             if (student == null)
                 return RedirectToAction("Login", "Account");
 
-<<<<<<< Updated upstream
-            var attendances = await _context.Attendances
-                .Include(a => a.Class)
-                .Where(a => a.StudentId == student.StudentId)
-=======
             // Base query for current student's attendance with related Class and Subject
             var query = _context.Attendances
                 .Include(a => a.Class)
@@ -106,17 +97,11 @@ namespace WebMobileAssignment.Controllers
             }
 
             var attendances = await query
->>>>>>> Stashed changes
                 .OrderByDescending(a => a.Date)
                 .ToListAsync();
 
             ViewBag.ActiveMenu = "Attendance";
-<<<<<<< Updated upstream
-            ViewBag.ActiveSubmenu = "History";
-=======
             ViewBag.ActiveSubmenu = "StudAttendanceHistory";
-            return View("StudAttendanceHistory", attendances);
->>>>>>> Stashed changes
             return View("StudAttendanceHistory", attendances);
         }
 
