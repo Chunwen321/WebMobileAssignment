@@ -23,8 +23,8 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
 
     <div class="col-md-3">
         <div class="stat-card" style="border-left-color: #ffc107;">
-            <div class="stat-label">Total Late</div>
-            <div class="stat-value" id="lateCount">4%</div>
+            <div class="stat-label">Medical Leave</div>
+            <div class="stat-value" id="medicalLeaveCount">4%</div>
             <div class="stat-change positive"></div>
         </div>
     </div>
@@ -125,7 +125,7 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
                     <div class="p-3"
                          style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
                         <h4 class="mb-0" style="color: #ffc107;">4%</h4>
-                        <small class="text-muted">Late</small>
+                        <small class="text-muted">Medical Leave</small>
                     </div>
                 </div>
             </div>
@@ -226,23 +226,23 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
             // Read values
             const presentRaw = readValue('presentCount');
             const absentRaw = readValue('absentCount');
-            const lateRaw = readValue('lateCount');
+            const medicalLeaveRaw = readValue('medicalLeaveCount');
 
             // Detect if they are percentages or absolute numbers
-            const sum = presentRaw + absentRaw + lateRaw;
+            const sum = presentRaw + absentRaw + medicalLeaveRaw;
 
             let dataPercents;
 
             if (Math.abs(sum - 100) <= 1) {
                 // Values already percentages
-                dataPercents = [presentRaw, absentRaw, lateRaw];
+                dataPercents = [presentRaw, absentRaw, medicalLeaveRaw];
             } else {
                 // Convert absolute numbers to percentages
-                const total = presentRaw + absentRaw + lateRaw || 1;
+                const total = presentRaw + absentRaw + medicalLeaveRaw || 1;
                 dataPercents = [
                     Math.round((presentRaw / total) * 100),
                     Math.round((absentRaw / total) * 100),
-                    Math.round((lateRaw / total) * 100)
+                    Math.round((medicalLeaveRaw / total) * 100)
                 ];
             }
 
@@ -252,13 +252,13 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
             const chart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Present', 'Absent', 'Late'],
+                    labels: ['Present', 'Absent', 'Medical Leave'],
                     datasets: [{
                         data: dataPercents,
                         backgroundColor: [
                             'rgba(2, 161, 69, 0.95)',   // Present (green)
                             'rgba(220, 53, 69, 0.95)',  // Absent (red)
-                            'rgba(255, 193, 7, 0.95)'   // Late (yellow)
+                            'rgba(255, 193, 7, 0.95)'   // Medical Leave (amber / #ffc107)
                         ],
                         borderWidth: 0,
                         hoverOffset: 6

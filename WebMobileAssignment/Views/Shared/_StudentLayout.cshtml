@@ -61,6 +61,13 @@
                         <span>View Attendance History</span>
                     </a>
 
+                    <!-- Apply Medical Leave -->
+                    <a asp-controller="Student" asp-action="StudApplyMedicalLeave"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "ApplyMedicalLeave" ? "active" : "")">
+                        <i class="bi bi-journal-medical"></i>
+                        <span>Apply Medical Leave</span>
+                    </a>
+
                 </div>
             </div>
 
