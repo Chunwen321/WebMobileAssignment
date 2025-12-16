@@ -73,40 +73,73 @@ public class S3Service
     /// </summary>
     public async Task<string> UploadDocumentAsync(IFormFile file, string folderPath)
     {
+        Console.WriteLine($"[S3Service] Starting document upload - File: {file?.FileName}, Size: {file?.Length}");
+        
         // Validate file
         if (file == null || file.Length == 0)
+        {
+            Console.WriteLine("[S3Service] ERROR: File is null or empty");
             throw new ArgumentException("File is empty");
+        }
 
         // Validate file type (images and documents)
         var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx" };
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         
+        Console.WriteLine($"[S3Service] File extension: {extension}");
+        
         if (!allowedExtensions.Contains(extension))
+        {
+            Console.WriteLine($"[S3Service] ERROR: Invalid file type: {extension}");
             throw new ArgumentException($"Invalid file type. Allowed: {string.Join(", ", allowedExtensions.Select(e => e.TrimStart('.')))}");
+        }
 
         // Validate file size (max 5 MB)
         if (file.Length > 5 * 1024 * 1024)
+        {
+            Console.WriteLine($"[S3Service] ERROR: File too large: {file.Length} bytes");
             throw new ArgumentException("File size must not exceed 5 MB");
+        }
 
         // Generate unique filename
         var fileName = $"{folderPath}/{Guid.NewGuid()}{extension}";
+        Console.WriteLine($"[S3Service] Generated S3 key: {fileName}");
+        Console.WriteLine($"[S3Service] Bucket: {_bucketName}");
 
-        // Upload to S3 with public-read ACL
-        using var stream = file.OpenReadStream();
-        var uploadRequest = new TransferUtilityUploadRequest
+        try
         {
-            InputStream = stream,
-            Key = fileName,
-            BucketName = _bucketName,
-            ContentType = file.ContentType,
-            CannedACL = S3CannedACL.PublicRead // Make file publicly readable
-        };
+            // Upload to S3 with public-read ACL
+            using var stream = file.OpenReadStream();
+            var uploadRequest = new TransferUtilityUploadRequest
+            {
+                InputStream = stream,
+                Key = fileName,
+                BucketName = _bucketName,
+                ContentType = file.ContentType,
+                CannedACL = S3CannedACL.PublicRead // Make file publicly readable
+            };
 
-        var transferUtility = new TransferUtility(_s3Client);
-        await transferUtility.UploadAsync(uploadRequest);
+            Console.WriteLine($"[S3Service] Starting S3 upload - ContentType: {file.ContentType}");
+            
+            var transferUtility = new TransferUtility(_s3Client);
+            await transferUtility.UploadAsync(uploadRequest);
 
-        // Return public URL
-        return $"https://{_bucketName}.s3.ap-southeast-1.amazonaws.com/{fileName}";
+            // Return public URL
+            var publicUrl = $"https://{_bucketName}.s3.ap-southeast-1.amazonaws.com/{fileName}";
+            Console.WriteLine($"[S3Service] Upload successful! URL: {publicUrl}");
+            
+            return publicUrl;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[S3Service] UPLOAD FAILED: {ex.GetType().Name} - {ex.Message}");
+            Console.WriteLine($"[S3Service] Stack trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[S3Service] Inner exception: {ex.InnerException.Message}");
+            }
+            throw;
+        }
     }
 
     /// <summary>
