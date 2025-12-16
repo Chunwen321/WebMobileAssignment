@@ -1,3 +1,5 @@
+@model WebMobileAssignment.Models.Student
+
 @{
     ViewBag.Title = "Change Profile Settings";
     ViewBag.ActiveSubmenu = "Settings";
@@ -7,77 +9,93 @@
 <div class="row g-3">
     <!-- Account Settings -->
     <div class="col-lg-8">
-  <div class="dashboard-card settings-account-card">
-<div class="card-header-custom">
-    <h5 class="card-title">
-   <i class="bi bi-person-circle"></i>
-Account Settings
-  </h5>
-       </div>
+      <div class="dashboard-card settings-account-card">
+        <div class="card-header-custom">
+            <h5 class="card-title">
+               <i class="bi bi-person-circle"></i>
+               Account Settings
+            </h5>
+        </div>
 
-    <form>
- <div class="row g-3">
- <div class="col-md-6">
-     <label class="form-label">First Name</label>
- <input type="text" class="form-control" value="Robert" required>
-   </div>
-    <div class="col-md-6">
-  <label class="form-label">Last Name</label>
-<input type="text" class="form-control" value="Doe" required>
-     </div>
-      <div class="col-md-6">
-       <label class="form-label">Email Address</label>
-    <div class="input-group">
-      <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-    <input type="email" class="form-control" value="robert.doe@email.com" required>
-        </div>
- </div>
-    <div class="col-md-6">
-    <label class="form-label">Phone Number</label>
-     <div class="input-group">
-<span class="input-group-text"><i class="bi bi-phone"></i></span>
-    <input type="tel" class="form-control" value="012-987-6543" required>
- </div>
-     </div>
-   <div class="col-12">
-      <label class="form-label">Address</label>
-<textarea class="form-control" rows="2">123 Main Street, Kuala Lumpur, Malaysia</textarea>
-     </div>
-<div class="col-12 mb-0">
- <button type="submit" class="btn btn-primary">
-  <i class="bi bi-check-circle me-2"></i>Save Changes
-</button>
-    </div>
-</div>
-  </form>
-        </div>
+        @* Use form POST to save changes *@
+        <form asp-action="StudSettings" method="post" enctype="application/x-www-form-urlencoded">
+            @Html.AntiForgeryToken()
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label">Full Name</label>
+                    <input name="FullName" type="text" class="form-control" value="@(Model?.User?.FullName ?? "")" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input name="Email" type="email" class="form-control" value="@(Model?.User?.Email ?? "")" required>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                        <input name="PhoneNumber" type="tel" class="form-control" value="@(Model?.User?.PhoneNumber ?? "")">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Date of Birth</label>
+                    <input name="DateOfBirth" type="date" class="form-control" value="@(Model?.User?.DateOfBirth.HasValue == true ? Model.User.DateOfBirth.Value.ToString("yyyy-MM-dd") : "")">
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Address</label>
+                    <textarea name="Address" class="form-control" rows="2">@("")</textarea>
+                </div>
+
+                <div class="col-12 mb-0">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        @* show success message *@
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mt-3 alert alert-success">@TempData["SuccessMessage"]</div>
+        }
+      </div>
     </div>
 
     <!-- Sidebar -->
- <div class="col-lg-4">
-     <!-- Profile Summary -->
-   <div class="dashboard-card">
-  <div class="text-center mb-3">
+    <div class="col-lg-4">
+        <!-- Profile Summary -->
+        <div class="dashboard-card">
+            <div class="text-center mb-3">
                 <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #02a145;">
- <i class="bi bi-person-fill"></i>
-       </div>
-     <h5 class="mb-1">Robert Doe</h5>
-      <p class="text-muted mb-0">Student</p>
-   </div>
-      <div class="list-group list-group-flush">
-   <div class="list-group-item px-0">
-   <small class="text-muted d-block">Account ID</small>
-     <strong>PAR001</strong>
-     </div>
-     <div class="list-group-item px-0">
- <small class="text-muted d-block">Member Since</small>
-  <strong>January 1, 2024</strong>
-    </div>
-  <div class="list-group-item px-0">
-     <small class="text-muted d-block">Status</small>
-   <span class="badge bg-success">Active</span>
-    </div>
-  </div>
- </div>
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <h5 class="mb-1">@((Model?.User?.FullName) ?? "¡X")</h5>
+                <p class="text-muted mb-0">Student</p>
+            </div>
+
+            <div class="list-group list-group-flush">
+                <div class="list-group-item px-0">
+                    <small class="text-muted d-block">Account ID</small>
+                    <strong>@(Model?.StudentId ?? "¡X")</strong>
+                </div>
+                <div class="list-group-item px-0">
+                    <small class="text-muted d-block">Member Since</small>
+                    <strong>@(Model?.EnrollmentDate?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "¡X")</strong>
+                </div>
+                <div class="list-group-item px-0">
+                    <small class="text-muted d-block">Status</small>
+                    <span class="badge @(Model?.User?.IsActive == true ? "bg-success" : "bg-secondary")">
+                        @(Model?.User?.IsActive == true ? "Active" : "Inactive")
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

@@ -1,0 +1,138 @@
+@model WebMobileAssignment.Models.Student
+
+@{
+    ViewBag.Title = "Apply Medical Leave";
+    ViewBag.ActiveMenu = "Attendance";
+    ViewBag.ActiveSubmenu = "ApplyMedicalLeave";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+
+    var classes = Model?.Enrollments?.Select(e => e.Class).Where(c => c != null).ToList()
+                  ?? new List<WebMobileAssignment.Models.Class>();
+}
+
+<div class="dashboard-card mb-4">
+    <div class="card-header-custom">
+        <h3 class="card-title">
+            <i class="bi bi-journal-medical"></i> Apply Medical Leave
+        </h3>
+    </div>
+
+    <form id="medicalLeaveForm" class="p-3" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Class</label>
+                <select id="classId" name="ClassId" class="form-select" required>
+                    <option value="">Select class</option>
+                    @foreach (var c in classes)
+                    {
+                        <option value="@c.ClassId">@c.ClassName</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Start Date</label>
+                <input id="startDate" name="StartDate" type="date" class="form-control" required />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input id="endDate" name="EndDate" type="date" class="form-control" required />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Reason / Remarks</label>
+                <textarea id="reason" name="Reason" class="form-control" rows="4" placeholder="Describe reason for leave (optional)"></textarea>
+            </div>
+
+            <!-- New file upload field -->
+            <div class="col-12">
+                <label class="form-label">Upload Photo (optional)</label>
+                <input id="photo" name="Photo" type="file" accept="image/*" class="form-control" />
+                <div class="mt-2">
+                    <img id="photoPreview" src="#" alt="Preview" style="max-height:120px; display:none; border-radius:6px;" />
+                </div>
+                <small class="text-muted">Attach a photo or doctor's note (jpg, png). Max size enforced server-side.</small>
+            </div>
+
+            <div class="col-12 d-flex gap-2 justify-content-end">
+                <a asp-controller="Student" asp-action="StudDashboard" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Apply</button>
+            </div>
+
+            <div class="col-12">
+                <div id="applyResult" class="mt-2"></div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const form = document.getElementById('medicalLeaveForm');
+            const result = document.getElementById('applyResult');
+            const photoInput = document.getElementById('photo');
+            const preview = document.getElementById('photoPreview');
+
+            // Preview image when selected
+            photoInput.addEventListener('change', function () {
+                const file = this.files && this.files[0];
+                if (file) {
+                    const url = URL.createObjectURL(file);
+                    preview.src = url;
+                    preview.style.display = 'inline-block';
+                } else {
+                    preview.src = '#';
+                    preview.style.display = 'none';
+                }
+            });
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                result.innerHTML = '';
+
+                const classId = document.getElementById('classId').value;
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+
+                if (!classId) {
+                    result.innerHTML = '<div class="alert alert-danger">Please select a class.</div>';
+                    return;
+                }
+                if (!startDate || !endDate) {
+                    result.innerHTML = '<div class="alert alert-danger">Please select both start and end dates.</div>';
+                    return;
+                }
+                if (new Date(startDate) > new Date(endDate)) {
+                    result.innerHTML = '<div class="alert alert-danger">Start date cannot be after end date.</div>';
+                    return;
+                }
+
+                try {
+                    const url = '@Url.Action("StudApplyMedicalLeave", "Student")';
+                    const formData = new FormData(form); // includes __RequestVerificationToken
+
+                    // Send multipart/form-data
+                    const resp = await fetch(url, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin'
+                    });
+
+                    const json = await resp.json();
+
+                    if (json.success) {
+                        result.innerHTML = `<div class="alert alert-success">${json.message}</div>`;
+                        setTimeout(() => { window.location.href = '@Url.Action("StudAttendanceHistory", "Student")'; }, 1200);
+                    } else {
+                        result.innerHTML = `<div class="alert alert-danger">${json.message || 'Failed to apply leave.'}</div>`;
+                    }
+                } catch (err) {
+                    result.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+                }
+            });
+        })();
+    </script>
+}
