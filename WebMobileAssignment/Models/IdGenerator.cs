@@ -10,6 +10,7 @@ public static class IdGenerator
     private static int _parentCounter = 1;
     private static int _classCounter = 1;
     private static int _attendanceCounter = 1;
+    private static int _leaveApplicationCounter = 1;
 
     public static string GenerateUserId(DB db)
  {
@@ -109,6 +110,20 @@ return id;
         }
     }
 
+    public static string GenerateLeaveApplicationId(DB db)
+    {
+        lock (_lock)
+        {
+            string id;
+            do
+            {
+                id = $"LEV{_leaveApplicationCounter:D4}";
+                _leaveApplicationCounter++;
+            } while (db.LeaveApplications.Any(l => l.LeaveId == id));
+            return id;
+        }
+    }
+
     // Initialize counters from existing data
   public static void InitializeCounters(DB db)
     {
@@ -121,6 +136,7 @@ return id;
             _parentCounter = GetNextCounter(db.Parents.Select(p => p.ParentId).ToList(), "P");
             _classCounter = GetNextCounter(db.Classes.Select(c => c.ClassId).ToList(), "C");
             _attendanceCounter = GetNextCounter(db.Attendances.Select(a => a.AttendanceId).ToList(), "ATT");
+            _leaveApplicationCounter = GetNextCounter(db.LeaveApplications.Select(l => l.LeaveId).ToList(), "LEV");
         }
     }
 

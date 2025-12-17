@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebMobileAssignment.Models;
+using WebMobileAssignment.Services;
 using System.Security.Claims;
 
 namespace WebMobileAssignment.Controllers
@@ -8,10 +9,12 @@ namespace WebMobileAssignment.Controllers
     public class StudentController : Controller
     {
         private readonly DB _context;
+        private readonly S3Service _s3Service;
 
-        public StudentController(DB context)
+        public StudentController(DB context, S3Service s3Service)
         {
             _context = context;
+            _s3Service = s3Service;
         }
 
         // Helper method to get current student
@@ -54,7 +57,43 @@ namespace WebMobileAssignment.Controllers
             if (student == null)
                 return RedirectToAction("Login", "Account");
 
+            // Get attendance data for this student
+            var allAttendances = await _context.Attendances
+                .Where(a => a.StudentId == student.StudentId)
+                .ToListAsync();
+
+            // Calculate attendance statistics
+            var totalClasses = allAttendances.Count;
+            var presentCount = allAttendances.Count(a => a.Status == "Present");
+            var absentCount = allAttendances.Count(a => a.Status == "Absent");
+            var leaveCount = allAttendances.Count(a => a.Status == "Leave");
+            var attendanceRate = totalClasses > 0 ? Math.Round((double)presentCount / totalClasses * 100, 2) : 0;
+
+            // Get enrollment statistics
+            var enrolledClasses = student.Enrollments?.Count ?? 0;
+
+            // Get recent attendances (last 5 records, ordered by date descending)
+            var recentAttendances = await _context.Attendances
+                .Include(a => a.Class)
+                    .ThenInclude(c => c.Subject)
+                .Include(a => a.Class)
+                    .ThenInclude(c => c.Teacher)
+                        .ThenInclude(t => t.User)
+                .Where(a => a.StudentId == student.StudentId)
+                .OrderByDescending(a => a.Date)
+                .Take(5)
+                .ToListAsync();
+
+            // Store in ViewBag for use in view
+            ViewBag.TotalClasses = totalClasses;
+            ViewBag.PresentCount = presentCount;
+            ViewBag.AbsentCount = absentCount;
+            ViewBag.LeaveCount = leaveCount;
+            ViewBag.AttendanceRate = attendanceRate;
+            ViewBag.EnrolledClasses = enrolledClasses;
+            ViewBag.RecentAttendances = recentAttendances;
             ViewBag.ActiveMenu = "Dashboard";
+
             return View("StudDashboard", student);
         }
 
@@ -314,19 +353,123 @@ namespace WebMobileAssignment.Controllers
         }
 
         // Settings
-        public IActionResult StudSettings()
+        public async Task<IActionResult> StudSettings()
         {
+            var student = await GetCurrentStudent();
+            if (student == null)
+                return RedirectToAction("Login", "Account");
+
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "Settings";
-            return View("StudSettings");
+            return View("StudSettings", student);
         }
 
         // Change Password
-        public IActionResult StudChangePassword()
+        public async Task<IActionResult> StudChangePassword()
         {
+            var student = await GetCurrentStudent();
+            if (student == null)
+                return RedirectToAction("Login", "Account");
+
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "ChangePassword";
-            return View("StudChangePassword");
+            return View("StudChangePassword", student);
+        }
+
+        // Apply Medical Leave
+        public async Task<IActionResult> StudApplyMedicalLeave()
+        {
+            var student = await GetCurrentStudent();
+            if (student == null)
+                return RedirectToAction("Login", "Account");
+
+            ViewBag.ActiveMenu = "Attendance";
+            ViewBag.ActiveSubmenu = "ApplyMedicalLeave";
+            return View("StudApplyMedicalLeave", student);
+        }
+
+        // Apply Medical Leave - POST Handler
+        [HttpPost]
+        public async Task<IActionResult> StudApplyMedicalLeave(DateTime startDate, DateTime endDate, string reason, IFormFile document)
+        {
+            try
+            {
+                var student = await GetCurrentStudent();
+                if (student == null)
+                {
+                    return Json(new { success = false, message = "Not authenticated. Please login." });
+                }
+
+                // Validation
+                if (startDate > endDate)
+                {
+                    return Json(new { success = false, message = "End date must be equal to or after start date." });
+                }
+
+                if (string.IsNullOrWhiteSpace(reason))
+                {
+                    return Json(new { success = false, message = "Please provide a reason for your leave." });
+                }
+
+                // Calculate number of days
+                var totalDays = (int)Math.Ceiling((endDate - startDate).TotalDays) + 1;
+
+                // Create leave application
+                var leaveId = IdGenerator.GenerateLeaveApplicationId(_context);
+                var leaveApplication = new LeaveApplication
+                {
+                    LeaveId = leaveId,
+                    UserId = student.UserId,
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    TotalDays = totalDays,
+                    Reason = reason,
+                    Status = "Pending",
+                    CreatedDate = DateTime.Now
+                };
+
+                // Handle document upload if provided
+                if (document != null && document.Length > 0)
+                {
+                    try
+                    {
+                        // Validate file type
+                        var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx" };
+                        var fileExtension = Path.GetExtension(document.FileName).ToLower();
+                        if (!allowedExtensions.Contains(fileExtension))
+                        {
+                            return Json(new { success = false, message = "File format not allowed. Accepted: PDF, JPG, PNG, DOC, DOCX" });
+                        }
+
+                        // Upload to S3 in the "Leave" folder
+                        var documentUrl = await _s3Service.UploadDocumentAsync(document, "Leave");
+                        leaveApplication.DocumentPaths = documentUrl;
+
+                        Console.WriteLine($"Document uploaded to S3: {documentUrl}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error uploading document to S3: {ex.Message}");
+                        return Json(new { success = false, message = $"Error uploading file: {ex.Message}" });
+                    }
+                }
+
+                // Save to database
+                _context.LeaveApplications.Add(leaveApplication);
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Medical leave application submitted successfully! ({totalDays} day(s))"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in StudApplyMedicalLeave POST: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
         }
     }
 }
