@@ -212,9 +212,26 @@
                              data-children-count="@(parent.Students?.Count ?? 0)">
                             <div class="dashboard-card h-100">
                                 <div class="parent-header">
-                                    <div class="parent-avatar">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
+                                    @{
+                                        var profilePictureUrl = parent.User?.ProfilePicture;
+                                        var hasCustomPicture = !string.IsNullOrEmpty(profilePictureUrl) && !profilePictureUrl.StartsWith("/images/");
+                                        var iconColor = parent.User.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true ? "male" : 
+                                                       parent.User.Gender?.Equals("Female", StringComparison.OrdinalIgnoreCase) == true ? "female" : "";
+                                    }
+                                    
+                                    @if (hasCustomPicture)
+                                    {
+                                        <div class="parent-avatar-img">
+                                            <img src="@profilePictureUrl" alt="@parent.User.FullName" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; border: 3px solid white;" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="parent-avatar @iconColor">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                    }
+                                    
                                     <div class="parent-status-badge">
                                         <span class="badge bg-@(parent.User.IsActive ? "success" : "secondary")">
                                             @(parent.User.IsActive ? "Active" : "Inactive")
@@ -256,7 +273,7 @@
                                         </p>
                                         <p class="small mb-0">
                                             <i class="bi bi-telephone me-1"></i>
-                                            @(parent.PhoneNumber ?? "N/A")
+                                            @(parent.User.PhoneNumber ?? "N/A")
                                         </p>
                                     </div>
 
@@ -320,7 +337,7 @@
                                         <td><strong>@parent.ParentId</strong></td>
                                         <td>@parent.User.FullName</td>
                                         <td>@parent.User.Email</td>
-                                        <td>@(parent.PhoneNumber ?? "N/A")</td>
+                                        <td>@(parent.User.PhoneNumber ?? "N/A")</td>
                                         <td>
                                             @if (parent.Students != null && parent.Students.Any())
                                             {
@@ -424,7 +441,7 @@
             const selectedStatus = statusFilter.value;
             const selectedChildren = childrenFilter.value;
 
-            document.querySelectorAll('.parent-card, .parent-row').forEach(card => {
+            document.querySelectorAll('.parent-card, .parent-row').forEach.card => {
                 const name = card.getAttribute('data-name');
                 const email = card.getAttribute('data-email');
                 const id = card.getAttribute('data-id');
@@ -477,6 +494,15 @@
         border-radius: 8px 8px 0 0;
     }
 
+    .parent-avatar-img {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-radius: 50%;
+        overflow: hidden;
+    }
+
     .parent-avatar {
         width: 80px;
         height: 80px;
@@ -489,6 +515,14 @@
         font-size: 2.5rem;
         color: #667eea;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .parent-avatar.male {
+        color: #0d6efd;
+    }
+
+    .parent-avatar.female {
+        color: #ec4899;
     }
 
     .parent-status-badge {

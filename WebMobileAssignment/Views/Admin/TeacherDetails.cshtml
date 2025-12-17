@@ -41,9 +41,26 @@
     <div class="col-12">
         <div class="dashboard-card profile-header">
             <div class="profile-banner">
-                <div class="profile-avatar-large">
-                    <i class="bi bi-person-fill"></i>
-                </div>
+                @{
+                    var profilePictureUrl = Model.User?.ProfilePicture;
+                    var hasCustomPicture = !string.IsNullOrEmpty(profilePictureUrl) && 
+                                          !profilePictureUrl.StartsWith("/images/");
+                }
+                
+                @if (hasCustomPicture)
+                {
+                    <div class="profile-avatar-large" style="background: transparent; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                        <img src="@profilePictureUrl" 
+                             alt="@Model.User.FullName" 
+                             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;" />
+                    </div>
+                }
+                else
+                {
+                    <div class="profile-avatar-large">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                }
             </div>
             <div class="profile-info">
                 <div class="row align-items-center">

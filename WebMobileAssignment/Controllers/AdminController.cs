@@ -116,7 +116,7 @@ namespace WebMobileAssignment.Controllers
                 parentId = parent.ParentId,
                 fullName = parent.User.FullName,
                 email = parent.User.Email,
-                phone = parent.PhoneNumber ?? "",
+                phone = parent.User.PhoneNumber ?? "",
                 address = parent.Address ?? "",
                 dob = parent.User.DateOfBirth?.ToString("yyyy-MM-dd") ?? "",
                 gender = parent.User.Gender ?? ""
@@ -142,7 +142,7 @@ namespace WebMobileAssignment.Controllers
                 parentId = parent.ParentId,
                 fullName = parent.User.FullName,
                 email = parent.User.Email,
-                phone = parent.PhoneNumber ?? "",
+                phone = parent.User.PhoneNumber ?? "",
                 address = parent.Address ?? "",
                 dob = parent.User.DateOfBirth?.ToString("yyyy-MM-dd") ?? "",
                 gender = parent.User.Gender ?? ""
@@ -156,7 +156,10 @@ namespace WebMobileAssignment.Controllers
             string? phoneNumber, string status, bool isActive, DateTime? enrollmentDate,
             // New parent fields - matching database columns
             string newParentFullName, string newParentEmail, string newParentPhone, 
-            string newParentAddress, DateTime? newParentDateOfBirth, string newParentGender)
+            string newParentAddress, DateTime? newParentDateOfBirth, string newParentGender,
+            // Profile picture uploads
+            IFormFile? profilePicture,
+            IFormFile? parentProfilePicture)
         {
             // If parentId is empty and newParentEmail provided, we'll create a parent
             if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
@@ -182,6 +185,10 @@ namespace WebMobileAssignment.Controllers
                 ModelState.Remove("classIds");
                 classIds = new List<string>();
             }
+
+            // Remove validation for optional profile pictures
+            ModelState.Remove("profilePicture");
+            ModelState.Remove("parentProfilePicture");
 
             // Manual validation for required fields
             if (string.IsNullOrWhiteSpace(fullName))
@@ -257,12 +264,26 @@ namespace WebMobileAssignment.Controllers
                     // If need to create new parent
                     if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
                     {
-                        // create parent user and parent with all fields
-                        var parentCount = await _context.Parents.CountAsync();
-                        var parentUserId = $"PARENT{(parentCount + 1):D3}";
-                        var parentIdGen = parentUserId;
+                        // create parent user and parent with all fields using IdGenerator
+                        var parentUserId = IdGenerator.GenerateUserId(_context);
+                        var parentIdGen = IdGenerator.GenerateParentId(_context);
 
                         var parentTempPassword = _helper.RandomPassword();
+
+                        // Handle parent profile picture upload to S3
+                        string? parentProfilePictureUrl = null;
+                        if (parentProfilePicture != null && parentProfilePicture.Length > 0)
+                        {
+                            try
+                            {
+                                parentProfilePictureUrl = await _s3Service.UploadFileAsync(parentProfilePicture, parentUserId);
+                            }
+                            catch (Exception uploadEx)
+                            {
+                                Console.WriteLine($"Warning: Failed to upload parent profile picture: {uploadEx.Message}");
+                                // Don't fail the operation if upload fails - use default
+                            }
+                        }
 
                         var parentUser = new User
                         {
@@ -270,9 +291,9 @@ namespace WebMobileAssignment.Controllers
                             FullName = newParentFullName,
                             Email = newParentEmail,
                             PasswordHash = _helper.HashPassword(parentTempPassword),
-                            PhoneNumber = newParentPhone, // Include phone in User table
                             DateOfBirth = newParentDateOfBirth, // Include date of birth
                             Gender = newParentGender, // Include gender
+                            ProfilePicture = parentProfilePictureUrl, // Set parent profile picture URL or leave null for default
                             UserType = "Parent",
                             CreatedDate = DateTime.Now,
                             Status = "active",
@@ -284,7 +305,6 @@ namespace WebMobileAssignment.Controllers
                         {
                             ParentId = parentIdGen,
                             UserId = parentUserId,
-                            PhoneNumber = newParentPhone, // Also store in Parent table
                             Address = newParentAddress // Store address in Parent table
                         };
                         _context.Parents.Add(parent);
@@ -310,6 +330,21 @@ namespace WebMobileAssignment.Controllers
                     var userId = IdGenerator.GenerateUserId(_context);
                     var studentId = IdGenerator.GenerateStudentId(_context);
 
+                    // Handle student profile picture upload to S3
+                    string? profilePictureUrl = null;
+                    if (profilePicture != null && profilePicture.Length > 0)
+                    {
+                        try
+                        {
+                            profilePictureUrl = await _s3Service.UploadFileAsync(profilePicture, userId);
+                        }
+                        catch (Exception uploadEx)
+                        {
+                            Console.WriteLine($"Warning: Failed to upload profile picture: {uploadEx.Message}");
+                            // Don't fail the operation if upload fails - use default
+                        }
+                    }
+
                     // Create User with all fields - using random temporary password
                     var user = new User
                     {
@@ -320,6 +355,7 @@ namespace WebMobileAssignment.Controllers
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
+                        ProfilePicture = profilePictureUrl, // Set profile picture URL or leave null for default icon
                         UserType = "Student",
                         CreatedDate = DateTime.Now,
                         Status = status,
@@ -333,7 +369,6 @@ namespace WebMobileAssignment.Controllers
                         StudentId = studentId,
                         UserId = userId,
                         ParentId = parentId,
-                        ClassId = null, // Don't use ClassId anymore - use Enrollments
                         DateOfBirth = dateOfBirth.Value,
                         Gender = gender,
                         EnrollmentDate = enrollmentDate ?? DateTime.Now
@@ -432,7 +467,7 @@ namespace WebMobileAssignment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StudentEdit(string studentId, string fullName, string email,
             string? phoneNumber, string parentId, List<string>? classIds, string? removeClassIds,
-            DateTime dateOfBirth, string gender, string status)
+            DateTime dateOfBirth, string gender, string status, IFormFile? profilePicture)
         {
             var student = await _context.Students
                 .Include(s => s.User)
@@ -458,6 +493,9 @@ namespace WebMobileAssignment.Controllers
 
             if (string.IsNullOrWhiteSpace(status))
                 ModelState.AddModelError("status", "Status is required");
+
+            // Remove validation for optional profile picture
+            ModelState.Remove("profilePicture");
 
             // Validate class capacity for new enrollments
             if (classIds != null && classIds.Any())
@@ -488,6 +526,28 @@ namespace WebMobileAssignment.Controllers
             {
                 try
                 {
+                    // Handle profile picture upload
+                    if (profilePicture != null && profilePicture.Length > 0)
+                    {
+                        try
+                        {
+                            // Delete old picture if exists
+                            if (!string.IsNullOrEmpty(student.User.ProfilePicture) && 
+                                !student.User.ProfilePicture.StartsWith("/images/"))
+                            {
+                                await _s3Service.DeleteFileAsync(student.User.ProfilePicture);
+                            }
+                            
+                            // Upload new picture
+                            var profilePictureUrl = await _s3Service.UploadFileAsync(profilePicture, student.User.UserId);
+                            student.User.ProfilePicture = profilePictureUrl;
+                        }
+                        catch (Exception uploadEx)
+                        {
+                            Console.WriteLine($"Warning: Failed to upload profile picture: {uploadEx.Message}");
+                        }
+                    }
+
                     // Update user information
                     student.User.FullName = fullName;
                     student.User.Email = email;
@@ -498,9 +558,6 @@ namespace WebMobileAssignment.Controllers
                     student.ParentId = string.IsNullOrEmpty(parentId) ? null : parentId;
                     student.DateOfBirth = dateOfBirth;
                     student.Gender = gender;
-
-                    // Don't set ClassId on Student anymore - use Enrollments instead
-                    student.ClassId = null;
 
                     _context.Update(student);
 
@@ -734,7 +791,8 @@ namespace WebMobileAssignment.Controllers
             string fullName, string email,
             string? phoneNumber, string? subjectTeach, DateTime? hireDate,
             string? title, string? education, string? skill, string? bio,
-            DateTime? dateOfBirth, string? gender, string? status)
+            DateTime? dateOfBirth, string? gender, string? status,
+            IFormFile? profilePicture)
         {
             // Manual validation for required fields
             if (string.IsNullOrWhiteSpace(fullName))
@@ -752,6 +810,9 @@ namespace WebMobileAssignment.Controllers
                 status = "active";
             }
 
+            // Remove validation for optional profile picture
+            ModelState.Remove("profilePicture");
+
             if (ModelState.IsValid)
             {
                 try
@@ -759,9 +820,24 @@ namespace WebMobileAssignment.Controllers
                     // Generate random temporary password for new teacher
                     var temporaryPassword = _helper.RandomPassword();
 
-                    var teacherCount = await _context.Teachers.CountAsync();
-                    var userId = $"TEACH{(teacherCount + 1):D3}";
-                    var teacherId = userId;
+                    // Generate IDs using IdGenerator
+                    var userId = IdGenerator.GenerateUserId(_context);
+                    var teacherId = IdGenerator.GenerateTeacherId(_context);
+
+                    // Handle profile picture upload to S3
+                    string? profilePictureUrl = null;
+                    if (profilePicture != null && profilePicture.Length > 0)
+                    {
+                        try
+                        {
+                            profilePictureUrl = await _s3Service.UploadFileAsync(profilePicture, userId);
+                        }
+                        catch (Exception uploadEx)
+                        {
+                            Console.WriteLine($"Warning: Failed to upload profile picture: {uploadEx.Message}");
+                            // Don't fail the operation if upload fails - use default
+                        }
+                    }
 
                     // Create User with all fields including optional ones - using random temporary password
                     var user = new User
@@ -773,6 +849,7 @@ namespace WebMobileAssignment.Controllers
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
+                        ProfilePicture = profilePictureUrl, // Set profile picture URL or leave null for default icon
                         UserType = "Teacher",
                         CreatedDate = DateTime.Now,
                         Status = status,
@@ -858,7 +935,8 @@ namespace WebMobileAssignment.Controllers
             string teacherId, string fullName, string email,
             string? phoneNumber, string? subjectTeach, DateTime? hireDate,
             string? title, string? education, string? skill, string? bio,
-            DateTime? dateOfBirth, string? gender, string? status)
+            DateTime? dateOfBirth, string? gender, string? status,
+            IFormFile? profilePicture)
         {
             var teacher = await _context.Teachers
                 .Include(t => t.User)
@@ -883,10 +961,36 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrWhiteSpace(status))
                 ModelState.AddModelError("status", "Status is required");
 
+            // Remove validation for optional profile picture
+            ModelState.Remove("profilePicture");
+
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Handle profile picture upload
+                    if (profilePicture != null && profilePicture.Length > 0)
+                    {
+                        try
+                        {
+                            // Delete old picture if exists
+                            if (!string.IsNullOrEmpty(teacher.User.ProfilePicture) && 
+                                !teacher.User.ProfilePicture.StartsWith("/images/"))
+                            {
+                                await _s3Service.DeleteFileAsync(teacher.User.ProfilePicture);
+                            }
+                            
+                            // Upload new picture
+                            var profilePictureUrl = await _s3Service.UploadFileAsync(profilePicture, teacher.User.UserId);
+                            teacher.User.ProfilePicture = profilePictureUrl;
+                        }
+                        catch (Exception uploadEx)
+                        {
+                            Console.WriteLine($"Warning: Failed to upload profile picture: {uploadEx.Message}");
+                            // Don't fail the operation if upload fails - use default
+                        }
+                    }
+
                     // Update User information
                     teacher.User.FullName = fullName;
                     teacher.User.Email = email;
@@ -1091,7 +1195,8 @@ namespace WebMobileAssignment.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ParentCreate(string fullName, string email, 
-            string? phoneNumber, string? address, DateTime? dateOfBirth, string? gender)
+            string? phoneNumber, string? address, DateTime? dateOfBirth, string? gender,
+            IFormFile? profilePicture)
         {
             // Manual validation for required fields
             if (string.IsNullOrWhiteSpace(fullName))
@@ -1100,6 +1205,9 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrWhiteSpace(email))
                 ModelState.AddModelError("email", "Email is required");
 
+            // Remove validation for optional profile picture
+            ModelState.Remove("profilePicture");
+
             if (ModelState.IsValid)
             {
                 try
@@ -1107,13 +1215,24 @@ namespace WebMobileAssignment.Controllers
                     // Generate random temporary password for new parent
                     var temporaryPassword = _helper.RandomPassword();
 
-                    // Generate proper User ID format
-                    var userCount = await _context.Users.CountAsync();
-                    var userId = $"U{(userCount + 1):D4}";
-        
-                    var parentCount = await _context.Parents.CountAsync();
-                    var parentId = $"P{(parentCount + 1):D4}";
+                    // Generate IDs using IdGenerator
+                    var userId = IdGenerator.GenerateUserId(_context);
+                    var parentId = IdGenerator.GenerateParentId(_context);
 
+                    // Handle profile picture upload to S3
+                    string? profilePictureUrl = null;
+                    if (profilePicture != null && profilePicture.Length > 0)
+                    {
+                        try
+                        {
+                            profilePictureUrl = await _s3Service.UploadFileAsync(profilePicture, userId);
+                        }
+                        catch (Exception uploadEx)
+                        {
+                            Console.WriteLine($"Warning: Failed to upload profile picture: {uploadEx.Message}");
+                            // Don't fail the operation if upload fails - use default
+                        }
+                    }
 
                     var user = new User
                     {
@@ -1124,6 +1243,7 @@ namespace WebMobileAssignment.Controllers
                         PhoneNumber = phoneNumber,
                         DateOfBirth = dateOfBirth,
                         Gender = gender,
+                        ProfilePicture = profilePictureUrl, // Set profile picture URL or leave null for default icon
                         UserType = "Parent",
                         CreatedDate = DateTime.Now,
                         Status = "active",
@@ -1135,7 +1255,6 @@ namespace WebMobileAssignment.Controllers
                     {
                         ParentId = parentId,
                         UserId = userId,
-                        PhoneNumber = phoneNumber,
                         Address = address
                     };
                     _context.Parents.Add(parent);
@@ -1162,9 +1281,7 @@ namespace WebMobileAssignment.Controllers
                 }
             }
 
-
             ViewBag.ActiveMenu = "ParentManagement";
-
             ViewBag.Title = "Create Parent";
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
@@ -1197,7 +1314,8 @@ namespace WebMobileAssignment.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ParentEdit(string parentId, string fullName, string email, 
-            string? phoneNumber, string? address, DateTime? dateOfBirth, string? gender, string status)
+            string? phoneNumber, string? address, DateTime? dateOfBirth, string? gender, string status,
+            IFormFile? profilePicture)
         {
             var parent = await _context.Parents
                 .Include(p => p.User)
@@ -1219,10 +1337,35 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrWhiteSpace(status))
                 ModelState.AddModelError("status", "Status is required");
 
+            // Remove validation for optional profile picture
+            ModelState.Remove("profilePicture");
+
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Handle profile picture upload
+                    if (profilePicture != null && profilePicture.Length > 0)
+                    {
+                        try
+                        {
+                            // Delete old picture if exists
+                            if (!string.IsNullOrEmpty(parent.User.ProfilePicture) && 
+                                !parent.User.ProfilePicture.StartsWith("/images/"))
+                            {
+                                await _s3Service.DeleteFileAsync(parent.User.ProfilePicture);
+                            }
+                            
+                            // Upload new picture
+                            var profilePictureUrl = await _s3Service.UploadFileAsync(profilePicture, parent.User.UserId);
+                            parent.User.ProfilePicture = profilePictureUrl;
+                        }
+                        catch (Exception uploadEx)
+                        {
+                            Console.WriteLine($"Warning: Failed to upload profile picture: {uploadEx.Message}");
+                        }
+                    }
+
                     // Update User information
                     parent.User.FullName = fullName;
                     parent.User.Email = email;
@@ -1233,7 +1376,6 @@ namespace WebMobileAssignment.Controllers
                     parent.User.IsActive = status == "active";
 
                     // Update Parent information
-                    parent.PhoneNumber = phoneNumber;
                     parent.Address = address;
 
                     _context.Update(parent);
@@ -1358,6 +1500,8 @@ namespace WebMobileAssignment.Controllers
             var classes = await _context.Classes
                 .Include(c => c.Teacher)
                 .ThenInclude(t => t.User)
+                .Include(c => c.Enrollments)
+                .OrderBy(c => c.ClassName)
                 .ToListAsync();
 
             return View(classes);
@@ -2107,6 +2251,8 @@ namespace WebMobileAssignment.Controllers
             ViewBag.Title = "Mark Student Attendance";
 
             ViewBag.Classes = await _context.Classes
+                .Include(c => c.Teacher)
+                .ThenInclude(t => t.User)
                 .Include(c => c.Enrollments)
                 .OrderBy(c => c.ClassName)
                 .ToListAsync();
@@ -2285,20 +2431,17 @@ namespace WebMobileAssignment.Controllers
         }
 
         // Attendance Management (View/Edit Records)
-        public async Task<IActionResult> AttendanceManagement(string? classId, DateTime? date)
+        public async Task<IActionResult> AttendanceManagement(string? classId, DateTime? startDate, DateTime? endDate)
         {
             ViewBag.ActiveMenu = "AttendanceManagement";
-            ViewBag.ActiveSubmenu = "Manage";
+            ViewBag.ActiveSubmenu = "Records";
             ViewBag.Title = "Manage Attendance";
-
-            var selectedDate = date ?? DateTime.Today;
-            ViewBag.SelectedDate = selectedDate.ToString("yyyy-MM-dd");
 
             var query = _context.Attendances
                 .Include(a => a.Student)
                 .ThenInclude(s => s.User)
                 .Include(a => a.Class)
-                .Where(a => a.Date.Date == selectedDate.Date);
+                .Where(a => a.Date.Date == DateTime.Today);
 
             if (!string.IsNullOrEmpty(classId))
             {
@@ -2421,22 +2564,21 @@ namespace WebMobileAssignment.Controllers
                 .Include(a => a.Student)
                 .ThenInclude(s => s.User)
                 .Include(a => a.Class)
-                .Include(a => a.MarkedByTeacher)
-                .ThenInclude(t => t.User)
-                .AsQueryable();
+                .Where(a => a.Date.Date == DateTime.Today);
 
             if (!string.IsNullOrEmpty(classId))
+            {
                 attendances = attendances.Where(a => a.ClassId == classId);
+                ViewBag.SelectedClassId = classId;
+            }
 
-            if (startDate.HasValue)
-                attendances = attendances.Where(a => a.Date >= startDate);
-
-            if (endDate.HasValue)
-                attendances = attendances.Where(a => a.Date <= endDate);
+            var records = await attendances.OrderByDescending(a => a.Date)
+                                           .ThenBy(a => a.Student.User.FullName)
+                                           .ToListAsync();
 
             ViewBag.Classes = await _context.Classes.ToListAsync();
 
-            return View(await attendances.OrderByDescending(a => a.Date).ToListAsync());
+            return View(records);
         }
 
         public async Task<IActionResult> AttendanceCreate()
@@ -2482,8 +2624,6 @@ namespace WebMobileAssignment.Controllers
 
             return View();
         }
-
-        // ==================== ATTENDANCE MANAGEMENT ====================
 
         // ==================== PROFILE PICTURE MANAGEMENT ====================
         
@@ -2596,7 +2736,7 @@ namespace WebMobileAssignment.Controllers
             ViewBag.TotalAttendanceRecords = totalAttendanceRecords;
             ViewBag.TheseMonthPresent = thisMonthPresent;
             ViewBag.ThisMonthAbsent = thisMonthAbsent;
-            ViewBag.ThisMonthLate = thisMonthLate;
+            ViewBag.TheseMonthLate = thisMonthLate;
             ViewBag.ThisMonthRate = thisMonthRate;
 
             return View();
@@ -2739,7 +2879,7 @@ namespace WebMobileAssignment.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Send email notification
+                // Send welcome email to student
                 try
                 {
                     var mailMessage = new System.Net.Mail.MailMessage
@@ -2754,7 +2894,7 @@ namespace WebMobileAssignment.Controllers
                                     <h2 style='color: #28a745;'>Leave Application Approved</h2>
                                     <p>Dear <strong>{leave.User.FullName}</strong>,</p>
                                     <p>Your leave application has been <strong style='color: #28a745;'>approved</strong>.</p>
-                                    
+                                        
                                     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
                                       <p style='margin: 5px 0;'><strong>Leave Period:</strong> {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy}</p>
                                       <p style='margin: 5px 0;'><strong>Total Days:</strong> {leave.TotalDays} day(s)</p>
@@ -2844,7 +2984,7 @@ namespace WebMobileAssignment.Controllers
                                     <h2 style='color: #dc3545;'>Leave Application Rejected</h2>
                                     <p>Dear <strong>{leave.User.FullName}</strong>,</p>
                                     <p>We regret to inform you that your leave application has been <strong style='color: #dc3545;'>rejected</strong>.</p>
-                                    
+                                        
                                     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
                                       <p style='margin: 5px 0;'><strong>Leave Period:</strong> {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy}</p>
                                       <p style='margin: 5px 0;'><strong>Total Days:</strong> {leave.TotalDays} day(s)</p>
@@ -2929,20 +3069,22 @@ namespace WebMobileAssignment.Controllers
 
             return RedirectToAction(nameof(LeaveIndex));
         }
-    }
 
-    // Request models for bulk operations
-    public class BulkAttendanceRequest
-    {
-        public string ClassId { get; set; }
-        public string PinCode { get; set; }
-        public string Date { get; set; }
-        public List<AttendanceItem> Attendances { get; set; }
-    }
+        // ==================== REQUEST MODELS ====================
 
-    public class AttendanceItem
-    {
-    public string StudentId { get; set; }
-        public string Status { get; set; }
+        // Request models for bulk operations
+        public class BulkAttendanceRequest
+        {
+            public string ClassId { get; set; }
+            public string PinCode { get; set; }
+            public string Date { get; set; }
+            public List<AttendanceItem> Attendances { get; set; }
+        }
+
+        public class AttendanceItem
+        {
+            public string StudentId { get; set; }
+            public string Status { get; set; }
+        }
     }
 }

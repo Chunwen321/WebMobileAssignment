@@ -1,38 +1,8 @@
 ﻿@model WebMobileAssignment.Models.Student
 
 @{
-    // Quick demo fallback when Model is null (for preview in dev)
-    var demoStudent = new WebMobileAssignment.Models.Student
-    {
-        StudentId = "S0001",
-        Gender = "Female",
-        EnrollmentDate = DateTime.Now.AddYears(-1),
-        User = new WebMobileAssignment.Models.User
-        {
-            FullName = "Demo Student",
-            IsActive = true,
-            DateOfBirth = new DateTime(2006,5,12),
-            PhoneNumber = "0123456789",
-            Email = "demo@student.local"
-        },
-        Class = new WebMobileAssignment.Models.Class
-        {
-            ClassName = "Form 3A",
-            RoomNumber = "A101",
-            Day = "Mon",
-            StartTime = TimeSpan.FromHours(9),
-            EndTime = TimeSpan.FromHours(10),
-            Subject = new WebMobileAssignment.Models.Subject { SubjectName = "Mathematics" },
-            Teacher = new WebMobileAssignment.Models.Teacher { User = new WebMobileAssignment.Models.User { FullName = "Mr. Demo" } }
-        },
-        Attendances = new List<WebMobileAssignment.Models.Attendance>
-        {
-            new WebMobileAssignment.Models.Attendance { Date = DateTime.Today.AddDays(-1), TakenOn = DateTime.Now.AddHours(-2), Status = "Present", Class = new WebMobileAssignment.Models.Class { ClassName = "Form 3A" } }
-        }
-    };
-
     // Use Model when available, otherwise use demo data
-    var student = Model ?? demoStudent;
+    var student = Model;
 
     // view helpers
     ViewBag.Title = "Student Profile";
@@ -41,7 +11,6 @@
 
     var user = student?.User;
     var enroll = student?.Enrollments?.FirstOrDefault();
-    var currentClass = enroll?.Class ?? student?.Class;
     var attendances = student?.Attendances ?? Enumerable.Empty<WebMobileAssignment.Models.Attendance>();
     var presentCount = attendances.Count(a => string.Equals(a.Status, "Present", StringComparison.OrdinalIgnoreCase));
     var absentCount = attendances.Count(a => string.Equals(a.Status, "Absent", StringComparison.OrdinalIgnoreCase));

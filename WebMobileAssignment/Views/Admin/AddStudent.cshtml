@@ -17,7 +17,7 @@
 <div class="row">
     <div class="col-12">
         <div class="dashboard-card bg-white p-4 rounded shadow-sm">
-            <form asp-action="StudentCreate" method="post" id="addStudentForm">
+            <form asp-action="StudentCreate" method="post" id="addStudentForm" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 
                 @if (!ViewData.ModelState.IsValid)
@@ -35,9 +35,58 @@
                 }
 
                 <!-- Student Personal Information -->
-                <h6 class="text-muted mb-3 border-bottom pb-2">
-                    <i class="bi bi-person-fill text-danger me-2"></i>Student Personal Information
+                <h6 class="text-danger mb-3 border-bottom pb-2">
+                    <i class="bi bi-person-fill me-2"></i>Student Personal Information
                 </h6>
+
+                <!-- Profile Picture Section -->
+                <div class="row mb-4">
+                    <div class="col-md-4 text-center">
+                        <div class="profile-picture-container">
+                            <div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
+                                <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <label for="profilePicture" class="btn btn-danger">
+                                    <i class="bi bi-upload"></i> Choose Photo
+                                </label>
+                                <input type="file" 
+                                       id="profilePicture" 
+                                       name="profilePicture"
+                                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                                       style="display: none;"
+                                       onchange="previewProfilePicture(event)">
+                                
+                                <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-danger" style="display: none;" onclick="clearProfilePicture()">
+                                    <i class="bi bi-x"></i> Remove
+                                </button>
+                            </div>
+                            
+                            <small class="text-muted d-block mt-3">
+                                <i class="bi bi-info-circle"></i> Max size: 5 MB<br>
+                                Formats: JPG, PNG, GIF, WEBP
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="alert alert-info border-0" style="background-color: #d1ecf1;">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-lightbulb-fill me-2 text-info"></i>Profile Picture Guidelines
+                            </h6>
+                            <ul class="mb-0">
+                                <li>Upload a clear photo of the student</li>
+                                <li>Image will be automatically uploaded to cloud storage (AWS S3)</li>
+                                <li>Square images work best (will be displayed as circle)</li>
+                                <li>Supported formats: JPG, PNG, GIF, WEBP</li>
+                                <li>Maximum file size: 5 MB</li>
+                                <li>If not uploaded, a default icon will be used</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row">
                     <!-- Full Name -->
                     <div class="col-md-6 mb-3">
@@ -76,13 +125,7 @@
                             <option value="Female" selected="@(ViewBag.Gender == "Female")">Female</option>
                         </select>
                     </div>
-                </div>
 
-                <!-- User Account Settings -->
-                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
-                    <i class="bi bi-gear-fill text-danger me-2"></i>Account Settings
-                </h6>
-                <div class="row">
                     <!-- Status -->
                     <div class="col-md-6 mb-3">
                         <label for="status" class="form-label">Account Status <span class="text-danger">*</span></label>
@@ -93,18 +136,25 @@
                             <option value="withdraw" selected="@(ViewBag.Status == "withdraw")">Withdraw</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- User Account Settings -->
+                <h6 class="text-danger mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-gear-fill me-2"></i>Account Settings
+                </h6>
+                <div class="row">
                     <!-- Default Password Info -->
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <div class="alert alert-info mb-0">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <small><strong>Automatic Password:</strong> A secure temporary password will be generated and sent to the parent's email.</small>
+                            <i class="bi bi-lock-fill me-2"></i>
+                            <strong>Automatic Password:</strong> A secure temporary password will be generated and sent to the student's email address.
                         </div>
                     </div>
                 </div>
 
                 <!-- Parent Information -->
-                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
-                    <i class="bi bi-people-fill text-danger me-2"></i>Parent/Guardian Information
+                <h6 class="text-danger mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-people-fill me-2"></i>Parent/Guardian Information
                 </h6>
 
                 <div class="row mb-3">
@@ -128,7 +178,7 @@
                                     <option value="@parent.ParentId" 
                                             data-fullname="@parent.User.FullName"
                                             data-email="@parent.User.Email" 
-                                            data-phone="@(parent.PhoneNumber ?? "")"
+                                            data-phone="@(parent.User.PhoneNumber ?? "")"
                                             data-address="@(parent.Address ?? "")"
                                             data-dob="@(parent.User.DateOfBirth?.ToString("yyyy-MM-dd") ?? "")"
                                             data-gender="@(parent.User.Gender ?? "")"
@@ -164,6 +214,55 @@
                     <div class="alert alert-success mb-3" id="existingParentIndicator" style="display: none;">
                         <i class="bi bi-check-circle me-2"></i>
                         <strong>Using Existing Parent:</strong> The selected parent's information is shown below (read-only).
+                    </div>
+
+                    <!-- Parent Profile Picture Section -->
+                    <h6 class="text-muted mb-3 mt-3 border-bottom pb-2">
+                        <i class="bi bi-person-badge-fill me-2"></i>Parent Profile Picture (Optional)
+                    </h6>
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <div class="profile-picture-container">
+                                <div id="parentProfilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 150px; height: 150px;">
+                                    <i class="bi bi-person-circle text-secondary" style="font-size: 7.5rem;"></i>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <label for="parentProfilePicture" class="btn btn-outline-warning btn-sm">
+                                        <i class="bi bi-upload"></i> Choose Parent Photo
+                                    </label>
+                                    <input type="file" 
+                                           id="parentProfilePicture" 
+                                           name="parentProfilePicture"
+                                           accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                                           style="display: none;"
+                                           onchange="previewParentProfilePicture(event)">
+                                    
+                                    <button type="button" id="clearParentProfilePictureBtn" class="btn btn-outline-secondary btn-sm" style="display: none;" onclick="clearParentProfilePicture()">
+                                        <i class="bi bi-x"></i> Remove
+                                    </button>
+                                </div>
+                                
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-info-circle"></i> Max 5 MB
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <div class="alert alert-warning border-0" style="background-color: #fff3cd;">
+                                <h6 class="alert-heading">
+                                    <i class="bi bi-lightbulb-fill me-2 text-warning"></i>Parent Profile Picture (Optional)
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li>Upload a photo for the parent/guardian account</li>
+                                    <li>This is <strong>optional</strong> - if not uploaded, default icon will be used</li>
+                                    <li>Square images work best (displayed as circle)</li>
+                                    <li>Max size: 5 MB | Formats: JPG, PNG, GIF, WEBP</li>
+                                    <li>Only applies when creating a <strong>new parent</strong> account</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Basic Information -->
@@ -234,8 +333,8 @@
                 </div>
 
                 <!-- Academic Details -->
-                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
-                    <i class="bi bi-book-fill text-danger me-2"></i>Academic Details
+                <h6 class="text-danger mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-book-fill me-2"></i>Academic Details
                 </h6>
                 <div class="row">
                     <!-- Classes (Multiple Selection) -->
@@ -618,5 +717,85 @@
                 }
             });
         })();
+
+        // Profile Picture Preview Functions
+        function previewProfilePicture(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('profilePicturePreview');
+            const clearBtn = document.getElementById('clearProfilePictureBtn');
+            
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must not exceed 5MB');
+                    event.target.value = '';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Replace icon div with image
+                    preview.outerHTML = `<img id="profilePicturePreview" 
+                                             src="${e.target.result}" 
+                                             alt="Profile Picture" 
+                                             class="img-thumbnail rounded-circle mb-3" 
+                                             style="width: 200px; height: 200px; object-fit: cover;">`;
+                    clearBtn.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearProfilePicture() {
+            const fileInput = document.getElementById('profilePicture');
+            const preview = document.getElementById('profilePicturePreview');
+            const clearBtn = document.getElementById('clearProfilePictureBtn');
+            
+            fileInput.value = '';
+            // Replace image with icon
+            preview.outerHTML = `<div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
+                                   <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
+                                 </div>`;
+            clearBtn.style.display = 'none';
+        }
+
+        // Parent Profile Picture Preview Functions
+        function previewParentProfilePicture(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('parentProfilePicturePreview');
+            const clearBtn = document.getElementById('clearParentProfilePictureBtn');
+            
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must not exceed 5MB');
+                    event.target.value = '';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Replace icon div with image
+                    preview.outerHTML = `<img id="parentProfilePicturePreview" 
+                                             src="${e.target.result}" 
+                                             alt="Parent Profile Picture" 
+                                             class="img-thumbnail rounded-circle mb-3" 
+                                             style="width: 150px; height: 150px; object-fit: cover;">`;
+                    clearBtn.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearParentProfilePicture() {
+            const fileInput = document.getElementById('parentProfilePicture');
+            const preview = document.getElementById('parentProfilePicturePreview');
+            const clearBtn = document.getElementById('clearParentProfilePictureBtn');
+            
+            fileInput.value = '';
+            // Replace image with icon
+            preview.outerHTML = `<div id="parentProfilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 150px; height: 150px;">
+                                   <i class="bi bi-person-circle text-secondary" style="font-size: 7.5rem;"></i>
+                                 </div>`;
+            clearBtn.style.display = 'none';
+        }
     </script>
 }
