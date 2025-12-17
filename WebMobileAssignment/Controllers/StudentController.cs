@@ -27,12 +27,27 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrEmpty(email))
                 return null;
 
-            // Find student by email
+            // Find student by email (include related Class -> Subject and Teacher->User)
             var student = await _context.Students
                 .Include(s => s.User)
                 .Include(s => s.Enrollments)
                     .ThenInclude(e => e.Class)
+                        .ThenInclude(c => c.Subject)
+                .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                        .ThenInclude(c => c.Teacher)
+                            .ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(s => s.User.Email == email);
+
+            // expose to layouts/views
+            try
+            {
+                ViewBag.Student = student;
+            }
+            catch
+            {
+                // ignore any viewbag assignment errors
+            }
 
             return student;
         }
@@ -49,20 +64,6 @@ namespace WebMobileAssignment.Controllers
         }
 
         // Attendance History
-        public async Task<IActionResult> StudAttendanceHistory()
-        {
-            var student = await GetCurrentStudent();
-            if (student == null)
-                return RedirectToAction("Login", "Account");
-
-            var attendances = await _context.Attendances
-                .Include(a => a.Class)
-                .Where(a => a.StudentId == student.StudentId)
-                .OrderByDescending(a => a.Date)
-                .ToListAsync();
-
-            ViewBag.ActiveMenu = "Attendance";
-            ViewBag.ActiveSubmenu = "History";
         public async Task<IActionResult> StudAttendanceHistory(string filterClass, string filterMonth, string filterStatus, string tableSearch)
         {
             var student = await GetCurrentStudent();
@@ -104,6 +105,8 @@ namespace WebMobileAssignment.Controllers
                     query = query.Where(a => a.Date >= start && a.Date < end);
                 }
             }
+
+        
 
             // Free-text search against class name or subject name
             if (!string.IsNullOrWhiteSpace(tableSearch))
@@ -293,6 +296,9 @@ namespace WebMobileAssignment.Controllers
                 .Include(c => c.Teacher)
                     .ThenInclude(t => t.User)
                 .Include(c => c.Subject)
+                .Include(c => c.Enrollments)
+                    .ThenInclude(e => e.Student)
+                        .ThenInclude(s => s.User)
                 .FirstOrDefaultAsync(c => c.ClassId == id);
 
             if (classInfo == null)
@@ -409,6 +415,7 @@ namespace WebMobileAssignment.Controllers
         // POST: apply medical leave (AJAX). Accepts JSON body.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Consumes("application/json")]
         public async Task<IActionResult> StudApplyMedicalLeave([FromBody] ApplyMedicalLeaveRequest req)
         {
             try
@@ -495,6 +502,7 @@ namespace WebMobileAssignment.Controllers
         // POST: apply medical leave with file upload (AJAX). Accepts multipart/form-data.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> StudApplyMedicalLeave([FromForm] ApplyMedicalLeaveForm req)
         {
             try

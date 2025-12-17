@@ -1,243 +1,556 @@
+@model WebMobileAssignment.Models.Class
+
 @{
     ViewBag.Title = "Class Details";
     ViewBag.ActiveMenu = "Classes";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+
+    var fillPercentage = Model.MaxCapacity > 0 ? (decimal)Model.CurrentCapacity / Model.MaxCapacity * 100 : 0;
+    var availableSlots = Model.MaxCapacity - Model.CurrentCapacity;
 }
 
-<div class="container-fluid">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="mb-2">Advanced Data Structures</h1>
-            <p class="text-muted">Class Code: CS302 | Semester 1 | 3 Credits</p>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Class Information -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="dashboard-card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-info-circle"></i> Class Information
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="info-item">
-                        <label>Instructor:</label>
-                        <span>Dr. Jane Smith</span>
-                    </div>
-                    <div class="info-item">
-                        <label>Schedule:</label>
-                        <span>Mon, Wed, Fri - 10:00 AM - 11:30 AM</span>
-                    </div>
-                    <div class="info-item">
-                        <label>Location:</label>
-                        <span>Room 301, Building A</span>
-                    </div>
-                    <div class="info-item">
-                        <label>Credits:</label>
-                        <span>3</span>
-                    </div>
-                    <div class="info-item">
-                        <label>Status:</label>
-                        <span>
-                            <span class="badge bg-primary">Active</span>
-                        </span>
-                    </div>
-                </div>
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="bi bi-book-fill text-success me-2"></i>
+                    Class Details
+                </h2>
+                <p class="text-muted">Complete information about @Model.ClassName</p>
             </div>
-        </div>
-
-        <!-- Student Performance -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="dashboard-card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-graph-up"></i> Your Performance
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="stat-row">
-                        <span>Attendance:</span>
-                        <strong class="text-success">92%</strong>
-                    </div>
-                    <div class="stat-row">
-                        <span>Current Grade:</span>
-                        <strong class="text-primary">A- (89%)</strong>
-                    </div>
-                    <div class="stat-row">
-                        <span>Class Rank:</span>
-                        <strong>5th of 42 students</strong>
-                    </div>
-                    <div class="stat-row">
-                        <span>Sessions Attended:</span>
-                        <strong>30 of 32</strong>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Links -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="dashboard-card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-lightning"></i> Quick Links
-                    </h5>
-                </div>
-                <div class="card-body d-flex flex-column gap-2">
-                    <button class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-chat"></i> Class Announcements
-                    </button>
-                    <button class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-file-earmark"></i> Course Materials
-                    </button>
-                    <button class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-calendar-event"></i> Upcoming Sessions
-                    </button>
-                    <button class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-chat-dots"></i> Contact Instructor
-                    </button>
-                </div>
+            <div>
+                <a asp-controller="Student" asp-action="StudClasses" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Classes
+                </a>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Class Announcements -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="dashboard-card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-megaphone"></i> Recent Announcements
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="announcement-item mb-3 pb-3 border-bottom">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">Midterm Exam Rescheduled</h6>
-                                <p class="text-muted mb-0 small">Posted 2 days ago</p>
-                            </div>
-                            <span class="badge bg-warning">Urgent</span>
-                        </div>
-                        <p class="mb-0 mt-2">The midterm exam has been rescheduled to next Friday at 2:00 PM. Please prepare accordingly.</p>
-                    </div>
-                    <div class="announcement-item mb-3 pb-3 border-bottom">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">Assignment 3 Posted</h6>
-                                <p class="text-muted mb-0 small">Posted 5 days ago</p>
-                            </div>
-                            <span class="badge bg-info">Assignment</span>
-                        </div>
-                        <p class="mb-0 mt-2">New assignment on Binary Search Trees is now available. Due date is November 30, 2024.</p>
-                    </div>
-                    <div class="announcement-item">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">Welcome to Advanced Data Structures</h6>
-                                <p class="text-muted mb-0 small">Posted 1 month ago</p>
-                            </div>
-                            <span class="badge bg-success">Info</span>
-                        </div>
-                        <p class="mb-0 mt-2">Welcome to the course! Please review the syllabus and course schedule before the first class.</p>
-                    </div>
+<!-- Profile Header Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card profile-header">
+            <div class="profile-banner">
+                <div class="profile-avatar-large">
+                    <i class="bi bi-book-fill"></i>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Attendance Details -->
-    <div class="row">
-        <div class="col-12">
-            <div class="dashboard-card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-calendar-check"></i> Your Attendance
-                    </h5>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Status</th>
-                                <th>Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Nov 22, 2024</td>
-                                <td><span class="badge bg-success">Present</span></td>
-                                <td>-</td>
-                            </tr>
-                            <tr>
-                                <td>Nov 20, 2024</td>
-                                <td><span class="badge bg-success">Present</span></td>
-                                <td>-</td>
-                            </tr>
-                            <tr>
-                                <td>Nov 18, 2024</td>
-                                <td><span class="badge bg-success">Present</span></td>
-                                <td>-</td>
-                            </tr>
-                            <tr>
-                                <td>Nov 15, 2024</td>
-                                <td><span class="badge bg-warning text-dark">Late</span></td>
-                                <td>Traffic delay</td>
-                            </tr>
-                            <tr>
-                                <td>Nov 13, 2024</td>
-                                <td><span class="badge bg-danger">Absent</span></td>
-                                <td>Medical appointment</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="profile-info">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="mb-1">@Model.ClassName</h3>
+                        <p class="text-muted mb-2">
+                            <strong>Class ID:</strong> @Model.ClassId
+                        </p>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @if (fillPercentage >= 100)
+                            {
+                                <span class="badge bg-danger px-3 py-2">
+                                    <i class="bi bi-x-circle me-1"></i>Full
+                                </span>
+                            }
+                            else if (fillPercentage >= 90)
+                            {
+                                <span class="badge bg-warning px-3 py-2">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>Almost Full
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success px-3 py-2">
+                                    <i class="bi bi-check-circle me-1"></i>Available
+                                </span>
+                            }
+                            
+                            @if (Model.Subject != null)
+                            {
+                                <span class="badge bg-primary px-3 py-2">
+                                    <i class="bi bi-tag me-1"></i>
+                                    @Model.Subject.SubjectName
+                                </span>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(Model.Day))
+                            {
+                                <span class="badge bg-info px-3 py-2">
+                                    <i class="bi bi-calendar-week me-1"></i>
+                                    @Model.Day
+                                </span>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <div class="profile-quick-stats">
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-number text-primary">@Model.CurrentCapacity</div>
+                                <div class="quick-stat-label">Enrolled</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-number text-success">@availableSlots</div>
+                                <div class="quick-stat-label">Available</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Capacity</div>
+                    <div class="stat-value text-success">@Model.MaxCapacity</div>
+                    <small class="text-muted">Maximum students</small>
+                </div>
+                <div class="card-icon green">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Currently Enrolled</div>
+                    <div class="stat-value text-primary">@Model.CurrentCapacity</div>
+                    <small class="text-muted">Active students</small>
+                </div>
+                <div class="card-icon blue">
+                    <i class="bi bi-person-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Occupancy Rate</div>
+                    <div class="stat-value text-warning">@fillPercentage.ToString("F1")%</div>
+                    <small class="text-muted">Fill percentage</small>
+                </div>
+                <div class="card-icon yellow">
+                    <i class="bi bi-pie-chart"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="border-left-color: #0dcaf0;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Available Slots</div>
+                    <div class="stat-value text-info">@availableSlots</div>
+                    <small class="text-muted">Remaining capacity</small>
+                </div>
+                <div class="card-icon cyan">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details Section -->
+<div class="row">
+    <!-- Left Column - Class Information -->
+    <div class="col-lg-4 mb-4">
+        <!-- Basic Information -->
+        <div class="dashboard-card mb-3">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle"></i>
+                    Class Information
+                </h5>
+            </div>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-tag"></i>
+                        Class ID
+                    </div>
+                    <div class="detail-value">@Model.ClassId</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-book"></i>
+                        Class Name
+                    </div>
+                    <div class="detail-value">@Model.ClassName</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-journals"></i>
+                        Subject
+                    </div>
+                    <div class="detail-value">
+                        @if (Model.Subject != null)
+                        {
+                            <span>@Model.Subject.SubjectName</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not assigned</span>
+                        }
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-person"></i>
+                        Teacher
+                    </div>
+                    <div class="detail-value">
+                        @if (Model.Teacher != null)
+                        {
+                            <span>@Model.Teacher.User.FullName</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Unassigned</span>
+                        }
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-geo-alt"></i>
+                        Room
+                    </div>
+                    <div class="detail-value">@(Model.RoomNumber ?? "Not set")</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Information -->
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-calendar-week"></i>
+                    Schedule
+                </h5>
+            </div>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-calendar"></i>
+                        Day
+                    </div>
+                    <div class="detail-value">@(Model.Day ?? "Not scheduled")</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-clock"></i>
+                        Start Time
+                    </div>
+                    <div class="detail-value">
+                        @if (Model.StartTime.HasValue)
+                        {
+                            @Model.StartTime.Value.ToString("hh\\:mm tt")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not set</span>
+                        }
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-clock-history"></i>
+                        End Time
+                    </div>
+                    <div class="detail-value">
+                        @if (Model.EndTime.HasValue)
+                        {
+                            @Model.EndTime.Value.ToString("hh\\:mm tt")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not set</span>
+                        }
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="bi bi-hourglass"></i>
+                        Duration
+                    </div>
+                    <div class="detail-value">
+                        @if (Model.StartTime.HasValue && Model.EndTime.HasValue)
+                        {
+                            var duration = Model.EndTime.Value - Model.StartTime.Value;
+                            @($"{duration.Hours}h {duration.Minutes}m")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not set</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Class Overview & Capacity -->
+    <div class="col-lg-8">
+        <!-- Capacity Progress -->
+        <div class="dashboard-card mb-3">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-graph-up"></i>
+                    Class Capacity Overview
+                </h5>
+            </div>
+            <div class="p-4">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-600">Enrollment Status</span>
+                        <span class="text-muted">@Model.CurrentCapacity / @Model.MaxCapacity students</span>
+                    </div>
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-@(fillPercentage >= 100 ? "danger" : fillPercentage >= 90 ? "warning" : "success")"
+                             role="progressbar"
+                             style="width: @fillPercentage%"
+                             aria-valuenow="@Model.CurrentCapacity"
+                             aria-valuemin="0"
+                             aria-valuemax="@Model.MaxCapacity">
+                            @fillPercentage.ToString("F0")%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-4">
+                    <div class="col-md-6">
+                        <div class="bg-light p-3 rounded text-center">
+                            <div class="text-primary fw-bold" style="font-size: 1.5rem;">@Model.CurrentCapacity</div>
+                            <div class="text-muted small">Students Enrolled</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-light p-3 rounded text-center">
+                            <div class="text-success fw-bold" style="font-size: 1.5rem;">@availableSlots</div>
+                            <div class="text-muted small">Available Slots</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrolled Students List -->
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-people"></i>
+                    Enrolled Students (@Model.CurrentCapacity / @Model.MaxCapacity)
+                </h5>
+            </div>
+            @if (Model.Enrollments != null && Model.Enrollments.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Enrolled Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var enrollment in Model.Enrollments.OrderBy(e => e.Student.User.FullName))
+                            {
+                                <tr>
+                                    <td><strong>@enrollment.Student.StudentId</strong></td>
+                                    <td>@enrollment.Student.User.FullName</td>
+                                    <td>@enrollment.Student.User.Email</td>
+                                    <td>@enrollment.EnrolledDate.ToString("dd MMM yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-3">No students enrolled yet</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
 <style>
-    .announcement-item {
-        background: #f8f9fa;
-        padding: 12px;
-        border-radius: 4px;
+    .profile-header {
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .profile-banner {
+        background: linear-gradient(135deg, #198754 0%, #157347 100%);
+        padding: 40px 30px 30px;
+        text-align: center;
+    }
+
+    .profile-avatar-large {
+        width: 120px;
+        height: 120px;
+        background: white;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        color: #198754;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .profile-info {
+        padding: 30px;
+        background: white;
+    }
+
+    .profile-quick-stats {
+        display: flex;
+        gap: 30px;
+        justify-content: flex-end;
+    }
+
+    .quick-stat-item {
+        text-align: center;
+    }
+
+    .quick-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+
+    .quick-stat-label {
+        font-size: 0.875rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .detail-list {
+        padding: 0;
+    }
+
+    .detail-item {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 120px;
+    }
+
+    .detail-label i {
+        color: #999;
+        min-width: 20px;
+    }
+
+    .detail-value {
+        text-align: right;
+        color: #333;
+        flex: 1;
+        word-wrap: break-word;
+    }
+
+    .stat-card {
+        padding: 20px;
+        background: white;
+        border-left: 4px solid;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
         margin-bottom: 8px;
     }
 
-    .stat-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    .stat-row:last-child {
-        border-bottom: none;
-    }
-
-    .info-item {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 12px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    .info-item:last-child {
-        border-bottom: none;
-    }
-
-    .info-item label {
+    .stat-value {
+        font-size: 2rem;
         font-weight: 600;
-        color: #666;
-        font-size: 0.9rem;
+        line-height: 1;
+        margin-bottom: 5px;
     }
 
-    .info-item span {
-        text-align: right;
+    .card-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .card-icon.blue {
+        background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+
+    .card-icon.green {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+
+    .card-icon.yellow {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    .card-icon.cyan {
+        background: rgba(13, 202, 240, 0.1);
+        color: #0dcaf0;
+    }
+
+    @@media (max-width: 768px) {
+        .profile-quick-stats {
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .detail-value {
+            text-align: left;
+        }
+
+        .detail-label {
+            min-width: auto;
+        }
     }
 </style>
