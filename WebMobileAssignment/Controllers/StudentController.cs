@@ -12,11 +12,13 @@ namespace WebMobileAssignment.Controllers
     {
         private readonly DB _context;
         private readonly S3Service _s3Service;
+        private readonly Helper _helper;
 
-        public StudentController(DB context, S3Service s3Service)
+        public StudentController(DB context, S3Service s3Service, Helper helper)
         {
             _context = context;
             _s3Service = s3Service;
+            _helper = helper;
         }
 
         // Helper method to get current student
@@ -500,6 +502,82 @@ namespace WebMobileAssignment.Controllers
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "ChangePassword";
             return View("StudChangePassword", student);
+        }
+
+        // Change Password - POST Handler
+        [HttpPost]
+        public async Task<IActionResult> StudChangePassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            try
+            {
+                var student = await GetCurrentStudent();
+                if (student == null)
+                {
+                    return Json(new { success = false, message = "Not authenticated. Please login." });
+                }
+
+                // Validation
+                if (string.IsNullOrWhiteSpace(currentPassword))
+                {
+                    return Json(new { success = false, message = "Current password is required." });
+                }
+
+                if (string.IsNullOrWhiteSpace(newPassword))
+                {
+                    return Json(new { success = false, message = "New password is required." });
+                }
+
+                if (newPassword.Length < 8)
+                {
+                    return Json(new { success = false, message = "New password must be at least 8 characters long." });
+                }
+
+                if (newPassword != confirmPassword)
+                {
+                    return Json(new { success = false, message = "New password and confirm password do not match." });
+                }
+
+                if (currentPassword == newPassword)
+                {
+                    return Json(new { success = false, message = "New password must be different from current password." });
+                }
+
+                // Get user
+                var user = student.User;
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "User not found." });
+                }
+
+                // Verify current password
+                if (!_helper.VerifyPassword(user.PasswordHash, currentPassword))
+                {
+                    Console.WriteLine($"Password verification failed for user {user.UserId}");
+                    return Json(new { success = false, message = "Current password is incorrect." });
+                }
+
+                // Hash new password
+                var newPasswordHash = _helper.HashPassword(newPassword);
+
+                // Update password
+                user.PasswordHash = newPasswordHash;
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"Password changed successfully for user {user.UserId}");
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Password changed successfully!"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in StudChangePassword POST: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
         }
 
         // Apply Medical Leave
