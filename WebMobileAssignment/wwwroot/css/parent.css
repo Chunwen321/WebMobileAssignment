@@ -532,9 +532,11 @@ display: flex;
     display: flex;
     align-items: center;
     justify-content: space-between;
-  margin-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid #f8f9fa;
+    min-height: 56px;
+    height: 56px;
 }
 
 .card-title {
@@ -545,10 +547,13 @@ display: flex;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    line-height: 1.5;
 }
 
 .card-title i {
     color: #ffc107;
+    font-size: 1.125rem;
+    line-height: 1;
 }
 
 .card-icon {
@@ -802,22 +807,79 @@ background: rgba(220, 53, 69, 0.1);
 
 .child-nav-container {
     display: flex;
-    align-items: center;
+align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
 }
 
-.child-nav-btn {
+/* Dashboard Child Summary Navigation Buttons */
+.card-header-custom .btn-group {
+    display: flex;
+ gap: 0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.card-header-custom .btn-group .child-nav-btn,
+.card-header-custom .btn-group .btn {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #0d6efd;
+    background: transparent;
+    color: #0d6efd;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 40px;
     display: flex;
     align-items: center;
+    justify-content: center;
+}
+
+.card-header-custom .btn-group .child-nav-btn:hover,
+.card-header-custom .btn-group .btn-outline-primary:hover {
+    background: #0d6efd;
+    color: white;
+    transform: none;
+}
+
+.card-header-custom .btn-group .child-nav-btn:active,
+.card-header-custom .btn-group .btn-outline-primary:active {
+    background: #0a58ca;
+    border-color: #0a58ca;
+}
+
+.card-header-custom .btn-group .btn-outline-secondary {
+    border-color: #6c757d;
+  color: #6c757d;
+    cursor: not-allowed;
+ opacity: 0.5;
+}
+
+.card-header-custom .btn-group .child-nav-btn i,
+.card-header-custom .btn-group .btn i {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Loading spinner in buttons */
+.card-header-custom .btn-group .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Child Navigation for Parent Classes page */
+.child-nav-btn {
+    display: flex;
+ align-items: center;
     gap: 0.5rem;
     padding: 0.625rem 1.25rem;
-    background: #ffc107;
+ background: #ffc107;
     color: #2c3e50;
     border: none;
     border-radius: 8px;
     font-weight: 600;
-    font-size: 0.95rem;
+  font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.3s ease;
     white-space: nowrap;
@@ -846,7 +908,7 @@ background: rgba(220, 53, 69, 0.1);
 .child-nav-btn:hover:not(.disabled) {
     background: #ffb300;
     transform: translateX(0) scale(1.05);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
 }
 
 .child-nav-prev:hover:not(.disabled) {
@@ -865,7 +927,7 @@ background: rgba(220, 53, 69, 0.1);
     background: #e9ecef;
     color: #adb5bd;
     cursor: not-allowed;
-    opacity: 0.6;
+ opacity: 0.6;
 }
 
 .child-nav-btn i {

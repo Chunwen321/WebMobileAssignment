@@ -5,12 +5,14 @@
 
 @{
     var students = ViewBag.Students as List<WebMobileAssignment.Models.Student> ?? new List<WebMobileAssignment.Models.Student>();
+    var allStudents = ViewBag.AllStudents as List<WebMobileAssignment.Models.Student> ?? new List<WebMobileAssignment.Models.Student>();
     var attendances = ViewBag.Attendances as List<WebMobileAssignment.Models.Attendance> ?? new List<WebMobileAssignment.Models.Attendance>();
     var classes = ViewBag.Classes as List<WebMobileAssignment.Models.Class> ?? new List<WebMobileAssignment.Models.Class>();
     var totalPresent = ViewBag.TotalPresent ?? 0;
     var totalAbsent = ViewBag.TotalAbsent ?? 0;
     var totalLate = ViewBag.TotalLate ?? 0;
     var attendanceRate = ViewBag.AttendanceRate ?? 0;
+    var selectedStudentId = ViewBag.SelectedStudentId as string;
     var selectedClassId = ViewBag.SelectedClassId as string;
     var selectedMonth = ViewBag.SelectedMonth as string;
     var selectedStatus = ViewBag.SelectedStatus as string;
@@ -20,44 +22,63 @@
     <div class="card-header-custom">
  <h3 class="card-title">
       <i class="bi bi-clock-history"></i>
-            Attendance History
+     Attendance History
         </h3>
     </div>
 
     <!-- Filters -->
     <form method="get" asp-controller="Parent" asp-action="AttendanceHistory">
    <div class="row g-3 mb-4">
-   <div class="col-md-3">
-          <label class="form-label">Class</label>
+        <!-- Child Selector (only show if parent has multiple children) -->
+            @if (allStudents.Count > 1)
+            {
+             <div class="col-md-3">
+          <label class="form-label">
+      <i class="bi bi-person-fill me-1"></i>Child
+           </label>
+         <select name="studentId" class="form-select">
+      <option value="">All Children</option>
+        @foreach (var student in allStudents)
+     {
+           <option value="@student.StudentId" selected="@(student.StudentId == selectedStudentId)">
+          @student.User.FullName
+           </option>
+    }
+    </select>
+       </div>
+   }
+            
+   <div class="@(allStudents.Count > 1 ? "col-md-3" : "col-md-4")">
+   <label class="form-label">Class</label>
  <select name="classId" class="form-select">
             <option value="">All Classes</option>
       @foreach (var classItem in classes)
    {
       <option value="@classItem.ClassId" selected="@(classItem.ClassId == selectedClassId)">
-        @classItem.ClassName (@(classItem.Subject?.SubjectName ?? "N/A"))
-              </option>
+   @classItem.ClassName (@(classItem.Subject?.SubjectName ?? "N/A"))
+       </option>
         }
      </select>
        </div>
-  <div class="col-md-3">
-          <label class="form-label">Month</label>
+  <div class="@(allStudents.Count > 1 ? "col-md-3" : "col-md-4")">
+       <label class="form-label">Month</label>
  <input type="month" name="month" class="form-control" value="@(selectedMonth ?? DateTime.Now.ToString("yyyy-MM"))">
        </div>
-       <div class="col-md-3">
+       <div class="@(allStudents.Count > 1 ? "col-md-2" : "col-md-3")">
 <label class="form-label">Status</label>
-     <select name="status" class="form-select">
+   <select name="status" class="form-select">
 <option value="">All Status</option>
            <option value="Present" selected="@(selectedStatus == "Present")">Present</option>
      <option value="Absent" selected="@(selectedStatus == "Absent")">Absent</option>
-          <option value="Late" selected="@(selectedStatus == "Late")">Late</option>
+      <option value="Late" selected="@(selectedStatus == "Late")">Late</option>
        </select>
-            </div>
-         <div class="col-md-3">
+    </div>
+         <div class="@(allStudents.Count > 1 ? "col-md-1" : "col-md-1")">
            <label class="form-label">&nbsp;</label>
  <button type="submit" class="btn btn-primary w-100">
-   <i class="bi bi-search me-2"></i>Search
+   <i class="bi bi-search"></i>
      </button>
-            </div>
+          </div>
         </div>
     </form>
 
@@ -73,19 +94,19 @@
         <div class="col-md-3">
     <div class="p-3 text-center" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
        <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #dc3545;"></i>
-              <h4 class="mt-2 mb-0" style="color: #dc3545;">@totalAbsent</h4>
-                <small class="text-muted">Total Absent</small>
+    <h4 class="mt-2 mb-0" style="color: #dc3545;">@totalAbsent</h4>
+      <small class="text-muted">Total Absent</small>
        </div>
         </div>
-        <div class="col-md-3">
+    <div class="col-md-3">
             <div class="p-3 text-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
        <i class="bi bi-clock-fill" style="font-size: 2rem; color: #ffc107;"></i>
        <h4 class="mt-2 mb-0" style="color: #ffc107;">@totalLate</h4>
          <small class="text-muted">Total Late</small>
-            </div>
+     </div>
         </div>
         <div class="col-md-3">
-          <div class="p-3 text-center" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
+   <div class="p-3 text-center" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
     <i class="bi bi-graph-up" style="font-size: 2rem; color: #0d6efd;"></i>
   <h4 class="mt-2 mb-0" style="color: #0d6efd;">@attendanceRate%</h4>
   <small class="text-muted">Attendance Rate</small>

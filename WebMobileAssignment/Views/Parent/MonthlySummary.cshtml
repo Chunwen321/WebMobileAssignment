@@ -4,19 +4,21 @@
 }
 
 @{
+    var allStudents = ViewBag.AllStudents as List<WebMobileAssignment.Models.Student> ?? new List<WebMobileAssignment.Models.Student>();
+    var selectedStudentId = ViewBag.SelectedStudentId as string;
     var totalClasses = ViewBag.TotalClasses ?? 0;
     var totalPresent = ViewBag.TotalPresent ?? 0;
   var totalAbsent = ViewBag.TotalAbsent ?? 0;
     var totalLate = ViewBag.TotalLate ?? 0;
-    var attendanceRate = ViewBag.AttendanceRate ?? 0;
+ var attendanceRate = ViewBag.AttendanceRate ?? 0;
     var subjectSummary = ViewBag.SubjectSummary as List<dynamic> ?? new List<dynamic>();
     var selectedYear = ViewBag.SelectedYear ?? DateTime.Now.Year;
     var selectedMonth = ViewBag.SelectedMonth ?? DateTime.Now.Month;
     var monthName = ViewBag.MonthName ?? DateTime.Now.ToString("MMMM yyyy");
     
-    // Calculate percentages for pie chart
+  // Calculate percentages for pie chart
     var presentPercent = totalClasses > 0 ? Math.Round((decimal)totalPresent / totalClasses * 100, 1) : 0;
-    var absentPercent = totalClasses > 0 ? Math.Round((decimal)totalAbsent / totalClasses * 100, 1) : 0;
+ var absentPercent = totalClasses > 0 ? Math.Round((decimal)totalAbsent / totalClasses * 100, 1) : 0;
     var latePercent = totalClasses > 0 ? Math.Round((decimal)totalLate / totalClasses * 100, 1) : 0;
 }
 
@@ -25,21 +27,35 @@
     <h3 class="card-title">
         <i class="bi bi-bar-chart-fill"></i>
  Monthly Attendance Summary
-        </h3>
-    <form method="get" asp-controller="Parent" asp-action="MonthlySummary" class="d-flex gap-2">
-            <select name="year" class="form-select form-select-sm" style="width: auto;">
-            @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 2; y--)
+    </h3>
+  <form method="get" asp-controller="Parent" asp-action="MonthlySummary" class="d-flex gap-2">
+          <!-- Child Selector (only show if parent has multiple children) -->
+       @if (allStudents.Count > 1)
+       {
+       <select name="studentId" class="form-select form-select-sm" style="width: auto;">
+  <option value="">All Children</option>
+  @foreach (var student in allStudents)
+     {
+        <option value="@student.StudentId" selected="@(student.StudentId == selectedStudentId)">
+ @student.User.FullName
+       </option>
+    }
+            </select>
+  }
+          
+   <select name="year" class="form-select form-select-sm" style="width: auto;">
+       @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 2; y--)
         {
          <option value="@y" selected="@(y == selectedYear)">@y</option>
         }
-            </select>
+     </select>
    <select name="month" class="form-select form-select-sm" style="width: auto;">
     @for (int m = 1; m <= 12; m++)
      {
-        var monthText = new DateTime(2000, m, 1).ToString("MMMM");
+    var monthText = new DateTime(2000, m, 1).ToString("MMMM");
            <option value="@m" selected="@(m == selectedMonth)">@monthText</option>
-                }
-          </select>
+        }
+   </select>
   <button type="submit" class="btn btn-sm btn-primary">
   <i class="bi bi-search"></i>
             </button>

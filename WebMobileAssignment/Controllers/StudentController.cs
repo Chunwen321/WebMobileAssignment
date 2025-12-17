@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebMobileAssignment.Models;
 using WebMobileAssignment.Services;
@@ -6,6 +7,7 @@ using System.Security.Claims;
 
 namespace WebMobileAssignment.Controllers
 {
+    [Authorize(Roles = "Student")]
     public class StudentController : Controller
     {
         private readonly DB _context;

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace WebMobileAssignment.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         private readonly DB _context;
@@ -1992,13 +1993,15 @@ namespace WebMobileAssignment.Controllers
             }
         }
 
-        // PIN Entry Page (Mobile-friendly)
+        // PIN Entry Page (Mobile-friendly) - Allow anonymous access for kiosk/shared devices
+        [AllowAnonymous]
         public async Task<IActionResult> AttendancePinEntry(string? pin)
         {
             ViewBag.PrefilledPin = pin;
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> SubmitAttendancePin(string pinCode, string studentId)
         {
