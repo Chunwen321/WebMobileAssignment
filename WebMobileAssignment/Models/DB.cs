@@ -282,6 +282,7 @@ public class Class
 
     public int CurrentCapacity { get; set; }
 
+    public bool IsActive { get; set; } = true;
 
     // Navigation properties
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();

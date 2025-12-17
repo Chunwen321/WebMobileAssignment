@@ -308,8 +308,30 @@
         $(document).ready(function() {
             console.log('Document ready');
             
-            // Focus on first PIN digit
-            $('#pin1').focus();
+            // Check if PIN is provided in URL (from QR code scan)
+            const urlParams = new URLSearchParams(window.location.search);
+            const prefilledPin = urlParams.get('pin');
+            
+            if (prefilledPin && prefilledPin.length === 6) {
+                // Auto-fill PIN from QR code
+                console.log('Auto-filling PIN from QR code:', prefilledPin);
+                for (let i = 0; i < 6; i++) {
+                    $(`#pin${i + 1}`).val(prefilledPin[i]);
+                }
+                
+                // Show success message
+                const qrScannedBadge = $('<div class="alert alert-success text-center mb-3">' +
+                    '<i class="bi bi-qr-code-scan me-2"></i>' +
+                    '<strong>QR Code Scanned!</strong> PIN auto-filled. Click Submit to mark attendance.' +
+                    '</div>');
+                qrScannedBadge.insertBefore('#attendanceForm');
+                
+                // Focus on submit button
+                $('#submitBtn').focus();
+            } else {
+                // Focus on first PIN digit if no QR code
+                $('#pin1').focus();
+            }
 
             // PIN digit navigation
             $('.pin-digit').on('input', function() {

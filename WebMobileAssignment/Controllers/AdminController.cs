@@ -38,8 +38,9 @@ namespace WebMobileAssignment.Controllers
                 .Where(a => a.Date.Date == DateTime.Today)
                 .CountAsync();
 
+            // Count both "Present" and "Leave" as present
             var presentToday = await _context.Attendances
-                .Where(a => a.Date.Date == DateTime.Today && a.Status == "Present")
+                .Where(a => a.Date.Date == DateTime.Today && (a.Status == "Present" || a.Status == "Leave"))
                 .CountAsync();
 
             var absentToday = await _context.Attendances
@@ -671,7 +672,7 @@ namespace WebMobileAssignment.Controllers
 
             if (student == null) return NotFound();
 
-            // Get attendance statistics
+            // Get attendance statistics - Count "Leave" as present
             var attendanceStats = await _context.Attendances
                 .Where(a => a.StudentId == id)
                 .GroupBy(a => a.Status)
@@ -680,13 +681,17 @@ namespace WebMobileAssignment.Controllers
 
             var totalAttendance = attendanceStats.Sum(s => s.Count);
             var presentCount = attendanceStats.FirstOrDefault(s => s.Status == "Present")?.Count ?? 0;
+            var leaveCount = attendanceStats.FirstOrDefault(s => s.Status == "Leave")?.Count ?? 0;
             var absentCount = attendanceStats.FirstOrDefault(s => s.Status == "Absent")?.Count ?? 0;
             var lateCount = attendanceStats.FirstOrDefault(s => s.Status == "Late")?.Count ?? 0;
-            var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
+            
+            // Count both Present and Leave as present for attendance rate
+            var totalPresentIncludingLeave = presentCount + leaveCount;
+            var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)totalPresentIncludingLeave / totalAttendance * 100, 1) : 0;
 
             ViewBag.TotalEnrollments = student.Enrollments?.Count ?? 0;
             ViewBag.TotalAttendance = totalAttendance;
-            ViewBag.PresentCount = presentCount;
+            ViewBag.PresentCount = totalPresentIncludingLeave; // Show combined count
             ViewBag.AbsentCount = absentCount;
             ViewBag.LateCount = lateCount;
             ViewBag.AttendanceRate = attendanceRate;
@@ -1818,7 +1823,7 @@ namespace WebMobileAssignment.Controllers
                 try
                 {
                     var subjectCount = await _context.Subjects.CountAsync();
-                    var subjectId = $"SUBJ{(subjectCount + 1):D3}";
+                    var subjectId = $"S{(subjectCount + 1):D3}";
 
                     var subject = new Subject
                     {
@@ -2002,11 +2007,16 @@ namespace WebMobileAssignment.Controllers
         }
 
         // ==================== ATTENDANCE MANAGEMENT ====================        // Take Attendance with PIN Code
-        public async Task<IActionResult> AttendanceTake()
+        public async Task<IActionResult> AttendanceTake(DateTime? selectedDate)
         {
             ViewBag.ActiveMenu = "AttendanceManagement";
             ViewBag.ActiveSubmenu = "Take";
             ViewBag.Title = "Take Attendance";
+
+            // Use selected date or default to today
+            var targetDate = selectedDate ?? DateTime.Today;
+            ViewBag.SelectedDate = targetDate;
+            ViewBag.SelectedDay = targetDate.DayOfWeek.ToString();
 
             // Load all classes
             ViewBag.Classes = await _context.Classes
@@ -2016,16 +2026,18 @@ namespace WebMobileAssignment.Controllers
                 .OrderBy(c => c.ClassName)
                 .ToListAsync();
 
-            // Load all existing sessions
+            // Load ONLY sessions created on the selected date
+            // CreatedDate must match the selected date exactly
             ViewBag.Sessions = await _context.AttendanceSessions
-                .Where(s => s.IsActive)
+                .Include(s => s.Class)
+                .Where(s => s.IsActive && s.CreatedDate.Date == targetDate.Date)
                 .ToListAsync();
 
             return View();
         }
 
         // Attendance Class Detail - for generating PIN
-        public async Task<IActionResult> AttendanceClassDetail(string id)
+        public async Task<IActionResult> AttendanceClassDetail(string id, DateTime? selectedDate)
         {
             if (string.IsNullOrEmpty(id)) return NotFound();
 
@@ -2043,333 +2055,40 @@ namespace WebMobileAssignment.Controllers
             ViewBag.ActiveMenu = "AttendanceManagement";
             ViewBag.ActiveSubmenu = "Take";
 
-            // Load sessions for this class
+            // Use selected date or default to today
+            var targetDate = selectedDate ?? DateTime.Today;
+            ViewBag.SelectedDate = targetDate;
+
+            // Load ONLY the session created on the selected date for this class
+            // This ensures we show the correct PIN for the selected date
             ViewBag.Sessions = await _context.AttendanceSessions
-                .Where(s => s.IsActive && s.ClassId == id)
+                .Where(s => s.IsActive && 
+                           s.ClassId == id && 
+                           s.CreatedDate.Date == targetDate.Date)
                 .ToListAsync();
 
-            // Load today's attendance records for this class
+            // Load ALL sessions for this class (to show if there's a PIN from a different date)
+            ViewBag.AllSessions = await _context.AttendanceSessions
+                .Where(s => s.IsActive && s.ClassId == id)
+                .OrderByDescending(s => s.CreatedDate)
+                .ToListAsync();
+
+            // Load attendance records for this class on the selected date
             ViewBag.TodayAttendances = await _context.Attendances
-                .Where(a => a.ClassId == id && a.Date.Date == DateTime.Today)
+                .Where(a => a.ClassId == id && a.Date.Date == targetDate.Date)
                 .ToListAsync();
 
             return View(classEntity);
         }
 
         [HttpPost]
-        public async Task<IActionResult> GenerateAttendancePin(string classId)
+        public async Task<IActionResult> SaveManualAttendance([FromBody] ManualAttendanceRequest request)
         {
             try
             {
-                var classEntity = await _context.Classes
-                    .Include(c => c.Enrollments)
-                    .FirstOrDefaultAsync(c => c.ClassId == classId);
-
-                if (classEntity == null)
-                    return Json(new { success = false, message = "Class not found" });
-
-                // Check if class has schedule (required for time validation)
-                if (!classEntity.StartTime.HasValue || !classEntity.EndTime.HasValue || string.IsNullOrEmpty(classEntity.Day))
-                    return Json(new { success = false, message = "Class schedule not configured. Please set class day and time first." });
-
-                // Check if PIN already exists for this class
-                var existingSession = await _context.AttendanceSessions
-                    .FirstOrDefaultAsync(s => s.ClassId == classId);
-
-                if (existingSession != null)
-                    return Json(new { success = false, message = "PIN code has already been generated for this class. Each class can only have one PIN code." });
-
-                // Generate 6-digit PIN
-                var random = new Random();
-                var pinCode = random.Next(100000, 999999).ToString();
-
-                // Create session - expiry based on class end time
-                var sessionCount = await _context.AttendanceSessions.CountAsync();
-                var sessionId = $"SESSION{(sessionCount + 1):D5}";
-
-                // Calculate expiry date (class end time on the current day or next occurrence of class day)
-                var today = DateTime.Today;
-                var classEndTime = today.Add(classEntity.EndTime.Value);
-
-                // If class end time has passed today, set expiry to next week's class
-                if (DateTime.Now > classEndTime)
+                if (string.IsNullOrEmpty(request.ClassId) || request.Attendances == null || !request.Attendances.Any())
                 {
-                    classEndTime = classEndTime.AddDays(7);
-                }
-
-                var session = new AttendanceSession
-                {
-                    SessionId = sessionId,
-                    PinCode = pinCode,
-                    ClassId = classId,
-                    CreatedByTeacherId = null, // Set to current teacher if auth implemented
-                    CreatedDate = DateTime.Now,
-                    ExpiryDate = classEndTime, // Valid until class end time
-                    IsActive = true,
-                    SessionType = "Class"
-                };
-
-                _context.AttendanceSessions.Add(session);
-                await _context.SaveChangesAsync();
-
-                // Get server URL for QR code
-                var request = HttpContext.Request;
-                var baseUrl = $"{request.Scheme}://{request.Host}";
-                var qrUrl = $"{baseUrl}/Admin/AttendancePinEntry?pin={pinCode}";
-
-                return Json(new
-                {
-                    success = true,
-                    sessionId = sessionId,
-                    pinCode = pinCode,
-                    qrUrl = qrUrl,
-                    expiryDate = session.ExpiryDate,
-                    className = classEntity.ClassName,
-                    enrolledCount = classEntity.Enrollments.Count,
-                    classDay = classEntity.Day,
-                    startTime = classEntity.StartTime.Value.ToString("hh\\:mm"),
-                    endTime = classEntity.EndTime.Value.ToString("hh\\:mm")
-                });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        // PIN Entry Page (Mobile-friendly) - Allow anonymous access for kiosk/shared devices
-        [AllowAnonymous]
-        public async Task<IActionResult> AttendancePinEntry(string? pin)
-        {
-            ViewBag.PrefilledPin = pin;
-            return View();
-        }
-
-        [AllowAnonymous]
-        [HttpPost]
-        public async Task<IActionResult> SubmitAttendancePin(string pinCode, string studentId)
-        {
-            try
-            {
-                // Find active session with this PIN
-                var session = await _context.AttendanceSessions
-                    .Include(s => s.Class)
-                    .FirstOrDefaultAsync(s => s.PinCode == pinCode && s.IsActive);
-
-                if (session == null)
-                    return Json(new { success = false, message = "Invalid PIN code" });
-
-                // Validate class has schedule
-                if (!session.Class.StartTime.HasValue || !session.Class.EndTime.HasValue)
-                    return Json(new { success = false, message = "Class schedule not configured" });
-
-                // Check if current time is within class hours
-                var currentTime = DateTime.Now.TimeOfDay;
-                var classStartTime = session.Class.StartTime.Value;
-                var classEndTime = session.Class.EndTime.Value;
-
-                if (currentTime < classStartTime || currentTime > classEndTime)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = $"Attendance can only be taken during class hours ({classStartTime:hh\\:mm} - {classEndTime:hh\\:mm}). Current time: {DateTime.Now:hh\\:mm tt}"
-                    });
-                }
-
-                // Check if today matches the class day
-                var currentDayOfWeek = DateTime.Now.DayOfWeek.ToString();
-                if (!string.IsNullOrEmpty(session.Class.Day) && !session.Class.Day.Equals(currentDayOfWeek, StringComparison.OrdinalIgnoreCase))
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = $"This class is scheduled for {session.Class.Day}, not {currentDayOfWeek}"
-                    });
-                }
-
-                // Check if student exists and is enrolled in this class
-                var student = await _context.Students
-                    .Include(s => s.User)
-                    .Include(s => s.Enrollments)
-                    .FirstOrDefaultAsync(s => s.StudentId == studentId);
-
-                if (student == null)
-                    return Json(new { success = false, message = "Student not found" });
-
-                var isEnrolled = student.Enrollments.Any(e => e.ClassId == session.ClassId);
-                if (!isEnrolled)
-                    return Json(new { success = false, message = "Student not enrolled in this class" });
-
-                // Check if already marked attendance for today
-                var existingAttendance = await _context.Attendances
-                    .FirstOrDefaultAsync(a => a.StudentId == studentId &&
-                                              a.ClassId == session.ClassId &&
-                                              a.Date.Date == DateTime.Today);
-
-                if (existingAttendance != null)
-                    return Json(new { success = false, message = "Attendance already marked for today" });
-
-                // Create attendance record
-                var attCount = await _context.Attendances.CountAsync();
-                var attId = $"ATT{(attCount + 1):D5}";
-
-                var attendance = new Attendance
-                {
-                    AttendanceId = attId,
-                    StudentId = studentId,
-                    ClassId = session.ClassId,
-                    Date = DateTime.Now,
-                    TakenOn = DateTime.Now,
-                    Status = "Present",
-                    MarkedByTeacherId = session.CreatedByTeacherId
-                };
-
-                _context.Attendances.Add(attendance);
-                await _context.SaveChangesAsync();
-
-                return Json(new
-                {
-                    success = true,
-                    message = $"Attendance marked successfully for {student.User.FullName}",
-                    studentName = student.User.FullName,
-                    className = session.Class.ClassName,
-                    time = DateTime.Now.ToString("hh:mm tt")
-                });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        // Admin Mark Attendance for Students (New - Admin selects students and enters PIN)
-        public async Task<IActionResult> AttendanceMarkForStudents()
-        {
-            ViewBag.ActiveMenu = "AttendanceManagement";
-            ViewBag.ActiveSubmenu = "Take";
-            ViewBag.Title = "Mark Student Attendance";
-
-            ViewBag.Classes = await _context.Classes
-                .Include(c => c.Teacher)
-                .ThenInclude(t => t.User)
-                .Include(c => c.Enrollments)
-                .OrderBy(c => c.ClassName)
-                .ToListAsync();
-
-            ViewBag.Sessions = await _context.AttendanceSessions
-                .Where(s => s.IsActive)
-                .ToListAsync();
-
-            return View();
-        }
-
-        // Get students for a specific class (New - AJAX endpoint)
-        [HttpGet]
-        public async Task<IActionResult> GetClassStudents(string classId)
-        {
-            try
-            {
-                var students = await _context.Enrollments
-                    .Where(e => e.ClassId == classId)
-                    .Include(e => e.Student)
-                    .ThenInclude(s => s.User)
-                    .Select(e => new
-                    {
-                        studentId = e.Student.StudentId,
-                        fullName = e.Student.User.FullName,
-                        email = e.Student.User.Email
-                    })
-                    .ToListAsync();
-
-                return Json(new { success = true, students });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        // Get PIN status for a class (New - AJAX endpoint)
-        [HttpGet]
-        public async Task<IActionResult> GetClassPinStatus(string classId)
-        {
-            try
-            {
-                var session = await _context.AttendanceSessions
-                    .Where(s => s.ClassId == classId && s.IsActive)
-                    .FirstOrDefaultAsync();
-
-                if (session != null)
-                {
-                    return Json(new
-                    {
-                        success = true,
-                        hasPin = true,
-                        pinCode = session.PinCode,
-                        sessionId = session.SessionId,
-                        expiryDate = session.ExpiryDate
-                    });
-                }
-
-                return Json(new { success = true, hasPin = false });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        // Verify class PIN (New - AJAX endpoint)
-        [HttpPost]
-        public async Task<IActionResult> VerifyClassPin(string classId, string pinCode)
-        {
-            try
-            {
-                var session = await _context.AttendanceSessions
-                    .FirstOrDefaultAsync(s => s.ClassId == classId &&
-                                              s.PinCode == pinCode &&
-                                              s.IsActive);
-
-                if (session == null)
-                {
-                    return Json(new { success = false, message = "Invalid PIN code for this class" });
-                }
-
-                if (session.ExpiryDate < DateTime.Now)
-                {
-                    return Json(new { success = false, message = "PIN code has expired" });
-                }
-
-                return Json(new
-                {
-                    success = true,
-                    message = "PIN verified successfully",
-                    sessionId = session.SessionId
-                });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        // Submit bulk attendance (New - Admin marks multiple students at once)
-        [HttpPost]
-        public async Task<IActionResult> SubmitBulkAttendance([FromBody] BulkAttendanceRequest request)
-        {
-            try
-            {
-                // Verify PIN
-                var session = await _context.AttendanceSessions
-                    .Include(s => s.Class)
-                    .FirstOrDefaultAsync(s => s.ClassId == request.ClassId &&
-                                              s.PinCode == request.PinCode &&
-                                              s.IsActive);
-
-                if (session == null)
-                {
-                    return Json(new { success = false, message = "Invalid PIN code" });
+                    return Json(new { success = false, message = "Invalid request data" });
                 }
 
                 var selectedDate = DateTime.Parse(request.Date);
@@ -2381,36 +2100,42 @@ namespace WebMobileAssignment.Controllers
 
                 foreach (var att in request.Attendances)
                 {
-                    // Check if already marked for this date
+                    // Check if attendance already exists for this student on this date
                     var existing = await _context.Attendances
-                        .AsNoTracking() // Important: Use AsNoTracking for read-only queries
                         .FirstOrDefaultAsync(a => a.StudentId == att.StudentId &&
                                                   a.ClassId == request.ClassId &&
                                                   a.Date.Date == selectedDate.Date);
 
                     if (existing != null)
                     {
-                        errors.Add($"Student {att.StudentId} already marked for {selectedDate:yyyy-MM-dd}");
-                        continue;
+                        // Update existing attendance
+                        if (existing.Status != att.Status)
+                        {
+                            existing.Status = att.Status;
+                            existing.TakenOn = DateTime.Now;
+                            _context.Update(existing);
+                            markedCount++;
+                        }
                     }
-
-                    // Increment the counter for each new record
-                    currentAttendanceCount++;
-                    var attId = $"ATT{currentAttendanceCount:D5}";
-
-                    var attendance = new Attendance
+                    else
                     {
-                        AttendanceId = attId,
-                        StudentId = att.StudentId,
-                        ClassId = request.ClassId,
-                        Date = selectedDate,
-                        TakenOn = DateTime.Now,
-                        Status = att.Status,
-                        MarkedByTeacherId = session.CreatedByTeacherId
-                    };
+                        // Create new attendance record
+                        currentAttendanceCount++;
+                        var attId = $"ATT{currentAttendanceCount:D5}";
 
-                    _context.Attendances.Add(attendance);
-                    markedCount++;
+                        var attendance = new Attendance
+                        {
+                            AttendanceId = attId,
+                            StudentId = att.StudentId,
+                            ClassId = request.ClassId,
+                            Date = selectedDate,
+                            TakenOn = DateTime.Now,
+                            Status = att.Status,
+                            MarkedByTeacherId = null // Could be set to current admin user
+                        };
+                        _context.Attendances.Add(attendance);
+                        markedCount++;
+                    }
                 }
 
                 // Save all changes at once
@@ -2421,7 +2146,7 @@ namespace WebMobileAssignment.Controllers
                     success = true,
                     marked = markedCount,
                     errors = errors.Count > 0 ? errors : null,
-                    message = $"Successfully marked attendance for {markedCount} student(s)"
+                    message = $"Successfully saved attendance for {markedCount} student(s)"
                 });
             }
             catch (Exception ex)
@@ -2430,61 +2155,124 @@ namespace WebMobileAssignment.Controllers
             }
         }
 
-        // Attendance Management (View/Edit Records)
-        public async Task<IActionResult> AttendanceManagement(string? classId, DateTime? startDate, DateTime? endDate)
-        {
-            ViewBag.ActiveMenu = "AttendanceManagement";
-            ViewBag.ActiveSubmenu = "Records";
-            ViewBag.Title = "Manage Attendance";
-
-            var query = _context.Attendances
-                .Include(a => a.Student)
-                .ThenInclude(s => s.User)
-                .Include(a => a.Class)
-                .Where(a => a.Date.Date == DateTime.Today);
-
-            if (!string.IsNullOrEmpty(classId))
-            {
-                query = query.Where(a => a.ClassId == classId);
-                ViewBag.SelectedClassId = classId;
-            }
-
-            var attendances = await query.OrderByDescending(a => a.Class.ClassName)
-                                          .ThenBy(a => a.Student.User.FullName)
-                                          .ToListAsync();
-
-            ViewBag.Classes = await _context.Classes.ToListAsync();
-
-            // Calculate statistics
-            var totalRecords = attendances.Count;
-            var presentCount = attendances.Count(r => r.Status == "Present");
-            var absentCount = attendances.Count(r => r.Status == "Absent");
-            var lateCount = attendances.Count(r => r.Status == "Late");
-            var attendanceRate = totalRecords > 0 ? Math.Round((decimal)presentCount / totalRecords * 100, 1) : 0;
-
-            ViewBag.TotalRecords = totalRecords;
-            ViewBag.PresentCount = presentCount;
-            ViewBag.AbsentCount = absentCount;
-            ViewBag.LateCount = lateCount;
-            ViewBag.AttendanceRate = attendanceRate;
-
-            return View(attendances);
-        }
-
         [HttpPost]
-        public async Task<IActionResult> UpdateAttendanceStatus(string attendanceId, string status)
+        public async Task<IActionResult> SaveSingleAttendance([FromBody] SingleAttendanceRequest request)
         {
             try
             {
-                var attendance = await _context.Attendances.FindAsync(attendanceId);
-                if (attendance == null)
-                    return Json(new { success = false, message = "Attendance record not found" });
+                if (string.IsNullOrEmpty(request.ClassId) || string.IsNullOrEmpty(request.StudentId))
+                {
+                    return Json(new { success = false, message = "Invalid request data" });
+                }
 
-                attendance.Status = status;
-                attendance.TakenOn = DateTime.Now;
+                var selectedDate = DateTime.Parse(request.Date);
+
+                // Get the class to validate schedule
+                var classEntity = await _context.Classes
+                    .FirstOrDefaultAsync(c => c.ClassId == request.ClassId);
+
+                if (classEntity == null)
+                {
+                    return Json(new { success = false, message = "Class not found" });
+                }
+
+                // Validate that admin can only mark attendance after class has started
+                if (classEntity.StartTime.HasValue)
+                {
+                    // Check if the selected date is before today
+                    if (selectedDate.Date < DateTime.Today)
+                    {
+                        // Past date - admin can mark attendance (already passed)
+                    }
+                    else if (selectedDate.Date == DateTime.Today)
+                    {
+                        // Today - check if class has started
+                        var currentTime = DateTime.Now.TimeOfDay;
+                        if (currentTime < classEntity.StartTime.Value)
+                        {
+                            return Json(new
+                            {
+                                success = false,
+                                message = $"Attendance can only be marked after class starts at {classEntity.StartTime.Value:hh\\:mm}. Current time: {DateTime.Now:hh\\:mm tt}"
+                            });
+                        }
+                    }
+                    else
+                    {
+                        // Future date - cannot mark attendance
+                        return Json(new
+                        {
+                            success = false,
+                            message = "Attendance cannot be marked for future dates"
+                        });
+                    }
+                }
+
+                // Validate that the selected date matches the class day
+                var selectedDayOfWeek = selectedDate.DayOfWeek.ToString();
+                if (!string.IsNullOrEmpty(classEntity.Day) && !classEntity.Day.Equals(selectedDayOfWeek, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"This class is scheduled for {classEntity.Day}, not {selectedDayOfWeek}"
+                    });
+                }
+
+                // Check if student is enrolled in this class
+                var isEnrolled = await _context.Enrollments
+                    .AnyAsync(e => e.StudentId == request.StudentId && e.ClassId == request.ClassId);
+
+                if (!isEnrolled)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Student is not enrolled in this class"
+                    });
+                }
+
+                // Check if attendance already exists for this student on this date
+                var existing = await _context.Attendances
+                    .FirstOrDefaultAsync(a => a.StudentId == request.StudentId &&
+                                              a.ClassId == request.ClassId &&
+                                              a.Date.Date == selectedDate.Date);
+
+                if (existing != null)
+                {
+                    // Update existing attendance
+                    existing.Status = request.Status;
+                    existing.TakenOn = DateTime.Now;
+                    _context.Update(existing);
+                }
+                else
+                {
+                    // Create new attendance record
+                    var currentAttendanceCount = await _context.Attendances.CountAsync();
+                    var attId = $"ATT{(currentAttendanceCount + 1):D5}";
+
+                    var attendance = new Attendance
+                    {
+                        AttendanceId = attId,
+                        StudentId = request.StudentId,
+                        ClassId = request.ClassId,
+                        Date = selectedDate,
+                        TakenOn = DateTime.Now,
+                        Status = request.Status,
+                        MarkedByTeacherId = null // Could be set to current admin user
+                    };
+
+                    _context.Attendances.Add(attendance);
+                }
+
+                // Save changes
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = "Status updated successfully" });
+                return Json(new
+                {
+                    success = true,
+                    message = $"Attendance saved: {request.Status}"
+                });
             }
             catch (Exception ex)
             {
@@ -2492,21 +2280,24 @@ namespace WebMobileAssignment.Controllers
             }
         }
 
-        // Attendance Records/History
+
+        // View Attendance Records with filters
         public async Task<IActionResult> AttendanceRecords(string? studentId, string? classId, DateTime? startDate, DateTime? endDate)
         {
             ViewBag.ActiveMenu = "AttendanceManagement";
             ViewBag.ActiveSubmenu = "Records";
             ViewBag.Title = "Attendance Records";
 
+            // Build query
             var query = _context.Attendances
                 .Include(a => a.Student)
-                .ThenInclude(s => s.User)
+                    .ThenInclude(s => s.User)
                 .Include(a => a.Class)
                 .Include(a => a.MarkedByTeacher)
-                .ThenInclude(t => t.User)
+                    .ThenInclude(t => t.User)
                 .AsQueryable();
 
+            // Apply filters
             if (!string.IsNullOrEmpty(studentId))
             {
                 query = query.Where(a => a.StudentId == studentId);
@@ -2531,18 +2322,17 @@ namespace WebMobileAssignment.Controllers
                 ViewBag.EndDate = endDate.Value.ToString("yyyy-MM-dd");
             }
 
-            var records = await query.OrderByDescending(a => a.Date)
-                                     .ThenBy(a => a.Student.User.FullName)
-                                     .ToListAsync();
-
-            ViewBag.Students = await _context.Students.Include(s => s.User).ToListAsync();
-            ViewBag.Classes = await _context.Classes.ToListAsync();
+            // Get filtered records
+            var records = await query
+                .OrderByDescending(a => a.Date)
+                .ThenByDescending(a => a.TakenOn)
+                .ToListAsync();
 
             // Calculate statistics
             var totalRecords = records.Count;
-            var presentCount = records.Count(r => r.Status == "Present");
-            var absentCount = records.Count(r => r.Status == "Absent");
-            var lateCount = records.Count(r => r.Status == "Late");
+            var presentCount = records.Count(a => a.Status == "Present");
+            var absentCount = records.Count(a => a.Status == "Absent");
+            var lateCount = records.Count(a => a.Status == "Late");
             var attendanceRate = totalRecords > 0 ? Math.Round((decimal)presentCount / totalRecords * 100, 1) : 0;
 
             ViewBag.TotalRecords = totalRecords;
@@ -2550,157 +2340,10 @@ namespace WebMobileAssignment.Controllers
             ViewBag.AbsentCount = absentCount;
             ViewBag.LateCount = lateCount;
             ViewBag.AttendanceRate = attendanceRate;
-
-            return View(records);
-        }
-
-        public async Task<IActionResult> AttendanceIndex(string classId, DateTime? startDate, DateTime? endDate)
-        {
-            ViewBag.ActiveMenu = "AttendanceManagement";
-            ViewBag.ActiveSubmenu = "Records";
-            ViewBag.Title = "Attendance Records";
-
-            var attendances = _context.Attendances
-                .Include(a => a.Student)
-                .ThenInclude(s => s.User)
-                .Include(a => a.Class)
-                .Where(a => a.Date.Date == DateTime.Today);
-
-            if (!string.IsNullOrEmpty(classId))
-            {
-                attendances = attendances.Where(a => a.ClassId == classId);
-                ViewBag.SelectedClassId = classId;
-            }
-
-            var records = await attendances.OrderByDescending(a => a.Date)
-                                           .ThenBy(a => a.Student.User.FullName)
-                                           .ToListAsync();
-
+            ViewBag.Students = await _context.Students.Include(s => s.User).ToListAsync();
             ViewBag.Classes = await _context.Classes.ToListAsync();
 
             return View(records);
-        }
-
-        public async Task<IActionResult> AttendanceCreate()
-        {
-            ViewBag.ActiveMenu = "AttendanceManagement";
-            ViewBag.ActiveSubmenu = "Record";
-            ViewBag.Title = "Record Attendance";
-            ViewBag.Students = await _context.Students.Include(s => s.User).ToListAsync();
-            ViewBag.Classes = await _context.Classes.ToListAsync();
-            ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
-
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AttendanceCreate(string studentId, string classId,
-            DateTime date, string status, string markedByTeacherId)
-        {
-            if (ModelState.IsValid)
-            {
-                var attCount = await _context.Attendances.CountAsync();
-                var attId = $"ATT{(attCount + 1):D5}";
-
-                var attendance = new Attendance
-                {
-                    AttendanceId = attId,
-                    StudentId = studentId,
-                    ClassId = classId,
-                    Date = date,
-                    Status = status,
-                    MarkedByTeacherId = markedByTeacherId
-                };
-                _context.Attendances.Add(attendance);
-
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(AttendanceIndex));
-            }
-
-            ViewBag.Students = await _context.Students.Include(s => s.User).ToListAsync();
-            ViewBag.Classes = await _context.Classes.ToListAsync();
-            ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
-
-            return View();
-        }
-
-        // ==================== PROFILE PICTURE MANAGEMENT ====================
-        
-        [HttpPost]
-        public async Task<IActionResult> UploadProfilePicture(IFormFile file, string userId)
-        {
-            try
-            {
-                if (file == null || file.Length == 0)
-                    return Json(new { success = false, message = "No file uploaded" });
-
-                // Find user
-                var user = await _context.Users.FindAsync(userId);
-                if (user == null)
-                    return Json(new { success = false, message = "User not found" });
-
-                // Delete old profile picture from S3 (if not default)
-                if (!string.IsNullOrEmpty(user.ProfilePicture) && 
-                    !user.ProfilePicture.StartsWith("/images/"))
-                {
-                    await _s3Service.DeleteFileAsync(user.ProfilePicture);
-                }
-
-                // Upload new picture to S3
-                var s3Url = await _s3Service.UploadFileAsync(file, userId);
-
-                // Update user record
-                user.ProfilePicture = s3Url;
-                await _context.SaveChangesAsync();
-
-                return Json(new 
-                { 
-                    success = true, 
-                    message = "Profile picture uploaded successfully",
-                    url = s3Url
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = $"Upload failed: {ex.Message}" });
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> DeleteProfilePicture(string userId)
-        {
-            try
-            {
-                var user = await _context.Users.FindAsync(userId);
-                if (user == null)
-                    return Json(new { success = false, message = "User not found" });
-
-                // Delete from S3 (if not default)
-                if (!string.IsNullOrEmpty(user.ProfilePicture) && 
-                    !user.ProfilePicture.StartsWith("/images/"))
-                {
-                    await _s3Service.DeleteFileAsync(user.ProfilePicture);
-                }
-
-                // Reset to default
-                user.ProfilePicture = "/images/default-avatar.png";
-                await _context.SaveChangesAsync();
-
-                return Json(new 
-                { 
-                    success = true, 
-                    message = "Profile picture deleted successfully"
-                });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = $"Delete failed: {ex.Message}" });
-            }
         }
 
         // Reports & Analytics
@@ -2729,14 +2372,78 @@ namespace WebMobileAssignment.Controllers
             var thisMonthTotal = thisMonthAttendances.Count;
             var thisMonthRate = thisMonthTotal > 0 ? Math.Round((decimal)thisMonthPresent / thisMonthTotal * 100, 1) : 0;
 
+            // Get weekly attendance data for trend chart (last 4 weeks)
+            var weeklyData = new List<object>();
+            for (int weekOffset = 3; weekOffset >= 0; weekOffset--)
+            {
+                var weekStart = startOfMonth.AddDays(weekOffset * 7);
+                var weekEnd = weekStart.AddDays(7);
+                
+                var weekAttendances = await _context.Attendances
+                    .Where(a => a.Date >= weekStart && a.Date < weekEnd)
+                    .ToListAsync();
+                
+                weeklyData.Add(new
+                {
+                    present = weekAttendances.Count(a => a.Status == "Present"),
+                    absent = weekAttendances.Count(a => a.Status == "Absent"),
+                    late = weekAttendances.Count(a => a.Status == "Late")
+                });
+            }
+            ViewBag.WeeklyData = weeklyData;
+
+            // Get top performing students (by attendance rate)
+            var studentAttendanceStats = await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Attendances)
+                .Where(s => s.Attendances.Any())
+                .Select(s => new
+                {
+                    StudentId = s.StudentId,
+                    FullName = s.User.FullName,
+                    TotalAttendance = s.Attendances.Count,
+                    PresentCount = s.Attendances.Count(a => a.Status == "Present"),
+                    AttendanceRate = s.Attendances.Count > 0 
+                        ? Math.Round((decimal)s.Attendances.Count(a => a.Status == "Present") / s.Attendances.Count * 100, 1) 
+                        : 0
+                })
+                .OrderByDescending(s => s.AttendanceRate)
+                .ThenByDescending(s => s.TotalAttendance)
+                .Take(5)
+                .ToListAsync();
+            
+            ViewBag.TopStudents = studentAttendanceStats;
+
+            // Get class performance data (enrollment and capacity)
+            var classPerformance = await _context.Classes
+                .Include(c => c.Enrollments)
+                .Where(c => c.Enrollments.Any())
+                .Select(c => new
+                {
+                    ClassId = c.ClassId,
+                    ClassName = c.ClassName,
+                    CurrentCapacity = c.CurrentCapacity,
+                    MaxCapacity = c.MaxCapacity,
+                    FillRate = c.MaxCapacity > 0 
+                        ? Math.Round((decimal)c.CurrentCapacity / c.MaxCapacity * 100, 1) 
+                        : 0,
+                    Status = c.CurrentCapacity >= c.MaxCapacity ? "Full" :
+                            c.CurrentCapacity >= (c.MaxCapacity * 0.9) ? "Almost Full" : "Active"
+                })
+                .OrderByDescending(c => c.FillRate)
+                .Take(5)
+                .ToListAsync();
+            
+            ViewBag.ClassPerformance = classPerformance;
+
             // Set ViewBag data
             ViewBag.TotalStudents = totalStudents;
             ViewBag.TotalTeachers = totalTeachers;
             ViewBag.TotalClasses = totalClasses;
             ViewBag.TotalAttendanceRecords = totalAttendanceRecords;
-            ViewBag.TheseMonthPresent = thisMonthPresent;
+            ViewBag.ThisMonthPresent = thisMonthPresent;
             ViewBag.ThisMonthAbsent = thisMonthAbsent;
-            ViewBag.TheseMonthLate = thisMonthLate;
+            ViewBag.ThisMonthLate = thisMonthLate;
             ViewBag.ThisMonthRate = thisMonthRate;
 
             return View();
@@ -2862,7 +2569,70 @@ namespace WebMobileAssignment.Controllers
             try
             {
                 leave.Status = "Approved";
-                leave.Remarks = remarks; // Save admin remarks
+                leave.Remarks = remarks;
+
+                // Get the student record
+                var student = await _context.Students
+                    .Include(s => s.Enrollments)
+                        .ThenInclude(e => e.Class)
+                    .FirstOrDefaultAsync(s => s.UserId == leave.UserId);
+
+                if (student != null && student.Enrollments.Any())
+                {
+                    // Get current attendance count for ID generation
+                    var currentAttendanceCount = await _context.Attendances.CountAsync();
+                    int attendanceRecordsCreated = 0;
+
+                    // For each day in the leave period
+                    for (var date = leave.StartDate.Date; date <= leave.EndDate.Date; date = date.AddDays(1))
+                    {
+                        // Get the day of week for this date
+                        var dayOfWeek = date.DayOfWeek.ToString();
+
+                        // For each class the student is enrolled in
+                        foreach (var enrollment in student.Enrollments)
+                        {
+                            // Check if the class is scheduled on this day
+                            if (!string.IsNullOrEmpty(enrollment.Class.Day) && 
+                                enrollment.Class.Day.Equals(dayOfWeek, StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Check if attendance already exists for this date and class
+                                var existingAttendance = await _context.Attendances
+                                    .FirstOrDefaultAsync(a => a.StudentId == student.StudentId && 
+                                                            a.ClassId == enrollment.ClassId && 
+                                                            a.Date.Date == date.Date);
+
+                                if (existingAttendance == null)
+                                {
+                                    // Create new attendance record with "Leave" status
+                                    currentAttendanceCount++;
+                                    var attendance = new Attendance
+                                    {
+                                        AttendanceId = $"ATT{currentAttendanceCount:D5}",
+                                        StudentId = student.StudentId,
+                                        ClassId = enrollment.ClassId,
+                                        Date = date,
+                                        TakenOn = DateTime.Now,
+                                        Status = "Leave",
+                                        MarkedByTeacherId = null
+                                    };
+                                    _context.Attendances.Add(attendance);
+                                    attendanceRecordsCreated++;
+                                }
+                                else if (existingAttendance.Status != "Leave")
+                                {
+                                    // Update existing records to "Leave" (any status except Leave itself)
+                                    existingAttendance.Status = "Leave";
+                                    existingAttendance.TakenOn = DateTime.Now;
+                                    _context.Update(existingAttendance);
+                                    attendanceRecordsCreated++;
+                                }
+                            }
+                        }
+                    }
+
+                    Console.WriteLine($"[ApproveLeave] Created/Updated {attendanceRecordsCreated} attendance records with 'Leave' status");
+                }
 
                 // Create notification for student
                 var notificationCount = await _context.Notifications.CountAsync();
@@ -2879,7 +2649,7 @@ namespace WebMobileAssignment.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Send welcome email to student
+                // Send email to student
                 try
                 {
                     var mailMessage = new System.Net.Mail.MailMessage
@@ -2902,6 +2672,13 @@ namespace WebMobileAssignment.Controllers
                                       {(string.IsNullOrEmpty(remarks) ? "" : $"<p style='margin: 5px 0;'><strong>Admin Remarks:</strong> {remarks}</p>")}
                                     </div>
 
+                                    <div style='background-color: #d1ecf1; padding: 15px; border-radius: 5px; border-left: 4px solid #0c5460;'>
+                                      <p style='margin: 0; color: #0c5460;'>
+                                        <strong>Note:</strong> Your attendance for the approved leave period has been automatically marked as Leave 
+                                        and will be counted as present for attendance rate calculations.
+                                      </p>
+                                    </div>
+
                                     <p style='color: #6c757d; font-size: 12px; margin-top: 30px;'>
                                       This is an automated email from the Tuition Attendance System.
                                     </p>
@@ -2918,11 +2695,13 @@ namespace WebMobileAssignment.Controllers
                     Console.WriteLine($"Warning: Failed to send email: {emailEx.Message}");
                 }
 
-                TempData["SuccessMessage"] = $"Leave application for {leave.User.FullName} has been approved.";
+                TempData["SuccessMessage"] = $"Leave application for {leave.User.FullName} has been approved. Attendance records have been automatically marked as 'Leave'.";
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = $"Error approving leave: {ex.Message}";
+                Console.WriteLine($"Error in ApproveLeave: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
 
             return RedirectToAction(nameof(LeaveDetails), new { id = leaveId });
@@ -2988,7 +2767,8 @@ namespace WebMobileAssignment.Controllers
                                     <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
                                       <p style='margin: 5px 0;'><strong>Leave Period:</strong> {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy}</p>
                                       <p style='margin: 5px 0;'><strong>Total Days:</strong> {leave.TotalDays} day(s)</p>
-                                      {(string.IsNullOrEmpty(remarks) ? "" : $"<p style='margin: 5px 0;'><strong>Reason for Rejection:</strong> {remarks}</p>")}
+                                      <p style='margin: 5px 0;'><strong>Reason:</strong> {leave.Reason}</p>
+                                      {(string.IsNullOrEmpty(remarks) ? "" : $"<p style='margin: 5px 0;'><strong>Admin Remarks:</strong> {remarks}</p>")}
                                     </div>
 
                                     <p>If you have any questions, please contact the administration office.</p>
@@ -3070,6 +2850,405 @@ namespace WebMobileAssignment.Controllers
             return RedirectToAction(nameof(LeaveIndex));
         }
 
+        // ==================== SETTINGS ====================
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Settings()
+        {
+            ViewBag.ActiveMenu = "Settings";
+            ViewBag.ActiveSubmenu = "Settings";
+            ViewBag.Title = "Admin Settings";
+
+            // Get current admin user
+            var userEmail = User.Identity.Name;
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == userEmail);
+
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("Dashboard");
+            }
+
+            return View(user);
+        }
+
+        // ==================== PROFILE PICTURE UPLOAD ENDPOINTS ====================
+
+        [HttpPost]
+        public async Task<IActionResult> UploadProfilePicture(IFormFile file, string userId)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                {
+                    return Json(new { success = false, message = "No file uploaded" });
+                }
+
+                // Validate file type
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(extension))
+                {
+                    return Json(new { success = false, message = "Invalid file type. Only JPG, PNG, GIF, and WEBP are allowed." });
+                }
+
+                // Validate file size (5 MB)
+                if (file.Length > 5 * 1024 * 1024)
+                {
+                    return Json(new { success = false, message = "File size must not exceed 5 MB" });
+                }
+
+                // Find user
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "User not found" });
+                }
+
+                // Delete old profile picture if exists
+                if (!string.IsNullOrEmpty(user.ProfilePicture) && !user.ProfilePicture.StartsWith("/images/"))
+                {
+                    try
+                    {
+                        await _s3Service.DeleteFileAsync(user.ProfilePicture);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Warning: Failed to delete old profile picture: {ex.Message}");
+                    }
+                }
+
+                // Upload to S3
+                var s3Url = await _s3Service.UploadFileAsync(file, userId);
+
+                // Update user profile picture
+                user.ProfilePicture = s3Url;
+                _context.Update(user);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Profile picture uploaded successfully!", url = s3Url });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error uploading profile picture: {ex.Message}");
+                return Json(new { success = false, message = $"Upload failed: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProfilePicture([FromBody] DeleteProfilePictureRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(request?.UserId))
+                {
+                    return Json(new { success = false, message = "User ID is required" });
+                }
+
+                // Find user
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == request.UserId);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "User not found" });
+                }
+
+                // Delete from S3 if exists
+                if (!string.IsNullOrEmpty(user.ProfilePicture) && !user.ProfilePicture.StartsWith("/images/"))
+                {
+                    try
+                    {
+                        await _s3Service.DeleteFileAsync(user.ProfilePicture);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Warning: Failed to delete from S3: {ex.Message}");
+                    }
+                }
+
+                // Update user profile picture to default
+                user.ProfilePicture = "/images/default-avatar.png";
+                _context.Update(user);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Profile picture removed successfully!" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting profile picture: {ex.Message}");
+                return Json(new { success = false, message = $"Delete failed: {ex.Message}" });
+            }
+        }
+
+        public class DeleteProfilePictureRequest
+        {
+            public string UserId { get; set; }
+        }
+
+        // ==================== NOTIFICATIONS ====================
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Notifications()
+        {
+            ViewBag.ActiveMenu = "Notifications";
+            ViewBag.Title = "Notifications";
+
+            // Get current admin user
+            var userEmail = User.Identity.Name;
+            var admin = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == userEmail && u.UserType == "Admin");
+
+            if (admin == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Get notifications for this admin user
+            var notifications = await _context.Notifications
+                .Include(n => n.User)
+                .Where(n => n.UserId == admin.UserId)
+                .OrderByDescending(n => n.CreatedDate)
+                .ToListAsync();
+
+            // Calculate notification stats
+            var totalNotifications = notifications.Count;
+            var unreadCount = notifications.Count(n => n.Status == "unread");
+            var readCount = notifications.Count(n => n.Status == "read");
+
+            // Count leave application notifications
+            var leaveCount = notifications.Count(n =>
+                n.Description.ToLower().Contains("leave application") &&
+                n.Status == "unread");
+
+            ViewBag.TotalNotifications = totalNotifications;
+            ViewBag.UnreadCount = unreadCount;
+            ViewBag.ReadCount = readCount;
+            ViewBag.LeaveCount = leaveCount;
+            ViewBag.Notifications = notifications;
+
+            return View();
+        }
+
+        // Mark notification as read
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAsRead(string notificationId)
+        {
+            try
+            {
+                var userEmail = User.Identity.Name;
+                var admin = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == userEmail && u.UserType == "Admin");
+
+                if (admin == null)
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                var notification = await _context.Notifications
+                    .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == admin.UserId);
+
+                if (notification == null)
+                {
+                    return Json(new { success = false, message = "Notification not found" });
+                }
+
+                notification.Status = "read";
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Mark all notifications as read
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            try
+            {
+                var userEmail = User.Identity.Name;
+                var admin = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == userEmail && u.UserType == "Admin");
+
+                if (admin == null)
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                var notifications = await _context.Notifications
+                    .Where(n => n.UserId == admin.UserId && n.Status == "unread")
+                    .ToListAsync();
+
+                foreach (var notification in notifications)
+                {
+                    notification.Status = "read";
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, count = notifications.Count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Get unread notification count (for layout badge)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetUnreadNotificationCount()
+        {
+            try
+            {
+                var userEmail = User.Identity.Name;
+                var admin = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == userEmail && u.UserType == "Admin");
+
+                if (admin == null)
+                {
+                    return Json(new { success = false, count = 0 });
+                }
+
+                var unreadCount = await _context.Notifications
+                    .CountAsync(n => n.UserId == admin.UserId && n.Status == "unread");
+
+                return Json(new { success = true, count = unreadCount });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, count = 0, message = ex.Message });
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Settings(string userId, string fullName, string email, string? phoneNumber)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("Settings");
+            }
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(fullName))
+                ModelState.AddModelError("fullName", "Full name is required");
+
+            if (string.IsNullOrWhiteSpace(email))
+                ModelState.AddModelError("email", "Email is required");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Update user information
+                    user.FullName = fullName;
+                    user.Email = email;
+                    user.PhoneNumber = phoneNumber;
+
+                    _context.Update(user);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "Settings updated successfully!";
+                    return RedirectToAction("Settings");
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error updating settings: {ex.Message}";
+                }
+            }
+
+            ViewBag.ActiveMenu = "Settings";
+            ViewBag.ActiveSubmenu = "Settings";
+            ViewBag.Title = "Admin Settings";
+            return View(user);
+        }
+
+        [Authorize(Roles = "Admin")]
+        public IActionResult ChangePassword()
+        {
+            ViewBag.ActiveMenu = "Settings";
+            ViewBag.ActiveSubmenu = "ChangePassword";
+            ViewBag.Title = "Change Password";
+
+            return View();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(currentPassword))
+                ModelState.AddModelError("currentPassword", "Current password is required");
+
+            if (string.IsNullOrWhiteSpace(newPassword))
+                ModelState.AddModelError("newPassword", "New password is required");
+
+            if (string.IsNullOrWhiteSpace(confirmPassword))
+                ModelState.AddModelError("confirmPassword", "Confirm password is required");
+
+            if (newPassword != confirmPassword)
+                ModelState.AddModelError("confirmPassword", "Passwords do not match");
+
+            if (newPassword != null && newPassword.Length < 6)
+                ModelState.AddModelError("newPassword", "Password must be at least 6 characters long");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Get current admin user
+                    var userEmail = User.Identity.Name;
+                    var user = await _context.Users
+                        .FirstOrDefaultAsync(u => u.Email == userEmail);
+
+                    if (user == null)
+                    {
+                        TempData["ErrorMessage"] = "User not found.";
+                        return RedirectToAction("ChangePassword");
+                    }
+
+                    // Verify current password
+                    if (!_helper.VerifyPassword(currentPassword, user.PasswordHash))
+                    {
+                        ModelState.AddModelError("currentPassword", "Current password is incorrect");
+                        ViewBag.ActiveMenu = "Settings";
+                        ViewBag.ActiveSubmenu = "ChangePassword";
+                        ViewBag.Title = "Change Password";
+                        return View();
+                    }
+
+                    // Update password
+                    user.PasswordHash = _helper.HashPassword(newPassword);
+                    _context.Update(user);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "Password changed successfully!";
+                    return RedirectToAction("ChangePassword");
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error changing password: {ex.Message}";
+                }
+            }
+
+            ViewBag.ActiveMenu = "Settings";
+            ViewBag.ActiveSubmenu = "ChangePassword";
+            ViewBag.Title = "Change Password";
+            return View();
+        }
         // ==================== REQUEST MODELS ====================
 
         // Request models for bulk operations
@@ -3086,5 +3265,33 @@ namespace WebMobileAssignment.Controllers
             public string StudentId { get; set; }
             public string Status { get; set; }
         }
+
+        // Request model for manual attendance saving
+        public class ManualAttendanceRequest
+        {
+            public string ClassId { get; set; }
+            public string PinCode { get; set; }
+            public string Date { get; set; }
+            public List<ManualAttendanceItem> Attendances { get; set; }
+        }
+
+        public class ManualAttendanceItem
+        {
+            public string StudentId { get; set; }
+            public string Status { get; set; }
+        }
+
+        // Request model for single attendance saving
+        public class SingleAttendanceRequest
+        {
+            public string ClassId { get; set; }
+            public string StudentId { get; set; }
+            public string Date { get; set; }
+            public string Status { get; set; }
+        }
     }
 }
+    
+
+
+
