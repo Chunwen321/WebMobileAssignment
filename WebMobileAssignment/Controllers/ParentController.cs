@@ -20,115 +20,243 @@ namespace WebMobileAssignment.Controllers
         // Helper method to get current parent and set ViewBag data
         private async Task<Parent?> GetCurrentParentAsync()
         {
-            var email = User.Identity?.Name;
+   var email = User.Identity?.Name;
      
-            if (string.IsNullOrEmpty(email))
-            {
-                // No authenticated user - return null instead of fallback
-                return null;
-            }
+    if (string.IsNullOrEmpty(email))
+    {
+       // No authenticated user - return null instead of fallback
+     return null;
+     }
 
             var parent = await _context.Parents
-                .Include(p => p.User)
-                .Include(p => p.Students)
-                    .ThenInclude(s => s.User)
-                .Include(p => p.Students)
-                    .ThenInclude(s => s.Enrollments)
-                    .ThenInclude(e => e.Class)
-                .Include(p => p.Students)
-                    .ThenInclude(s => s.Attendances)
+       .Include(p => p.User)
+    .Include(p => p.Students)
+    .ThenInclude(s => s.User)
+    .Include(p => p.Students)
+          .ThenInclude(s => s.Enrollments)
+      .ThenInclude(e => e.Class)
+     .ThenInclude(c => c.Teacher)
+      .ThenInclude(t => t.User)
+   .Include(p => p.Students)
+           .ThenInclude(s => s.Attendances)
                 .FirstOrDefaultAsync(p => p.User.Email == email);
-      
-            // Set ViewBag for layout
-            if (parent != null)
-            {
-                ViewBag.ParentName = parent.User.FullName;
    
-                // Get unread notification count
-   var unreadCount = await _context.Notifications
-.CountAsync(n => n.UserId == parent.UserId && n.Status == "unread");
-           ViewBag.UnreadNotificationCount = unreadCount;
+       // Set ViewBag for layout
+    if (parent != null)
+   {
+     ViewBag.ParentName = parent.User.FullName;
+   
+        // Get unread notification count
+          var unreadCount = await _context.Notifications
+              .CountAsync(n => n.UserId == parent.UserId && n.Status == "unread");
+         ViewBag.UnreadNotificationCount = unreadCount;
             }
-       
+  
             return parent;
         }
 
         // Dashboard
-        public async Task<IActionResult> Dashboard()
-        {
-            ViewBag.ActiveMenu = "Dashboard";
+        public async Task<IActionResult> Dashboard(string? studentId)
+  {
+   ViewBag.ActiveMenu = "Dashboard";
             
-            var parent = await GetCurrentParentAsync();
-              
-            if (parent != null && parent.Students.Any())
+   var parent = await GetCurrentParentAsync();
+     
+   if (parent != null && parent.Students.Any())
+       {
+    // Get all students for navigation
+      var allStudents = parent.Students.ToList();
+     ViewBag.AllStudents = allStudents;
+ ViewBag.TotalChildren = allStudents.Count;
+  
+          // Get the selected student (either from parameter or first student)
+        Student? student = null;
+ if (!string.IsNullOrEmpty(studentId))
+    {
+     student = allStudents.FirstOrDefault(s => s.StudentId == studentId);
+           }
+      
+      // If still null, default to first student
+  if (student == null)
+ {
+         student = allStudents.FirstOrDefault();
+ }
+       
+     if (student != null)
+    {
+      // Get current student index for navigation
+            var currentIndex = allStudents.FindIndex(s => s.StudentId == student.StudentId);
+       ViewBag.CurrentIndex = currentIndex;
+        ViewBag.CurrentStudentId = student.StudentId;
+ 
+        // Check if there are previous/next students
+    ViewBag.HasPrevious = currentIndex > 0;
+   ViewBag.HasNext = currentIndex < allStudents.Count - 1;
+      ViewBag.PreviousStudentId = ViewBag.HasPrevious ? allStudents[currentIndex - 1].StudentId : null;
+ViewBag.NextStudentId = ViewBag.HasNext ? allStudents[currentIndex + 1].StudentId : null;
+     
+  // Calculate attendance statistics
+      var allAttendances = student.Attendances;
+      var totalAttendance = allAttendances.Count;
+        var presentCount = allAttendances.Count(a => a.Status == "Present");
+         var absentCount = allAttendances.Count(a => a.Status == "Absent");
+  var lateCount = allAttendances.Count(a => a.Status == "Late");
+              var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
+        
+   // Get recent attendance (last 5 records)
+         var recentAttendance = await _context.Attendances
+    .Include(a => a.Class)
+     .Include(a => a.Student)
+  .Where(a => a.StudentId == student.StudentId)
+          .OrderByDescending(a => a.Date)
+       .Take(5)
+   .ToListAsync();
+          
+     ViewBag.StudentName = student.User.FullName;
+   ViewBag.TotalClasses = student.Enrollments.Count;
+        ViewBag.TotalAttendance = totalAttendance;
+        ViewBag.PresentCount = presentCount;
+        ViewBag.AbsentCount = absentCount;
+     ViewBag.LateCount = lateCount;
+    ViewBag.AttendanceRate = attendanceRate;
+ ViewBag.RecentAttendance = recentAttendance;
+ 
+            // Get primary class info
+             var primaryEnrollment = student.Enrollments.FirstOrDefault();
+        if (primaryEnrollment != null)
             {
-                // Get the first student (primary child)
-                var student = parent.Students.FirstOrDefault();
-                
-                if (student != null)
-                {
-                    // Calculate attendance statistics
-                    var allAttendances = student.Attendances;
-                    var totalAttendance = allAttendances.Count;
-                    var presentCount = allAttendances.Count(a => a.Status == "Present");
-                    var absentCount = allAttendances.Count(a => a.Status == "Absent");
-                    var lateCount = allAttendances.Count(a => a.Status == "Late");
-                    var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
-                    
-                    // Get recent attendance (last 5 records)
-                    var recentAttendance = await _context.Attendances
-                            .Include(a => a.Class)
-                            .Include(a => a.Student)
-                            .Where(a => a.StudentId == student.StudentId)
-                            .OrderByDescending(a => a.Date)
-                            .Take(5)
-                            .ToListAsync();
-                
-                    ViewBag.StudentName = student.User.FullName;
-                    ViewBag.StudentId = student.StudentId;
-                    ViewBag.TotalClasses = student.Enrollments.Count;
-                    ViewBag.TotalAttendance = totalAttendance;
-                    ViewBag.PresentCount = presentCount;
-                    ViewBag.AbsentCount = absentCount;
-                    ViewBag.LateCount = lateCount;
-                    ViewBag.AttendanceRate = attendanceRate;
-                    ViewBag.RecentAttendance = recentAttendance;
-                    
-                    // Get primary class info
-                    var primaryEnrollment = student.Enrollments.FirstOrDefault();
-                    if (primaryEnrollment != null)
-                    {
-                        ViewBag.ClassName = primaryEnrollment.Class.ClassName;
-                    }
-                }
-            }
-              
-            return View();
+       ViewBag.ClassName = primaryEnrollment.Class.ClassName;
+      }
+      }
+    }
+           
+      return View();
+        }
+
+        // AJAX endpoint to get dashboard data for a specific child
+    [HttpGet]
+ public async Task<IActionResult> GetDashboardData(string studentId)
+        {
+     try
+  {
+      var parent = await GetCurrentParentAsync();
+  
+      if (parent == null || !parent.Students.Any())
+    {
+ return Json(new { success = false, message = "No parent or students found" });
+   }
+
+ // Get all students for navigation
+      var allStudents = parent.Students.ToList();
+          
+ // Find the requested student
+  var student = allStudents.FirstOrDefault(s => s.StudentId == studentId);
+             
+      if (student == null)
+  {
+    return Json(new { success = false, message = "Student not found" });
+      }
+
+    // Get current student index for navigation
+       var currentIndex = allStudents.FindIndex(s => s.StudentId == studentId);
+  
+    // Calculate attendance statistics
+var allAttendances = student.Attendances;
+     var totalAttendance = allAttendances.Count;
+    var presentCount = allAttendances.Count(a => a.Status == "Present");
+       var absentCount = allAttendances.Count(a => a.Status == "Absent");
+    var lateCount = allAttendances.Count(a => a.Status == "Late");
+    var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
+    
+   // Get recent attendance (last 5 records)
+var recentAttendance = await _context.Attendances
+.Include(a => a.Class)
+        .Where(a => a.StudentId == student.StudentId)
+     .OrderByDescending(a => a.Date)
+       .Take(5)
+ .Select(a => new {
+  date = a.Date.ToString("yyyy-MM-dd"),
+      className = a.Class.ClassName,
+       timeIn = a.TakenOn.ToString("h:mm tt"),
+            status = a.Status
+   })
+       .ToListAsync();
+       
+     // Get primary class info
+var primaryEnrollment = student.Enrollments.FirstOrDefault();
+      var className = primaryEnrollment != null ? primaryEnrollment.Class.ClassName : "Not enrolled";
+    
+  // Calculate rates for chart
+var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
+   var absentRate = totalAttendance > 0 ? Math.Round((decimal)absentCount / totalAttendance * 100, 1) : 0;
+            var lateRate = totalAttendance > 0 ? Math.Round((decimal)lateCount / totalAttendance * 100, 1) : 0;
+
+   return Json(new
+    {
+ success = true,
+        data = new
+        {
+ // Student info
+   studentName = student.User.FullName,
+   studentId = student.StudentId,
+          className = className,
+  currentIndex = currentIndex + 1,
+  totalChildren = allStudents.Count,
+      profilePicture = student.User.ProfilePicture ?? "/images/default-avatar.png",
+    
+   // Navigation
+      hasPrevious = currentIndex > 0,
+    hasNext = currentIndex < allStudents.Count - 1,
+      previousStudentId = currentIndex > 0 ? allStudents[currentIndex - 1].StudentId : null,
+ nextStudentId = currentIndex < allStudents.Count - 1 ? allStudents[currentIndex + 1].StudentId : null,
+       
+     // Stats
+       totalClasses = student.Enrollments.Count,
+       totalAttendance = totalAttendance,
+       presentCount = presentCount,
+    absentCount = absentCount,
+          lateCount = lateCount,
+            attendanceRate = attendanceRate,
+  
+ // Chart data
+      presentRate = presentRate,
+    absentRate = absentRate,
+    lateRate = lateRate,
+   
+  // Recent attendance
+  recentAttendance = recentAttendance
+    }
+          });
+  }
+   catch (Exception ex)
+   {
+       return Json(new { success = false, message = ex.Message });
+      }
         }
 
         // Attendance - View History
-        public async Task<IActionResult> AttendanceHistory(string? classId, string? month, string? status)
+        public async Task<IActionResult> AttendanceHistory(string? studentId, string? classId, string? month, string? status)
         {
    ViewBag.ActiveMenu = "Attendance";
-            ViewBag.ActiveSubmenu = "History";
+        ViewBag.ActiveSubmenu = "History";
    
-          var parent = await GetCurrentParentAsync();
-            
+        var parent = await GetCurrentParentAsync();
+      
    if (parent == null)
       {
-                return RedirectToAction("Login", "Account");
+        return RedirectToAction("Login", "Account");
  }
-        
+    
  // Get all students for this parent
-            var students = await _context.Students
+       var students = await _context.Students
      .Include(s => s.User)
   .Include(s => s.Enrollments)
-           .ThenInclude(e => e.Class)
+    .ThenInclude(e => e.Class)
    .ThenInclude(c => c.Subject)
     .Where(s => s.ParentId == parent.ParentId)
     .ToListAsync();
-       
-            if (!students.Any())
+     
+   if (!students.Any())
   {
        ViewBag.Students = new List<Student>();
         ViewBag.Attendances = new List<Attendance>();
@@ -136,27 +264,42 @@ namespace WebMobileAssignment.Controllers
        ViewBag.TotalPresent = 0;
      ViewBag.TotalAbsent = 0;
          ViewBag.TotalLate = 0;
-         ViewBag.AttendanceRate = 0;
-                return View();
+   ViewBag.AttendanceRate = 0;
+           return View();
  }
+
+            // Store all students for dropdown
+      ViewBag.AllStudents = students;
+
+       // If studentId specified, filter to that student, otherwise show all
+          List<Student> filteredStudents;
+            if (!string.IsNullOrEmpty(studentId))
+    {
+     filteredStudents = students.Where(s => s.StudentId == studentId).ToList();
+      ViewBag.SelectedStudentId = studentId;
+}
+            else
+    {
+        filteredStudents = students;
+            }
     
-    // Get all enrolled classes for filter dropdown
-            var enrolledClasses = students
+    // Get all enrolled classes for filter dropdown (from filtered students)
+ var enrolledClasses = filteredStudents
     .SelectMany(s => s.Enrollments.Select(e => e.Class))
-                .Distinct()
+       .Distinct()
   .ToList();
+    
+         // Get student IDs from filtered list
+   var studentIds = filteredStudents.Select(s => s.StudentId).ToList();
             
-            // Get student IDs
-            var studentIds = students.Select(s => s.StudentId).ToList();
-            
-          // Build attendance query
+        // Build attendance query
      var query = _context.Attendances
      .Include(a => a.Student)
       .ThenInclude(s => s.User)
       .Include(a => a.Class)
      .ThenInclude(c => c.Subject)
-     .Include(a => a.MarkedByTeacher)
-       .ThenInclude(t => t.User)
+  .Include(a => a.MarkedByTeacher)
+   .ThenInclude(t => t.User)
         .Where(a => studentIds.Contains(a.StudentId));
             
   // Apply filters
@@ -167,40 +310,40 @@ namespace WebMobileAssignment.Controllers
  }
   
     if (!string.IsNullOrEmpty(month))
-            {
+  {
     if (DateTime.TryParse(month + "-01", out DateTime monthDate))
    {
-              var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
+         var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
  var endDate = startDate.AddMonths(1).AddDays(-1);
    query = query.Where(a => a.Date >= startDate && a.Date <= endDate);
-               ViewBag.SelectedMonth = month;
+      ViewBag.SelectedMonth = month;
     }
       }
-            
+      
      if (!string.IsNullOrEmpty(status))
             {
      query = query.Where(a => a.Status == status);
     ViewBag.SelectedStatus = status;
-            }
+       }
      
             // Get filtered attendances
-   var attendances = await query
+ var attendances = await query
        .OrderByDescending(a => a.Date)
         .Take(50)
-           .ToListAsync();
-            
+     .ToListAsync();
+        
        // Calculate statistics
             var totalPresent = attendances.Count(a => a.Status == "Present");
   var totalAbsent = attendances.Count(a => a.Status == "Absent");
-            var totalLate = attendances.Count(a => a.Status == "Late");
+ var totalLate = attendances.Count(a => a.Status == "Late");
             var totalCount = attendances.Count;
-        var attendanceRate = totalCount > 0 ? Math.Round((decimal)totalPresent / totalCount * 100, 1) : 0;
+    var attendanceRate = totalCount > 0 ? Math.Round((decimal)totalPresent / totalCount * 100, 1) : 0;
      
-         ViewBag.Students = students;
+         ViewBag.Students = filteredStudents;
     ViewBag.Attendances = attendances;
             ViewBag.Classes = enrolledClasses;
      ViewBag.TotalPresent = totalPresent;
-            ViewBag.TotalAbsent = totalAbsent;
+          ViewBag.TotalAbsent = totalAbsent;
     ViewBag.TotalLate = totalLate;
     ViewBag.AttendanceRate = attendanceRate;
  
@@ -208,14 +351,14 @@ namespace WebMobileAssignment.Controllers
         }
 
         // Attendance - Monthly Summary
-        public async Task<IActionResult> MonthlySummary(int? year, int? month)
+        public async Task<IActionResult> MonthlySummary(string? studentId, int? year, int? month)
     {
      ViewBag.ActiveMenu = "Attendance";
             ViewBag.ActiveSubmenu = "MonthlySummary";
        
             var parent = await GetCurrentParentAsync();
             
-       if (parent == null)
+   if (parent == null)
          {
      return RedirectToAction("Login", "Account");
     }
@@ -227,66 +370,82 @@ namespace WebMobileAssignment.Controllers
   var endDate = startDate.AddMonths(1).AddDays(-1);
        
    ViewBag.SelectedYear = selectedYear;
-            ViewBag.SelectedMonth = selectedMonth;
+       ViewBag.SelectedMonth = selectedMonth;
      ViewBag.MonthName = startDate.ToString("MMMM yyyy");
-            
-      // Get all students for this parent
+     
+ // Get all students for this parent
    var students = await _context.Students
-           .Include(s => s.User)
+        .Include(s => s.User)
          .Include(s => s.Enrollments)
-         .ThenInclude(e => e.Class)
+ .ThenInclude(e => e.Class)
 .ThenInclude(c => c.Subject)
-            .Include(s => s.Attendances)
+  .Include(s => s.Attendances)
   .Where(s => s.ParentId == parent.ParentId)
-              .ToListAsync();
-       
+   .ToListAsync();
+ 
     if (!students.Any())
-         {
+       {
        ViewBag.TotalClasses = 0;
    ViewBag.TotalPresent = 0;
                 ViewBag.TotalAbsent = 0;
-                ViewBag.TotalLate = 0;
+      ViewBag.TotalLate = 0;
    ViewBag.AttendanceRate = 0;
-       ViewBag.SubjectSummary = new List<object>();
-           return View();
-    }
+ ViewBag.SubjectSummary = new List<object>();
+            ViewBag.AllStudents = new List<Student>();
+   return View();
+}
+
+            // Store all students for dropdown
+            ViewBag.AllStudents = students;
+
+            // If studentId specified, filter to that student, otherwise show all
+    List<Student> filteredStudents;
+    if (!string.IsNullOrEmpty(studentId))
+ {
+                filteredStudents = students.Where(s => s.StudentId == studentId).ToList();
+      ViewBag.SelectedStudentId = studentId;
+            }
+            else
+{
+                filteredStudents = students;
+       }
      
-        // Get student IDs
-     var studentIds = students.Select(s => s.StudentId).ToList();
+        // Get student IDs from filtered list
+     var studentIds = filteredStudents.Select(s => s.StudentId).ToList();
   
       // Get attendances for the selected month
    var monthlyAttendances = await _context.Attendances
    .Include(a => a.Class)
        .ThenInclude(c => c.Subject)
         .Where(a => studentIds.Contains(a.StudentId) && 
-         a.Date >= startDate && 
+a.Date >= startDate && 
        a.Date <= endDate)
     .ToListAsync();
   
 // Calculate overall statistics
             var totalClasses = monthlyAttendances.Count;
        var totalPresent = monthlyAttendances.Count(a => a.Status == "Present");
-            var totalAbsent = monthlyAttendances.Count(a => a.Status == "Absent");
+  var totalAbsent = monthlyAttendances.Count(a => a.Status == "Absent");
   var totalLate = monthlyAttendances.Count(a => a.Status == "Late");
-            var attendanceRate = totalClasses > 0 ? Math.Round((decimal)totalPresent / totalClasses * 100, 1) : 0;
+         var attendanceRate = totalClasses > 0 ? Math.Round((decimal)totalPresent / totalClasses * 100, 1) : 0;
             
 // Calculate subject-wise summary
         var subjectSummary = monthlyAttendances
-       .GroupBy(a => new { 
+    .GroupBy(a => new { 
             SubjectId = a.Class.SubjectId, 
      SubjectName = a.Class.Subject?.SubjectName ?? "N/A" 
     })
-            .Select(g => new
+  .Select(g => new
         {
           Subject = g.Key.SubjectName,
-          TotalClasses = g.Count(),
+     TotalClasses = g.Count(),
    Present = g.Count(a => a.Status == "Present"),
       Absent = g.Count(a => a.Status == "Absent"),
     Late = g.Count(a => a.Status == "Late"),
  AttendanceRate = g.Count() > 0 ? Math.Round((decimal)g.Count(a => a.Status == "Present") / g.Count() * 100, 1) : 0
-         })
-           .OrderBy(s => s.Subject)
-              .ToList();
+     })
+     .OrderBy(s => s.Subject)
+     .ToList();
             
             ViewBag.TotalClasses = totalClasses;
             ViewBag.TotalPresent = totalPresent;
@@ -294,62 +453,128 @@ namespace WebMobileAssignment.Controllers
        ViewBag.TotalLate = totalLate;
             ViewBag.AttendanceRate = attendanceRate;
         ViewBag.SubjectSummary = subjectSummary;
-            
+   
             return View();
         }
 
         // Student Profile
         public async Task<IActionResult> StudentProfile(string? studentId)
         {
-            ViewBag.ActiveMenu = "StudentProfile";
+      ViewBag.ActiveMenu = "StudentProfile";
   
     var parent = await GetCurrentParentAsync();
    
     if (parent == null || !parent.Students.Any())
     {
-ViewBag.Student = null;
+        ViewBag.Student = null;
         ViewBag.Parent = parent;
-      ViewBag.AllStudents = new List<Student>();
+   ViewBag.AllStudents = new List<Student>();
         return View();
     }
 
     // Get all students for the dropdown selector
     ViewBag.AllStudents = parent.Students.ToList();
 
-    // If studentId is not provided, use the first student
+// If studentId is not provided, use the first student
     Student? student = null;
     if (!string.IsNullOrEmpty(studentId))
-    {
-        student = parent.Students.FirstOrDefault(s => s.StudentId == studentId);
+ {
+      student = parent.Students.FirstOrDefault(s => s.StudentId == studentId);
     }
       
-    // If still null, default to first student
+  // If still null, default to first student
     if (student == null)
-    {
+ {
         student = parent.Students.FirstOrDefault();
     }
 
     ViewBag.Student = student;
     ViewBag.Parent = parent;
-            
+    ViewBag.ClassPage = 1; // Initialize class page
+     
     if (student != null)
     {
         // Calculate attendance statistics
      var allAttendances = student.Attendances;
         var totalAttendance = allAttendances.Count;
-        var presentCount = allAttendances.Count(a => a.Status == "Present");
+     var presentCount = allAttendances.Count(a => a.Status == "Present");
         var absentCount = allAttendances.Count(a => a.Status == "Absent");
-        var lateCount = allAttendances.Count(a => a.Status == "Late");
+     var lateCount = allAttendances.Count(a => a.Status == "Late");
         var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
        
   ViewBag.TotalAttendance = totalAttendance;
     ViewBag.PresentCount = presentCount;
-        ViewBag.AbsentCount = absentCount;
+ ViewBag.AbsentCount = absentCount;
         ViewBag.LateCount = lateCount;
-        ViewBag.AttendanceRate = attendanceRate;
+     ViewBag.AttendanceRate = attendanceRate;
     }
     
     return View();
+}
+
+// AJAX endpoint to get paginated enrolled classes
+[HttpGet]
+public async Task<IActionResult> GetEnrolledClasses(string studentId, int page = 1)
+{
+    try
+    {
+        var parent = await GetCurrentParentAsync();
+   
+        if (parent == null)
+        {
+     return Json(new { success = false, message = "Parent not found" });
+   }
+
+        // Find the student
+        var student = await _context.Students
+            .Include(s => s.Enrollments)
+      .ThenInclude(e => e.Class)
+       .ThenInclude(c => c.Teacher)
+             .ThenInclude(t => t.User)
+         .FirstOrDefaultAsync(s => s.StudentId == studentId && s.ParentId == parent.ParentId);
+
+        if (student == null)
+        {
+        return Json(new { success = false, message = "Student not found" });
+        }
+
+ // Pagination settings
+        int pageSize = 2;
+        var allEnrollments = student.Enrollments.ToList();
+        var totalClasses = allEnrollments.Count;
+ var totalPages = (int)Math.Ceiling((double)totalClasses / pageSize);
+        
+        // Ensure page is within valid range
+        if (page < 1) page = 1;
+        if (page > totalPages && totalPages > 0) page = totalPages;
+      
+        // Get paginated enrollments
+        var pagedEnrollments = allEnrollments
+  .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(e => new
+  {
+     className = e.Class.ClassName,
+    day = e.Class.Day,
+           startTime = e.Class.StartTime?.ToString("hh\\:mm"),
+       endTime = e.Class.EndTime?.ToString("hh\\:mm"),
+       teacherName = e.Class.Teacher?.User.FullName
+            })
+       .ToList();
+
+        return Json(new
+        {
+         success = true,
+        enrollments = pagedEnrollments,
+            currentPage = page,
+            totalPages = totalPages,
+      totalClasses = totalClasses
+        });
+    }
+    catch (Exception ex)
+    {
+     return Json(new { success = false, message = ex.Message });
+    }
 }
 
 // AJAX endpoint to get student profile content
@@ -361,7 +586,7 @@ public async Task<IActionResult> GetStudentProfileContent(string studentId)
     if (parent == null || !parent.Students.Any())
     {
         return Json(new { success = false, message = "No students found" });
-    }
+  }
 
     // Get all students
     var allStudents = parent.Students.ToList();
@@ -396,25 +621,26 @@ public async Task<IActionResult> GetStudentProfileContent(string studentId)
     ViewBag.AbsentCount = absentCount;
     ViewBag.LateCount = lateCount;
     ViewBag.AttendanceRate = attendanceRate;
+    ViewBag.ClassPage = 1; // Initialize class page for new student
 
     // Render partial view to string
     var htmlContent = await this.RenderViewAsync("_StudentProfileContent", student, true);
 
     return Json(new
-    {
+{
         success = true,
         html = htmlContent,
      navigation = new
         {
-            studentName = student.User.FullName,
+        studentName = student.User.FullName,
             currentIndex = currentIndex + 1,
             totalChildren = totalChildren,
    hasPrevious = hasPrevious,
  hasNext = hasNext,
     previousStudentId = previousStudentId,
-          nextStudentId = nextStudentId
+  nextStudentId = nextStudentId
         }
-    });
+  });
 }
 
 // Classes
@@ -548,34 +774,34 @@ n.Description.ToLower().Contains("absent") ||
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAsRead(string notificationId)
         {
-            try
+          try
      {
-                var parent = await GetCurrentParentAsync();
+        var parent = await GetCurrentParentAsync();
   
        if (parent == null)
         {
      return Json(new { success = false, message = "Unauthorized" });
-      }
+    }
             
   var notification = await _context.Notifications
    .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == parent.UserId);
-         
+       
       if (notification == null)
       {
      return Json(new { success = false, message = "Notification not found" });
       }
-      
+  
     notification.Status = "read";
       await _context.SaveChangesAsync();
-                
+       
         return Json(new { success = true });
      }
-    catch (Exception ex)
-            {
+  catch (Exception ex)
+   {
     return Json(new { success = false, message = ex.Message });
  }
-        }
-        
+   }
+
         // Mark all notifications as read
         [HttpPost]
         [ValidateAntiForgeryToken]

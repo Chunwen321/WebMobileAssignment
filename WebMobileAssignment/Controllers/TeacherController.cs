@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebMobileAssignment.Models;
 
 namespace WebMobileAssignment.Controllers
 {
+    [Authorize(Roles = "Teacher")]
     public class TeacherController : Controller
     {
         private readonly DB _db;

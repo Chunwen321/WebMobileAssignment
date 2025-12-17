@@ -297,5 +297,18 @@ else
             _helper.SignOut();
             return RedirectToAction("Login");
         }
+
+        // GET: /Account/AccessDenied
+        public IActionResult AccessDenied(string? returnUrl = null)
+        {
+            ViewBag.ReturnUrl = returnUrl;
+            
+            // Optional: Force logout if user tries to access unauthorized page
+    // This prevents them from staying logged in but blocked
+    _helper.SignOut();
+        
+        ViewBag.ErrorMessage = "Access Denied. You do not have permission to access this page.";
+  return View();
+        }
     }
 }

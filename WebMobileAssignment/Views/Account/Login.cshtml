@@ -2,6 +2,14 @@
     ViewBag.Title = "Login";
 }
 
+<!-- Toast notification container -->
+<div id="captchaToast" class="toast-notification" style="display: none;">
+    <div class="toast-content">
+        <i class="bi bi-exclamation-circle toast-icon"></i>
+        <span class="toast-message">Please complete the reCAPTCHA verification.</span>
+    </div>
+</div>
+
 <div class="login-container-horizontal">
     <div class="login-card-horizontal">
         <!-- Left Side - Branding -->
@@ -137,6 +145,25 @@ icon.classList.remove('bi-eye-slash');
   }
   }
 
+  // Function to show toast notification
+  function showCaptchaToast() {
+   const toast = document.getElementById('captchaToast');
+      toast.style.display = 'block';
+      
+      // Trigger animation
+      setTimeout(() => {
+          toast.classList.add('show');
+      }, 10);
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => {
+              toast.style.display = 'none';
+          }, 300);
+      }, 3000);
+  }
+
     // Load saved credentials when page loads
     document.addEventListener('DOMContentLoaded', function() {
      const savedEmail = localStorage.getItem('rememberedEmail');
@@ -172,20 +199,20 @@ document.getElementById('email').value = savedEmail;
      }
      
     // Get reCAPTCHA v2 response
-         var recaptchaResponse = grecaptcha.getResponse();
-    
+       var recaptchaResponse = grecaptcha.getResponse();
+ 
  if (recaptchaResponse.length === 0) {
-    alert('Please complete the reCAPTCHA verification.');
+    showCaptchaToast();
  console.log('? reCAPTCHA not completed');
     return false;
           }
-          
-            console.log('? reCAPTCHA v2 token received:', recaptchaResponse.substring(0, 30) + '...');
+        
+       console.log('? reCAPTCHA v2 token received:', recaptchaResponse.substring(0, 30) + '...');
    document.getElementById('recaptchaToken').value = recaptchaResponse;
   
-       // Submit the form
+// Submit the form
       e.target.submit();
-      });
+  });
         
 // Clear credentials when Remember Me is unchecked
       document.getElementById('rememberMe').addEventListener('change', function() {
@@ -196,5 +223,21 @@ document.getElementById('email').value = savedEmail;
         }
      });
     });
+    </script>
+  
+    <script>
+        (function() {
+         var css = '.toast-notification { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); z-index: 9999; opacity: 0; transform: translateX(400px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); }';
+         css += '.toast-notification.show { opacity: 1; transform: translateX(0); }';
+       css += '.toast-content { display: flex; align-items: center; gap: 12px; }';
+         css += '.toast-icon { font-size: 24px; animation: pulse 2s infinite; }';
+          css += '.toast-message { font-size: 15px; font-weight: 500; }';
+ css += String.fromCharCode(64) + 'keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }';
+            css += String.fromCharCode(64) + 'media (max-width: 768px) { .toast-notification { top: 10px; right: 10px; left: 10px; transform: translateY(-100px); } .toast-notification.show { transform: translateY(0); } }';
+
+        var style = document.createElement('style');
+            style.textContent = css;
+            document.head.appendChild(style);
+    })();
     </script>
 }
