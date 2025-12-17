@@ -1,84 +1,572 @@
-﻿@model WebMobileAssignment.Models.Student
+@model WebMobileAssignment.Models.Student
 
 @{
     ViewBag.Title = "My Class Schedule";
     ViewBag.ActiveMenu = "Classes";
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
 
-    var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
-
-    // Build schedule groups by Day (preserve classes without Day as "TBA" - but we will not render TBA)
+    var days = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+    
+    // Get enrollments
     var enrollments = Model?.Enrollments ?? Enumerable.Empty<WebMobileAssignment.Models.Enrollment>();
-    var classes = enrollments
+    var enrolledClasses = enrollments
         .Where(e => e.Class != null)
         .Select(e => e.Class!)
         .ToList();
 
-    var byDay = classes
+    // Build schedule groups by Day
+    var byDay = enrolledClasses
         .Where(c => !string.IsNullOrWhiteSpace(c.Day))
         .GroupBy(c => c.Day!.Trim(), StringComparer.OrdinalIgnoreCase)
         .ToDictionary(g => g.Key, g => g.OrderBy(c => c.StartTime ?? TimeSpan.Zero).ToList(), StringComparer.OrdinalIgnoreCase);
 
-    Func<TimeSpan?, string> fmt = ts =>
+    // Generate time slots from 8 AM to 8 PM (every hour)
+    var timeSlots = new List<TimeSpan>();
+    for (int hour = 8; hour <= 20; hour++)
     {
-        if (!ts.HasValue) return "—";
+        timeSlots.Add(new TimeSpan(hour, 0, 0));
+    }
+
+    Func<TimeSpan?, string> formatTime = ts =>
+    {
+        if (!ts.HasValue) return "�X";
         return DateTime.Today.Add(ts.Value).ToString("hh:mm tt");
     };
 }
 
-<div class="row">
-    <div class="col-12 mb-4">
-        <h3>Class Schedule</h3>
-        <p class="text-muted">Weekly view of your enrolled classes.</p>
-    </div>
-
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                @* Combined container for all weekdays *@
-                @foreach (var day in daysOfWeek)
-                {
-                    <div class="mb-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <h6 class="mb-0 me-2">@day</h6>
-                            <small class="text-muted">@(byDay.TryGetValue(day, out var _list) && _list.Any() ? $"{_list.Count} class(es)" : "No classes")</small>
-                        </div>
-
-                        <div>
-                            @{
-                                if (byDay.TryGetValue(day, out var list) && list.Any())
-                                {
-                                    <div class="row g-2">
-                                        @foreach (var cls in list)
-                                        {
-                                            <div class="col-12">
-                                                <div class="p-2 border rounded">
-                                                    <div class="fw-bold">@cls.ClassName</div>
-                                                    <div class="small text-muted">
-                                                        @if (cls.Subject != null) { @cls.Subject.SubjectName } else { <text>Subject: —</text> }
-                                                    </div>
-                                                    <div class="small text-muted">
-                                                        <i class="bi bi-clock-history"></i>
-                                                        @fmt(cls.StartTime) - @fmt(cls.EndTime)
-                                                        @if (!string.IsNullOrWhiteSpace(cls.RoomNumber))
-                                                        {
-                                                            <span class="ms-2"><i class="bi bi-geo-alt"></i> @cls.RoomNumber</span>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="text-muted small">No classes for @day.</div>
-                                }
-                            }
-                        </div>
-                    </div>
-                }
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2">
+                        <i class="bi bi-calendar-week-fill text-success me-2"></i>
+                        My Class Schedule
+                    </h2>
+                    <p class="text-muted">View your enrolled classes and weekly schedule</p>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Quick Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: #0d6efd;">
+                <div class="stat-label">Total Classes</div>
+                <div class="stat-value text-primary">@enrolledClasses.Count</div>
+                <small class="text-muted">Enrolled classes</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: #198754;">
+                <div class="stat-label">Scheduled Days</div>
+                <div class="stat-value text-success">@byDay.Count</div>
+                <small class="text-muted">Days with classes</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: #ffc107;">
+                <div class="stat-label">Teachers</div>
+                <div class="stat-value text-warning">@enrolledClasses.Where(c => c.Teacher != null).Select(c => c.TeacherId).Distinct().Count()</div>
+                <small class="text-muted">Instructors</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-left-color: #0dcaf0;">
+                <div class="stat-label">Subjects</div>
+                <div class="stat-value text-info">@enrolledClasses.Where(c => c.Subject != null).Select(c => c.SubjectId).Distinct().Count()</div>
+                <small class="text-muted">Subject areas</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Toggle -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-success active" onclick="showView('timetable')">
+                    <i class="bi bi-calendar3"></i> Timetable View
+                </button>
+                <button type="button" class="btn btn-outline-success" onclick="showView('daily')">
+                    <i class="bi bi-list-columns-reverse"></i> Daily View
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timetable View -->
+    <div id="timetableView" class="row">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-header-custom">
+                    <h5 class="card-title">
+                        <i class="bi bi-table"></i>
+                        Weekly Timetable
+                    </h5>
+                    <div class="legend">
+                        <span class="legend-item">
+                            <span class="legend-color" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></span>
+                            Morning (8AM-12PM)
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-color" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></span>
+                            Afternoon (12PM-5PM)
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-color" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></span>
+                            Evening (5PM-8PM)
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="timetable">
+                        <thead>
+                            <tr>
+                                <th class="time-column">Time</th>
+                                @foreach (var day in days)
+                                {
+                                    <th class="day-column">
+                                        <div class="day-header">
+                                            <i class="bi bi-calendar-day"></i>
+                                            @day
+                                        </div>
+                                    </th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var timeSlot in timeSlots)
+                            {
+                                <tr>
+                                    <td class="time-cell">
+                                        @{
+                                            var hour = timeSlot.Hours;
+                                            var period = hour >= 12 ? "PM" : "AM";
+                                            var displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+                                        }
+                                        <strong>@displayHour:00</strong> @period
+                                    </td>
+                                    @foreach (var day in days)
+                                    {
+                                        var classesInSlot = enrolledClasses.Where(c => 
+                                            c.Day == day && 
+                                            c.StartTime.HasValue && 
+                                            c.StartTime.Value <= timeSlot && 
+                                            c.EndTime.HasValue && 
+                                            c.EndTime.Value > timeSlot
+                                        ).ToList();
+
+                                        <td class="schedule-cell">
+                                            @foreach (var cls in classesInSlot)
+                                            {
+                                                // Only render if this is the start time
+                                                if (cls.StartTime.Value.Hours == timeSlot.Hours)
+                                                {
+                                                    var gradientClass = timeSlot.Hours < 12 ? "morning" : (timeSlot.Hours < 17 ? "afternoon" : "evening");
+                                                    
+                                                    <div class="class-block @gradientClass" title="@cls.ClassName">
+                                                        <div class="class-block-header">
+                                                            <strong>@cls.ClassName</strong>
+                                                        </div>
+                                                        <div class="class-block-info">
+                                                            <div class="info-line">
+                                                                <i class="bi bi-clock"></i>
+                                                                @{
+                                                                    var startTime = cls.StartTime.Value.ToString("hh\\:mm");
+                                                                    var endTime = cls.EndTime.Value.ToString("hh\\:mm");
+                                                                }
+                                                                @startTime - @endTime
+                                                            </div>
+                                                            <div class="info-line">
+                                                                <i class="bi bi-person"></i>
+                                                                @if (cls.Teacher != null)
+                                                                {
+                                                                    @cls.Teacher.User.FullName
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="text-muted">TBA</span>
+                                                                }
+                                                            </div>
+                                                            <div class="info-line">
+                                                                <i class="bi bi-geo-alt"></i>
+                                                                @(cls.RoomNumber ?? "TBA")
+                                                            </div>
+                                                        </div>
+                                                        <div class="class-block-footer">
+                                                            <a asp-controller="Student" asp-action="StudClassDetail" asp-route-id="@cls.ClassId" class="btn-link-white">
+                                                                <i class="bi bi-eye"></i> View
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily View -->
+    <div id="dailyView" class="row d-none">
+        @foreach (var day in days)
+        {
+            var classesForDay = byDay.ContainsKey(day) ? byDay[day] : new List<WebMobileAssignment.Models.Class>();
+            
+            if (classesForDay.Any())
+            {
+                <div class="col-12 mb-4">
+                    <div class="dashboard-card">
+                        <div class="card-header-custom">
+                            <h5 class="card-title">
+                                <i class="bi bi-calendar-day me-2"></i>
+                                @day
+                                <span class="badge bg-success ms-2">@classesForDay.Count classes</span>
+                            </h5>
+                        </div>
+                        <div class="row g-3 p-3">
+                            @foreach (var cls in classesForDay)
+                            {
+                                var timeSlotHour = cls.StartTime?.Hours ?? 0;
+                                var gradientClass = timeSlotHour < 12 ? "morning" : (timeSlotHour < 17 ? "afternoon" : "evening");
+                                
+                                <div class="col-lg-4 col-md-6 col-sm-12">
+                                    <div class="daily-class-card @gradientClass">
+                                        <div class="daily-class-header">
+                                            <div class="daily-class-time">
+                                                <i class="bi bi-clock-fill"></i>
+                                                @{
+                                                    var startHour = cls.StartTime.Value.Hours;
+                                                    var startMin = cls.StartTime.Value.Minutes;
+                                                    var startPeriod = startHour >= 12 ? "PM" : "AM";
+                                                    var startDisplayHour = startHour > 12 ? startHour - 12 : (startHour == 0 ? 12 : startHour);
+                                                    var dailyStartTime = $"{startDisplayHour:D2}:{startMin:D2} {startPeriod}";
+                                                    
+                                                    var endHour = cls.EndTime.Value.Hours;
+                                                    var endMin = cls.EndTime.Value.Minutes;
+                                                    var endPeriod = endHour >= 12 ? "PM" : "AM";
+                                                    var endDisplayHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
+                                                    var dailyEndTime = $"{endDisplayHour:D2}:{endMin:D2} {endPeriod}";
+                                                }
+                                                @dailyStartTime - @dailyEndTime
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="daily-class-name">
+                                            @cls.ClassName
+                                        </div>
+                                        
+                                        @if (cls.Subject != null)
+                                        {
+                                            <div class="daily-class-subject">
+                                                <i class="bi bi-book"></i>
+                                                @cls.Subject.SubjectName
+                                            </div>
+                                        }
+                                        
+                                        <div class="daily-class-details">
+                                            <div class="detail-item">
+                                                <i class="bi bi-person-fill"></i>
+                                                <span>@(cls.Teacher?.User.FullName ?? "TBA")</span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <i class="bi bi-geo-alt-fill"></i>
+                                                <span>@(cls.RoomNumber ?? "TBA")</span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <i class="bi bi-people-fill"></i>
+                                                <span>@cls.CurrentCapacity/@cls.MaxCapacity students</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="daily-class-actions">
+                                            <a asp-controller="Student" asp-action="StudClassDetail" asp-route-id="@cls.ClassId" class="btn btn-sm btn-light w-100">
+                                                <i class="bi bi-eye-fill"></i> View Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        function showView(view) {
+            const timetableView = document.getElementById('timetableView');
+            const dailyView = document.getElementById('dailyView');
+            const buttons = document.querySelectorAll('.btn-group .btn');
+
+            if (view === 'timetable') {
+                timetableView.classList.remove('d-none');
+                dailyView.classList.add('d-none');
+                buttons[0].classList.add('active', 'btn-success');
+                buttons[0].classList.remove('btn-outline-success');
+                buttons[1].classList.remove('active', 'btn-success');
+                buttons[1].classList.add('btn-outline-success');
+            } else {
+                timetableView.classList.add('d-none');
+                dailyView.classList.remove('d-none');
+                buttons[0].classList.remove('active', 'btn-success');
+                buttons[0].classList.add('btn-outline-success');
+                buttons[1].classList.add('active', 'btn-success');
+                buttons[1].classList.remove('btn-outline-success');
+            }
+        }
+    </script>
+}
+
+<style>
+    /* Stat Card Styles */
+    .stat-card {
+        padding: 20px;
+        background: white;
+        border-left: 4px solid;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 600;
+    }
+
+    /* Legend Styles */
+    .legend {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+    }
+
+    /* Timetable Styles */
+    .timetable {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+
+    .time-column {
+        width: 100px;
+        background: #f8f9fa;
+        position: sticky;
+        left: 0;
+        z-index: 2;
+    }
+
+    .day-column {
+        min-width: 180px;
+        background: linear-gradient(135deg, #198754 0%, #157347 100%);
+        color: white;
+        font-weight: 600;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .day-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .time-cell {
+        padding: 15px;
+        background: #f8f9fa;
+        border-right: 2px solid #dee2e6;
+        border-bottom: 1px solid #dee2e6;
+        font-size: 0.9rem;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+    }
+
+    .schedule-cell {
+        padding: 5px;
+        border: 1px solid #e0e0e0;
+        vertical-align: top;
+        min-height: 80px;
+        position: relative;
+    }
+
+    .class-block {
+        padding: 12px;
+        border-radius: 8px;
+        color: white;
+        margin-bottom: 5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+
+    .class-block:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+    .class-block.morning {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .class-block.afternoon {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .class-block.evening {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .class-block-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.3);
+        font-size: 0.95rem;
+    }
+
+    .class-block-info {
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+
+    .info-line {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+        opacity: 0.95;
+    }
+
+    .class-block-footer {
+        text-align: right;
+    }
+
+    .btn-link-white {
+        color: white;
+        text-decoration: none;
+        font-size: 0.85rem;
+        opacity: 0.9;
+        transition: opacity 0.2s;
+    }
+
+    .btn-link-white:hover {
+        opacity: 1;
+    }
+
+    /* Daily View Styles */
+    .daily-class-card {
+        padding: 20px;
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .daily-class-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    }
+
+    .daily-class-card.morning {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .daily-class-card.afternoon {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .daily-class-card.evening {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .daily-class-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid rgba(255,255,255,0.3);
+    }
+
+    .daily-class-time {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .daily-class-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .daily-class-subject {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+        opacity: 0.9;
+    }
+
+    .daily-class-details {
+        flex: 1;
+        margin-bottom: 12px;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        opacity: 0.95;
+    }
+
+    .daily-class-actions {
+        margin-top: auto;
+    }
+
+    .btn-group {
+        gap: 8px;
+    }
+</style>

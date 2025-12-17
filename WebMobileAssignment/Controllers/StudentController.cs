@@ -22,12 +22,27 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrEmpty(email))
                 return null;
 
-            // Find student by email
+            // Find student by email (include related Class -> Subject and Teacher->User)
             var student = await _context.Students
                 .Include(s => s.User)
                 .Include(s => s.Enrollments)
                     .ThenInclude(e => e.Class)
+                        .ThenInclude(c => c.Subject)
+                .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                        .ThenInclude(c => c.Teacher)
+                            .ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(s => s.User.Email == email);
+
+            // expose to layouts/views
+            try
+            {
+                ViewBag.Student = student;
+            }
+            catch
+            {
+                // ignore any viewbag assignment errors
+            }
 
             return student;
         }
@@ -85,6 +100,8 @@ namespace WebMobileAssignment.Controllers
                     query = query.Where(a => a.Date >= start && a.Date < end);
                 }
             }
+
+        
 
             // Free-text search against class name or subject name
             if (!string.IsNullOrWhiteSpace(tableSearch))
@@ -273,6 +290,9 @@ namespace WebMobileAssignment.Controllers
                 .Include(c => c.Teacher)
                     .ThenInclude(t => t.User)
                 .Include(c => c.Subject)
+                .Include(c => c.Enrollments)
+                    .ThenInclude(e => e.Student)
+                        .ThenInclude(s => s.User)
                 .FirstOrDefaultAsync(c => c.ClassId == id);
 
             if (classInfo == null)

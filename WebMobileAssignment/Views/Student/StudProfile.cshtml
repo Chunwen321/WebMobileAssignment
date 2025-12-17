@@ -41,7 +41,7 @@
 
     var user = student?.User;
     var enroll = student?.Enrollments?.FirstOrDefault();
-    var cls = enroll?.Class ?? student?.Class;
+    var currentClass = enroll?.Class ?? student?.Class;
     var attendances = student?.Attendances ?? Enumerable.Empty<WebMobileAssignment.Models.Attendance>();
     var presentCount = attendances.Count(a => string.Equals(a.Status, "Present", StringComparison.OrdinalIgnoreCase));
     var absentCount = attendances.Count(a => string.Equals(a.Status, "Absent", StringComparison.OrdinalIgnoreCase));
@@ -50,16 +50,37 @@
     var attendanceRate = totalAttendance > 0 ? Math.Round((presentCount / (double)totalAttendance) * 100) : 0;
     var recent = attendances.OrderByDescending(a => a.Date).Take(5).ToList();
 
-    // Build a safe subject entry list from enrollments (SubjectName, ClassName, TeacherName)
-    var subjectEntries = student?.Enrollments?
-        .Where(e => e.Class?.Subject != null)
-        .Select(e => (
-            SubjectName: e.Class.Subject?.SubjectName ?? "",
-            ClassName: e.Class.ClassName ?? "",
-            TeacherName: e.Class.Teacher?.User?.FullName ?? ""
-        ))
-        .Distinct()
-        .ToList() ?? new List<(string SubjectName, string ClassName, string TeacherName)>();
+    // Build a safe subject entry list from enrollments including a CSS class derived from class start time
+    var subjectEntries = new List<(string SubjectName, string ClassName, string TeacherName, string CssClass)>();
+    if (student?.Enrollments != null)
+    {
+        foreach (var e in student.Enrollments)
+        {
+            var cls = e.Class;
+            if (cls?.Subject == null) continue;
+
+            // determine time-of-day class for color (morning/afternoon/evening)
+            string css = "morning"; // default
+            if (cls.StartTime.HasValue)
+            {
+                var h = cls.StartTime.Value.Hours;
+                css = h < 12 ? "morning" : (h < 17 ? "afternoon" : "evening");
+            }
+
+            subjectEntries.Add((
+                SubjectName: cls.Subject?.SubjectName ?? "",
+                ClassName: cls.ClassName ?? "",
+                TeacherName: cls.Teacher?.User?.FullName ?? "",
+                CssClass: css
+            ));
+        }
+
+        // remove duplicates by Subject+Class+Teacher
+        subjectEntries = subjectEntries
+            .GroupBy(x => (x.SubjectName, x.ClassName, x.TeacherName))
+            .Select(g => g.First())
+            .ToList();
+    }
 }
 
 <div class="row g-3">
@@ -67,9 +88,10 @@
     <div class="col-lg-4">
         <div class="dashboard-card">
             <div class="text-center mb-3">
-                <div class="user-avatar mx-auto mb-3"
-                     style="width: 120px; height: 120px; font-size: 3rem; background: #198754;">
-                    <i class="bi bi-person-fill"></i>
+                <div>
+                    <label for="profilePhotoInput" class="mx-auto d-block mb-3" style="width:120px; height:120px; cursor:pointer;">
+                        <img id="profilePhoto" src="/images/default-avatar.png" alt="avatar" class="profile-img mx-auto d-block" style="width:120px; height:120px; object-fit:cover;" />
+                    </label>
                 </div>
 
                 <h4 class="mb-1">@((user?.FullName) ?? "N/A")</h4>
@@ -127,21 +149,21 @@
                 @if (subjectEntries.Any())
                 {
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-hover mb-0 subjects-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Subject</th>
-                                    <th>Class</th>
-                                    <th>Teacher</th>
+                                    <th class="col-subject">Subject</th>
+                                    <th class="col-class">Class</th>
+                                    <th class="col-teacher">Teacher</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var s in subjectEntries)
                                 {
-                                    <tr>
-                                        <td>@(string.IsNullOrEmpty(s.SubjectName) ? "—" : s.SubjectName)</td>
-                                        <td>@(string.IsNullOrEmpty(s.ClassName) ? "—" : s.ClassName)</td>
-                                        <td>@(string.IsNullOrEmpty(s.TeacherName) ? "—" : s.TeacherName)</td>
+                                    <tr class="@s.CssClass">
+                                        <td class="subject-cell">@(string.IsNullOrEmpty(s.SubjectName) ? "—" : s.SubjectName)</td>
+                                        <td class="class-cell">@(string.IsNullOrEmpty(s.ClassName) ? "—" : s.ClassName)</td>
+                                        <td class="teacher-cell">@(string.IsNullOrEmpty(s.TeacherName) ? "—" : s.TeacherName)</td>
                                     </tr>
                                 }
                             </tbody>
@@ -155,4 +177,46 @@
             </div>
         </div>
     </div>
+</div>
+</div>
+</div>
+</div>
+
+<style>
+    /* Column background colors mapped to timetable legend colors */
+    .table thead th.col-subject,
+    .table tbody td.subject-cell {
+        background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+        color: white;
+    }
+
+    /* Class column -> Afternoon (pink gradient) */
+    .table thead th.col-class,
+    .table tbody td.class-cell {
+        background: linear-gradient(135deg,#f093fb 0%,#f5576c 100%);
+        color: white;
+    }
+
+    /* Teacher column -> Evening (cyan gradient) */
+    .table thead th.col-teacher,
+    .table tbody td.teacher-cell {
+        background: linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);
+        color: white;
+    }
+
+    /* Slight padding for cells to look nicer */
+    .table td.subject-cell,
+    .table td.class-cell,
+    .table td.teacher-cell {
+        padding: 12px 16px;
+        overflow: hidden;
+    }
+    
+    /* Make header text slightly bolder for contrast */
+    .table thead th.col-subject,
+    .table thead th.col-class,
+    .table thead th.col-teacher {
+        font-weight: 600;
+    }
+</style>
 </div>

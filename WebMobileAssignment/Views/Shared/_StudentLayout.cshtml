@@ -10,6 +10,39 @@
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/student.css" asp-append-version="true" />
+    <style>
+        /* Soft rounded corners for layout elements */
+        .sidebar {
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+            overflow: hidden;
+        }
+
+        .sidebar-footer, .sidebar-header, .sidebar-nav {
+            border-radius: 0;
+        }
+
+        .user-avatar {
+            border-radius: 8px;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logout-btn {
+            border-radius: 8px;
+        }
+
+        .dashboard-card {
+            border-radius: 12px;
+        }
+
+        .topbar {
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+    </style>
 </head>
 <body class="student-layout">
 
@@ -129,15 +162,26 @@
 
         <!-- Sidebar Footer -->
         <div class="sidebar-footer">
+            @{
+                var displayName = "Student";
+                var displayRole = "Student";
+
+                if (ViewBag.Student != null && ViewBag.Student.User != null)
+                {
+                    displayName = ViewBag.Student.User.FullName ?? "Student";
+                    displayRole = ViewBag.Student.User.Email ?? "Student";
+                }
+            }
             <div class="user-info">
                 <div class="user-avatar">
                     <i class="bi bi-person-fill"></i>
                 </div>
                 <div class="user-details">
-                    <div class="user-name">Student Name</div>
+                    <div class="user-name">@displayName</div>
+                    <div class="user-role">@displayRole</div>
                 </div>
             </div>
-            <a asp-controller="Account" asp-action="Login" class="logout-btn" title="Logout">
+            <a asp-controller="Account" asp-action="Logout" class="logout-btn" title="Logout">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </div>
