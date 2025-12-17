@@ -5,9 +5,6 @@
     ViewBag.ActiveMenu = "Attendance";
     ViewBag.ActiveSubmenu = "ApplyMedicalLeave";
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
-
-    var classes = Model?.Enrollments?.Select(e => e.Class).Where(c => c != null).ToList()
-                  ?? new List<WebMobileAssignment.Models.Class>();
 }
 
 <div class="dashboard-card mb-4">
@@ -21,39 +18,69 @@
         @Html.AntiForgeryToken()
         <div class="row g-3">
             <div class="col-md-6">
-                <label class="form-label">Class</label>
-                <select id="classId" name="ClassId" class="form-select" required>
-                    <option value="">Select class</option>
-                    @foreach (var c in classes)
-                    {
-                        <option value="@c.ClassId">@c.ClassName</option>
-                    }
-                </select>
+                <label class="form-label">
+                    Start Date <span class="text-danger">*</span>
+                </label>
+                <input id="startDate" 
+                       name="StartDate" 
+                       type="date" 
+                       class="form-control" 
+                       min="@DateTime.Today.ToString("yyyy-MM-dd")" 
+                       required 
+                       onchange="calculateDays()" />
             </div>
 
-            <div class="col-md-3">
-                <label class="form-label">Start Date</label>
-                <input id="startDate" name="StartDate" type="date" class="form-control" required />
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">End Date</label>
-                <input id="endDate" name="EndDate" type="date" class="form-control" required />
+            <div class="col-md-6">
+                <label class="form-label">
+                    End Date <span class="text-danger">*</span>
+                </label>
+                <input id="endDate" 
+                       name="EndDate" 
+                       type="date" 
+                       class="form-control" 
+                       min="@DateTime.Today.ToString("yyyy-MM-dd")" 
+                       required 
+                       onchange="calculateDays()" />
             </div>
 
             <div class="col-12">
-                <label class="form-label">Reason / Remarks</label>
-                <textarea id="reason" name="Reason" class="form-control" rows="4" placeholder="Describe reason for leave (optional)"></textarea>
-            </div>
-
-            <!-- New file upload field -->
-            <div class="col-12">
-                <label class="form-label">Upload Photo (optional)</label>
-                <input id="photo" name="Photo" type="file" accept="image/*" class="form-control" />
-                <div class="mt-2">
-                    <img id="photoPreview" src="#" alt="Preview" style="max-height:120px; display:none; border-radius:6px;" />
+                <label class="form-label">Total Days</label>
+                <div class="input-group">
+                    <input type="text" id="totalDaysDisplay" class="form-control" readonly placeholder="Select dates above" />
+                    <span class="input-group-text">day(s)</span>
                 </div>
-                <small class="text-muted">Attach a photo or doctor's note (jpg, png). Max size enforced server-side.</small>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">
+                    Reason / Remarks <span class="text-danger">*</span>
+                </label>
+                <textarea id="reason" 
+                          name="Reason" 
+                          class="form-control" 
+                          rows="4" 
+                          placeholder="Describe reason for leave. Medical leave requires supporting documents."
+                          maxlength="1000"
+                          required></textarea>
+                <small class="text-muted">Maximum 1000 characters</small>
+            </div>
+
+            <!-- Supporting Document Upload -->
+            <div class="col-12">
+                <label class="form-label">
+                    Supporting Document (Optional)
+                    <i class="bi bi-info-circle" title="Upload medical certificate, letter, or supporting document"></i>
+                </label>
+                <input type="file" 
+                       id="document" 
+                       name="document" 
+                       class="form-control" 
+                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" 
+                       onchange="previewFile()" />
+                <small class="text-muted d-block mt-1">
+                    Accepted formats: PDF, JPG, PNG, DOC, DOCX. Maximum 5MB file size.
+                </small>
+                <div id="filePreview" class="mt-2"></div>
             </div>
 
             <div class="col-12 d-flex gap-2 justify-content-end">
@@ -70,43 +97,88 @@
 
 @section Scripts {
     <script>
+        function calculateDays() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const display = document.getElementById('totalDaysDisplay');
+
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                if (end >= start) {
+                    const diffTime = Math.abs(end - start);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    display.value = diffDays;
+                    display.classList.remove('is-invalid');
+                    display.classList.add('fw-bold', 'text-success');
+                } else {
+                    display.value = 'End date must be after start date';
+                    display.classList.add('is-invalid');
+                    display.classList.remove('fw-bold', 'text-success');
+                }
+            } else {
+                display.value = '';
+            }
+        }
+
+        function previewFile() {
+            const input = document.getElementById('document');
+            const preview = document.getElementById('filePreview');
+            preview.innerHTML = '';
+
+            if (input.files.length === 0) {
+                return;
+            }
+
+            const file = input.files[0];
+            
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`File "${file.name}" exceeds 5MB limit`);
+                input.value = '';
+                preview.innerHTML = '';
+                return;
+            }
+
+            const div = document.createElement('div');
+            div.className = 'alert alert-secondary py-2 px-3 mb-2';
+            div.innerHTML = `
+                <i class="bi bi-file-earmark-text me-2"></i>
+                <strong>${file.name}</strong>
+                <small class="text-muted ms-2">(${(file.size / 1024).toFixed(2)} KB)</small>
+            `;
+            preview.appendChild(div);
+        }
+
         (function () {
             const form = document.getElementById('medicalLeaveForm');
             const result = document.getElementById('applyResult');
-            const photoInput = document.getElementById('photo');
-            const preview = document.getElementById('photoPreview');
 
-            // Preview image when selected
-            photoInput.addEventListener('change', function () {
-                const file = this.files && this.files[0];
-                if (file) {
-                    const url = URL.createObjectURL(file);
-                    preview.src = url;
-                    preview.style.display = 'inline-block';
-                } else {
-                    preview.src = '#';
-                    preview.style.display = 'none';
-                }
+            // Set min date to today
+            document.addEventListener('DOMContentLoaded', function() {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('startDate').min = today;
+                document.getElementById('endDate').min = today;
             });
 
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 result.innerHTML = '';
 
-                const classId = document.getElementById('classId').value;
                 const startDate = document.getElementById('startDate').value;
                 const endDate = document.getElementById('endDate').value;
+                const reason = document.getElementById('reason').value;
 
-                if (!classId) {
-                    result.innerHTML = '<div class="alert alert-danger">Please select a class.</div>';
-                    return;
-                }
                 if (!startDate || !endDate) {
                     result.innerHTML = '<div class="alert alert-danger">Please select both start and end dates.</div>';
                     return;
                 }
                 if (new Date(startDate) > new Date(endDate)) {
                     result.innerHTML = '<div class="alert alert-danger">Start date cannot be after end date.</div>';
+                    return;
+                }
+                if (!reason.trim()) {
+                    result.innerHTML = '<div class="alert alert-danger">Please provide a reason for your leave.</div>';
                     return;
                 }
 
@@ -125,7 +197,7 @@
 
                     if (json.success) {
                         result.innerHTML = `<div class="alert alert-success">${json.message}</div>`;
-                        setTimeout(() => { window.location.href = '@Url.Action("StudAttendanceHistory", "Student")'; }, 1200);
+                        setTimeout(() => { window.location.href = '@Url.Action("StudDashboard", "Student")'; }, 1200);
                     } else {
                         result.innerHTML = `<div class="alert alert-danger">${json.message || 'Failed to apply leave.'}</div>`;
                     }

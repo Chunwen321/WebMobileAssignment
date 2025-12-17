@@ -1,14 +1,26 @@
 @{
     ViewBag.Title = "Student Dashboard";
     ViewBag.ActiveMenu = "StudDashboard";
-Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    
+    var student = Model;
+    var totalClasses = ViewBag.TotalClasses ?? 0;
+    var presentCount = ViewBag.PresentCount ?? 0;
+    var absentCount = ViewBag.AbsentCount ?? 0;
+    var leaveCount = ViewBag.LeaveCount ?? 0;
+    var attendanceRate = ViewBag.AttendanceRate ?? 0;
+    var enrolledClasses = ViewBag.EnrolledClasses ?? 0;
+    
+    var presentPercentage = totalClasses > 0 ? Math.Round((double)presentCount / totalClasses * 100, 2) : 0;
+    var absentPercentage = totalClasses > 0 ? Math.Round((double)absentCount / totalClasses * 100, 2) : 0;
+    var leavePercentage = totalClasses > 0 ? Math.Round((double)leaveCount / totalClasses * 100, 2) : 0;
 }
 <div class="row g-3 mb-4">
     <!-- Attendance Stats -->
     <div class="col-md-3">
         <div class="stat-card" style="border-left-color: #198754;">
             <div class="stat-label">Total Present</div>
-            <div class="stat-value" id="presentCount">90%</div>
+            <div class="stat-value" id="presentCount">@presentPercentage%</div>
             <div class="stat-change positive"></div>
         </div>
     </div>
@@ -16,7 +28,7 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
     <div class="col-md-3">
         <div class="stat-card" style="border-left-color: #dc3545;">
             <div class="stat-label">Total Absent</div>
-            <div class="stat-value" id="absentCount">6%</div>
+            <div class="stat-value" id="absentCount">@absentPercentage%</div>
             <div class="stat-change negative"></div>
         </div>
     </div>
@@ -24,7 +36,7 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
     <div class="col-md-3">
         <div class="stat-card" style="border-left-color: #ffc107;">
             <div class="stat-label">Medical Leave</div>
-            <div class="stat-value" id="medicalLeaveCount">4%</div>
+            <div class="stat-value" id="medicalLeaveCount">@leavePercentage%</div>
             <div class="stat-change positive"></div>
         </div>
     </div>
@@ -32,14 +44,14 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
     <div class="col-md-3">
         <div class="stat-card" style="border-left-color: #0d6efd;">
             <div class="stat-label">Attendance Rate</div>
-            <div class="stat-value">94%</div>
+            <div class="stat-value" id="attendanceRate">@(Math.Round(attendanceRate, 2))%</div>
             <div class="stat-change positive"></div>
         </div>
     </div>
 </div>
 
 <div class="row g-3">
-    <!-- Child Summary -->
+    <!-- Student Summary -->
     <div class="col-lg-4">
         <div class="dashboard-card">
             <div class="card-header-custom">
@@ -53,26 +65,26 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
                      style="width: 80px; height: 80px; font-size: 2rem; background: #02a145;">
                     <i class="bi bi-person-fill"></i>
                 </div>
-                <h5 class="mt-3 mb-1">John Doe</h5>
-                <p class="text-muted mb-2">Student ID: STU001</p>
+                <h5 class="mt-3 mb-1">@student?.User?.FullName</h5>
+                <p class="text-muted mb-2">Student ID: @student?.StudentId</p>
             </div>
 
             <div class="list-group list-group-flush">
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                    <span class="text-muted"><i class="bi bi-book-fill me-2 text-primary"></i>Class</span>
-                    <strong>Form 5 Science</strong>
+                    <span class="text-muted"><i class="bi bi-book-fill me-2 text-primary"></i>Enrolled Classes</span>
+                    <strong>@enrolledClasses</strong>
                 </div>
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-calendar3 me-2 text-success"></i>Total Classes</span>
-                    <strong>50</strong>
+                    <strong>@totalClasses</strong>
                 </div>
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-check-circle-fill me-2 text-success"></i>Present</span>
-                    <strong>45</strong>
+                    <strong>@presentCount</strong>
                 </div>
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-x-circle-fill me-2 text-danger"></i>Absent</span>
-                    <strong>3</strong>
+                    <strong>@absentCount</strong>
                 </div>
             </div>
 
@@ -108,7 +120,7 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
                 <div class="col-4">
                     <div class="p-3"
                          style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
-                        <h4 class="mb-0" style="color: #198754;">90%</h4>
+                        <h4 class="mb-0" style="color: #198754;">@presentPercentage%</h4>
                         <small class="text-muted">Present</small>
                     </div>
                 </div>
@@ -116,7 +128,7 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
                 <div class="col-4">
                     <div class="p-3"
                          style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
-                        <h4 class="mb-0" style="color: #dc3545;">6%</h4>
+                        <h4 class="mb-0" style="color: #dc3545;">@absentPercentage%</h4>
                         <small class="text-muted">Absent</small>
                     </div>
                 </div>
@@ -124,7 +136,7 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
                 <div class="col-4">
                     <div class="p-3"
                          style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
-                        <h4 class="mb-0" style="color: #ffc107;">4%</h4>
+                        <h4 class="mb-0" style="color: #ffc107;">@leavePercentage%</h4>
                         <small class="text-muted">Medical Leave</small>
                     </div>
                 </div>
@@ -142,59 +154,58 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
                     <i class="bi bi-clock-history"></i>
                     Recent Attendance
                 </h3>
-                <a asp-controller="Parent" asp-action="AttendanceHistory"
+                <a asp-controller="Student" asp-action="StudAttendanceHistory"
                    class="btn btn-sm btn-outline-primary">
                     View All <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
+
+
 
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Class</th>
-                            <th>Time In</th>
+                            <th>Classroom</th>
+                            <th>Subject</th>
+                            <th>Teacher</th>
                             <th>Status</th>
-                            <th>Remarks</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td><i class="bi bi-calendar3 me-2 text-muted"></i>2024-01-15</td>
-                            <td>Mathematics</td>
-                            <td>2:00 PM</td>
-                            <td><span class="badge bg-success">Present</span></td>
-                            <td>On time</td>
-                        </tr>
-                        <tr>
-                            <td><i class="bi bi-calendar3 me-2 text-muted"></i>2024-01-14</td>
-                            <td>Science</td>
-                            <td>2:15 PM</td>
-                            <td><span class="badge bg-warning">Late</span></td>
-                            <td>15 minutes late</td>
-                        </tr>
-                        <tr>
-                            <td><i class="bi bi-calendar3 me-2 text-muted"></i>2024-01-13</td>
-                            <td>English</td>
-                            <td>-</td>
-                            <td><span class="badge bg-danger">Absent</span></td>
-                            <td>Medical leave</td>
-                        </tr>
-                        <tr>
-                            <td><i class="bi bi-calendar3 me-2 text-muted"></i>2024-01-12</td>
-                            <td>Mathematics</td>
-                            <td>2:00 PM</td>
-                            <td><span class="badge bg-success">Present</span></td>
-                            <td>On time</td>
-                        </tr>
-                        <tr>
-                            <td><i class="bi bi-calendar3 me-2 text-muted"></i>2024-01-11</td>
-                            <td>Science</td>
-                            <td>2:00 PM</td>
-                            <td><span class="badge bg-success">Present</span></td>
-                            <td>On time</td>
-                        </tr>
+                        @{
+                            var recentAttendances = ViewBag.RecentAttendances as List<WebMobileAssignment.Models.Attendance> ?? new List<WebMobileAssignment.Models.Attendance>();
+                            
+                            if (recentAttendances.Any())
+                            {
+                                foreach (var attendance in recentAttendances)
+                                {
+                                    var statusBadgeClass = attendance.Status switch
+                                    {
+                                        "Present" => "bg-success",
+                                        "Absent" => "bg-danger",
+                                        "Late" => "bg-warning",
+                                        "Leave" => "bg-info",
+                                        _ => "bg-secondary"
+                                    };
+                                    
+                                    <tr>
+                                        <td><i class="bi bi-calendar3 me-2 text-muted"></i>@attendance.Date.ToString("yyyy-MM-dd")</td>
+                                        <td>@(attendance.Class?.RoomNumber ?? "N/A")</td>
+                                        <td>@(attendance.Class?.Subject?.SubjectName ?? "N/A")</td>
+                                        <td>@(attendance.Class?.Teacher?.User?.FullName ?? "N/A")</td>
+                                        <td><span class="badge @statusBadgeClass">@attendance.Status</span></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No attendance records found</td>
+                                </tr>
+                            }
+                        }
                     </tbody>
                 </table>
             </div>
