@@ -18,7 +18,7 @@
 <div class="row">
     <div class="col-12">
         <div class="dashboard-card bg-white p-4 rounded shadow-sm">
-            <form asp-action="TeacherCreate" method="post">
+            <form asp-action="TeacherCreate" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 
                 @if (!ViewData.ModelState.IsValid)
@@ -35,10 +35,62 @@
                     </div>
                 }
 
+                <!-- Profile Picture Section -->
+                <h6 class="text-danger mb-3 border-bottom pb-2">
+                    <i class="bi bi-person-badge-fill me-2"></i>Profile Picture
+                </h6>
+                <div class="row mb-4">
+                    <div class="col-md-4 text-center">
+                        <div class="profile-picture-container">
+                            <div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
+                                <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <label for="profilePicture" class="btn btn-danger">
+                                    <i class="bi bi-upload"></i> Choose Photo
+                                </label>
+                                <input type="file" 
+                                       id="profilePicture" 
+                                       name="profilePicture"
+                                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                                       style="display: none;"
+                                       onchange="previewProfilePicture(event)">
+                                
+                                <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-danger" style="display: none;" onclick="clearProfilePicture()">
+                                    <i class="bi bi-x"></i> Remove
+                                </button>
+                            </div>
+                            
+                            <small class="text-muted d-block mt-3">
+                                <i class="bi bi-info-circle"></i> Max size: 5 MB<br>
+                                Formats: JPG, PNG, GIF, WEBP
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="alert alert-info border-0" style="background-color: #d1ecf1;">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-lightbulb-fill me-2 text-info"></i>Profile Picture Guidelines
+                            </h6>
+                            <ul class="mb-0">
+                                <li>Upload a clear professional photo of the teacher</li>
+                                <li>Image will be automatically uploaded to cloud storage (AWS S3)</li>
+                                <li>Square images work best (will be displayed as circle)</li>
+                                <li>Supported formats: JPG, PNG, GIF, WEBP</li>
+                                <li>Maximum file size: 5 MB</li>
+                                <li>If not uploaded, a default icon will be used</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Basic Information Section -->
-                <h6 class="text-muted mb-3 border-bottom pb-2">
+                <h6 class="text-danger mb-3 border-bottom pb-2">
                     <i class="bi bi-person-circle me-2"></i>Basic Information
                 </h6>
+
                 <div class="row">
                     <!-- Full Name -->
                     <div class="col-md-6 mb-3">
@@ -104,7 +156,7 @@
                 </div>
 
                 <!-- Professional Details Section -->
-                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
+                <h6 class="text-danger mb-3 mt-4 border-bottom pb-2">
                     <i class="bi bi-briefcase me-2"></i>Professional Details
                 </h6>
                 <div class="row">
@@ -187,5 +239,45 @@
                 $('#hireDate').val(new Date().toISOString().split('T')[0]);
             }
         });
+
+        // Profile Picture Preview Functions
+        function previewProfilePicture(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('profilePicturePreview');
+            const clearBtn = document.getElementById('clearProfilePictureBtn');
+            
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must not exceed 5MB');
+                    event.target.value = '';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Replace icon div with image
+                    preview.outerHTML = `<img id="profilePicturePreview" 
+                                             src="${e.target.result}" 
+                                             alt="Profile Picture" 
+                                             class="img-thumbnail rounded-circle mb-3" 
+                                             style="width: 200px; height: 200px; object-fit: cover;">`;
+                    clearBtn.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearProfilePicture() {
+            const fileInput = document.getElementById('profilePicture');
+            const preview = document.getElementById('profilePicturePreview');
+            const clearBtn = document.getElementById('clearProfilePictureBtn');
+            
+            fileInput.value = '';
+            // Replace image with icon
+            preview.outerHTML = `<div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
+                                   <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
+                                 </div>`;
+            clearBtn.style.display = 'none';
+        }
     </script>
 }

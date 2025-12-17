@@ -17,10 +17,92 @@
             </h5>
         </div>
 
-        @* Use form POST to save changes *@
-        <form asp-action="StudSettings" method="post" enctype="application/x-www-form-urlencoded">
+        @* Use form POST to save changes with multipart for file upload *@
+        <form asp-action="StudSettings" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
+            
+            @* Success/Error Messages *@
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            <!-- Profile Picture Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h6 class="text-primary mb-3 border-bottom pb-2">
+                        <i class="bi bi-image me-2"></i>Profile Picture
+                    </h6>
+                </div>
+                <div class="col-md-4 text-center">
+                    @if (!string.IsNullOrEmpty(Model?.User?.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
+                    {
+                        <img id="profilePicturePreview" 
+                             src="@Model.User.ProfilePicture" 
+                             alt="Profile Picture" 
+                             class="img-thumbnail rounded-circle mb-3" 
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light border" style="width: 150px; height: 150px;">
+                            <i class="bi bi-person-circle text-secondary" style="font-size: 7rem;"></i>
+                        </div>
+                    }
+                    
+                    <div class="d-grid gap-2">
+                        <label for="profilePictureFile" class="btn btn-primary">
+                            <i class="bi bi-upload"></i> Choose Photo
+                        </label>
+                        <input type="file" 
+                               id="profilePictureFile" 
+                               name="profilePicture"
+                               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                               style="display: none;">
+                    </div>
+                    
+                    <small class="text-muted d-block mt-2">
+                        <i class="bi bi-info-circle"></i> Max size: 5 MB<br>
+                        Formats: JPG, PNG, GIF, WEBP
+                    </small>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="alert alert-info border-0">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-lightbulb-fill me-2"></i>Profile Picture Tips
+                        </h6>
+                        <ul class="mb-0 small">
+                            <li>Upload a clear photo of yourself</li>
+                            <li>Square images work best (displayed as circle)</li>
+                            <li>Your image will be automatically uploaded to secure cloud storage</li>
+                            <li>Supported formats: JPG, PNG, GIF, WEBP</li>
+                            <li>Maximum file size: 5 MB</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <!-- Personal Information Section -->
             <div class="row g-3">
+                <div class="col-12">
+                    <h6 class="text-primary mb-3 border-bottom pb-2">
+                        <i class="bi bi-person-fill me-2"></i>Personal Information
+                    </h6>
+                </div>
+                
                 <div class="col-12">
                     <label class="form-label">Full Name</label>
                     <input name="FullName" type="text" class="form-control" value="@(Model?.User?.FullName ?? "")" required>
@@ -46,10 +128,19 @@
                     <label class="form-label">Date of Birth</label>
                     <input name="DateOfBirth" type="date" class="form-control" value="@(Model?.User?.DateOfBirth.HasValue == true ? Model.User.DateOfBirth.Value.ToString("yyyy-MM-dd") : "")">
                 </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Gender</label>
+                    <select name="Gender" class="form-select">
+                        <option value="">-- Select Gender --</option>
+                        <option value="Male" selected="@(Model?.Gender == "Male")">Male</option>
+                        <option value="Female" selected="@(Model?.Gender == "Female")">Female</option>
+                    </select>
+                </div>
 
                 <div class="col-12">
                     <label class="form-label">Address</label>
-                    <textarea name="Address" class="form-control" rows="2">@("")</textarea>
+                    <textarea name="Address" class="form-control" rows="2" placeholder="Enter your address">@("")</textarea>
                 </div>
 
                 <div class="col-12 mb-0">
@@ -59,12 +150,6 @@
                 </div>
             </div>
         </form>
-
-        @* show success message *@
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="mt-3 alert alert-success">@TempData["SuccessMessage"]</div>
-        }
       </div>
     </div>
 
@@ -73,21 +158,31 @@
         <!-- Profile Summary -->
         <div class="dashboard-card">
             <div class="text-center mb-3">
-                <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #02a145;">
-                    <i class="bi bi-person-fill"></i>
-                </div>
-                <h5 class="mb-1">@((Model?.User?.FullName) ?? "¡X")</h5>
+                @if (!string.IsNullOrEmpty(Model?.User?.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
+                {
+                    <img src="@Model.User.ProfilePicture" 
+                         alt="@Model.User.FullName" 
+                         class="rounded-circle mb-3" 
+                         style="width: 80px; height: 80px; object-fit: cover; border: 3px solid #02a145;">
+                }
+                else
+                {
+                    <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #02a145;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                }
+                <h5 class="mb-1">@((Model?.User?.FullName) ?? "N/A")</h5>
                 <p class="text-muted mb-0">Student</p>
             </div>
 
             <div class="list-group list-group-flush">
                 <div class="list-group-item px-0">
                     <small class="text-muted d-block">Account ID</small>
-                    <strong>@(Model?.StudentId ?? "¡X")</strong>
+                    <strong>@(Model?.StudentId ?? "N/A")</strong>
                 </div>
                 <div class="list-group-item px-0">
                     <small class="text-muted d-block">Member Since</small>
-                    <strong>@(Model?.EnrollmentDate?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "¡X")</strong>
+                    <strong>@(Model?.EnrollmentDate?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "N/A")</strong>
                 </div>
                 <div class="list-group-item px-0">
                     <small class="text-muted d-block">Status</small>
@@ -99,3 +194,47 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Profile Picture Preview
+        (function() {
+            const fileInput = document.getElementById('profilePictureFile');
+            const preview = document.getElementById('profilePicturePreview');
+
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // Validate file type
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!validTypes.includes(file.type)) {
+                        alert('Invalid file type. Please upload JPG, PNG, GIF, or WEBP image.');
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    // Validate file size (5 MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File size must not exceed 5 MB.');
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Replace icon/image with new preview
+                        preview.outerHTML = `<img id="profilePicturePreview" 
+                                                  src="${e.target.result}" 
+                                                  alt="Profile Picture" 
+                                                  class="img-thumbnail rounded-circle mb-3" 
+                                                  style="width: 150px; height: 150px; object-fit: cover;">`;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        })();
+    </script>
+}

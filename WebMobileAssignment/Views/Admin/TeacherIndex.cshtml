@@ -217,9 +217,26 @@
                              data-hire="@(teacher.HireDate?.ToString("yyyy-MM-dd") ?? "")">
                             <div class="dashboard-card h-100">
                                 <div class="teacher-header">
-                                    <div class="teacher-avatar">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
+                                    @{
+                                        var profilePictureUrl = teacher.User?.ProfilePicture;
+                                        var hasCustomPicture = !string.IsNullOrEmpty(profilePictureUrl) && !profilePictureUrl.StartsWith("/images/");
+                                        var iconColor = teacher.User.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true ? "male" : 
+                                                       teacher.User.Gender?.Equals("Female", StringComparison.OrdinalIgnoreCase) == true ? "female" : "";
+                                    }
+                                    
+                                    @if (hasCustomPicture)
+                                    {
+                                        <div class="teacher-avatar-img">
+                                            <img src="@profilePictureUrl" alt="@teacher.User.FullName" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; border: 3px solid white;" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="teacher-avatar @iconColor">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                    }
+                                    
                                     <div class="teacher-status-badge">
                                         <span class="badge bg-@(teacher.User.IsActive ? "success" : "secondary")">
                                             @(teacher.User.IsActive ? "Active" : "Inactive")
@@ -475,6 +492,15 @@
         border-radius: 8px 8px 0 0;
     }
 
+    .teacher-avatar-img {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-radius: 50%;
+        overflow: hidden;
+    }
+
     .teacher-avatar {
         width: 80px;
         height: 80px;
@@ -486,6 +512,15 @@
         margin: 0 auto;
         font-size: 2.5rem;
         color: #667eea;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .teacher-avatar.male {
+        color: #0d6efd;
+    }
+
+    .teacher-avatar.female {
+        color: #ec4899;
     }
 
     .teacher-status-badge {

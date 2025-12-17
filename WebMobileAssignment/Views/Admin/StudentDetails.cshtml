@@ -265,31 +265,31 @@
                 <div class="detail-list">
                     <div class="detail-item">
                         <div class="detail-label">
-                            <i class="bi bi-person"></i>
-                            Parent Name
+                            <i class="bi bi-person-badge"></i>
+                            Parent Full Name
                         </div>
-                        <div class="detail-value">@Model.Parent.User.FullName</div>
+                        <div class="detail-value">@(Model.Parent.User.FullName)</div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">
                             <i class="bi bi-envelope"></i>
-                            Email
+                            Email Address
                         </div>
-                        <div class="detail-value">@Model.Parent.User.Email</div>
+                        <div class="detail-value">@(Model.Parent.User.Email)</div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">
                             <i class="bi bi-telephone"></i>
-                            Phone
+                            Phone Number
                         </div>
-                        <div class="detail-value">@(Model.Parent.PhoneNumber ?? "Not provided")</div>
+                        <div class="detail-value">@(Model.Parent.User.PhoneNumber ?? "Not provided")</div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">
-                            <i class="bi bi-tag"></i>
-                            Parent ID
+                            <i class="bi bi-geo-alt"></i>
+                            Address
                         </div>
-                        <div class="detail-value">@Model.Parent.ParentId</div>
+                        <div class="detail-value">@(Model.Parent.Address ?? "Not provided")</div>
                     </div>
                 </div>
                 <div class="mt-3 text-center">

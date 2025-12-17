@@ -204,12 +204,6 @@ public class Student
     [ForeignKey(nameof(ParentId))]
     public Parent? Parent { get; set; }
 
-    [MaxLength(20)]
-    public string? ClassId { get; set; }
-
-    [ForeignKey(nameof(ClassId))]
-    public Class? Class { get; set; }
-
     public DateTime? DateOfBirth { get; set; }
 
     [MaxLength(10)]
@@ -231,9 +225,6 @@ public class Parent
 
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
-
-    [MaxLength(20)]
-    public string? PhoneNumber { get; set; }
 
     [MaxLength(200)]
     public string? Address { get; set; }

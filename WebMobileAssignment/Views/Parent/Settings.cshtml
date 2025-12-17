@@ -63,7 +63,7 @@
      </div>
      <div class="col-md-6">
           <label class="form-label text-muted">Phone Number</label>
-         <div class="display-value">@(parent.PhoneNumber ?? parent.User.PhoneNumber ?? "Not provided")</div>
+         <div class="display-value">@(parent.User.PhoneNumber ?? "Not provided")</div>
      </div>
   <div class="col-md-6">
      <label class="form-label text-muted">Date of Birth</label>
@@ -109,7 +109,7 @@
          <label class="form-label">Phone Number</label>
           <div class="input-group">
     <span class="input-group-text"><i class="bi bi-phone"></i></span>
-            <input type="tel" class="form-control" name="phoneNumber" value="@(parent.PhoneNumber ?? parent.User.PhoneNumber)" placeholder="Enter phone number">
+            <input type="tel" class="form-control" name="phoneNumber" value="@(parent.User.PhoneNumber)" placeholder="Enter phone number">
            </div>
      </div>
         <div class="col-md-6">

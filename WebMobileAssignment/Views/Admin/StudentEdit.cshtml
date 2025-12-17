@@ -55,20 +55,30 @@
                 </div>
 
                 <!-- Profile Picture Section -->
-                <h6 class="text-muted mb-3 border-bottom pb-2">
-                    <i class="bi bi-person-badge-fill text-danger me-2"></i>Profile Picture
+                <h6 class="text-danger mb-3 border-bottom pb-2">
+                    <i class="bi bi-person-badge-fill me-2"></i>Profile Picture
                 </h6>
                 <div class="row mb-4">
                     <div class="col-md-4 text-center">
                         <div class="profile-picture-container">
-                            <img id="profilePicturePreview" 
-                                 src="@(Model.User.ProfilePicture ?? "/images/default-avatar.png")" 
-                                 alt="Profile Picture" 
-                                 class="img-thumbnail rounded-circle" 
-                                 style="width: 200px; height: 200px; object-fit: cover;">
+                            @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
+                            {
+                                <img id="profilePicturePreview" 
+                                     src="@Model.User.ProfilePicture" 
+                                     alt="Profile Picture" 
+                                     class="img-thumbnail rounded-circle mb-3" 
+                                     style="width: 200px; height: 200px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
+                                    <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
+                                </div>
+                            }
                             
-                            <div class="mt-3">
-                                <label for="profilePictureFile" class="btn btn-danger btn-sm">
+
+                            <div class="d-grid gap-2">
+                                <label for="profilePictureFile" class="btn btn-danger">
                                     <i class="bi bi-upload"></i> Choose Photo
                                 </label>
                                 <input type="file" 
@@ -76,15 +86,15 @@
                                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
                                        style="display: none;">
                                 
-                                @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && Model.User.ProfilePicture != "/images/default-avatar.png")
+                                @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
                                 {
-                                    <button type="button" id="deleteProfilePictureBtn" class="btn btn-outline-danger btn-sm ms-2">
+                                    <button type="button" id="deleteProfilePictureBtn" class="btn btn-outline-danger">
                                         <i class="bi bi-trash"></i> Remove
                                     </button>
                                 }
                             </div>
-                            
-                            <div id="uploadProgress" class="mt-2" style="display: none;">
+                        
+                            <div id="uploadProgress" class="mt-3" style="display: none;">
                                 <div class="progress">
                                     <div class="progress-bar progress-bar-striped progress-bar-animated" 
                                          role="progressbar" 
@@ -92,9 +102,9 @@
                                 </div>
                             </div>
                             
-                            <div id="uploadMessage" class="mt-2"></div>
+                            <div id="uploadMessage" class="mt-3"></div>
                             
-                            <small class="text-muted d-block mt-2">
+                            <small class="text-muted d-block mt-3">
                                 <i class="bi bi-info-circle"></i> Max size: 5 MB<br>
                                 Formats: JPG, PNG, GIF, WEBP
                             </small>
@@ -102,8 +112,10 @@
                     </div>
                     
                     <div class="col-md-8">
-                        <div class="alert alert-info">
-                            <h6><i class="bi bi-lightbulb-fill me-2"></i>Profile Picture Guidelines</h6>
+                        <div class="alert alert-info border-0" style="background-color: #d1ecf1;">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-lightbulb-fill me-2 text-info"></i>Profile Picture Guidelines
+                            </h6>
                             <ul class="mb-0">
                                 <li>Upload a clear photo of the student</li>
                                 <li>Image will be automatically uploaded to cloud storage (AWS S3)</li>
@@ -115,8 +127,8 @@
                     </div>
                 </div>
 
-                <h6 class="text-muted mb-3 border-bottom pb-2">
-                    <i class="bi bi-person-fill text-danger me-2"></i>Personal Information
+                <h6 class="text-danger mb-3 border-bottom pb-2">
+                    <i class="bi bi-person-fill me-2"></i>Personal Information
                 </h6>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -174,8 +186,8 @@
                     </div>
                 </div>
 
-                <h6 class="text-muted mb-3 mt-3 border-bottom pb-2">
-                    <i class="bi bi-book-fill text-danger me-2"></i>Class Enrollment Management
+                <h6 class="text-danger mb-3 mt-3 border-bottom pb-2">
+                    <i class="bi bi-book-fill me-2"></i>Class Enrollment Management
                 </h6>
                 
                 <!-- Current Enrollments -->
@@ -352,15 +364,20 @@
 
                     if (result.success) {
                         showMessage('success', result.message);
-                        preview.src = result.url;
+                        // Replace icon with image
+                        preview.outerHTML = `<img id="profilePicturePreview" 
+                                                  src="${result.url}" 
+                                                  alt="Profile Picture" 
+                                                  class="img-thumbnail rounded-circle mb-3" 
+                                                  style="width: 200px; height: 200px; object-fit: cover;">`;
                         
                         // Add delete button if not already present
                         if (!deleteBtn) {
-                            const btnContainer = document.querySelector('.profile-picture-container .mt-3');
+                            const btnContainer = document.querySelector('.d-grid.gap-2');
                             const newDeleteBtn = document.createElement('button');
                             newDeleteBtn.type = 'button';
                             newDeleteBtn.id = 'deleteProfilePictureBtn';
-                            newDeleteBtn.className = 'btn btn-outline-danger btn-sm ms-2';
+                            newDeleteBtn.className = 'btn btn-outline-danger';
                             newDeleteBtn.innerHTML = '<i class="bi bi-trash"></i> Remove';
                             newDeleteBtn.onclick = deleteProfilePicture;
                             btnContainer.appendChild(newDeleteBtn);
@@ -372,12 +389,14 @@
                         }, 1000);
                     } else {
                         showMessage('error', result.message);
-                        // Revert preview to original
-                        preview.src = '@(Model.User.ProfilePicture ?? "/images/default-avatar.png")';
+                        // Revert preview - check if it's image or icon
+                        const originalSrc = '@Model.User.ProfilePicture';
+                        if (originalSrc && !originalSrc.startsWith('/images/')) {
+                            preview.src = originalSrc;
+                        }
                     }
                 } catch (error) {
                     showMessage('error', 'Upload failed: ' + error.message);
-                    preview.src = '@(Model.User.ProfilePicture ?? "/images/default-avatar.png")';
                 } finally {
                     uploadProgress.style.display = 'none';
                     fileInput.value = '';
@@ -410,7 +429,10 @@
 
                     if (result.success) {
                         showMessage('success', result.message);
-                        preview.src = '/images/default-avatar.png';
+                        // Replace image with icon
+                        preview.outerHTML = `<div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
+                                               <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
+                                             </div>`;
                         
                         // Remove delete button
                         if (deleteBtn) {

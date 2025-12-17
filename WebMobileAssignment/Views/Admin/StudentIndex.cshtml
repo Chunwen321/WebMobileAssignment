@@ -225,9 +225,26 @@
                              data-classes="@(student.Enrollments?.Count ?? 0)">
                             <div class="dashboard-card h-100">
                                 <div class="student-header">
-                                    <div class="student-avatar @(student.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true ? "male" : student.Gender?.Equals("Female", StringComparison.OrdinalIgnoreCase) == true ? "female" : "")">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
+                                    @{
+                                        var profilePictureUrl = student.User?.ProfilePicture;
+                                        var hasCustomPicture = !string.IsNullOrEmpty(profilePictureUrl) && !profilePictureUrl.StartsWith("/images/");
+                                        var iconColor = student.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true ? "male" : 
+                                                       student.Gender?.Equals("Female", StringComparison.OrdinalIgnoreCase) == true ? "female" : "";
+                                    }
+                                    
+                                    @if (hasCustomPicture)
+                                    {
+                                        <div class="student-avatar-img">
+                                            <img src="@profilePictureUrl" alt="@student.User.FullName" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; border: 3px solid white;" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="student-avatar @iconColor">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                    }
+                                    
                                     <div class="student-status-badge">
                                         @{
                                             var statusBadgeClass = student.User.Status?.ToLower() switch
@@ -547,6 +564,15 @@
         text-align: center;
         position: relative;
         border-radius: 8px 8px 0 0;
+    }
+
+    .student-avatar-img {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-radius: 50%;
+        overflow: hidden;
     }
 
     .student-avatar {

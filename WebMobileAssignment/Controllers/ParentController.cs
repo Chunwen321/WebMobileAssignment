@@ -869,8 +869,7 @@ n.Description.ToLower().Contains("absent") ||
    parent.User.Gender = gender;
         
       // Update Parent table fields
-     parent.PhoneNumber = phoneNumber;
-        parent.Address = address;
+     parent.Address = address;
      
           // Save changes to database
  await _context.SaveChangesAsync();

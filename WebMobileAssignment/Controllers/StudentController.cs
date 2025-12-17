@@ -24,8 +24,16 @@ namespace WebMobileAssignment.Controllers
         {
             // Get email from ClaimTypes.Name (as set by Helper.SignIn)
             var email = User.FindFirstValue(ClaimTypes.Name);
+            
+            Console.WriteLine($"[GetCurrentStudent] Email from claims: {email ?? "NULL"}");
+            Console.WriteLine($"[GetCurrentStudent] User.Identity.IsAuthenticated: {User.Identity?.IsAuthenticated}");
+            Console.WriteLine($"[GetCurrentStudent] User.Identity.Name: {User.Identity?.Name ?? "NULL"}");
+            
             if (string.IsNullOrEmpty(email))
+            {
+                Console.WriteLine("[GetCurrentStudent] Email is null or empty - user not authenticated");
                 return null;
+            }
 
             // Find student by email (include related Class -> Subject and Teacher->User)
             var student = await _context.Students
@@ -38,6 +46,15 @@ namespace WebMobileAssignment.Controllers
                         .ThenInclude(c => c.Teacher)
                             .ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(s => s.User.Email == email);
+
+            if (student == null)
+            {
+                Console.WriteLine($"[GetCurrentStudent] No student found for email: {email}");
+            }
+            else
+            {
+                Console.WriteLine($"[GetCurrentStudent] Student found: {student.StudentId} - {student.User.FullName}");
+            }
 
             // expose to layouts/views
             try
@@ -55,9 +72,18 @@ namespace WebMobileAssignment.Controllers
         // Dashboard
         public async Task<IActionResult> StudDashboard()
         {
+            Console.WriteLine("[StudDashboard] Method called");
+            Console.WriteLine($"[StudDashboard] User authenticated: {User.Identity?.IsAuthenticated}");
+            
             var student = await GetCurrentStudent();
             if (student == null)
+            {
+                Console.WriteLine("[StudDashboard] Student is null - redirecting to login");
+                Console.WriteLine($"[StudDashboard] Current claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
                 return RedirectToAction("Login", "Account");
+            }
+
+            Console.WriteLine($"[StudDashboard] Loading dashboard for student: {student.StudentId}");
 
             // Get attendance data for this student
             var allAttendances = await _context.Attendances
@@ -247,7 +273,7 @@ namespace WebMobileAssignment.Controllers
                     return Json(new
                     {
                         success = false,
-                        message = $"This class is scheduled for {session.Class.Day}, not {currentDayOfWeek}"
+                        message = $"Attendance can only be taken on the scheduled day: {session.Class.Day}"
                     });
                 }
 
@@ -364,6 +390,104 @@ namespace WebMobileAssignment.Controllers
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "Settings";
             return View("StudSettings", student);
+        }
+
+        // Settings - POST Handler
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> StudSettings(string fullName, string email, string? phoneNumber, 
+            DateTime? dateOfBirth, string? gender, string? address, IFormFile? profilePicture)
+        {
+            var student = await GetCurrentStudent();
+            if (student == null)
+                return RedirectToAction("Login", "Account");
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                TempData["ErrorMessage"] = "Full name is required.";
+                return View("StudSettings", student);
+            }
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                TempData["ErrorMessage"] = "Email is required.";
+                return View("StudSettings", student);
+            }
+
+            try
+            {
+                // Handle profile picture upload if provided
+                if (profilePicture != null && profilePicture.Length > 0)
+                {
+                    try
+                    {
+                        // Validate file type
+                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                        var fileExtension = Path.GetExtension(profilePicture.FileName).ToLower();
+                        if (!allowedExtensions.Contains(fileExtension))
+                        {
+                            TempData["ErrorMessage"] = "Invalid file type. Please upload JPG, PNG, GIF, or WEBP image.";
+                            return View("StudSettings", student);
+                        }
+
+                        // Validate file size (5 MB)
+                        if (profilePicture.Length > 5 * 1024 * 1024)
+                        {
+                            TempData["ErrorMessage"] = "File size must not exceed 5 MB.";
+                            return View("StudSettings", student);
+                        }
+
+                        // Delete old picture if exists and is not default
+                        if (!string.IsNullOrEmpty(student.User.ProfilePicture) && 
+                            !student.User.ProfilePicture.StartsWith("/images/"))
+                        {
+                            await _s3Service.DeleteFileAsync(student.User.ProfilePicture);
+                        }
+
+                        // Upload new picture to S3
+                        var profilePictureUrl = await _s3Service.UploadFileAsync(profilePicture, student.User.UserId);
+                        student.User.ProfilePicture = profilePictureUrl;
+                        
+                        Console.WriteLine($"Profile picture uploaded successfully: {profilePictureUrl}");
+                    }
+                    catch (Exception uploadEx)
+                    {
+                        Console.WriteLine($"Error uploading profile picture: {uploadEx.Message}");
+                        TempData["ErrorMessage"] = $"Failed to upload profile picture: {uploadEx.Message}";
+                        return View("StudSettings", student);
+                    }
+                }
+
+                // Update user information
+                student.User.FullName = fullName;
+                student.User.Email = email;
+                student.User.PhoneNumber = phoneNumber;
+                student.User.DateOfBirth = dateOfBirth;
+                student.User.Gender = gender;
+
+                // Update student information
+                if (!string.IsNullOrWhiteSpace(gender))
+                {
+                    student.Gender = gender;
+                }
+                if (dateOfBirth.HasValue)
+                {
+                    student.DateOfBirth = dateOfBirth.Value;
+                }
+
+                _context.Update(student);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Profile updated successfully!";
+                return RedirectToAction(nameof(StudSettings));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating student profile: {ex.Message}");
+                TempData["ErrorMessage"] = $"Error updating profile: {ex.Message}";
+                return View("StudSettings", student);
+            }
         }
 
         // Change Password
