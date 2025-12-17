@@ -27,7 +27,7 @@
 <div class="row">
     <div class="col-12">
         <div class="dashboard-card bg-white p-4 rounded shadow-sm">
-            <form asp-action="StudentEdit" method="post">
+            <form asp-action="StudentEdit" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 
                 @if (!ViewData.ModelState.IsValid)
@@ -82,9 +82,14 @@
                                     <i class="bi bi-upload"></i> Choose Photo
                                 </label>
                                 <input type="file" 
-                                       id="profilePictureFile" 
+                                       id="profilePictureFile"
+                                       name="profilePicture"
                                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
                                        style="display: none;">
+                                
+                                <button type="button" id="btnWebcam" class="btn btn-outline-primary">
+                                    <i class="bi bi-camera-fill"></i> Take Photo
+                                </button>
                                 
                                 @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
                                 {
@@ -118,6 +123,7 @@
                             </h6>
                             <ul class="mb-0">
                                 <li>Upload a clear photo of the student</li>
+                                <li><strong>NEW:</strong> Use your webcam to take a photo directly</li>
                                 <li>Image will be automatically uploaded to cloud storage (AWS S3)</li>
                                 <li>Square images work best (will be displayed as circle)</li>
                                 <li>Supported formats: JPG, PNG, GIF, WEBP</li>
@@ -302,108 +308,74 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     
+    <!-- Webcam Capture Script -->
+    <script src="~/js/webcam-capture.js"></script>
+
     <script>
-        // ==================== PROFILE PICTURE UPLOAD ====================
+        // ==================== WEBCAM FUNCTIONALITY ====================
+        (function() {
+            // Initialize webcam capture
+            WebcamCapture.init('profilePicturePreview', 'profilePictureFile', function(file) {
+                console.log('Photo captured from webcam:', file.name);
+                // Photo is now in the file input, will be uploaded when form is submitted
+            });
+
+            // Webcam button click handler
+            const webcamBtn = document.getElementById('btnWebcam');
+            if (webcamBtn) {
+                webcamBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal();
+                });
+            }
+        })();
+
+        // ==================== PROFILE PICTURE PREVIEW (No immediate upload) ====================
         (function() {
             const fileInput = document.getElementById('profilePictureFile');
             const preview = document.getElementById('profilePicturePreview');
-            const uploadProgress = document.getElementById('uploadProgress');
-            const uploadMessage = document.getElementById('uploadMessage');
-            const deleteBtn = document.getElementById('deleteProfilePictureBtn');
             const userId = '@Model.User.UserId';
 
-            // File selection handler
+            // File selection handler - ONLY PREVIEW, don't upload
             if (fileInput) {
-                fileInput.addEventListener('change', async function(e) {
+                fileInput.addEventListener('change', function(e) {
                     const file = e.target.files[0];
                     if (!file) return;
+
+                    console.log('File selected:', file.name, file.type, file.size);
 
                     // Validate file type
                     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
                     if (!validTypes.includes(file.type)) {
-                        showMessage('error', 'Invalid file type. Please upload JPG, PNG, GIF, or WEBP image.');
+                        alert('Invalid file type. Please upload JPG, PNG, GIF, or WEBP image.');
                         fileInput.value = '';
                         return;
                     }
 
                     // Validate file size (5 MB)
                     if (file.size > 5 * 1024 * 1024) {
-                        showMessage('error', 'File size must not exceed 5 MB.');
+                        alert('File size must not exceed 5 MB.');
                         fileInput.value = '';
                         return;
                     }
 
-                    // Show preview immediately
+                    // Show preview only - don't upload yet
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        preview.src = e.target.result;
+                        const currentPreview = document.getElementById('profilePicturePreview');
+                        if (currentPreview) {
+                            currentPreview.outerHTML = `<img id="profilePicturePreview" 
+                                                      src="${e.target.result}" 
+                                                      alt="Profile Picture" 
+                                                      class="img-thumbnail rounded-circle mb-3" 
+                                                      style="width: 200px; height: 200px; object-fit: cover;">`;
+                        }
                     };
                     reader.readAsDataURL(file);
-
-                    // Upload to server
-                    await uploadFile(file);
                 });
             }
 
-            async function uploadFile(file) {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('userId', userId);
-
-                try {
-                    // Show progress
-                    uploadProgress.style.display = 'block';
-                    uploadMessage.innerHTML = '';
-
-                    const response = await fetch('@Url.Action("UploadProfilePicture", "Admin")', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        showMessage('success', result.message);
-                        // Replace icon with image
-                        preview.outerHTML = `<img id="profilePicturePreview" 
-                                                  src="${result.url}" 
-                                                  alt="Profile Picture" 
-                                                  class="img-thumbnail rounded-circle mb-3" 
-                                                  style="width: 200px; height: 200px; object-fit: cover;">`;
-                        
-                        // Add delete button if not already present
-                        if (!deleteBtn) {
-                            const btnContainer = document.querySelector('.d-grid.gap-2');
-                            const newDeleteBtn = document.createElement('button');
-                            newDeleteBtn.type = 'button';
-                            newDeleteBtn.id = 'deleteProfilePictureBtn';
-                            newDeleteBtn.className = 'btn btn-outline-danger';
-                            newDeleteBtn.innerHTML = '<i class="bi bi-trash"></i> Remove';
-                            newDeleteBtn.onclick = deleteProfilePicture;
-                            btnContainer.appendChild(newDeleteBtn);
-                        }
-                        
-                        // Reload page after 1 second to reflect changes
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
-                    } else {
-                        showMessage('error', result.message);
-                        // Revert preview - check if it's image or icon
-                        const originalSrc = '@Model.User.ProfilePicture';
-                        if (originalSrc && !originalSrc.startsWith('/images/')) {
-                            preview.src = originalSrc;
-                        }
-                    }
-                } catch (error) {
-                    showMessage('error', 'Upload failed: ' + error.message);
-                } finally {
-                    uploadProgress.style.display = 'none';
-                    fileInput.value = '';
-                }
-            }
-
             // Delete profile picture
+            const deleteBtn = document.getElementById('deleteProfilePictureBtn');
             if (deleteBtn) {
                 deleteBtn.addEventListener('click', deleteProfilePicture);
             }
@@ -414,9 +386,6 @@
                 }
 
                 try {
-                    uploadProgress.style.display = 'block';
-                    uploadMessage.innerHTML = '';
-
                     const response = await fetch('@Url.Action("DeleteProfilePicture", "Admin")', {
                         method: 'POST',
                         headers: {
@@ -428,44 +397,17 @@
                     const result = await response.json();
 
                     if (result.success) {
-                        showMessage('success', result.message);
-                        // Replace image with icon
-                        preview.outerHTML = `<div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
-                                               <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
-                                             </div>`;
-                        
-                        // Remove delete button
-                        if (deleteBtn) {
-                            deleteBtn.remove();
-                        }
-                        
-                        // Reload page after 1 second
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
+                        alert('Profile picture removed successfully!');
+                        window.location.reload();
                     } else {
-                        showMessage('error', result.message);
+                        alert('Error: ' + result.message);
                     }
                 } catch (error) {
-                    showMessage('error', 'Delete failed: ' + error.message);
-                } finally {
-                    uploadProgress.style.display = 'none';
+                    alert('Delete failed: ' + error.message);
                 }
             }
 
             window.deleteProfilePicture = deleteProfilePicture;
-
-            function showMessage(type, message) {
-                const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-                const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
-                
-                uploadMessage.innerHTML = `
-                    <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                        <i class="bi ${icon} me-2"></i>${message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
-            }
         })();
 
         // ==================== CLASS ENROLLMENT MANAGEMENT ====================

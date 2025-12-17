@@ -1,0 +1,301 @@
+@{
+    ViewBag.Title = "Notifications";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@{
+    var notifications = ViewBag.Notifications as List<WebMobileAssignment.Models.Notification> ?? new List<WebMobileAssignment.Models.Notification>();
+    var totalNotifications = ViewBag.TotalNotifications ?? 0;
+    var unreadCount = ViewBag.UnreadCount ?? 0;
+    var readCount = ViewBag.ReadCount ?? 0;
+    var leaveCount = ViewBag.LeaveCount ?? 0;
+}
+
+<form method="post" id="notificationForm">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="row g-3 mb-4">
+    <!-- Notification Stats -->
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="stat-label">Total Notifications</div>
+            <div class="stat-value">@totalNotifications</div>
+            <div class="stat-change">
+                <i class="bi bi-bell-fill"></i>
+                <span>All time</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="stat-label">Unread</div>
+            <div class="stat-value">@unreadCount</div>
+            <div class="stat-change">
+                <i class="bi bi-envelope-fill"></i>
+                <span>Needs attention</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #ffc107;">
+            <div class="stat-label">Leave Applications</div>
+            <div class="stat-value">@leaveCount</div>
+            <div class="stat-change">
+                <i class="bi bi-calendar-x"></i>
+                <span>Pending reviews</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="stat-label">Completed</div>
+            <div class="stat-value">@readCount</div>
+            <div class="stat-change positive">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Read & acknowledged</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-card">
+    <div class="card-header-custom">
+        <h3 class="card-title">
+            <i class="bi bi-bell-fill"></i>
+            All Notifications
+        </h3>
+        @if (unreadCount > 0)
+        {
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
+                    <i class="bi bi-check-all me-2"></i>Mark All as Read
+                </button>
+            </div>
+        }
+    </div>
+
+    <!-- Notifications List -->
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="all">
+            @if (notifications.Any())
+            {
+                @foreach (var notification in notifications)
+                {
+                    var isUnread = notification.Status == "unread";
+                    var isLeave = notification.Description.ToLower().Contains("leave application");
+                    var isSystem = notification.Description.ToLower().Contains("system") || 
+                                   notification.Description.ToLower().Contains("update");
+
+                    var borderColor = isLeave ? "warning" : (isSystem ? "primary" : "success");
+                    var iconClass = isLeave ? "bi-calendar-x" : (isSystem ? "bi-info-circle-fill" : "bi-bell-fill");
+                    var iconType = isLeave ? "warning" : (isSystem ? "primary" : "success");
+
+                    var timeAgo = GetTimeAgo(notification.CreatedDate);
+
+                    <div class="notification-item @(isUnread ? "unread" : "read") border-start border-@borderColor border-4">
+                        <div class="notification-header">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="notification-icon @iconType">
+                                    <i class="bi @iconClass"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">@GetNotificationTitle(notification.Description)</h6>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock me-1"></i>@timeAgo
+                                    </small>
+                                </div>
+                                @if (isUnread)
+                                {
+                                    <span class="badge bg-danger">Unread</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Read</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="notification-body">
+                            <p class="mb-0">@notification.Description</p>
+                        </div>
+                        @if (isUnread)
+                        {
+                            <div class="notification-footer">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="markAsRead('@notification.NotificationId')">
+                                    <i class="bi bi-check me-1"></i>Mark as Read
+                                </button>
+                                @if (isLeave)
+                                {
+                                    <a href="@Url.Action("LeaveIndex", "Admin")" class="btn btn-sm btn-outline-warning">
+                                        <i class="bi bi-calendar-event me-1"></i>View Leave Applications
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-bell-slash" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No notifications yet</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetTimeAgo(DateTime date)
+    {
+        var timeSpan = DateTime.Now - date;
+
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes} minute{((int)timeSpan.TotalMinutes == 1 ? "" : "s")} ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours} hour{((int)timeSpan.TotalHours == 1 ? "" : "s")} ago";
+        if (timeSpan.TotalDays < 30)
+            return $"{(int)timeSpan.TotalDays} day{((int)timeSpan.TotalDays == 1 ? "" : "s")} ago";
+        if (timeSpan.TotalDays < 365)
+            return $"{(int)(timeSpan.TotalDays / 30)} month{((int)(timeSpan.TotalDays / 30) == 1 ? "" : "s")} ago";
+
+        return date.ToString("MMM dd, yyyy");
+    }
+
+    string GetNotificationTitle(string description)
+    {
+        if (description.ToLower().Contains("leave application"))
+            return "New Leave Application";
+        if (description.ToLower().Contains("system"))
+            return "System Notification";
+        if (description.ToLower().Contains("update"))
+            return "System Update";
+        if (description.ToLower().Contains("attendance"))
+            return "Attendance Alert";
+
+        return "Notification";
+    }
+}
+
+@section Scripts {
+<script>
+    function markAsRead(notificationId) {
+        $.ajax({
+            url: '@Url.Action("MarkAsRead", "Admin")',
+            type: 'POST',
+            data: {
+                notificationId: notificationId,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('An error occurred while marking notification as read.');
+            }
+        });
+    }
+
+    function markAllAsRead() {
+        if (confirm('Mark all notifications as read?')) {
+            $.ajax({
+                url: '@Url.Action("MarkAllAsRead", "Admin")',
+                type: 'POST',
+                data: {
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while marking all notifications as read.');
+                }
+            });
+        }
+    }
+</script>
+
+<style>
+    .notification-item {
+        padding: 1.25rem;
+        border-radius: 8px;
+        background: white;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .notification-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .notification-item.unread {
+        background: #f8f9fa;
+    }
+
+    .notification-item.read {
+        opacity: 0.8;
+    }
+
+    .notification-header {
+        margin-bottom: 0.75rem;
+    }
+
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .notification-icon.danger {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    .notification-icon.warning {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    .notification-icon.primary {
+        background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+
+    .notification-icon.success {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+
+    .notification-icon.info {
+        background: rgba(13, 202, 240, 0.1);
+        color: #0dcaf0;
+    }
+
+    .notification-body {
+        padding: 0.75rem 0;
+        line-height: 1.6;
+    }
+
+    .notification-footer {
+        padding-top: 0.75rem;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        gap: 0.5rem;
+    }
+</style>
+}

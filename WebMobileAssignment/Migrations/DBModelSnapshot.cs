@@ -146,6 +146,9 @@ namespace WebMobileAssignment.Migrations
                     b.Property<TimeSpan?>("EndTime")
                         .HasColumnType("time");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<int>("MaxCapacity")
                         .HasColumnType("int");
 
@@ -282,10 +285,6 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -301,10 +300,6 @@ namespace WebMobileAssignment.Migrations
             modelBuilder.Entity("WebMobileAssignment.Models.Student", b =>
                 {
                     b.Property<string>("StudentId")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("ClassId")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
@@ -328,8 +323,6 @@ namespace WebMobileAssignment.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("StudentId");
-
-                    b.HasIndex("ClassId");
 
                     b.HasIndex("ParentId");
 
@@ -581,10 +574,6 @@ namespace WebMobileAssignment.Migrations
 
             modelBuilder.Entity("WebMobileAssignment.Models.Student", b =>
                 {
-                    b.HasOne("WebMobileAssignment.Models.Class", "Class")
-                        .WithMany()
-                        .HasForeignKey("ClassId");
-
                     b.HasOne("WebMobileAssignment.Models.Parent", "Parent")
                         .WithMany("Students")
                         .HasForeignKey("ParentId")
@@ -595,8 +584,6 @@ namespace WebMobileAssignment.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Class");
 
                     b.Navigation("Parent");
 
