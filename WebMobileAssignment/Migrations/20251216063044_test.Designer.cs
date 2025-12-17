@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebMobileAssignment.Models;
 
@@ -11,9 +12,11 @@ using WebMobileAssignment.Models;
 namespace WebMobileAssignment.Migrations
 {
     [DbContext(typeof(DB))]
-    partial class DBModelSnapshot : ModelSnapshot
+    [Migration("20251216063044_test")]
+    partial class test
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -191,54 +194,6 @@ namespace WebMobileAssignment.Migrations
                     b.HasIndex("ClassId");
 
                     b.ToTable("Enrollments");
-                });
-
-            modelBuilder.Entity("WebMobileAssignment.Models.LeaveApplication", b =>
-                {
-                    b.Property<string>("LeaveId")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DocumentPaths")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<string>("Remarks")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("TotalDays")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.HasKey("LeaveId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("LeaveApplications");
                 });
 
             modelBuilder.Entity("WebMobileAssignment.Models.Notification", b =>
@@ -546,17 +501,6 @@ namespace WebMobileAssignment.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("WebMobileAssignment.Models.LeaveApplication", b =>
-                {
-                    b.HasOne("WebMobileAssignment.Models.User", "User")
-                        .WithMany("LeaveApplications")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("WebMobileAssignment.Models.Notification", b =>
                 {
                     b.HasOne("WebMobileAssignment.Models.User", "User")
@@ -645,8 +589,6 @@ namespace WebMobileAssignment.Migrations
 
             modelBuilder.Entity("WebMobileAssignment.Models.User", b =>
                 {
-                    b.Navigation("LeaveApplications");
-
                     b.Navigation("Notifications");
                 });
 #pragma warning restore 612, 618

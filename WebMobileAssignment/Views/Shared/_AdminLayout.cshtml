@@ -115,6 +115,15 @@
                 </div>
             </div>
 
+            <!-- Leave Management -->
+            <a asp-controller="Admin" asp-action="LeaveIndex"
+               class="sidebar-item @(ViewBag.ActiveMenu == "LeaveManagement" ? "active" : "")">
+                <div class="sidebar-item-content">
+                    <i class="bi bi-calendar-x"></i>
+                    <span>Leave Management</span>
+                </div>
+            </a>
+
             <!-- Reports -->
             <a asp-controller="Admin" asp-action="Reports"
                class="sidebar-item @(ViewBag.ActiveMenu == "Reports" ? "active" : "")">

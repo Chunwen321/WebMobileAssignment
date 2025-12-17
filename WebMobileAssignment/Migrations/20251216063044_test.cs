@@ -1,3 +1,4 @@
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -5,11 +6,18 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WebMobileAssignment.Migrations
 {
     /// <inheritdoc />
-    public partial class AddAttendanceSession : Migration
+    public partial class test : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<string>(
+                name: "ProfilePicture",
+                table: "Users",
+                type: "nvarchar(1000)",
+                maxLength: 1000,
+                nullable: true);
+
             migrationBuilder.CreateTable(
                 name: "AttendanceSessions",
                 columns: table => new
@@ -48,11 +56,6 @@ namespace WebMobileAssignment.Migrations
                 name: "IX_AttendanceSessions_CreatedByTeacherId",
                 table: "AttendanceSessions",
                 column: "CreatedByTeacherId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AttendanceSessions_PinCode",
-                table: "AttendanceSessions",
-                column: "PinCode");
         }
 
         /// <inheritdoc />
@@ -60,6 +63,10 @@ namespace WebMobileAssignment.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AttendanceSessions");
+
+            migrationBuilder.DropColumn(
+                name: "ProfilePicture",
+                table: "Users");
         }
     }
 }

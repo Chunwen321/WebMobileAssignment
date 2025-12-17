@@ -19,6 +19,9 @@ builder.Services.AddScoped<Helper>();
 // Add ReCaptcha service with HttpClient
 builder.Services.AddHttpClient<ReCaptchaService>();
 
+// Add S3 Service
+builder.Services.AddSingleton<S3Service>();
+
 // Add Authentication with Cookie
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>

@@ -18,6 +18,7 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
     public DbSet<Attendance> Attendances { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<AttendanceSession> AttendanceSessions { get; set; }
+    public DbSet<LeaveApplication> LeaveApplications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,6 +76,13 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
             .WithMany(c => c.Enrollments)
             .HasForeignKey(e => e.ClassId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure LeaveApplication relationships (Students only)
+        modelBuilder.Entity<LeaveApplication>()
+            .HasOne(l => l.User)
+            .WithMany(u => u.LeaveApplications)
+            .HasForeignKey(l => l.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
@@ -107,6 +115,9 @@ public class User
     [MaxLength(10)]
     public string? Gender { get; set; }
 
+    [MaxLength(1000)]
+    public string? ProfilePicture { get; set; } = "/images/default-avatar.png";
+
     [Required]
     [MaxLength(20)]
     public string UserType { get; set; } = string.Empty; // Admin / Teacher / Student / Parent
@@ -121,6 +132,7 @@ public class User
 
     // Navigation property
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public ICollection<LeaveApplication> LeaveApplications { get; set; } = new List<LeaveApplication>();
 }
 
 public class Admin
@@ -389,4 +401,44 @@ public class AttendanceSession
 
     [MaxLength(20)]
     public string SessionType { get; set; } = "Class"; // Class / Individual
+}
+
+public class LeaveApplication
+{
+    [Key]
+    [MaxLength(20)]
+    public string LeaveId { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(20)]
+    public string UserId { get; set; } = string.Empty;
+
+    [ForeignKey(nameof(UserId))]
+    public User User { get; set; } = null!;
+
+    [Required]
+    public DateTime StartDate { get; set; }
+
+    [Required]
+    public DateTime EndDate { get; set; }
+
+    public int TotalDays { get; set; }
+
+    [Required]
+    [MaxLength(1000)]
+    public string Reason { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(20)]
+    public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
+
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+    // S3 document paths stored as JSON array or comma-separated
+    [MaxLength(2000)]
+    public string? DocumentPaths { get; set; }
+
+    // Admin remarks when approving/rejecting
+    [MaxLength(1000)]
+    public string? Remarks { get; set; }
 }
