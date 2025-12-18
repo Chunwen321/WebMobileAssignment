@@ -409,6 +409,9 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("int");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -420,6 +423,12 @@ namespace WebMobileAssignment.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastFailedLogin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LockoutEnd")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -438,10 +447,6 @@ namespace WebMobileAssignment.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("ThemePreference")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("UserType")
                         .IsRequired()
