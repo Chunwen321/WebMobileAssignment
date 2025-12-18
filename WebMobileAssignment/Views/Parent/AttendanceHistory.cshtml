@@ -49,28 +49,28 @@
    }
             
    <div class="@(allStudents.Count > 1 ? "col-md-3" : "col-md-4")">
-   <label class="form-label">Class</label>
+   <label class="form-label" style="color: var(--text-primary);">Class</label>
  <select name="classId" class="form-select">
-            <option value="">All Classes</option>
+      <option value="">All Classes</option>
       @foreach (var classItem in classes)
    {
       <option value="@classItem.ClassId" selected="@(classItem.ClassId == selectedClassId)">
-   @classItem.ClassName (@(classItem.Subject?.SubjectName ?? "N/A"))
+@classItem.ClassName (@(classItem.Subject?.SubjectName ?? "N/A"))
        </option>
-        }
+    }
      </select>
        </div>
   <div class="@(allStudents.Count > 1 ? "col-md-3" : "col-md-4")">
-       <label class="form-label">Month</label>
+       <label class="form-label" style="color: var(--text-primary);">Month</label>
  <input type="month" name="month" class="form-control" value="@(selectedMonth ?? DateTime.Now.ToString("yyyy-MM"))">
        </div>
        <div class="@(allStudents.Count > 1 ? "col-md-2" : "col-md-3")">
-<label class="form-label">Status</label>
+<label class="form-label" style="color: var(--text-primary);">Status</label>
    <select name="status" class="form-select">
 <option value="">All Status</option>
            <option value="Present" selected="@(selectedStatus == "Present")">Present</option>
      <option value="Absent" selected="@(selectedStatus == "Absent")">Absent</option>
-      <option value="Late" selected="@(selectedStatus == "Late")">Late</option>
+      <option value="Late" selected="@(selectedStatus == "Late")">Leave</option>
        </select>
     </div>
          <div class="@(allStudents.Count > 1 ? "col-md-1" : "col-md-1")">
@@ -100,9 +100,9 @@
         </div>
     <div class="col-md-3">
             <div class="p-3 text-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
-       <i class="bi bi-clock-fill" style="font-size: 2rem; color: #ffc107;"></i>
+       <i class="bi bi-calendar-x" style="font-size: 2rem; color: #ffc107;"></i>
        <h4 class="mt-2 mb-0" style="color: #ffc107;">@totalLate</h4>
-         <small class="text-muted">Total Late</small>
+         <small class="text-muted">Total Leave</small>
      </div>
         </div>
         <div class="col-md-3">

@@ -10,7 +10,7 @@
  --sidebar-bg-end: #34495e;
     
   /* Accent Color (Yellow - from login page parent icon) */
-    --parent-accent: #ffc107;
+ --parent-accent: #ffc107;
 --parent-accent-hover: rgba(255, 193, 7, 0.1);
     --parent-accent-active: rgba(255, 193, 7, 0.15);
     
@@ -28,6 +28,42 @@
     --text-primary: #2c3e50;
     --text-secondary: #6c757d;
     --text-muted: #6c757d;
+    
+    /* Border Colors */
+    --border-color: #dee2e6;
+    --border-light: #e9ecef;
+}
+
+/* ==================== DARK MODE VARIABLES ==================== */
+[data-theme="dark"] {
+    /* Sidebar - Darker in dark mode */
+    --sidebar-bg-start: #1a1a1a;
+    --sidebar-bg-end: #252525;
+    
+    /* Backgrounds */
+    --page-bg: #1a1a1a;
+    --card-bg: #2d2d2d;
+    
+    /* Text Colors */
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-muted: #888888;
+ 
+    /* Border Colors */
+    --border-color: #404040;
+    --border-light: #353535;
+}
+
+/* ==================== DARK MODE TRANSITIONS ==================== */
+body,
+.dashboard-card,
+.stat-card,
+.notification-item,
+.sidebar,
+.topbar,
+.sidebar-item,
+.sidebar-subitem {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 /* ==================== PARENT CLASSES STYLES ==================== */
@@ -105,6 +141,15 @@
     color: #333;
 }
 
+/* Enrolled Class Box Styling */
+.enrolled-class-box {
+    background: #f8f9fa;
+}
+
+[data-theme="dark"] .enrolled-class-box {
+    background: #353535;
+}
+
 /* 
  * ICON COLOR REFERENCE (from login page)
  */
@@ -152,8 +197,8 @@
 .parent-layout {
     margin: 0;
     padding: 0;
-  background: #f5f7fa;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--page-bg);
+ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .parent-layout main {
@@ -169,13 +214,13 @@
     top: 0;
     height: 100vh;
     width: 280px;
-    background: #1c1a1a;
+    background: var(--sidebar-bg-start);
     color: white;
     display: flex;
     flex-direction: column;
     z-index: 1000;
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
 .sidebar-header {
@@ -433,7 +478,7 @@ display: flex;
 
 /* Top Bar */
 .topbar {
-    background: white;
+    background: var(--card-bg);
     padding: 1rem 1.5rem;
     display: flex;
     align-items: center;
@@ -442,6 +487,11 @@ display: flex;
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] .topbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-toggle {
@@ -451,14 +501,23 @@ display: flex;
     border-radius: 8px;
     background: #f8f9fa;
     border: none;
- color: #2c3e50;
+ color: var(--text-primary);
     font-size: 1.25rem;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
+[data-theme="dark"] .sidebar-toggle {
+    background: #3d3d3d;
+    color: var(--text-primary);
+}
+
 .sidebar-toggle:hover {
     background: #e9ecef;
+}
+
+[data-theme="dark"] .sidebar-toggle:hover {
+    background: #4d4d4d;
 }
 
 .topbar-title {
@@ -468,7 +527,7 @@ display: flex;
 .topbar-title h1 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--text-primary);
     margin: 0;
 }
 
@@ -486,14 +545,24 @@ display: flex;
     background: #f8f9fa;
     border: none;
     color: #6c757d;
-    font-size: 1.125rem;
+  font-size: 1.125rem;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .topbar-btn {
+    background: #3d3d3d;
+    color: #b0b0b0;
 }
 
 .topbar-btn:hover {
   background: #ffc107;
     color: white;
+}
+
+[data-theme="dark"] .topbar-btn:hover {
+    background: #ffc107;
+    color: #2c3e50;
 }
 
 .topbar-btn .badge {
@@ -515,7 +584,7 @@ display: flex;
 
 /* Cards */
 .dashboard-card {
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -523,9 +592,17 @@ display: flex;
     height: 100%;
 }
 
+[data-theme="dark"] .dashboard-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
 .dashboard-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     transform: translateY(-2px);
+}
+
+[data-theme="dark"] .dashboard-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .card-header-custom {
@@ -534,7 +611,7 @@ display: flex;
     justify-content: space-between;
     margin-bottom: 1.25rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid #f8f9fa;
+    border-bottom: 2px solid var(--border-light);
     min-height: 56px;
     height: 56px;
 }
@@ -542,8 +619,8 @@ display: flex;
 .card-title {
     font-size: 1.125rem;
     font-weight: 700;
-    color: #2c3e50;
-    margin: 0;
+    color: var(--text-primary);
+margin: 0;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -588,24 +665,29 @@ background: rgba(220, 53, 69, 0.1);
 
 /* Stats Cards */
 .stat-card {
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
     padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border-left: 4px solid #ffc107;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .stat-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .stat-label {
     font-size: 0.875rem;
-    color: #6c757d;
-    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+  margin-bottom: 0.5rem;
     font-weight: 500;
 }
 
 .stat-value {
     font-size: 2rem;
     font-weight: 700;
-  color: #2c3e50;
+  color: var(--text-primary);
     margin-bottom: 0.25rem;
 }
 
@@ -614,6 +696,7 @@ background: rgba(220, 53, 69, 0.1);
   display: flex;
     align-items: center;
     gap: 0.25rem;
+    color: var(--text-secondary);
 }
 
 .stat-change.positive {
@@ -638,10 +721,14 @@ background: rgba(220, 53, 69, 0.1);
 
 .password-icon {
     position: absolute;
-    left: 1rem;
+  left: 1rem;
     color: #6c757d;
     font-size: 1.125rem;
     z-index: 10;
+}
+
+[data-theme="dark"] .password-icon {
+    color: #b0b0b0;
 }
 
 .password-input {
@@ -652,11 +739,32 @@ background: rgba(220, 53, 69, 0.1);
     transition: all 0.3s ease;
 }
 
+[data-theme="dark"] .password-input {
+    background-color: #3d3d3d;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .password-input::placeholder {
+    color: #999999;
+    opacity: 1;
+}
+
 .password-input:focus {
     border-color: #ffc107;
   box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
   padding-left: 3rem !important;
     padding-right: 3rem !important;
+}
+
+[data-theme="dark"] .password-input:focus {
+    background-color: #3d3d3d;
+    border-color: #ffc107;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .password-input:focus::placeholder {
+    color: #aaaaaa;
 }
 
 .password-toggle-btn {
@@ -682,25 +790,12 @@ background: rgba(220, 53, 69, 0.1);
     font-size: 1.125rem;
 }
 
-.btn-update-password {
-    background: #ffc107;
-    border: none;
-    color: #2c3e50;
-    padding: 0.75rem 2rem;
-    font-weight: 600;
-    border-radius: 8px;
- transition: all 0.3s ease;
+[data-theme="dark"] .password-toggle-btn {
+    color: #b0b0b0;
 }
 
-.btn-update-password:hover {
-    background: #ffb300;
-    color: #2c3e50;
-    transform: translateY(-2px);
- box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-}
-
-.btn-update-password:active {
-    transform: translateY(0);
+[data-theme="dark"] .password-toggle-btn:hover {
+    color: #ffc107;
 }
 
 /* ==================== SETTINGS PAGE CUSTOM STYLES ==================== */
@@ -1034,4 +1129,289 @@ color: #2c3e50;
     justify-content: space-between;
     font-size: 0.9rem;
     padding: 5px 0;
+}
+
+/* ==================== STUDENT PROFILE PAGE HEIGHT ALIGNMENT ==================== */
+/* Ensure equal heights for profile card and enrolled classes/attendance cards */
+.row.g-3 > .col-lg-4.d-flex,
+.row.g-3 > .col-lg-8.d-flex {
+    display: flex !important;
+}
+
+.row.g-3 > .col-lg-4.d-flex .dashboard-card,
+.row.g-3 > .col-lg-8.d-flex .dashboard-card {
+    min-height: 600px;
+}
+
+/* Ensure the right column wrapper takes full height */
+.col-lg-8.d-flex .d-flex.flex-column.h-100 {
+ min-height: 600px;
+}
+
+/* Equal distribution of space for both cards in right column */
+.col-lg-8 .flex-fill {
+    flex: 1 1 0;
+    min-height: 290px;
+}
+
+/* Profile card specific styling */
+.col-lg-4 .dashboard-card.d-flex.flex-column {
+    justify-content: space-between;
+}
+
+.col-lg-4 .list-group.flex-grow-1 {
+    flex-grow: 1 !important;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 991.98px) {
+ .row.g-3 > .col-lg-4.d-flex .dashboard-card,
+    .row.g-3 > .col-lg-8.d-flex .dashboard-card,
+    .col-lg-8.d-flex .d-flex.flex-column.h-100,
+    .col-lg-8 .flex-fill {
+        min-height: auto !important;
+    }
+}
+
+/* ==================== DARK MODE SPECIFIC STYLES ==================== */
+
+/* Notification Items Dark Mode */
+[data-theme="dark"] .notification-item {
+    background: var(--card-bg);
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .notification-item.unread {
+    background: #353535;
+}
+
+[data-theme="dark"] .notification-item.read {
+    opacity: 0.7;
+}
+
+[data-theme="dark"] .notification-body p {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .notification-footer {
+    border-top-color: var(--border-color);
+}
+
+/* Form Inputs Dark Mode */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #3d3d3d;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: #888888;
+    opacity: 1;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #3d3d3d;
+    border-color: #ffc107;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control:focus::placeholder {
+    color: #999999;
+}
+
+/* Form Labels Dark Mode */
+[data-theme="dark"] .form-label,
+[data-theme="dark"] label {
+    color: var(--text-primary);
+}
+
+/* Table Dark Mode */
+[data-theme="dark"] .table {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .table-hover > tbody > tr:hover > * {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .table-light {
+    background-color: #353535;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .table thead th {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+/* List Group Dark Mode */
+[data-theme="dark"] .list-group-item {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .list-group-item strong {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .list-group-item .text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Badge Dark Mode */
+[data-theme="dark"] .badge.bg-secondary {
+    background-color: #4d4d4d !important;
+}
+
+/* Buttons Dark Mode */
+[data-theme="dark"] .btn-outline-primary {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+[data-theme="dark"] .btn-outline-primary:hover {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #2c3e50;
+}
+
+[data-theme="dark"] .btn-outline-secondary {
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .btn-outline-secondary:hover {
+    background-color: #4d4d4d;
+    border-color: #4d4d4d;
+    color: var(--text-primary);
+}
+
+/* Material Item Dark Mode */
+[data-theme="dark"] .material-item {
+    background: #353535;
+}
+
+/* Enrolled Class Box Styling */
+.enrolled-class-box {
+    background: #f8f9fa;
+}
+
+[data-theme="dark"] .enrolled-class-box {
+    background: #353535;
+}
+
+/* Child Selector Card Dark Mode */
+[data-theme="dark"] .child-selector-card {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.08));
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+/* Child Navigation Card Dark Mode */
+[data-theme="dark"] .child-navigation-card {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.08));
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+/* Small Text & Muted Text Dark Mode */
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] small.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Display Value Dark Mode */
+[data-theme="dark"] .display-value {
+    color: var(--text-primary);
+    border-bottom-color: var(--border-color);
+}
+
+/* Alert Dark Mode */
+[data-theme="dark"] .alert {
+    background-color: #2d2d2d;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .alert-success {
+    background-color: rgba(25, 135, 84, 0.2);
+    border-color: rgba(25, 135, 84, 0.4);
+    color: #198754;
+}
+
+[data-theme="dark"] .alert-danger {
+    background-color: rgba(220, 53, 69, 0.2);
+    border-color: rgba(220, 53, 69, 0.4);
+    color: #dc3545;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: rgba(13, 110, 253, 0.2);
+    border-color: rgba(13, 110, 253, 0.4);
+    color: #0d6efd;
+}
+
+/* Empty State Icons Dark Mode */
+[data-theme="dark"] .bi-bell-slash,
+[data-theme="dark"] .text-center i {
+  color: #555 !important;
+}
+
+/* Chart Container Dark Mode */
+[data-theme="dark"] .col-lg-7 > div,
+[data-theme="dark"] .col-lg-8 canvas {
+    background: #353535 !important;
+}
+
+/* Dashboard h5 headings Dark Mode */
+[data-theme="dark"] h5,
+[data-theme="dark"] h4,
+[data-theme="dark"] h3,
+[data-theme="dark"] h2,
+[data-theme="dark"] h1 {
+    color: var(--text-primary);
+}
+
+/* Strong tags Dark Mode */
+[data-theme="dark"] strong {
+    color: var(--text-primary);
+}
+
+/* ==================== UPDATE PASSWORD BUTTON STYLES ==================== */
+
+.btn-update-password {
+    background: #ffc107;
+    border: none;
+    color: #2c3e50;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-update-password:hover {
+    background: #ffb300;
+    color: #2c3e50;
+    transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.btn-update-password:active {
+    transform: translateY(0);
+}
+
+[data-theme="dark"] .btn-update-password {
+    background: #ffc107;
+    border: none;
+    color: #2c3e50;
+}
+
+[data-theme="dark"] .btn-update-password:hover {
+    background: #ffb300;
+    color: #2c3e50;
 }

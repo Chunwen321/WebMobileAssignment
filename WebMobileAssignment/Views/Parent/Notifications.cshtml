@@ -43,7 +43,7 @@
     <div class="stat-value">@warningCount</div>
             <div class="stat-change">
  <i class="bi bi-exclamation-triangle-fill"></i>
-       <span>Late/Absent alerts</span>
+       <span>Leave/Absent alerts</span>
             </div>
         </div>
     </div>
@@ -83,7 +83,7 @@
   @foreach (var notification in notifications)
      {
      var isUnread = notification.Status == "unread";
-      var isWarning = notification.Description.ToLower().Contains("late") || 
+      var isWarning = notification.Description.ToLower().Contains("leave") || 
             notification.Description.ToLower().Contains("absent") || 
    notification.Description.ToLower().Contains("warning");
        var isAnnouncement = notification.Description.ToLower().Contains("announcement") || 
@@ -167,8 +167,8 @@ else
         // Extract a title from the description or use a generic one
   if (description.ToLower().Contains("absent"))
     return "Absence Alert";
-      if (description.ToLower().Contains("late"))
-return "Late Alert";
+      if (description.ToLower().Contains("leave"))
+return "Leave Alert";
         if (description.ToLower().Contains("holiday") || description.ToLower().Contains("announcement"))
             return "Announcement";
         if (description.ToLower().Contains("attendance"))
@@ -186,20 +186,20 @@ return "Schedule Update";
 <script>
     function markAsRead(notificationId) {
         $.ajax({
-    url: '@Url.Action("MarkAsRead", "Parent")',
+  url: '@Url.Action("MarkAsRead", "Parent")',
         type: 'POST',
          data: {
-    notificationId: notificationId,
-                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+  notificationId: notificationId,
+     __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
  },
-        success: function(response) {
+ success: function(response) {
   if (response.success) {
           location.reload();
      } else {
 alert('Error: ' + response.message);
        }
 },
-      error: function() {
+    error: function() {
     alert('An error occurred while marking notification as read.');
   }
         });
@@ -208,31 +208,31 @@ alert('Error: ' + response.message);
     function markAllAsRead() {
         if (confirm('Mark all notifications as read?')) {
         $.ajax({
-        url: '@Url.Action("MarkAllAsRead", "Parent")',
+    url: '@Url.Action("MarkAllAsRead", "Parent")',
   type: 'POST',
-         data: {
+   data: {
        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
      },
            success: function(response) {
       if (response.success) {
-         location.reload();
+  location.reload();
  } else {
-         alert('Error: ' + response.message);
+    alert('Error: ' + response.message);
        }
-           },
+         },
         error: function() {
      alert('An error occurred while marking all notifications as read.');
-                }
-            });
-        }
+ }
+   });
+}
     }
 </script>
 
 <style>
-    .notification-item {
-        padding: 1.25rem;
+  .notification-item {
+    padding: 1.25rem;
         border-radius: 8px;
-     background: white;
+     background: var(--card-bg);
       margin-bottom: 1rem;
         transition: all 0.3s ease;
     }
@@ -241,30 +241,38 @@ alert('Error: ' + response.message);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
+    [data-theme="dark"] .notification-item:hover {
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
     .notification-item.unread {
     background: #f8f9fa;
     }
 
-    .notification-item.read {
+    [data-theme="dark"] .notification-item.unread {
+        background: #353535;
+    }
+
+  .notification-item.read {
    opacity: 0.8;
     }
 
     .notification-header {
-        margin-bottom: 0.75rem;
+   margin-bottom: 0.75rem;
     }
 
     .notification-icon {
         width: 40px;
         height: 40px;
         border-radius: 8px;
-        display: flex;
-        align-items: center;
+    display: flex;
+    align-items: center;
     justify-content: center;
   font-size: 1.25rem;
     }
 
     .notification-icon.danger {
-        background: rgba(220, 53, 69, 0.1);
+    background: rgba(220, 53, 69, 0.1);
         color: #dc3545;
     }
 
@@ -278,8 +286,8 @@ alert('Error: ' + response.message);
  color: #0d6efd;
     }
 
-    .notification-icon.success {
-     background: rgba(25, 135, 84, 0.1);
+ .notification-icon.success {
+  background: rgba(25, 135, 84, 0.1);
     color: #198754;
     }
 
@@ -290,12 +298,17 @@ background: rgba(13, 202, 240, 0.1);
 
     .notification-body {
         padding: 0.75rem 0;
-     line-height: 1.6;
+  line-height: 1.6;
+        color: var(--text-primary);
+    }
+
+    .notification-body p {
+      color: var(--text-secondary);
     }
 
     .notification-footer {
         padding-top: 0.75rem;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--border-light);
         display: flex;
         gap: 0.5rem;
     }

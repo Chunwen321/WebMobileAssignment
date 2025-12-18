@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebMobileAssignment.Models;
 using Microsoft.AspNetCore.Authorization;
+using WebMobileAssignment.Services;
 
 namespace WebMobileAssignment.Controllers
 {
@@ -10,11 +11,13 @@ namespace WebMobileAssignment.Controllers
     {
         private readonly DB _context;
         private readonly Helper _helper;
+        private readonly S3Service _s3Service;
 
-        public ParentController(DB context, Helper helper)
-        {
-            _context = context;
-            _helper = helper;
+        public ParentController(DB context, Helper helper, S3Service s3Service)
+      {
+         _context = context;
+       _helper = helper;
+      _s3Service = s3Service;
         }
 
         // Helper method to get current parent and set ViewBag data
@@ -240,15 +243,15 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
    ViewBag.ActiveMenu = "Attendance";
         ViewBag.ActiveSubmenu = "History";
    
-        var parent = await GetCurrentParentAsync();
-      
+ var parent = await GetCurrentParentAsync();
+   
    if (parent == null)
-      {
+    {
         return RedirectToAction("Login", "Account");
  }
     
  // Get all students for this parent
-       var students = await _context.Students
+    var students = await _context.Students
      .Include(s => s.User)
   .Include(s => s.Enrollments)
     .ThenInclude(e => e.Class)
@@ -259,11 +262,11 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
    if (!students.Any())
   {
        ViewBag.Students = new List<Student>();
-        ViewBag.Attendances = new List<Attendance>();
+     ViewBag.Attendances = new List<Attendance>();
   ViewBag.Classes = new List<Class>();
-       ViewBag.TotalPresent = 0;
+  ViewBag.TotalPresent = 0;
      ViewBag.TotalAbsent = 0;
-         ViewBag.TotalLate = 0;
+       ViewBag.TotalLate = 0; // Note: Database still stores as "Late" but displayed as "Leave"
    ViewBag.AttendanceRate = 0;
            return View();
  }
@@ -278,20 +281,20 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
      filteredStudents = students.Where(s => s.StudentId == studentId).ToList();
       ViewBag.SelectedStudentId = studentId;
 }
-            else
+        else
     {
         filteredStudents = students;
             }
     
     // Get all enrolled classes for filter dropdown (from filtered students)
  var enrolledClasses = filteredStudents
-    .SelectMany(s => s.Enrollments.Select(e => e.Class))
-       .Distinct()
+  .SelectMany(s => s.Enrollments.Select(e => e.Class))
+   .Distinct()
   .ToList();
     
-         // Get student IDs from filtered list
+    // Get student IDs from filtered list
    var studentIds = filteredStudents.Select(s => s.StudentId).ToList();
-            
+  
         // Build attendance query
      var query = _context.Attendances
      .Include(a => a.Student)
@@ -300,7 +303,7 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
      .ThenInclude(c => c.Subject)
   .Include(a => a.MarkedByTeacher)
    .ThenInclude(t => t.User)
-        .Where(a => studentIds.Contains(a.StudentId));
+      .Where(a => studentIds.Contains(a.StudentId));
             
   // Apply filters
   if (!string.IsNullOrEmpty(classId))
@@ -313,37 +316,37 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
   {
     if (DateTime.TryParse(month + "-01", out DateTime monthDate))
    {
-         var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
+ var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
  var endDate = startDate.AddMonths(1).AddDays(-1);
    query = query.Where(a => a.Date >= startDate && a.Date <= endDate);
-      ViewBag.SelectedMonth = month;
+    ViewBag.SelectedMonth = month;
     }
       }
       
      if (!string.IsNullOrEmpty(status))
-            {
+       {
      query = query.Where(a => a.Status == status);
     ViewBag.SelectedStatus = status;
        }
      
-            // Get filtered attendances
+  // Get filtered attendances
  var attendances = await query
        .OrderByDescending(a => a.Date)
         .Take(50)
      .ToListAsync();
         
-       // Calculate statistics
-            var totalPresent = attendances.Count(a => a.Status == "Present");
-  var totalAbsent = attendances.Count(a => a.Status == "Absent");
- var totalLate = attendances.Count(a => a.Status == "Late");
+     // Calculate statistics (Note: "Late" in database represents "Leave")
+          var totalPresent = attendances.Count(a => a.Status == "Present");
+var totalAbsent = attendances.Count(a => a.Status == "Absent");
+ var totalLate = attendances.Count(a => a.Status == "Late"); // Displayed as "Leave" in views
             var totalCount = attendances.Count;
     var attendanceRate = totalCount > 0 ? Math.Round((decimal)totalPresent / totalCount * 100, 1) : 0;
      
          ViewBag.Students = filteredStudents;
     ViewBag.Attendances = attendances;
-            ViewBag.Classes = enrolledClasses;
-     ViewBag.TotalPresent = totalPresent;
-          ViewBag.TotalAbsent = totalAbsent;
+       ViewBag.Classes = enrolledClasses;
+   ViewBag.TotalPresent = totalPresent;
+  ViewBag.TotalAbsent = totalAbsent;
     ViewBag.TotalLate = totalLate;
     ViewBag.AttendanceRate = attendanceRate;
  
@@ -352,26 +355,26 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
 
         // Attendance - Monthly Summary
         public async Task<IActionResult> MonthlySummary(string? studentId, int? year, int? month)
-    {
+ {
      ViewBag.ActiveMenu = "Attendance";
-            ViewBag.ActiveSubmenu = "MonthlySummary";
+      ViewBag.ActiveSubmenu = "MonthlySummary";
        
             var parent = await GetCurrentParentAsync();
-            
+        
    if (parent == null)
          {
      return RedirectToAction("Login", "Account");
     }
   
    // Default to current month if not specified
-        var selectedYear = year ?? DateTime.Now.Year;
+  var selectedYear = year ?? DateTime.Now.Year;
             var selectedMonth = month ?? DateTime.Now.Month;
-   var startDate = new DateTime(selectedYear, selectedMonth, 1);
+ var startDate = new DateTime(selectedYear, selectedMonth, 1);
   var endDate = startDate.AddMonths(1).AddDays(-1);
        
    ViewBag.SelectedYear = selectedYear;
        ViewBag.SelectedMonth = selectedMonth;
-     ViewBag.MonthName = startDate.ToString("MMMM yyyy");
+   ViewBag.MonthName = startDate.ToString("MMMM yyyy");
      
  // Get all students for this parent
    var students = await _context.Students
@@ -385,29 +388,29 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
  
     if (!students.Any())
        {
-       ViewBag.TotalClasses = 0;
-   ViewBag.TotalPresent = 0;
-                ViewBag.TotalAbsent = 0;
+ViewBag.TotalClasses = 0;
+ViewBag.TotalPresent = 0;
+    ViewBag.TotalAbsent = 0;
       ViewBag.TotalLate = 0;
    ViewBag.AttendanceRate = 0;
  ViewBag.SubjectSummary = new List<object>();
-            ViewBag.AllStudents = new List<Student>();
+ ViewBag.AllStudents = new List<Student>();
    return View();
 }
 
-            // Store all students for dropdown
-            ViewBag.AllStudents = students;
+     // Store all students for dropdown
+     ViewBag.AllStudents = students;
 
-            // If studentId specified, filter to that student, otherwise show all
+       // If studentId specified, filter to that student, otherwise show all
     List<Student> filteredStudents;
     if (!string.IsNullOrEmpty(studentId))
  {
-                filteredStudents = students.Where(s => s.StudentId == studentId).ToList();
+       filteredStudents = students.Where(s => s.StudentId == studentId).ToList();
       ViewBag.SelectedStudentId = studentId;
-            }
-            else
+       }
+else
 {
-                filteredStudents = students;
+       filteredStudents = students;
        }
      
         // Get student IDs from filtered list
@@ -422,17 +425,17 @@ a.Date >= startDate &&
        a.Date <= endDate)
     .ToListAsync();
   
-// Calculate overall statistics
+// Calculate overall statistics (Note: "Late" in database represents "Leave")
             var totalClasses = monthlyAttendances.Count;
        var totalPresent = monthlyAttendances.Count(a => a.Status == "Present");
   var totalAbsent = monthlyAttendances.Count(a => a.Status == "Absent");
-  var totalLate = monthlyAttendances.Count(a => a.Status == "Late");
+  var totalLate = monthlyAttendances.Count(a => a.Status == "Late"); // Displayed as "Leave" in views
          var attendanceRate = totalClasses > 0 ? Math.Round((decimal)totalPresent / totalClasses * 100, 1) : 0;
             
 // Calculate subject-wise summary
         var subjectSummary = monthlyAttendances
     .GroupBy(a => new { 
-            SubjectId = a.Class.SubjectId, 
+     SubjectId = a.Class.SubjectId, 
      SubjectName = a.Class.Subject?.SubjectName ?? "N/A" 
     })
   .Select(g => new
@@ -441,20 +444,20 @@ a.Date >= startDate &&
      TotalClasses = g.Count(),
    Present = g.Count(a => a.Status == "Present"),
       Absent = g.Count(a => a.Status == "Absent"),
-    Late = g.Count(a => a.Status == "Late"),
+    Late = g.Count(a => a.Status == "Late"), // Displayed as "Leave" in views
  AttendanceRate = g.Count() > 0 ? Math.Round((decimal)g.Count(a => a.Status == "Present") / g.Count() * 100, 1) : 0
      })
      .OrderBy(s => s.Subject)
      .ToList();
             
-            ViewBag.TotalClasses = totalClasses;
-            ViewBag.TotalPresent = totalPresent;
+    ViewBag.TotalClasses = totalClasses;
+        ViewBag.TotalPresent = totalPresent;
             ViewBag.TotalAbsent = totalAbsent;
        ViewBag.TotalLate = totalLate;
-            ViewBag.AttendanceRate = attendanceRate;
-        ViewBag.SubjectSummary = subjectSummary;
+    ViewBag.AttendanceRate = attendanceRate;
+   ViewBag.SubjectSummary = subjectSummary;
    
-            return View();
+return View();
         }
 
         // Student Profile
@@ -839,10 +842,22 @@ n.Description.ToLower().Contains("absent") ||
         public async Task<IActionResult> Settings()
         {
             ViewBag.ActiveMenu = "Settings";
+            ViewBag.ActiveSubmenu = "AccountSettings";
         
             var parent = await GetCurrentParentAsync();
             ViewBag.Parent = parent;
             return View();
+        }
+
+        // Change Password Page
+        public async Task<IActionResult> ChangePassword()
+        {
+ ViewBag.ActiveMenu = "Settings";
+            ViewBag.ActiveSubmenu = "ChangePassword";
+        
+            var parent = await GetCurrentParentAsync();
+            ViewBag.Parent = parent;
+     return View();
         }
 
         // Update Profile
@@ -850,18 +865,18 @@ n.Description.ToLower().Contains("absent") ||
         [ValidateAntiForgeryToken]
       public async Task<IActionResult> UpdateProfile(string fullName, string email, string? phoneNumber, 
             DateTime? dateOfBirth, string? gender, string? address)
-        {
+ {
      try
      {
      var parent = await GetCurrentParentAsync();
-         
+    
       if (parent == null)
       {
   TempData["Error"] = "Parent profile not found.";
          return RedirectToAction("Settings");
-         }
+ }
 
-                // Update User table fields
+            // Update User table fields
          parent.User.FullName = fullName;
        // Email is readonly, so we don't update it
     parent.User.PhoneNumber = phoneNumber;
@@ -871,83 +886,83 @@ n.Description.ToLower().Contains("absent") ||
       // Update Parent table fields
      parent.Address = address;
      
-          // Save changes to database
+  // Save changes to database
  await _context.SaveChangesAsync();
    
-             TempData["Success"] = "Profile updated successfully!";
+           TempData["Success"] = "Profile updated successfully!";
     }
-            catch (Exception ex)
+   catch (Exception ex)
     {
-           TempData["Error"] = $"Error updating profile: {ex.Message}";
-      }
+    TempData["Error"] = $"Error updating profile: {ex.Message}";
+    }
             
   return RedirectToAction("Settings");
         }
 
-        // Change Password
+        // Change Password POST
         [HttpPost]
         [ValidateAntiForgeryToken]
- public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+ public async Task<IActionResult> ChangePasswordPost(string currentPassword, string newPassword, string confirmPassword)
         {
   try
-     {
-       var parent = await GetCurrentParentAsync();
+ {
+var parent = await GetCurrentParentAsync();
 
     if (parent == null)
-       {
+   {
    TempData["Error"] = "Parent profile not found.";
-        return RedirectToAction("Settings");
-      }
-
-      // Verify new password and confirm password match
-      if (newPassword != confirmPassword)
-    {
-                TempData["Error"] = "New password and confirm password do not match.";
-  return RedirectToAction("Settings");
+        return RedirectToAction("ChangePassword");
     }
 
-        // Verify password length
+   // Verify new password and confirm password match
+      if (newPassword != confirmPassword)
+    {
+          TempData["Error"] = "New password and confirm password do not match.";
+  return RedirectToAction("ChangePassword");
+    }
+
+   // Verify password length
     if (newPassword.Length < 8)
-           {
+        {
          TempData["Error"] = "Password must be at least 8 characters long.";
-          return RedirectToAction("Settings");
+     return RedirectToAction("ChangePassword");
   }
 
       // Verify current password using Helper (handles both plain text and hashed passwords)
-            bool isPasswordCorrect = false;
+    bool isPasswordCorrect = false;
    
-        // Check if password is hashed (ASP.NET Identity hashes start with "AQA" or are longer than 50 chars)
+   // Check if password is hashed (ASP.NET Identity hashes start with "AQA" or are longer than 50 chars)
      if (parent.User.PasswordHash.StartsWith("AQA") || parent.User.PasswordHash.Length > 50)
       {
       // Password is hashed - use Helper.VerifyPassword
       isPasswordCorrect = _helper.VerifyPassword(parent.User.PasswordHash, currentPassword);
 }
-                else
+          else
       {
         // Password is plain text - compare directly (for backward compatibility)
         isPasswordCorrect = parent.User.PasswordHash == currentPassword;
          }
 
-                if (!isPasswordCorrect)
+      if (!isPasswordCorrect)
     {
         TempData["Error"] = "Current password is incorrect.";
-       return RedirectToAction("Settings");
+       return RedirectToAction("ChangePassword");
         }
 
       // Hash and update new password using Helper
       parent.User.PasswordHash = _helper.HashPassword(newPassword);
     
      // Save changes to database
-                await _context.SaveChangesAsync();
+   await _context.SaveChangesAsync();
      
-          TempData["Success"] = "Password changed successfully!";
+        TempData["Success"] = "Password changed successfully!";
      }
-            catch (Exception ex)
+         catch (Exception ex)
   {
           TempData["Error"] = $"Error changing password: {ex.Message}";
-            }
-            
-     return RedirectToAction("Settings");
+    }
+        
+     return RedirectToAction("ChangePassword");
         }
 
         // Download Report - Optional PDF generation functionality
@@ -955,8 +970,176 @@ n.Description.ToLower().Contains("absent") ||
   {
             // TODO: Implement PDF generation logic in the future if needed
    // For now, redirect back to Monthly Summary
-        TempData["Info"] = "PDF download feature will be available soon.";
+   TempData["Info"] = "PDF download feature will be available soon.";
  return RedirectToAction("MonthlySummary");
+        }
+
+        // ==================== PROFILE PICTURE UPLOAD ENDPOINTS ====================
+
+        [HttpPost]
+      public async Task<IActionResult> UploadProfilePicture(IFormFile file, string userId)
+      {
+            try
+            {
+    Console.WriteLine($"[UploadProfilePicture] Starting upload for userId: {userId}");
+  
+          if (file == null || file.Length == 0)
+              {
+   Console.WriteLine("[UploadProfilePicture] ERROR: No file uploaded");
+            return Json(new { success = false, message = "No file uploaded" });
+            }
+
+          // Validate file type
+          var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+     var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+    if (!allowedExtensions.Contains(extension))
+         {
+       Console.WriteLine($"[UploadProfilePicture] ERROR: Invalid file type: {extension}");
+           return Json(new { success = false, message = "Invalid file type. Only JPG, PNG, GIF, and WEBP are allowed." });
+      }
+
+          // Validate file size (5 MB)
+      if (file.Length > 5 * 1024 * 1024)
+       {
+    Console.WriteLine($"[UploadProfilePicture] ERROR: File too large: {file.Length} bytes");
+        return Json(new { success = false, message = "File size must not exceed 5 MB" });
+        }
+
+            // Get current parent
+              Console.WriteLine("[UploadProfilePicture] Getting current parent...");
+      var parent = await GetCurrentParentAsync();
+     
+      if (parent == null)
+     {
+        Console.WriteLine("[UploadProfilePicture] ERROR: Parent not found");
+          return Json(new { success = false, message = "Parent profile not found. Please log in again." });
+    }
+            
+     if (parent.User == null)
+    {
+        Console.WriteLine("[UploadProfilePicture] ERROR: Parent.User is null");
+        return Json(new { success = false, message = "User information not found. Please log in again." });
+}
+                
+      Console.WriteLine($"[UploadProfilePicture] Parent found: {parent.ParentId}, User: {parent.User.UserId}");
+       
+          if (parent.User.UserId != userId)
+          {
+           Console.WriteLine($"[UploadProfilePicture] ERROR: Unauthorized - Expected: {userId}, Got: {parent.User.UserId}");
+        return Json(new { success = false, message = "Unauthorized access" });
+          }
+
+            // Delete old profile picture if exists
+              if (!string.IsNullOrEmpty(parent.User.ProfilePicture) && 
+    !parent.User.ProfilePicture.StartsWith("/images/"))
+          {
+     Console.WriteLine($"[UploadProfilePicture] Deleting old profile picture: {parent.User.ProfilePicture}");
+     try
+       {
+         await _s3Service.DeleteFileAsync(parent.User.ProfilePicture);
+            Console.WriteLine("[UploadProfilePicture] Old picture deleted successfully");
+        }
+           catch (Exception ex)
+   {
+          Console.WriteLine($"[UploadProfilePicture] Warning: Failed to delete old profile picture: {ex.Message}");
+              }
+    }
+
+  // Upload to S3
+  Console.WriteLine("[UploadProfilePicture] Uploading to S3...");
+  var s3Url = await _s3Service.UploadFileAsync(file, userId);
+   Console.WriteLine($"[UploadProfilePicture] Upload successful: {s3Url}");
+
+     // Update user profile picture
+     parent.User.ProfilePicture = s3Url;
+       _context.Update(parent.User);
+                await _context.SaveChangesAsync();
+ 
+           Console.WriteLine("[UploadProfilePicture] Database updated successfully");
+
+     return Json(new { success = true, message = "Profile picture uploaded successfully!", url = s3Url });
+  }
+ catch (Exception ex)
+     {
+                Console.WriteLine($"[UploadProfilePicture] ERROR: {ex.GetType().Name} - {ex.Message}");
+   Console.WriteLine($"[UploadProfilePicture] Stack trace: {ex.StackTrace}");
+                return Json(new { success = false, message = $"Upload failed: {ex.Message}" });
+      }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProfilePicture([FromBody] DeleteProfilePictureRequest request)
+        {
+            try
+            {
+                Console.WriteLine($"[DeleteProfilePicture] Starting delete for userId: {request?.UserId}");
+  
+            if (string.IsNullOrEmpty(request?.UserId))
+     {
+             Console.WriteLine("[DeleteProfilePicture] ERROR: UserId is required");
+   return Json(new { success = false, message = "User ID is required" });
+          }
+
+                // Get current parent
+                Console.WriteLine("[DeleteProfilePicture] Getting current parent...");
+        var parent = await GetCurrentParentAsync();
+       
+      if (parent == null)
+     {
+     Console.WriteLine("[DeleteProfilePicture] ERROR: Parent not found");
+  return Json(new { success = false, message = "Parent profile not found. Please log in again." });
+     }
+    
+     if (parent.User == null)
+    {
+     Console.WriteLine("[DeleteProfilePicture] ERROR: Parent.User is null");
+    return Json(new { success = false, message = "User information not found. Please log in again." });
+            }
+    
+      Console.WriteLine($"[DeleteProfilePicture] Parent found: {parent.ParentId}, User: {parent.User.UserId}");
+           
+        if (parent.User.UserId != request.UserId)
+ {
+           Console.WriteLine($"[DeleteProfilePicture] ERROR: Unauthorized - Expected: {request.UserId}, Got: {parent.User.UserId}");
+   return Json(new { success = false, message = "Unauthorized access" });
+  }
+
+         // Delete from S3 if exists
+       if (!string.IsNullOrEmpty(parent.User.ProfilePicture) && 
+    !parent.User.ProfilePicture.StartsWith("/images/"))
+                {
+            Console.WriteLine($"[DeleteProfilePicture] Deleting from S3: {parent.User.ProfilePicture}");
+        try
+        {
+            await _s3Service.DeleteFileAsync(parent.User.ProfilePicture);
+    Console.WriteLine("[DeleteProfilePicture] S3 deletion successful");
+   }
+         catch (Exception ex)
+        {
+               Console.WriteLine($"[DeleteProfilePicture] Warning: Failed to delete from S3: {ex.Message}");
+             }
+       }
+
+          // Update user profile picture to default
+    parent.User.ProfilePicture = "/images/default-avatar.png";
+     _context.Update(parent.User);
+                await _context.SaveChangesAsync();
+      
+         Console.WriteLine("[DeleteProfilePicture] Database updated successfully");
+
+                return Json(new { success = true, message = "Profile picture removed successfully!" });
+ }
+            catch (Exception ex)
+{
+           Console.WriteLine($"[DeleteProfilePicture] ERROR: {ex.GetType().Name} - {ex.Message}");
+      Console.WriteLine($"[DeleteProfilePicture] Stack trace: {ex.StackTrace}");
+    return Json(new { success = false, message = $"Delete failed: {ex.Message}" });
+      }
+        }
+
+        public class DeleteProfilePictureRequest
+    {
+            public string UserId { get; set; }
         }
     }
 }

@@ -25,7 +25,7 @@
   <div class="col-md-3">
     <div class="stat-card" style="border-left-color: #dc3545;">
    <div class="stat-label">Total Absent</div>
-            <div class="stat-value" id="absentCountStat">@(ViewBag.AbsentCount ?? 0)</div>
+     <div class="stat-value" id="absentCountStat">@(ViewBag.AbsentCount ?? 0)</div>
       <div class="stat-change negative">
   <i class="bi bi-x-circle"></i>
    <span>Absent days</span>
@@ -33,13 +33,13 @@
  </div>
     </div>
 
-    <div class="col-md-3">
+ <div class="col-md-3">
       <div class="stat-card" style="border-left-color: #ffc107;">
- <div class="stat-label">Total Late</div>
+ <div class="stat-label">Total Leave</div>
   <div class="stat-value" id="lateCountStat">@(ViewBag.LateCount ?? 0)</div>
-            <div class="stat-change">
- <i class="bi bi-clock"></i>
- <span>Late arrivals</span>
+     <div class="stat-change">
+ <i class="bi bi-calendar-x"></i>
+ <span>On leave</span>
  </div>
    </div>
     </div>
@@ -50,7 +50,7 @@
  <div class="stat-value" id="attendanceRateStat">@(ViewBag.AttendanceRate ?? 0)%</div>
   <div class="stat-change positive">
        <i class="bi bi-graph-up"></i>
-        <span>Overall rate</span>
+ <span>Overall rate</span>
    </div>
   </div>
     </div>
@@ -75,7 +75,7 @@
   </button>
     }
   else
-    {
+{
   <button class="btn btn-outline-secondary" disabled>
 <i class="bi bi-chevron-left"></i>
     </button>
@@ -86,7 +86,7 @@
        <button class="btn btn-outline-primary child-nav-btn" data-student-id="@ViewBag.NextStudentId" data-action="next" title="Next Child">
      <i class="bi bi-chevron-right"></i>
     </button>
-       }
+    }
      else
       {
     <button class="btn btn-outline-secondary" disabled>
@@ -98,7 +98,7 @@
      </div>
   <div class="text-center mb-3">
    @* Display actual profile picture or default avatar *@
-      @if (currentStudent != null && !string.IsNullOrEmpty(currentStudent.User?.ProfilePicture) && currentStudent.User.ProfilePicture != "/images/default-avatar.png")
+   @if (currentStudent != null && !string.IsNullOrEmpty(currentStudent.User?.ProfilePicture) && currentStudent.User.ProfilePicture != "/images/default-avatar.png")
       {
           <img id="studentAvatar" src="@currentStudent.User.ProfilePicture" 
            alt="@currentStudent.User.FullName" 
@@ -111,7 +111,7 @@ else
       <i class="bi bi-person-fill"></i>
     </div>
       }
-  <h5 class="mt-3 mb-1" id="studentName">@(ViewBag.StudentName ?? "No student found")</h5>
+  <h5 class="mt-3 mb-1" id="studentName" style="color: var(--text-primary);">@(ViewBag.StudentName ?? "No student found")</h5>
        @if (ViewBag.TotalChildren != null && ViewBag.TotalChildren > 1)
     {
     <p class="text-muted small mb-2" id="childCounter">
@@ -124,23 +124,27 @@ else
  <span class="text-muted"><i class="bi bi-book-fill me-2 text-primary"></i>Class</span>
     <strong id="className">@(ViewBag.ClassName ?? "Not enrolled")</strong>
     </div>
-        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-     <span class="text-muted"><i class="bi bi-calendar3 me-2 text-success"></i>Total Classes</span>
+     <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+  <span class="text-muted"><i class="bi bi-calendar3 me-2 text-success"></i>Total Classes</span>
 <strong id="totalClasses">@(ViewBag.TotalClasses ?? 0)</strong>
    </div>
   <div class="list-group-item d-flex justify-content-between align-items-center px-0">
    <span class="text-muted"><i class="bi bi-check-circle-fill me-2 text-success"></i>Present</span>
      <strong id="presentCount">@(ViewBag.PresentCount ?? 0)</strong>
-     </div>
-   <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+ </div>
+ <div class="list-group-item d-flex justify-content-between align-items-center px-0">
      <span class="text-muted"><i class="bi bi-x-circle-fill me-2 text-danger"></i>Absent</span>
-     <strong id="absentCount">@(ViewBag.AbsentCount ?? 0)</strong>
+   <strong id="absentCount">@(ViewBag.AbsentCount ?? 0)</strong>
+    </div>
+   <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+     <span class="text-muted"><i class="bi bi-calendar-x me-2 text-warning"></i>Leave</span>
+   <strong id="leaveCount">@(ViewBag.LateCount ?? 0)</strong>
     </div>
 </div>
-     <a id="viewProfileBtn" asp-controller="Parent" asp-action="StudentProfile" asp-route-studentId="@ViewBag.CurrentStudentId" class="btn btn-outline-primary w-100 mt-3">
+   <a id="viewProfileBtn" asp-controller="Parent" asp-action="StudentProfile" asp-route-studentId="@ViewBag.CurrentStudentId" class="btn btn-outline-primary w-100 mt-3">
  <i class="bi bi-eye-fill me-2"></i>View Full Profile
     </a>
-        </div>
+    </div>
   </div>
 
     <!-- Attendance Overview Chart -->
@@ -162,79 +166,79 @@ Attendance Overview
   <div class="row g-3 align-items-center">
          <!-- Chart Column (Left Side) -->
      <div class="col-lg-7">
-              <div style="background: #f8f9fa; border-radius: 8px; padding: 28px; position: relative;">
+          <div style="background: #f8f9fa; border-radius: 8px; padding: 28px; position: relative;">
      <canvas id="attendanceOverviewChart" 
-                  style="max-height: 300px;"
-        data-present="@(ViewBag.PresentCount ?? 0)"
+     style="max-height: 300px;"
+    data-present="@(ViewBag.PresentCount ?? 0)"
       data-absent="@(ViewBag.AbsentCount ?? 0)"
-          data-late="@(ViewBag.LateCount ?? 0)"
+ data-late="@(ViewBag.LateCount ?? 0)"
         data-total="@(ViewBag.TotalAttendance ?? 0)"></canvas>
-             <div class="text-center mt-2">
-              <small class="text-muted" id="totalAttendanceText">Based on @(ViewBag.TotalAttendance ?? 0) total records</small>
+      <div class="text-center mt-2">
+   <small class="text-muted" id="totalAttendanceText">Based on @(ViewBag.TotalAttendance ?? 0) total records</small>
           </div>
       </div>
 </div>
-         
+ 
        <!-- Stats Column (Right Side) -->
      <div class="col-lg-5">
-                    <div class="d-flex flex-column gap-3">
+       <div class="d-flex flex-column gap-3">
         <!-- Present -->
     <div class="p-3 d-flex align-items-center" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px; border-left: 4px solid #198754;">
          <div class="flex-grow-1">
             <h4 class="mb-0" style="color: #198754;" id="presentRate">
           @{
-      var presentRate = ViewBag.TotalAttendance > 0 
+   var presentRate = ViewBag.TotalAttendance > 0 
    ? Math.Round((decimal)(ViewBag.PresentCount ?? 0) / ViewBag.TotalAttendance * 100, 1) 
-         : 0;
-        }
+   : 0;
+     }
     @presentRate%
   </h4>
      <small class="text-muted">Present</small>
-             </div>
-          <div class="ms-3">
+          </div>
+     <div class="ms-3">
   <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i>
  </div>
      </div>
   
     <!-- Absent -->
        <div class="p-3 d-flex align-items-center" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px; border-left: 4px solid #dc3545;">
-     <div class="flex-grow-1">
-             <h4 class="mb-0" style="color: #dc3545;" id="absentRate">
+ <div class="flex-grow-1">
+      <h4 class="mb-0" style="color: #dc3545;" id="absentRate">
    @{
        var absentRate = ViewBag.TotalAttendance > 0 
-             ? Math.Round((decimal)(ViewBag.AbsentCount ?? 0) / ViewBag.TotalAttendance * 100, 1) 
+           ? Math.Round((decimal)(ViewBag.AbsentCount ?? 0) / ViewBag.TotalAttendance * 100, 1) 
     : 0;
    }
            @absentRate%
-             </h4>
+        </h4>
        <small class="text-muted">Absent</small>
      </div>
-           <div class="ms-3">
-         <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #dc3545;"></i>
-       </div>
+        <div class="ms-3">
+ <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #dc3545;"></i>
+ </div>
             </div>
-          
-     <!-- Late -->
-          <div class="p-3 d-flex align-items-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px; border-left: 4px solid #ffc107;">
+     
+     <!-- Leave -->
+       <div class="p-3 d-flex align-items-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px; border-left: 4px solid #ffc107;">
 <div class="flex-grow-1">
        <h4 class="mb-0" style="color: #ffc107;" id="lateRate">
-          @{
+    @{
     var lateRate = ViewBag.TotalAttendance > 0 
         ? Math.Round((decimal)(ViewBag.LateCount ?? 0) / ViewBag.TotalAttendance * 100, 1) 
  : 0;
      }
-            @lateRate%
+         @lateRate%
     </h4>
-    <small class="text-muted">Late</small>
-       </div>
+    <small class="text-muted">Leave</small>
+   </div>
      <div class="ms-3">
-  <i class="bi bi-clock-fill" style="font-size: 2rem; color: #ffc107;"></i>
+  <i class="bi bi-calendar-x" style="font-size: 2rem; color: #ffc107;"></i>
      </div>
        </div>
-   </div>
+ </div>
     </div>
-            </div>
-  </div>
+        </div>
+</div>
     </div>
 </div>
 
@@ -252,12 +256,12 @@ Attendance Overview
     </a>
         </div>
     <div class="table-responsive">
-      <table class="table table-hover align-middle">
+ <table class="table table-hover align-middle">
       <thead>
  <tr>
     <th>Date</th>
 <th>Class</th>
-       <th>Time In</th>
+   <th>Time In</th>
       <th>Status</th>
    <th>Remarks</th>
          </tr>
@@ -268,7 +272,7 @@ Attendance Overview
       @foreach (var attendance in (List<WebMobileAssignment.Models.Attendance>)ViewBag.RecentAttendance)
   {
     <tr>
-       <td><i class="bi bi-calendar3 me-2 text-muted"></i>@attendance.Date.ToString("yyyy-MM-dd")</td>
+     <td><i class="bi bi-calendar3 me-2 text-muted"></i>@attendance.Date.ToString("yyyy-MM-dd")</td>
     <td>@attendance.Class?.ClassName</td>
        <td>@attendance.TakenOn.ToString("h:mm tt")</td>
    <td>
@@ -278,10 +282,10 @@ var badgeClass = attendance.Status switch
     "Present" => "bg-success",
       "Absent" => "bg-danger",
   "Late" => "bg-warning",
-          _ => "bg-secondary"
+  _ => "bg-secondary"
        };
  }
-      <span class="badge @badgeClass">@attendance.Status</span>
+  <span class="badge @badgeClass">@attendance.Status</span>
    </td>
     <td>
    @if (attendance.Status == "Present")
@@ -290,15 +294,15 @@ var badgeClass = attendance.Status switch
  }
        else if (attendance.Status == "Late")
   {
-      <text>Arrived late</text>
+<text>On leave</text>
   }
   else
    {
    <text>-</text>
      }
   </td>
-    </tr>
-           }
+  </tr>
+   }
   }
        else
   {
@@ -367,12 +371,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('lateCountStat').textContent = data.lateCount;
   document.getElementById('attendanceRateStat').textContent = data.attendanceRate + '%';
 
-        // Update child summary
+   // Update child summary
         document.getElementById('studentName').textContent = data.studentName;
-        document.getElementById('className').textContent = data.className;
+     document.getElementById('className').textContent = data.className;
         document.getElementById('totalClasses').textContent = data.totalClasses;
         document.getElementById('presentCount').textContent = data.presentCount;
      document.getElementById('absentCount').textContent = data.absentCount;
+        document.getElementById('leaveCount').textContent = data.lateCount;
  
    // Update profile picture
         const studentAvatar = document.getElementById('studentAvatar');
@@ -386,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
    // Update child counter
         const childCounter = document.getElementById('childCounter');
-        if (childCounter) {
+      if (childCounter) {
       childCounter.textContent = `Child ${data.currentIndex} of ${data.totalChildren}`;
         }
 
@@ -396,18 +401,18 @@ document.addEventListener('DOMContentLoaded', function() {
      document.getElementById('lateRate').textContent = data.lateRate + '%';
         document.getElementById('totalAttendanceText').textContent = `Based on ${data.totalAttendance} total records`;
 
-        // Re-render attendance chart with new data
+ // Re-render attendance chart with new data
 if (typeof renderAttendanceChart === 'function') {
-         renderAttendanceChart('attendanceOverviewChart', {
-              presentCount: data.presentCount,
+   renderAttendanceChart('attendanceOverviewChart', {
+  presentCount: data.presentCount,
     absentCount: data.absentCount,
    lateCount: data.lateCount,
-      totalAttendance: data.totalAttendance
-            });
+totalAttendance: data.totalAttendance
+    });
     } else {
-     // Fallback to recreating the chart directly
-            updateAttendanceChart(data.presentCount, data.absentCount, data.lateCount, data.totalAttendance);
-        }
+// Fallback to recreating the chart directly
+       updateAttendanceChart(data.presentCount, data.absentCount, data.lateCount, data.totalAttendance);
+     }
 
         // Update navigation buttons
         updateNavigationButtons(data);
@@ -496,41 +501,40 @@ nextBtn.setAttribute('data-action', 'next');
     }
 
     function updateRecentAttendanceTable(attendances) {
-        const tbody = document.getElementById('recentAttendanceTable');
+    const tbody = document.getElementById('recentAttendanceTable');
         
-      if (!attendances || attendances.length === 0) {
-     tbody.innerHTML = `
- <tr>
-           <td colspan="5" class="text-center text-muted py-4">
- <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-        <p class="mb-0 mt-2">No attendance records found</p>
+        if (!attendances || attendances.length === 0) {
+   tbody.innerHTML = `
+         <tr>
+ <td colspan="5" class="text-center text-muted py-4">
+  <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+     <p class="mb-0 mt-2">No attendance records found</p>
      </td>
-     </tr>
-       `;
-     return;
+      </tr>
+   `;
+    return;
         }
  
       tbody.innerHTML = '';
         attendances.forEach(att => {
-       const badgeClass = att.status === 'Present' ? 'bg-success' :
-     att.status === 'Absent' ? 'bg-danger' :
-   att.status === 'Late' ? 'bg-warning' : 'bg-secondary';
+            const badgeClass = att.status === 'Present' ? 'bg-success' :
+      att.status === 'Absent' ? 'bg-danger' :
+           att.status === 'Late' ? 'bg-warning' : 'bg-secondary';
     
-         const remarks = att.status === 'Present' ? 'On time' :
-             att.status === 'Late' ? 'Arrived late' : '-';
+            const remarks = att.status === 'Present' ? 'On time' :
+        att.status === 'Late' ? 'On leave' : '-';
   
-        const row = document.createElement('tr');
-  row.innerHTML = `
-        <td><i class="bi bi-calendar3 me-2 text-muted"></i>${att.date}</td>
-                <td>${att.className || 'N/A'}</td>
-           <td>${att.timeIn}</td>
-           <td><span class="badge ${badgeClass}">${att.status}</span></td>
-    <td>${remarks}</td>
-    `;
- tbody.appendChild(row);
-        });
-    }
-
+     const row = document.createElement('tr');
+      row.innerHTML = `
+       <td><i class="bi bi-calendar3 me-2 text-muted"></i>${att.date}</td>
+    <td>${att.className || 'N/A'}</td>
+    <td>${att.timeIn}</td>
+                <td><span class="badge ${badgeClass}">${att.status}</span></td>
+                <td>${remarks}</td>
+            `;
+       tbody.appendChild(row);
+   });
+ }
     // Initialize Attendance Chart
     let attendanceChartInstance = null;
     
@@ -538,40 +542,40 @@ nextBtn.setAttribute('data-action', 'next');
         const canvas = document.getElementById('attendanceOverviewChart');
         if (!canvas) return;
   
-     const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d');
         const presentCount = parseInt(canvas.dataset.present, 10) || 0;
-        const absentCount = parseInt(canvas.dataset.absent, 10) || 0;
+  const absentCount = parseInt(canvas.dataset.absent, 10) || 0;
      const lateCount = parseInt(canvas.dataset.late, 10) || 0;
         const totalCount = parseInt(canvas.dataset.total, 10) || 0;
 
    // Calculate percentages
    let dataPercents = [0, 0, 0];
-        if (totalCount > 0) {
+   if (totalCount > 0) {
   dataPercents = [
-        Math.round((presentCount / totalCount) * 100),
+  Math.round((presentCount / totalCount) * 100),
       Math.round((absentCount / totalCount) * 100),
-                Math.round((lateCount / totalCount) * 100)
-            ];
-        }
+       Math.round((lateCount / totalCount) * 100)
+       ];
+ }
 
-        // Destroy existing chart if it exists
+  // Destroy existing chart if it exists
         if (attendanceChartInstance) {
  attendanceChartInstance.destroy();
   }
 
         // Chart data
-        const data = {
-            labels: ['Present', 'Absent', 'Late'],
+  const data = {
+            labels: ['Present', 'Absent', 'Leave'],
         datasets: [{
   data: dataPercents,
-                backgroundColor: [
+ backgroundColor: [
   'rgba(25, 135, 84, 0.95)',  // Present
          'rgba(220, 53, 69, 0.95)',  // Absent
-    'rgba(255, 193, 7, 0.95)'    // Late
-          ],
-     borderWidth: 0,
+    'rgba(255, 193, 7, 0.95)'    // Leave
+     ],
+  borderWidth: 0,
   hoverOffset: 6
-    }]
+ }]
         };
 
    // Chart options

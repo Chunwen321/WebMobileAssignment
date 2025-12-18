@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/parent.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="parent-layout">
     <!-- Sidebar -->
@@ -84,14 +85,29 @@
                 }
             </a>
 
-            <!-- Settings -->
-            <a asp-controller="Parent" asp-action="Settings"
-               class="sidebar-item @(ViewBag.ActiveMenu == "Settings" ? "active" : "")">
-                <div class="sidebar-item-content">
-                    <i class="bi bi-gear-fill"></i>
-                    <span>Settings</span>
+            <!-- Settings - Dropdown -->
+            <div class="sidebar-dropdown">
+                <button class="sidebar-item dropdown-toggle @(ViewBag.ActiveMenu == "Settings" ? "active" : "")"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#settingsMenu">
+                    <div class="sidebar-item-content">
+                        <i class="bi bi-gear-fill"></i>
+                        <span>Settings</span>
+                    </div>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse @(ViewBag.ActiveMenu == "Settings" ? "show" : "")" id="settingsMenu">
+                    <a asp-controller="Parent" asp-action="Settings"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "AccountSettings" ? "active" : "")">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Account Settings</span>
+                    </a>
+                    <a asp-controller="Parent" asp-action="ChangePassword"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "ChangePassword" ? "active" : "")">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>Change Password</span>
+                    </a>
                 </div>
-            </a>
+            </div>
         </nav>
 
         <!-- Sidebar Footer -->
@@ -122,6 +138,9 @@
                 <h1>@ViewBag.Title</h1>
             </div>
             <div class="topbar-actions">
+                <button class="topbar-btn" id="darkModeToggle" title="Toggle Dark Mode">
+                    <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+                </button>
                 <button class="topbar-btn" title="Notifications" onclick="window.location.href='@Url.Action("Notifications", "Parent")'">
                     <i class="bi bi-bell-fill"></i>
                     @if (ViewBag.UnreadNotificationCount != null && ViewBag.UnreadNotificationCount > 0)
