@@ -12,95 +12,95 @@
     var totalLate = ViewBag.TotalLate ?? 0;
  var attendanceRate = ViewBag.AttendanceRate ?? 0;
     var subjectSummary = ViewBag.SubjectSummary as List<dynamic> ?? new List<dynamic>();
-    var selectedYear = ViewBag.SelectedYear ?? DateTime.Now.Year;
-    var selectedMonth = ViewBag.SelectedMonth ?? DateTime.Now.Month;
+ var selectedYear = ViewBag.SelectedYear ?? DateTime.Now.Year;
+  var selectedMonth = ViewBag.SelectedMonth ?? DateTime.Now.Month;
     var monthName = ViewBag.MonthName ?? DateTime.Now.ToString("MMMM yyyy");
     
   // Calculate percentages for pie chart
     var presentPercent = totalClasses > 0 ? Math.Round((decimal)totalPresent / totalClasses * 100, 1) : 0;
  var absentPercent = totalClasses > 0 ? Math.Round((decimal)totalAbsent / totalClasses * 100, 1) : 0;
-    var latePercent = totalClasses > 0 ? Math.Round((decimal)totalLate / totalClasses * 100, 1) : 0;
+var latePercent = totalClasses > 0 ? Math.Round((decimal)totalLate / totalClasses * 100, 1) : 0;
 }
 
 <div class="dashboard-card mb-4">
     <div class="card-header-custom">
     <h3 class="card-title">
-        <i class="bi bi-bar-chart-fill"></i>
+  <i class="bi bi-bar-chart-fill"></i>
  Monthly Attendance Summary
     </h3>
   <form method="get" asp-controller="Parent" asp-action="MonthlySummary" class="d-flex gap-2">
           <!-- Child Selector (only show if parent has multiple children) -->
        @if (allStudents.Count > 1)
-       {
+  {
        <select name="studentId" class="form-select form-select-sm" style="width: auto;">
   <option value="">All Children</option>
   @foreach (var student in allStudents)
      {
-        <option value="@student.StudentId" selected="@(student.StudentId == selectedStudentId)">
+ <option value="@student.StudentId" selected="@(student.StudentId == selectedStudentId)">
  @student.User.FullName
        </option>
     }
-            </select>
+      </select>
   }
-          
+ 
    <select name="year" class="form-select form-select-sm" style="width: auto;">
-       @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 2; y--)
+ @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 2; y--)
         {
          <option value="@y" selected="@(y == selectedYear)">@y</option>
-        }
+ }
      </select>
-   <select name="month" class="form-select form-select-sm" style="width: auto;">
-    @for (int m = 1; m <= 12; m++)
+<select name="month" class="form-select form-select-sm" style="width: auto;">
+  @for (int m = 1; m <= 12; m++)
      {
     var monthText = new DateTime(2000, m, 1).ToString("MMMM");
-           <option value="@m" selected="@(m == selectedMonth)">@monthText</option>
-        }
+   <option value="@m" selected="@(m == selectedMonth)">@monthText</option>
+  }
    </select>
   <button type="submit" class="btn btn-sm btn-primary">
   <i class="bi bi-search"></i>
-            </button>
+</button>
  </form>
     </div>
 
     <!-- Monthly Stats Overview -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="stat-card" style="border-left-color: #0d6efd;">
+   <div class="stat-card" style="border-left-color: #0d6efd;">
      <div class="stat-label">Total Classes</div>
-           <div class="stat-value">@totalClasses</div>
-                <div class="stat-change">
+         <div class="stat-value">@totalClasses</div>
+        <div class="stat-change">
          <i class="bi bi-calendar3"></i>
               <span>@monthName</span>
-        </div>
-            </div>
+     </div>
+      </div>
  </div>
         <div class="col-md-3">
          <div class="stat-card" style="border-left-color: #198754;">
-                <div class="stat-label">Days Present</div>
+          <div class="stat-label">Days Present</div>
         <div class="stat-value">@totalPresent</div>
      <div class="stat-change positive">
  <i class="bi bi-arrow-up"></i>
-         <span>@attendanceRate% attendance</span>
+<span>@attendanceRate% attendance</span>
     </div>
        </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card" style="border-left-color: #dc3545;">
-        <div class="stat-label">Days Absent</div>
+ <div class="stat-label">Days Absent</div>
           <div class="stat-value">@totalAbsent</div>
-                <div class="stat-change">
+    <div class="stat-change">
     <i class="bi bi-x-circle"></i>
        <span>@absentPercent% of total</span>
-        </div>
-            </div>
+</div>
+         </div>
         </div>
       <div class="col-md-3">
   <div class="stat-card" style="border-left-color: #ffc107;">
-           <div class="stat-label">Times Late</div>
+      <div class="stat-label">Days on Leave</div>
                 <div class="stat-value">@totalLate</div>
-             <div class="stat-change">
-        <i class="bi bi-clock"></i>
-        <span>@latePercent% of total</span>
+      <div class="stat-change">
+        <i class="bi bi-calendar-x"></i>
+  <span>@latePercent% of total</span>
      </div>
     </div>
      </div>
@@ -114,7 +114,7 @@
     <p class="mb-0 mt-2">Try selecting a different month or ensure your children are enrolled in classes.</p>
       </div>
     }
-    else
+else
     {
         <!-- Attendance Percentage Graph -->
         <div class="row g-3 mb-4">
@@ -122,34 +122,34 @@
     <h5 class="mb-3">Attendance Distribution for @monthName</h5>
        
    <!-- Visual Progress Bars -->
-     <div class="mb-4">
+  <div class="mb-4">
            <div class="mb-3">
  <div class="d-flex justify-content-between mb-1">
      <span><i class="bi bi-check-circle-fill text-success me-2"></i>Present</span>
           <strong class="text-success">@totalPresent (@presentPercent%)</strong>
-       </div>
+ </div>
            <div class="progress" style="height: 25px;">
     <div class="progress-bar bg-success" role="progressbar" style="width: @presentPercent%"></div>
        </div>
-             </div>
-              <div class="mb-3">
+  </div>
+    <div class="mb-3">
 <div class="d-flex justify-content-between mb-1">
         <span><i class="bi bi-x-circle-fill text-danger me-2"></i>Absent</span>
       <strong class="text-danger">@totalAbsent (@absentPercent%)</strong>
           </div>
  <div class="progress" style="height: 25px;">
       <div class="progress-bar bg-danger" role="progressbar" style="width: @absentPercent%"></div>
-               </div>
+       </div>
    </div>
              <div class="mb-3">
-              <div class="d-flex justify-content-between mb-1">
-          <span><i class="bi bi-clock-fill text-warning me-2"></i>Late</span>
+  <div class="d-flex justify-content-between mb-1">
+          <span><i class="bi bi-calendar-x text-warning me-2"></i>Leave</span>
              <strong class="text-warning">@totalLate (@latePercent%)</strong>
        </div>
-         <div class="progress" style="height: 25px;">
+  <div class="progress" style="height: 25px;">
          <div class="progress-bar bg-warning" role="progressbar" style="width: @latePercent%"></div>
      </div>
-        </div>
+   </div>
      </div>
          </div>
         </div>
@@ -169,13 +169,13 @@
 
         <div class="table-responsive">
  <table class="table table-hover align-middle">
-            <thead class="table-light">
+  <thead class="table-light">
          <tr>
        <th>Subject</th>
-             <th>Total Classes</th>
+<th>Total Classes</th>
    <th>Present</th>
-               <th>Absent</th>
-    <th>Late</th>
+ <th>Absent</th>
+    <th>Leave</th>
          <th>Attendance Rate</th>
       <th>Status</th>
   </tr>
@@ -185,10 +185,10 @@
          {
 var rate = (decimal)subject.AttendanceRate;
          var statusBadge = rate >= 90 ? "success" : (rate >= 80 ? "warning" : "danger");
-              var statusText = rate >= 90 ? "Excellent" : (rate >= 80 ? "Good" : "Needs Attention");
-          var progressBarColor = rate >= 90 ? "success" : (rate >= 80 ? "warning" : "danger");
+       var statusText = rate >= 90 ? "Excellent" : (rate >= 80 ? "Good" : "Needs Attention");
+var progressBarColor = rate >= 90 ? "success" : (rate >= 80 ? "warning" : "danger");
        
-        <tr>
+  <tr>
       <td>
              <i class="bi bi-book-fill me-2" style="color: #0d6efd;"></i>
  <strong>@subject.Subject</strong>
@@ -197,28 +197,28 @@ var rate = (decimal)subject.AttendanceRate;
   <td><span class="badge bg-success-subtle text-success">@subject.Present</span></td>
           <td><span class="badge bg-danger-subtle text-danger">@subject.Absent</span></td>
        <td><span class="badge bg-warning-subtle text-warning">@subject.Late</span></td>
-           <td>
+   <td>
       <div class="progress" style="height: 20px;">
  <div class="progress-bar bg-@progressBarColor" role="progressbar" style="width: @(subject.AttendanceRate)%">
    @(subject.AttendanceRate)%
-                </div>
+       </div>
          </div>
          </td>
    <td><span class="badge bg-@statusBadge">@statusText</span></td>
-                 </tr>
-        }
+  </tr>
+  }
        </tbody>
       <tfoot class="table-light">
    <tr>
     <th>Total</th>
      <th>@totalClasses</th>
-                <th><span class="badge bg-success">@totalPresent</span></th>
+     <th><span class="badge bg-success">@totalPresent</span></th>
       <th><span class="badge bg-danger">@totalAbsent</span></th>
-       <th><span class="badge bg-warning">@totalLate</span></th>
+   <th><span class="badge bg-warning">@totalLate</span></th>
      <th>
-            <div class="progress" style="height: 20px;">
+ <div class="progress" style="height: 20px;">
   <div class="progress-bar bg-@(attendanceRate >= 90 ? "success" : attendanceRate >= 80 ? "warning" : "danger")" 
-            role="progressbar" style="width: @attendanceRate%">
+  role="progressbar" style="width: @attendanceRate%">
    @attendanceRate%
        </div>
      </div>
@@ -226,7 +226,7 @@ var rate = (decimal)subject.AttendanceRate;
    <th>
            <span class="badge bg-@(attendanceRate >= 90 ? "success" : attendanceRate >= 80 ? "warning" : "danger")">
        @(attendanceRate >= 90 ? "Excellent" : attendanceRate >= 80 ? "Good" : "Needs Attention")
-           </span>
+  </span>
         </th>
       </tr>
          </tfoot>
@@ -238,23 +238,23 @@ var rate = (decimal)subject.AttendanceRate;
  <button class="btn btn-outline-primary" onclick="window.print()">
     <i class="bi bi-printer me-2"></i>Print Summary
          </button>
-            <a asp-controller="Parent" asp-action="DownloadReport" class="btn btn-danger">
+    <a asp-controller="Parent" asp-action="DownloadReport" class="btn btn-danger">
        <i class="bi bi-file-pdf me-2"></i>Download PDF Report
-            </a>
+    </a>
         </div>
     </div>
 
     <!-- Notes Section -->
     <div class="dashboard-card mt-3">
 <div class="card-header-custom">
-          <h3 class="card-title">
-             <i class="bi bi-info-circle-fill"></i>
+  <h3 class="card-title">
+        <i class="bi bi-info-circle-fill"></i>
          Important Notes
     </h3>
         </div>
-        <div class="alert alert-info mb-0">
+      <div class="alert alert-info mb-0">
             <i class="bi bi-lightbulb-fill me-2"></i>
      <strong>Note:</strong> Attendance rate of 90% and above is considered Excellent. 80-89% is Good. Below 80% requires attention.
-        </div>
+     </div>
     </div>
 }

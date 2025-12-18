@@ -21,8 +21,15 @@ namespace WebMobileAssignment.Controllers
         }
 
         // GET: /Account/Login
-        public IActionResult Login()
+        public IActionResult Login(string? returnUrl = null)
         {
+            // If user is trying to access a protected page without being logged in,
+            // redirect to Access Denied page
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                return RedirectToAction("AccessDenied", new { returnUrl = returnUrl });
+            }
+
             ViewBag.ReCaptchaSiteKey = _configuration["ReCaptcha:SiteKey"];
             return View();
         }
