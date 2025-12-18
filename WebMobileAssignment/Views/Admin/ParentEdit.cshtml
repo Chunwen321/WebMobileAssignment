@@ -86,10 +86,22 @@
                                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
                                        style="display: none;">
                                 
+                                <button type="button" id="btnWebcam" class="btn btn-outline-primary">
+                                    <i class="bi bi-camera-fill"></i> Take Photo
+                                </button>
+                                
+                                <button type="button" id="btnEditPhoto" class="btn btn-outline-success" style="display: none;">
+                                    <i class="bi bi-crop"></i> Edit Photo
+                                </button>
+                                
+                                <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-secondary" style="display: none;">
+                                    <i class="bi bi-x"></i> Clear
+                                </button>
+                                
                                 @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
                                 {
                                     <button type="button" id="deleteProfilePictureBtn" class="btn btn-outline-danger">
-                                        <i class="bi bi-trash"></i> Remove
+                                        <i class="bi bi-trash"></i> Remove from S3
                                     </button>
                                 }
                             </div>
@@ -118,6 +130,8 @@
                             </h6>
                             <ul class="mb-0">
                                 <li>Upload a clear photo of the parent/guardian</li>
+                                <li><strong>NEW:</strong> Use your webcam to take a photo directly</li>
+                                <li><strong>NEW:</strong> Click "Edit Photo" to crop, rotate, and adjust your image</li>
                                 <li>Image will be automatically uploaded to cloud storage (AWS S3)</li>
                                 <li>Square images work best (will be displayed as circle)</li>
                                 <li>Supported formats: JPG, PNG, GIF, WEBP</li>
@@ -223,84 +237,90 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
+    <!-- Cropper.js CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+    <!-- Webcam Capture Script -->
+    <script src="~/js/webcam-capture.js"></script>
+
+    <!-- Image Cropper Module -->
+    <script src="~/js/image-cropper.js"></script>
+
+    <!-- Inject Modals -->
+    <div id="imageCropperModals"></div>
     <script>
-        // ==================== PROFILE PICTURE PREVIEW (No immediate upload) ====================
+        document.getElementById('imageCropperModals').innerHTML = ImageCropper.getModalHTML();
+    </script>
+
+    <script>
+        // ==================== INITIALIZE IMAGE CROPPER ====================
+        ImageCropper.init({
+            targetId: 'parent',
+            previewElementId: 'profilePicturePreview',
+            fileInputId: 'profilePictureFile',
+            clearButtonId: 'clearProfilePictureBtn',
+            editButtonId: 'btnEditPhoto',
+            previewWidth: 200,
+            previewHeight: 200
+        });
+
+        // Show Edit button if existing profile picture exists
+        @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
+        {
+            <text>
+            document.getElementById('btnEditPhoto').style.display = 'block';
+            document.getElementById('clearProfilePictureBtn').style.display = 'block';
+            </text>
+        }
+
+        // ==================== WEBCAM FUNCTIONALITY ====================
         (function() {
-            const fileInput = document.getElementById('profilePictureFile');
-            const preview = document.getElementById('profilePicturePreview');
-            const userId = '@Model.User.UserId';
+            WebcamCapture.init('profilePicturePreview', 'profilePictureFile', function(file) {
+                console.log('Photo captured from webcam:', file.name);
+                document.getElementById('btnEditPhoto').style.display = 'block';
+                document.getElementById('clearProfilePictureBtn').style.display = 'block';
+            });
 
-            // File selection handler - ONLY PREVIEW, don't upload
-            if (fileInput) {
-                fileInput.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (!file) return;
-
-                    // Validate file type
-                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                    if (!validTypes.includes(file.type)) {
-                        alert('Invalid file type. Please upload JPG, PNG, GIF, or WEBP image.');
-                        fileInput.value = '';
-                        return;
-                    }
-
-                    // Validate file size (5 MB)
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('File size must not exceed 5 MB.');
-                        fileInput.value = '';
-                        return;
-                    }
-
-                    // Show preview only - don't upload yet
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const currentPreview = document.getElementById('profilePicturePreview');
-                        if (currentPreview) {
-                            currentPreview.outerHTML = `<img id="profilePicturePreview" 
-                                                      src="${e.target.result}" 
-                                                      alt="Profile Picture" 
-                                                      class="img-thumbnail rounded-circle mb-3" 
-                                                      style="width: 200px; height: 200px; object-fit: cover;">`;
-                        }
-                    };
-                    reader.readAsDataURL(file);
+            const webcamBtn = document.getElementById('btnWebcam');
+            if (webcamBtn) {
+                webcamBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal();
                 });
             }
+        })();
 
-            // Delete profile picture
+        // ==================== DELETE PROFILE PICTURE FROM S3 ====================
+        (function() {
             const deleteBtn = document.getElementById('deleteProfilePictureBtn');
             if (deleteBtn) {
-                deleteBtn.addEventListener('click', deleteProfilePicture);
-            }
-
-            async function deleteProfilePicture() {
-                if (!confirm('Are you sure you want to remove the profile picture?')) {
-                    return;
-                }
-
-                try {
-                    const response = await fetch('@Url.Action("DeleteProfilePicture", "Admin")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ userId: userId })
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        alert('Profile picture removed successfully!');
-                        window.location.reload();
-                    } else {
-                        alert('Error: ' + result.message);
+                deleteBtn.addEventListener('click', async function() {
+                    if (!confirm('Are you sure you want to permanently remove the profile picture from cloud storage?')) {
+                        return;
                     }
-                } catch (error) {
-                    alert('Delete failed: ' + error.message);
-                }
-            }
 
-            window.deleteProfilePicture = deleteProfilePicture;
+                    try {
+                        const response = await fetch('@Url.Action("DeleteProfilePicture", "Admin")', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ userId: '@Model.User.UserId' })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            alert('Profile picture removed successfully from cloud storage!');
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + result.message);
+                        }
+                    } catch (error) {
+                        alert('Delete failed: ' + error.message);
+                    }
+                });
+            }
         })();
     </script>
 }

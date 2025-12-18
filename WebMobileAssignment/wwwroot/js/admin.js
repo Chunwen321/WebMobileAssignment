@@ -1,5 +1,60 @@
 // ==================== ADMIN PORTAL JAVASCRIPT ====================
 
+// ==================== DARK MODE FUNCTIONALITY ====================
+/**
+ * Dark Mode Toggle with LocalStorage Persistence
+ */
+(function() {
+    // Initialize dark mode from localStorage on page load
+    const initDarkMode = () => {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        const htmlElement = document.documentElement;
+        const darkModeIcon = document.getElementById('darkModeIcon');
+   
+        if (savedTheme === 'dark') {
+            htmlElement.setAttribute('data-theme', 'dark');
+            if (darkModeIcon) {
+                darkModeIcon.classList.remove('bi-moon-fill');
+                darkModeIcon.classList.add('bi-sun-fill');
+            }
+        }
+    };
+    
+    // Call init immediately (before DOMContentLoaded) to prevent flash
+    initDarkMode();
+    
+    // Setup toggle button after DOM loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const htmlElement = document.documentElement;
+        
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', function() {
+                const currentTheme = htmlElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+                // Update theme
+                htmlElement.setAttribute('data-theme', newTheme);
+ 
+                // Save to localStorage
+                localStorage.setItem('theme', newTheme);
+    
+                // Update icon
+                if (newTheme === 'dark') {
+                    darkModeIcon.classList.remove('bi-moon-fill');
+                    darkModeIcon.classList.add('bi-sun-fill');
+                } else {
+                    darkModeIcon.classList.remove('bi-sun-fill');
+                    darkModeIcon.classList.add('bi-moon-fill');
+                }
+     
+                console.log(`[Dark Mode] Switched to ${newTheme} mode`);
+            });
+        }
+    });
+})();
+
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Admin portal JavaScript loaded');

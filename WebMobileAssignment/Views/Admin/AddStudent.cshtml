@@ -55,10 +55,17 @@
                                        id="profilePicture" 
                                        name="profilePicture"
                                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
-                                       style="display: none;"
-                                       onchange="previewProfilePicture(event)">
+                                       style="display: none;">
                                 
-                                <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-danger" style="display: none;" onclick="clearProfilePicture()">
+                                <button type="button" id="btnWebcam" class="btn btn-outline-primary">
+                                    <i class="bi bi-camera-fill"></i> Take Photo
+                                </button>
+                                
+                                <button type="button" id="btnEditPhoto" class="btn btn-outline-success" style="display: none;">
+                                    <i class="bi bi-crop"></i> Edit Photo
+                                </button>
+                                
+                                <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-danger" style="display: none;">
                                     <i class="bi bi-x"></i> Remove
                                 </button>
                             </div>
@@ -77,6 +84,8 @@
                             </h6>
                             <ul class="mb-0">
                                 <li>Upload a clear photo of the student</li>
+                                <li><strong>NEW:</strong> Use your webcam to take a photo directly</li>
+                                <li><strong>NEW:</strong> Click "Edit Photo" to crop, rotate, and adjust your image</li>
                                 <li>Image will be automatically uploaded to cloud storage (AWS S3)</li>
                                 <li>Square images work best (will be displayed as circle)</li>
                                 <li>Supported formats: JPG, PNG, GIF, WEBP</li>
@@ -211,7 +220,8 @@
                         <strong>Creating New Parent:</strong> Fill in all the details below. A temporary password will be automatically generated and sent to the parent's email.
                     </div>
                     
-                    <div class="alert alert-success mb-3" id="existingParentIndicator" style="display: none;">
+                    <div class="alert alert-success mb-3" id="existingParentIndicator" style="display: none;
+                        ">
                         <i class="bi bi-check-circle me-2"></i>
                         <strong>Using Existing Parent:</strong> The selected parent's information is shown below (read-only).
                     </div>
@@ -235,10 +245,17 @@
                                            id="parentProfilePicture" 
                                            name="parentProfilePicture"
                                            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
-                                           style="display: none;"
-                                           onchange="previewParentProfilePicture(event)">
+                                           style="display: none;">
                                     
-                                    <button type="button" id="clearParentProfilePictureBtn" class="btn btn-outline-secondary btn-sm" style="display: none;" onclick="clearParentProfilePicture()">
+                                    <button type="button" id="btnParentWebcam" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-camera-fill"></i> Take Photo
+                                    </button>
+                                    
+                                    <button type="button" id="btnEditParentPhoto" class="btn btn-outline-success btn-sm" style="display: none;">
+                                        <i class="bi bi-crop"></i> Edit Photo
+                                    </button>
+                                    
+                                    <button type="button" id="clearParentProfilePictureBtn" class="btn btn-outline-secondary btn-sm" style="display: none;">
                                         <i class="bi bi-x"></i> Remove
                                     </button>
                                 </div>
@@ -407,7 +424,78 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
+    <!-- Cropper.js CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+    <!-- Webcam Capture Script -->
+    <script src="~/js/webcam-capture.js"></script>
+
+    <!-- Image Cropper Module -->
+    <script src="~/js/image-cropper.js"></script>
+
+    <!-- Inject Modals -->
+    <div id="imageCropperModals"></div>
     <script>
+        document.getElementById('imageCropperModals').innerHTML = ImageCropper.getModalHTML();
+    </script>
+
+    <script>
+        // ==================== INITIALIZE IMAGE CROPPERS ====================
+        // Initialize ImageCropper for student
+        ImageCropper.init({
+            targetId: 'student',
+            previewElementId: 'profilePicturePreview',
+            fileInputId: 'profilePicture',
+            clearButtonId: 'clearProfilePictureBtn',
+            editButtonId: 'btnEditPhoto',
+            previewWidth: 200,
+            previewHeight: 200
+        });
+
+        // Initialize ImageCropper for parent
+        ImageCropper.init({
+            targetId: 'parent',
+            previewElementId: 'parentProfilePicturePreview',
+            fileInputId: 'parentProfilePicture',
+            clearButtonId: 'clearParentProfilePictureBtn',
+            editButtonId: 'btnEditParentPhoto',
+            previewWidth: 150,
+            previewHeight: 150
+        });
+
+        // ==================== WEBCAM FUNCTIONALITY ====================
+        (function() {
+            // Initialize webcam capture for student
+            WebcamCapture.init('profilePicturePreview', 'profilePicture', function(file) {
+                console.log('Student photo captured from webcam:', file.name);
+                document.getElementById('clearProfilePictureBtn').style.display = 'block';
+                document.getElementById('btnEditPhoto').style.display = 'block';
+            });
+
+            const webcamBtn = document.getElementById('btnWebcam');
+            if (webcamBtn) {
+                webcamBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal();
+                });
+            }
+
+            // Initialize webcam capture for parent
+            WebcamCapture.init('parentProfilePicturePreview', 'parentProfilePicture', function(file) {
+                console.log('Parent photo captured from webcam:', file.name);
+                document.getElementById('clearParentProfilePictureBtn').style.display = 'block';
+                document.getElementById('btnEditParentPhoto').style.display = 'block';
+            }, 'parentWebcamModal');
+
+            const parentWebcamBtn = document.getElementById('btnParentWebcam');
+            if (parentWebcamBtn) {
+                parentWebcamBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal('parentWebcamModal');
+                });
+            }
+        })();
+
+        // ==================== PARENT SEARCH AND CLASS SELECTION ====================
         (function() {
             const btnSearch = document.getElementById('btnSearchParent');
             const emailInput = document.getElementById('parentSearchEmail');
@@ -420,7 +508,6 @@
             const newParentIndicator = document.getElementById('newParentIndicator');
             const existingParentIndicator = document.getElementById('existingParentIndicator');
 
-            // Parent input fields - matching database columns
             const parentFullName = document.getElementById('parentFullName');
             const parentEmail = document.getElementById('parentEmail');
             const parentPhone = document.getElementById('parentPhone');
@@ -428,23 +515,16 @@
             const parentDateOfBirth = document.getElementById('parentDateOfBirth');
             const parentGender = document.getElementById('parentGender');
 
-            // Required field indicators
             const parentNameRequired = document.getElementById('parentNameRequired');
             const parentEmailRequired = document.getElementById('parentEmailRequired');
 
-            // Show parent form by default (user can edit or fill)
             parentFields.style.display = 'block';
 
-            // Class selection handler
             if (classSelect) {
                 classSelect.addEventListener('change', function() {
                     updateSelectedClassesList();
                 });
-                
-                // Initial update
                 updateSelectedClassesList();
-                
-                // Add visual styling to options based on capacity
                 updateClassOptionsStyles();
             }
 
@@ -455,12 +535,12 @@
                     const isFull = availableSlots <= 0;
                     
                     if (isFull) {
-                        option.style.color = '#dc3545'; // Red for full
+                        option.style.color = '#dc3545';
                         option.style.fontWeight = 'bold';
                     } else if (availableSlots <= 5) {
-                        option.style.color = '#ffc107'; // Yellow for limited
+                        option.style.color = '#ffc107';
                     } else {
-                        option.style.color = '#198754'; // Green for available
+                        option.style.color = '#198754';
                     }
                 });
             }
@@ -496,7 +576,6 @@
                 }
             }
 
-            // Function to set parent fields (editable or readonly) - now includes all fields
             function setParentFields(data, isExisting) {
                 parentFullName.value = data.fullName || '';
                 parentEmail.value = data.email || '';
@@ -506,7 +585,6 @@
                 parentGender.value = data.gender || '';
 
                 if (isExisting) {
-                    // Existing parent - make fields readonly
                     parentFullName.setAttribute('readonly', 'readonly');
                     parentEmail.setAttribute('readonly', 'readonly');
                     parentPhone.setAttribute('readonly', 'readonly');
@@ -526,7 +604,6 @@
                     parentNameRequired.style.display = 'none';
                     parentEmailRequired.style.display = 'none';
                 } else {
-                    // New parent - make fields editable
                     parentFullName.removeAttribute('readonly');
                     parentEmail.removeAttribute('readonly');
                     parentPhone.removeAttribute('readonly');
@@ -544,7 +621,6 @@
                     newParentIndicator.style.display = 'block';
                     existingParentIndicator.style.display = 'none';
                     
-                    // Show required indicators if creating new parent with data
                     if (data.fullName || data.email) {
                         parentNameRequired.style.display = 'inline';
                         parentEmailRequired.style.display = 'inline';
@@ -552,7 +628,6 @@
                 }
             }
 
-            // Function to clear parent fields
             function clearParentFields() {
                 parentFullName.value = '';
                 parentEmail.value = '';
@@ -582,19 +657,16 @@
                 searchResult.innerHTML = '';
             }
 
-            // Parent dropdown change handler
             parentSelect.addEventListener('change', async function() {
                 const selectedOption = parentSelect.options[parentSelect.selectedIndex];
                 const parentId = parentSelect.value;
 
                 if (!parentId) {
-                    // No selection - clear and allow new parent creation
                     clearParentFields();
                     emailInput.value = '';
                     return;
                 }
 
-                // Get data from option data attributes (faster than AJAX)
                 const fullName = selectedOption.getAttribute('data-fullname');
                 const email = selectedOption.getAttribute('data-email');
                 const phone = selectedOption.getAttribute('data-phone');
@@ -603,11 +675,9 @@
                 const gender = selectedOption.getAttribute('data-gender');
 
                 if (fullName && email) {
-                    // Use data attributes
                     setParentFields({ fullName, email, phone, address, dob, gender }, true);
                     searchResult.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Existing parent selected';
                 } else {
-                    // Fallback to AJAX if data attributes not available
                     try {
                         const resp = await fetch('/Admin/GetParentById?id=' + encodeURIComponent(parentId));
                         if (!resp.ok) throw new Error('Network error');
@@ -623,11 +693,9 @@
                     }
                 }
 
-                // Clear search input
                 emailInput.value = '';
             });
 
-            // Parent search functionality
             btnSearch.addEventListener('click', async function() {
                 const email = emailInput.value.trim();
 
@@ -644,7 +712,6 @@
                     const data = await resp.json();
 
                     if (data && data.success && data.parentId) {
-                        // Parent found - select in dropdown if exists, or add if not
                         let optionExists = false;
                         for (let i = 0; i < parentSelect.options.length; i++) {
                             if (parentSelect.options[i].value === data.parentId) {
@@ -655,7 +722,6 @@
                         }
 
                         if (!optionExists) {
-                            // Add to dropdown with all data attributes
                             const option = document.createElement('option');
                             option.value = data.parentId;
                             option.textContent = `${data.fullName} (${data.email})`;
@@ -669,11 +735,9 @@
                             parentSelect.appendChild(option);
                         }
 
-                        // Fill and lock fields
                         setParentFields(data, true);
                         searchResult.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Parent found and selected!';
                     } else {
-                        // Not found - prepare for new parent creation
                         parentSelect.value = '';
                         setParentFields({ fullName: '', email: email, phone: '', address: '', dob: '', gender: '' }, false);
                         searchResult.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Parent not found. You can create a new parent account by filling in the details below.';
@@ -684,7 +748,6 @@
                 }
             });
 
-            // Allow pressing Enter in search field
             emailInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -692,7 +755,6 @@
                 }
             });
 
-            // Detect manual changes to parent fields to show new parent indicator
             [parentFullName, parentEmail, parentPhone, parentAddress].forEach(field => {
                 field.addEventListener('input', function() {
                     if (!field.hasAttribute('readonly')) {
@@ -707,7 +769,6 @@
                 });
             });
 
-            // Clear parent selection when manually editing email field
             parentEmail.addEventListener('focus', function() {
                 if (!parentEmail.hasAttribute('readonly') && parentSelect.value !== '') {
                     if (confirm('Do you want to clear the selected parent and create a new one instead?')) {
@@ -717,85 +778,5 @@
                 }
             });
         })();
-
-        // Profile Picture Preview Functions
-        function previewProfilePicture(event) {
-            const file = event.target.files[0];
-            const preview = document.getElementById('profilePicturePreview');
-            const clearBtn = document.getElementById('clearProfilePictureBtn');
-            
-            if (file) {
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('File size must not exceed 5MB');
-                    event.target.value = '';
-                    return;
-                }
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Replace icon div with image
-                    preview.outerHTML = `<img id="profilePicturePreview" 
-                                             src="${e.target.result}" 
-                                             alt="Profile Picture" 
-                                             class="img-thumbnail rounded-circle mb-3" 
-                                             style="width: 200px; height: 200px; object-fit: cover;">`;
-                    clearBtn.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function clearProfilePicture() {
-            const fileInput = document.getElementById('profilePicture');
-            const preview = document.getElementById('profilePicturePreview');
-            const clearBtn = document.getElementById('clearProfilePictureBtn');
-            
-            fileInput.value = '';
-            // Replace image with icon
-            preview.outerHTML = `<div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
-                                   <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
-                                 </div>`;
-            clearBtn.style.display = 'none';
-        }
-
-        // Parent Profile Picture Preview Functions
-        function previewParentProfilePicture(event) {
-            const file = event.target.files[0];
-            const preview = document.getElementById('parentProfilePicturePreview');
-            const clearBtn = document.getElementById('clearParentProfilePictureBtn');
-            
-            if (file) {
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('File size must not exceed 5MB');
-                    event.target.value = '';
-                    return;
-                }
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Replace icon div with image
-                    preview.outerHTML = `<img id="parentProfilePicturePreview" 
-                                             src="${e.target.result}" 
-                                             alt="Parent Profile Picture" 
-                                             class="img-thumbnail rounded-circle mb-3" 
-                                             style="width: 150px; height: 150px; object-fit: cover;">`;
-                    clearBtn.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function clearParentProfilePicture() {
-            const fileInput = document.getElementById('parentProfilePicture');
-            const preview = document.getElementById('parentProfilePicturePreview');
-            const clearBtn = document.getElementById('clearParentProfilePictureBtn');
-            
-            fileInput.value = '';
-            // Replace image with icon
-            preview.outerHTML = `<div id="parentProfilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 150px; height: 150px;">
-                                   <i class="bi bi-person-circle text-secondary" style="font-size: 7.5rem;"></i>
-                                 </div>`;
-            clearBtn.style.display = 'none';
-        }
     </script>
-}
+}}}

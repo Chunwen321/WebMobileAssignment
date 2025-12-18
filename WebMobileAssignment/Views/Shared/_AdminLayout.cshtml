@@ -190,6 +190,9 @@
                 <h1>@ViewBag.Title</h1>
             </div>
             <div class="topbar-actions">
+                <button class="topbar-btn" id="darkModeToggle" title="Toggle Dark Mode">
+                    <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+                </button>
                 <a href="@Url.Action("Notifications", "Admin")" class="topbar-btn" title="Notifications">
                     <i class="bi bi-bell-fill"></i>
                     <span class="badge" id="notificationBadge">0</span>
