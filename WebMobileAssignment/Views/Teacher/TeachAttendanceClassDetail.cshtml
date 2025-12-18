@@ -1,0 +1,532 @@
+@model WebMobileAssignment.Models.Class
+@{
+    ViewBag.Title = "Class Attendance Detail";
+    ViewBag.ActiveMenu = "Attendance";
+    ViewBag.ActiveSubmenu = "MarkAttendance";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    
+    var allSessions = ViewBag.AllSessions as List<WebMobileAssignment.Models.AttendanceSession> ?? new List<WebMobileAssignment.Models.AttendanceSession>();
+    var sessions = ViewBag.Sessions as List<WebMobileAssignment.Models.AttendanceSession> ?? new List<WebMobileAssignment.Models.AttendanceSession>();
+    
+    // Get selected date from ViewBag, default to today
+    var selectedDate = ViewBag.SelectedDate as DateTime? ?? DateTime.Today;
+    var selectedDay = selectedDate.DayOfWeek.ToString();
+    var isSelectedDate = !string.IsNullOrEmpty(Model.Day) && Model.Day.Equals(selectedDay, StringComparison.OrdinalIgnoreCase);
+    
+    // Check for session created on selected date ONLY
+    var sessionOnSelectedDate = sessions.FirstOrDefault(s => s.ClassId == Model.ClassId && s.CreatedDate.Date == selectedDate.Date);
+    var hasValidSession = sessionOnSelectedDate != null;
+    
+    // Check if PIN is expired (after class end time on the same day)
+    var isPinExpired = false;
+    if (hasValidSession && Model.EndTime.HasValue && selectedDate.Date == DateTime.Today)
+    {
+        var nowTime = DateTime.Now.TimeOfDay;
+        isPinExpired = nowTime > Model.EndTime.Value;
+    }
+    
+    var todayAttendances = ViewBag.TodayAttendances as List<WebMobileAssignment.Models.Attendance> ?? new List<WebMobileAssignment.Models.Attendance>();
+    
+    var todayDay = DateTime.Now.DayOfWeek.ToString();
+    var isToday = !string.IsNullOrEmpty(Model.Day) && Model.Day.Equals(todayDay, StringComparison.OrdinalIgnoreCase) && selectedDate.Date == DateTime.Today;
+    
+    var currentTime = DateTime.Now.TimeOfDay;
+    var isActive = Model.StartTime.HasValue && Model.EndTime.HasValue && 
+                   currentTime >= Model.StartTime.Value && currentTime <= Model.EndTime.Value &&
+                   selectedDate.Date == DateTime.Today;
+}
+
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1">
+                    <i class="bi bi-book text-primary me-2"></i>
+                    @Model.ClassName - Attendance
+                </h5>
+                <p class="text-muted small mb-0">@selectedDate.ToString("dddd, MMMM dd, yyyy")</p>
+            </div>
+            <a href="@Url.Action("TeachMarkAttendance", new { selectedDate = selectedDate.ToString("yyyy-MM-dd") })" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Classes
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Class Information -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Class Information
+                </h6>
+            </div>
+            <div class="p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="info-box">
+                            <div class="info-label">Class ID</div>
+                            <div class="info-value">@Model.ClassId</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box">
+                            <div class="info-label">Class Name</div>
+                            <div class="info-value">@Model.ClassName</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box">
+                            <div class="info-label">Schedule</div>
+                            <div class="info-value">
+                                @if (Model.StartTime.HasValue && Model.EndTime.HasValue)
+                                {
+                                    <span>@Model.Day - @Model.StartTime.Value.ToString(@"hh\:mm") to @Model.EndTime.Value.ToString(@"hh\:mm")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Not scheduled</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box">
+                            <div class="info-label">Room</div>
+                            <div class="info-value">@(Model.RoomNumber ?? "Not assigned")</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box">
+                            <div class="info-label">Enrolled Students</div>
+                            <div class="info-value">@Model.Enrollments.Count students</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box">
+                            <div class="info-label">Status</div>
+                            <div class="info-value">
+                                @if (selectedDate.Date > DateTime.Today)
+                                {
+                                    <span class="badge bg-info"><i class="bi bi-calendar-event"></i> Future Date</span>
+                                }
+                                else if (selectedDate.Date < DateTime.Today)
+                                {
+                                    <span class="badge bg-secondary"><i class="bi bi-calendar-x"></i> Past Date</span>
+                                }
+                                else if (isActive)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-circle-fill blink"></i> Class in Progress</span>
+                                }
+                                else if (Model.EndTime.HasValue && currentTime > Model.EndTime.Value)
+                                {
+                                    <span class="badge bg-secondary"><i class="bi bi-check-circle"></i> Class Ended</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info"><i class="bi bi-clock"></i> Upcoming</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Attendance Taking Card -->
+    <div class="col-lg-4">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>Mark Attendance
+                </h6>
+            </div>
+            <div class="p-4 text-center">
+                @if (!isSelectedDate)
+                {
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-exclamation-triangle mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0 small"><strong>Not Scheduled for This Date</strong></p>
+                        <p class="mb-0 small">This class is scheduled for <strong>@Model.Day</strong>, not @selectedDay.</p>
+                    </div>
+                }
+                else if (selectedDate.Date > DateTime.Today)
+                {
+                    <!-- Future date -->
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-calendar-event mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0 small"><strong>Future Date</strong></p>
+                        <p class="mb-0 small">Attendance can only be marked on or after the class date.</p>
+                    </div>
+                }
+                else
+                {
+                    <!-- Attendance Marking Available -->
+                    <div class="marking-section">
+                        <i class="bi bi-check2-circle mb-3" style="font-size: 3rem; color: #0d6efd;"></i>
+                        <p class="mb-3"><strong>Ready to Mark Attendance</strong></p>
+                        <p class="text-muted small mb-3">Mark attendance for enrolled students below.</p>
+                        
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <button id="checkAllBtn" class="btn btn-success btn-sm w-100">
+                                    <i class="bi bi-check-all me-1"></i>Check All
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button id="uncheckAllBtn" class="btn btn-outline-secondary btn-sm w-100">
+                                    <i class="bi bi-x me-1"></i>Uncheck All
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <span id="savingIndicator" class="text-muted small mt-3" style="display: none;">
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                            Saving...
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manual Attendance Taking -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-people me-2"></i>Enrolled Students (@Model.Enrollments.Count)
+                </h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;">
+                                <input type="checkbox" id="selectAllCheckbox" class="form-check-input" />
+                            </th>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentList">
+                        @if (Model.Enrollments != null && Model.Enrollments.Any())
+                        {
+                            @foreach (var enrollment in Model.Enrollments.OrderBy(e => e.Student.User.FullName))
+                            {
+                                var todayAttendance = todayAttendances.FirstOrDefault(a => 
+                                    a.StudentId == enrollment.StudentId && 
+                                    a.ClassId == Model.ClassId && 
+                                    a.Date.Date == selectedDate.Date);
+                                var isPresent = todayAttendance != null && todayAttendance.Status == "Present";
+                                var attStatus = todayAttendance?.Status ?? "";
+
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input student-attendance" 
+                                               data-student-id="@enrollment.StudentId" 
+                                               data-class-id="@Model.ClassId"
+                                               @(isPresent ? "checked" : "") />
+                                    </td>
+                                    <td>@enrollment.Student.StudentId</td>
+                                    <td>@enrollment.Student.User.FullName</td>
+                                    <td><small class="text-muted">@enrollment.Student.User.Email</small></td>
+                                    <td>
+                                        <span class="badge @(isPresent ? "bg-success" : "bg-light text-dark")">
+                                            @(string.IsNullOrEmpty(attStatus) ? "Unmarked" : attStatus)
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox me-2"></i>No students enrolled in this class
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Styles -->
+<style>
+    .info-box {
+        padding: 0.75rem 0;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .info-value small {
+        display: block;
+        font-size: 0.85rem;
+    }
+
+    .pin-display-large {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .pin-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        opacity: 0.9;
+        margin-bottom: 0.5rem;
+    }
+
+    .pin-code {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: 4px;
+        font-family: 'Courier New', monospace;
+        margin: 1rem 0;
+    }
+
+    .qr-display {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .qr-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #6c757d;
+    }
+
+    .qr-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .generate-section {
+        padding: 1rem;
+    }
+
+    .marking-section {
+        padding: 1rem;
+    }
+
+    .blink {
+        animation: blink 1s infinite;
+    }
+
+    @@keyframes blink {
+        0%, 50%, 100% { opacity: 1; }
+        25%, 75% { opacity: 0.5; }
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+
+    .student-attendance {
+        cursor: pointer;
+    }
+</style>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+    const classId = '@Model.ClassId';
+    const selectedDate = '@selectedDate.ToString("yyyy-MM-dd")';
+    const checkAllBtn = document.getElementById('checkAllBtn');
+    const uncheckAllBtn = document.getElementById('uncheckAllBtn');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const studentCheckboxes = document.querySelectorAll('.student-attendance');
+    const savingIndicator = document.getElementById('savingIndicator');
+
+    // Check All functionality
+    if (checkAllBtn) {
+        checkAllBtn.addEventListener('click', function() {
+            studentCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            selectAllCheckbox.checked = true;
+            saveAllAttendance();
+        });
+    }
+
+    // Uncheck All functionality
+    if (uncheckAllBtn) {
+        uncheckAllBtn.addEventListener('click', function() {
+            studentCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectAllCheckbox.checked = false;
+            saveAllAttendance();
+        });
+    }
+
+    // Select All checkbox
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            studentCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            if (this.checked || document.querySelectorAll('.student-attendance:checked').length > 0) {
+                saveAllAttendance();
+            }
+        });
+    }
+
+    // Individual checkbox changes
+    studentCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            saveSingleAttendance(this);
+        });
+    });
+
+    // Save all attendance
+    function saveAllAttendance() {
+        const attendanceData = [];
+        
+        studentCheckboxes.forEach(checkbox => {
+            const studentId = checkbox.getAttribute('data-student-id');
+            const status = checkbox.checked ? 'Present' : 'Absent';
+            
+            attendanceData.push({
+                studentId: studentId,
+                classId: classId,
+                status: status,
+                date: selectedDate
+            });
+        });
+
+        showSavingIndicator();
+        
+        fetch('@Url.Action("SaveTeacherManualAttendance", "Teacher")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            },
+            body: JSON.stringify(attendanceData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideSavingIndicator();
+            if (data.success) {
+                updateStatusBadges();
+            } else {
+                alert('Error saving attendance: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            hideSavingIndicator();
+            console.error('Error:', error);
+            alert('Error saving attendance');
+        });
+    }
+
+    // Save single attendance
+    function saveSingleAttendance(checkbox) {
+        const studentId = checkbox.getAttribute('data-student-id');
+        const status = checkbox.checked ? 'Present' : 'Absent';
+
+        showSavingIndicator();
+
+        fetch('@Url.Action("SaveTeacherAttendance", "Teacher")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            },
+            body: JSON.stringify({
+                studentId: studentId,
+                classId: classId,
+                status: status,
+                date: selectedDate
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideSavingIndicator();
+            if (data.success) {
+                updateStatusBadges();
+            } else {
+                alert('Error saving attendance: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            hideSavingIndicator();
+            console.error('Error:', error);
+            alert('Error saving attendance');
+        });
+    }
+
+    // Update status badges
+    function updateStatusBadges() {
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const checkbox = row.querySelector('.student-attendance');
+            const statusBadge = row.querySelector('td:last-child .badge');
+            
+            if (checkbox && statusBadge) {
+                if (checkbox.checked) {
+                    statusBadge.className = 'badge bg-success';
+                    statusBadge.textContent = 'Present';
+                } else {
+                    statusBadge.className = 'badge bg-light text-dark';
+                    statusBadge.textContent = 'Absent';
+                }
+            }
+        });
+    }
+
+    function showSavingIndicator() {
+        if (savingIndicator) savingIndicator.style.display = 'inline-block';
+    }
+
+    function hideSavingIndicator() {
+        if (savingIndicator) savingIndicator.style.display = 'none';
+    }
+
+    // Update select all checkbox state
+    function updateSelectAllCheckbox() {
+        const checkedCount = document.querySelectorAll('.student-attendance:checked').length;
+        const totalCount = studentCheckboxes.length;
+        
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = checkedCount === totalCount && totalCount > 0;
+            selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
+        }
+    }
+
+    // Monitor checkbox changes to update select all
+    studentCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectAllCheckbox);
+    });
+
+    updateSelectAllCheckbox();
+</script>

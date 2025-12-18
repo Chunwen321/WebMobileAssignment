@@ -121,11 +121,11 @@ namespace WebMobileAssignment.Controllers
             
             // Default to today's date if not provided
             DateTime dateToCheck = string.IsNullOrEmpty(selectedDate) 
-                ? DateTime.Now 
+                ? DateTime.Today 
                 : DateTime.Parse(selectedDate);
             
             // Get the day of week (Monday, Tuesday, etc.)
-            string dayOfWeek = dateToCheck.ToString("dddd");
+            string dayOfWeek = dateToCheck.DayOfWeek.ToString();
             
             // Get all classes for today's day of week
             var classes = await _db.Classes
@@ -138,10 +138,208 @@ namespace WebMobileAssignment.Controllers
                 .ToListAsync();
             
             ViewBag.Classes = classes;
-            ViewBag.SelectedDate = dateToCheck.ToString("yyyy-MM-dd");
-            ViewBag.DayOfWeek = dayOfWeek;
+            ViewBag.SelectedDate = dateToCheck;
+            ViewBag.SelectedDay = dayOfWeek;
             await GetCurrentTeacherAsync();
             return View("TeachMarkAttendance");
+        }
+
+        // Attendance - Class Detail
+        public async Task<IActionResult> TeachAttendanceClassDetail(string id, string selectedDate = null)
+        {
+            ViewBag.ActiveMenu = "Attendance";
+            ViewBag.ActiveSubmenu = "MarkAttendance";
+            
+            var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(userEmail))
+                return RedirectToAction("Login", "Account");
+            
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+            if (user == null)
+                return Unauthorized();
+            
+            var classDetail = await _db.Classes
+                .Include(c => c.Teacher)
+                    .ThenInclude(t => t.User)
+                .Include(c => c.Enrollments)
+                    .ThenInclude(e => e.Student)
+                        .ThenInclude(s => s.User)
+                .Include(c => c.Attendances)
+                .Include(c => c.Subject)
+                .FirstOrDefaultAsync(c => c.ClassId == id);
+            
+            if (classDetail == null)
+                return NotFound();
+            
+            // Verify teacher owns this class
+            if (classDetail.Teacher?.User?.UserId != user.UserId)
+                return Unauthorized();
+            
+            // Set selected date
+            DateTime dateToCheck = string.IsNullOrEmpty(selectedDate) 
+                ? DateTime.Today 
+                : DateTime.Parse(selectedDate);
+            
+            ViewBag.SelectedDate = dateToCheck;
+            
+            // Get attendance for selected date
+            var attendances = await _db.Attendances
+                .Where(a => a.ClassId == id && a.Date.Date == dateToCheck.Date)
+                .ToListAsync();
+            
+            ViewBag.TodayAttendances = attendances;
+            
+            // Get all sessions for this class
+            var sessions = await _db.AttendanceSessions
+                .Where(s => s.ClassId == id)
+                .ToListAsync();
+            
+            ViewBag.Sessions = sessions;
+            ViewBag.AllSessions = sessions;
+            
+            await GetCurrentTeacherAsync();
+            return View("TeachAttendanceClassDetail", classDetail);
+        }
+
+        // Save single attendance
+        [HttpPost]
+        public async Task<IActionResult> SaveTeacherAttendance([FromBody] dynamic data)
+        {
+            try
+            {
+                var studentId = (string)data.studentId;
+                var classId = (string)data.classId;
+                var status = (string)data.status;
+                var dateStr = (string)data.date;
+                
+                if (!DateTime.TryParse(dateStr, out DateTime date))
+                    return Json(new { success = false, message = "Invalid date" });
+                
+                var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+                
+                if (user == null)
+                    return Unauthorized();
+                
+                var teacher = await _db.Teachers
+                    .FirstOrDefaultAsync(t => t.UserId == user.UserId);
+                
+                if (teacher == null)
+                    return Unauthorized();
+                
+                // Verify teacher owns this class
+                var classObj = await _db.Classes
+                    .FirstOrDefaultAsync(c => c.ClassId == classId && c.TeacherId == teacher.TeacherId);
+                
+                if (classObj == null)
+                    return Unauthorized();
+                
+                // Find or create attendance record
+                var attendance = await _db.Attendances
+                    .FirstOrDefaultAsync(a => a.StudentId == studentId && 
+                                              a.ClassId == classId && 
+                                              a.Date.Date == date.Date);
+                
+                if (attendance == null)
+                {
+                    attendance = new Attendance
+                    {
+                        StudentId = studentId,
+                        ClassId = classId,
+                        Status = status,
+                        Date = date,
+                        MarkedByTeacherId = teacher.TeacherId,
+                        TakenOn = DateTime.Now
+                    };
+                    _db.Attendances.Add(attendance);
+                }
+                else
+                {
+                    attendance.Status = status;
+                    attendance.MarkedByTeacherId = teacher.TeacherId;
+                    attendance.TakenOn = DateTime.Now;
+                    _db.Attendances.Update(attendance);
+                }
+                
+                await _db.SaveChangesAsync();
+                return Json(new { success = true, message = "Attendance saved successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Save batch attendance
+        [HttpPost]
+        public async Task<IActionResult> SaveTeacherManualAttendance([FromBody] List<dynamic> data)
+        {
+            try
+            {
+                var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+                
+                if (user == null)
+                    return Unauthorized();
+                
+                var teacher = await _db.Teachers
+                    .FirstOrDefaultAsync(t => t.UserId == user.UserId);
+                
+                if (teacher == null)
+                    return Unauthorized();
+                
+                foreach (var item in data)
+                {
+                    var studentId = (string)item.studentId;
+                    var classId = (string)item.classId;
+                    var status = (string)item.status;
+                    var dateStr = (string)item.date;
+                    
+                    if (!DateTime.TryParse(dateStr, out DateTime date))
+                        continue;
+                    
+                    // Verify teacher owns this class
+                    var classObj = await _db.Classes
+                        .FirstOrDefaultAsync(c => c.ClassId == classId && c.TeacherId == teacher.TeacherId);
+                    
+                    if (classObj == null)
+                        continue;
+                    
+                    // Find or create attendance record
+                    var attendance = await _db.Attendances
+                        .FirstOrDefaultAsync(a => a.StudentId == studentId && 
+                                                  a.ClassId == classId && 
+                                                  a.Date.Date == date.Date);
+                    
+                    if (attendance == null)
+                    {
+                        attendance = new Attendance
+                        {
+                            StudentId = studentId,
+                            ClassId = classId,
+                            Status = status,
+                            Date = date,
+                            MarkedByTeacherId = teacher.TeacherId,
+                            TakenOn = DateTime.Now
+                        };
+                        _db.Attendances.Add(attendance);
+                    }
+                    else
+                    {
+                        attendance.Status = status;
+                        attendance.MarkedByTeacherId = teacher.TeacherId;
+                        attendance.TakenOn = DateTime.Now;
+                        _db.Attendances.Update(attendance);
+                    }
+                }
+                
+                await _db.SaveChangesAsync();
+                return Json(new { success = true, message = "Attendance saved successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         // Attendance - View History
