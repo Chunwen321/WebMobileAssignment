@@ -12,7 +12,7 @@
     var totalAttendance = attendances.Count;
     var presentCount = attendances.Count(a => a.Status == "Present");
     var absentCount = attendances.Count(a => a.Status == "Absent");
-    var lateCount = attendances.Count(a => a.Status == "Late");
+    var leaveCount = attendances.Count(a => a.Status == "Leave");
     var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 0) : 0;
   
     var statusBadge = attendanceRate >= 80 ? "success" : (attendanceRate >= 70 ? "warning" : "danger");
@@ -109,7 +109,7 @@
        </div>
           <div class="perf-row">
 <span>Leave:</span>
-   <strong class="text-warning">@lateCount</strong>
+   <strong class="text-warning">@leaveCount</strong>
     </div>
            </div>
             </div>
@@ -163,7 +163,7 @@
    @foreach (var attendance in attendances.Take(20))
             {
    var statusBadgeColor = attendance.Status == "Present" ? "success" : 
-  (attendance.Status == "Late" ? "warning" : 
+  (attendance.Status == "Leave" ? "warning" : 
         (attendance.Status == "Absent" ? "danger" : "secondary"));
  
    <tr>

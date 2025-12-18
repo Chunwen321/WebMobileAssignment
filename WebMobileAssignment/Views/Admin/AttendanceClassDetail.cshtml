@@ -25,7 +25,7 @@
         isPinExpired = nowTime > Model.EndTime.Value;
     }
     
-    var todayAttendances = ViewBag.TodayAttendances as List<WebMobileAssignment.Models.Attendance> ?? new List<WebMobileAssignment.Models.Attendance>();
+    var todayAttendances = ViewBag.TodayAttendances as List<WebMobileAssignment.Controllers.AdminController.AttendanceSummaryDto> ?? new List<WebMobileAssignment.Controllers.AdminController.AttendanceSummaryDto>();
     
     var todayDay = DateTime.Now.DayOfWeek.ToString();
     var isToday = !string.IsNullOrEmpty(Model.Day) && Model.Day.Equals(todayDay, StringComparison.OrdinalIgnoreCase) && selectedDate.Date == DateTime.Today;
@@ -34,6 +34,10 @@
     var isActive = Model.StartTime.HasValue && Model.EndTime.HasValue && 
                    currentTime >= Model.StartTime.Value && currentTime <= Model.EndTime.Value &&
                    selectedDate.Date == DateTime.Today;
+    
+    // Use filtered enrollments - only students enrolled on or before the selected date
+    var filteredEnrollments = ViewBag.FilteredEnrollments as List<WebMobileAssignment.Models.Enrollment> ?? Model.Enrollments.ToList();
+    var filteredEnrollmentCount = filteredEnrollments.Count;
 }
 
 <!-- Header Section -->
@@ -101,7 +105,7 @@
                     <div class="col-md-6">
                         <div class="info-box">
                             <div class="info-label">Enrolled Students</div>
-                            <div class="info-value">@Model.Enrollments.Count students</div>
+                            <div class="info-value">@filteredEnrollmentCount students</div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -156,20 +160,18 @@
                 else if (hasValidSession)
                 {
                     <!-- Show existing PIN (valid for the selected date) -->
-                    @if (isPinExpired)
+                    @if (isPinExpired || selectedDate.Date < DateTime.Today)
                     {
-                        <!-- PIN exists but expired -->
-                        <div class="pin-display-large" style="opacity: 0.6;">
+                        <!-- PIN exists but expired (past date or class ended) -->
+                        <div class="pin-display-large" style="position: relative; opacity: 0.7;">
                             <div class="pin-label">6-DIGIT PIN CODE</div>
-                            <div class="pin-code text-muted">@sessionOnSelectedDate.PinCode</div>
-                            <div class="badge bg-danger mt-2">
-                                <i class="bi bi-x-circle"></i> EXPIRED
+                            <div class="pin-code">@sessionOnSelectedDate.PinCode</div>
+                            
+                            <!-- Red overlay with EXPIRED text -->
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(220, 53, 69, 0.6); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                                <div style="font-size: 2.5rem; font-weight: bold; color: white; letter-spacing: 2px;">EXPIRED</div>
+                                <div style="font-size: 0.9rem; color: white; margin-top: 8px;">@(selectedDate.Date < DateTime.Today ? "Class date has passed" : "Class ended")</div>
                             </div>
-                        </div>
-                        
-                        <div class="alert alert-danger mt-3 mb-0">
-                            <i class="bi bi-clock-history"></i>
-                            <small>This PIN expired at @Model.EndTime.Value.ToString("hh\\:mm") when the class ended. Students can no longer use this PIN.</small>
                         </div>
                     }
                     else
@@ -188,14 +190,7 @@
                             <div id="qrCodeContainer" class="qr-container"></div>
                         </div>
 
-                        @if (selectedDate.Date < DateTime.Today)
-                        {
-                            <div class="alert alert-info mt-3 mb-0">
-                                <i class="bi bi-calendar-check"></i>
-                                <small>This PIN was generated on @sessionOnSelectedDate.CreatedDate.ToString("MMM dd, yyyy") (Past Date)</small>
-                            </div>
-                        }
-                        else if (selectedDate.Date == DateTime.Today && Model.EndTime.HasValue)
+                        @if (selectedDate.Date == DateTime.Today && Model.EndTime.HasValue)
                         {
                             <div class="alert alert-success mt-3 mb-0">
                                 <i class="bi bi-check-circle"></i>
@@ -266,7 +261,7 @@
         <div class="dashboard-card">
             <div class="card-header-custom d-flex justify-content-between align-items-center">
                 <h6 class="card-title mb-0">
-                    <i class="bi bi-people me-2"></i>Enrolled Students (@Model.Enrollments.Count)
+                    <i class="bi bi-people me-2"></i>Enrolled Students (@filteredEnrollmentCount)
                 </h6>
                 <div>
                     <button id="checkAllBtn" class="btn btn-sm btn-outline-success me-2">
@@ -295,9 +290,9 @@
                         </tr>
                     </thead>
                     <tbody id="studentList">
-                        @if (Model.Enrollments != null && Model.Enrollments.Any())
+                        @if (filteredEnrollments != null && filteredEnrollments.Any())
                         {
-                            @foreach (var enrollment in Model.Enrollments.OrderBy(e => e.Student.User.FullName))
+                            @foreach (var enrollment in filteredEnrollments.OrderBy(e => e.Student.User.FullName))
                             {
                                 var attendance = todayAttendances.FirstOrDefault(a => a.StudentId == enrollment.Student.StudentId);
                                 var isPresent = attendance != null && attendance.Status == "Present";
@@ -336,11 +331,23 @@
                                                         <i class="bi bi-x-circle"></i> Absent
                                                     </span>
                                                 }
+                                                else if (attendance.Status == "Leave")
+                                                {
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-calendar-check"></i> Leave
+                                                    </span>
+                                                }
+                                                else if (attendance.Status == "Not Marked")
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-dash-circle"></i> Not Marked
+                                                    </span>
+                                                }
                                             }
                                             else
                                             {
                                                 <span class="badge bg-secondary">
-                                                    <i class="bi bi-clock"></i> Not Marked
+                                                    <i class="bi bi-dash-circle"></i> Not Marked
                                                 </span>
                                             }
                                         </span>
@@ -351,7 +358,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-3">No students enrolled</td>
+                                <td colspan="5" class="text-center text-muted py-3">No students enrolled as of @selectedDate.ToString("MMM dd, yyyy")</td>
                             </tr>
                         }
                     </tbody>
@@ -758,7 +765,6 @@
                             setTimeout(() => toast.remove(), 3000);
                         } else {
                             alert('Error: ' + response.message);
-                            // Revert checkboxes on error
                             location.reload();
                         }
                     },
@@ -772,76 +778,6 @@
                     }
                 });
             });
-
-            // Automatic absent marking function (runs periodically and on visibility change)
-            function autoMarkAbsentStudents() {
-                // Only auto-mark for today's classes after class has ended
-                const today = new Date().toISOString().split('T')[0];
-                if (selectedDate !== today) {
-                    return; // Don't auto-mark for past or future dates
-                }
-
-                // Check if class has ended (only auto-mark after class time)
-                @if (Model.EndTime.HasValue && selectedDate.Date == DateTime.Today)
-                {
-                    @:const classEndTime = '@Model.EndTime.Value.ToString("hh\\:mm")';
-                    @:const now = new Date();
-                    @:const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-                    @:
-                    @:if (currentTime < classEndTime) {
-                    @:    console.log('Class not ended yet. Auto-mark will run after class ends.');
-                    @:    return;
-                    @:}
-                }
-
-                console.log('Auto-marking absent students...');
-                
-                $.ajax({
-                    url: '/Admin/AutoMarkAbsentStudents',
-                    type: 'POST',
-                    data: {
-                        classId: classId,
-                        attendanceDate: selectedDate
-                    },
-                    success: function(response) {
-                        if (response.success && response.markedCount > 0) {
-                            console.log(`Auto-marked ${response.markedCount} student(s) as absent`);
-                            
-                            // Show notification toast instead of alert
-                            const toast = $('<div class="alert alert-info alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">' +
-                                '<i class="bi bi-info-circle me-2"></i>' +
-                                `Automatically marked ${response.markedCount} student(s) as absent` +
-                                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
-                                '</div>');
-                            
-                            $('body').append(toast);
-                            
-                            // Reload page to show updated attendance
-                            setTimeout(() => {
-                                location.reload();
-                            }, 2000);
-                        } else {
-                            console.log('All students already marked');
-                        }
-                    },
-                    error: function() {
-                        console.error('Failed to auto-mark absent students');
-                    }
-                });
-            }
-
-            // Run auto-mark when page becomes visible (user switches back to this tab)
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden) {
-                    autoMarkAbsentStudents();
-                }
-            });
-
-            // Run auto-mark every 5 minutes
-            setInterval(autoMarkAbsentStudents, 5 * 60 * 1000);
-
-            // Run auto-mark on page load (after 3 seconds to allow initial page setup)
-            setTimeout(autoMarkAbsentStudents, 3000);
         });
     </script>
 }

@@ -302,7 +302,7 @@ ${enrollment.startTime && enrollment.endTime ? `<span class="ms-1" style="color:
  * @param {Object} data - The attendance data object
  * @param {number} data.presentCount - Number of present days
  * @param {number} data.absentCount - Number of absent days
- * @param {number} data.lateCount - Number of late arrivals
+ * @param {number} data.leaveCount - Number of leave days
  * @param {number} data.totalAttendance - Total attendance records
  * @returns {Chart|null} - The Chart.js instance or null if Chart.js is not loaded
  */
@@ -323,8 +323,8 @@ function renderAttendanceChart(canvasId, data) {
     // Validate data
     const presentCount = data.presentCount || 0;
     const absentCount = data.absentCount || 0;
-    const lateCount = data.lateCount || 0;
-    const totalAttendance = data.totalAttendance || (presentCount + absentCount + lateCount);
+    const leaveCount = data.leaveCount || 0;
+    const totalAttendance = data.totalAttendance || (presentCount + absentCount + leaveCount);
 
     // Calculate percentages
     let dataPercents = [0, 0, 0];
@@ -332,7 +332,7 @@ function renderAttendanceChart(canvasId, data) {
         dataPercents = [
          Math.round((presentCount / totalAttendance) * 100),
             Math.round((absentCount / totalAttendance) * 100),
-  Math.round((lateCount / totalAttendance) * 100)
+  Math.round((leaveCount / totalAttendance) * 100)
   ];
     }
 
@@ -347,13 +347,13 @@ function renderAttendanceChart(canvasId, data) {
  const chart = new Chart(ctx, {
       type: 'doughnut',
   data: {
-  labels: ['Present', 'Absent', 'Late'],
+  labels: ['Present', 'Absent', 'Leave'],
         datasets: [{
 data: dataPercents,
      backgroundColor: [
   'rgba(25, 135, 84, 0.95)',// Present (green)
         'rgba(220, 53, 69, 0.95)',   // Absent (red)
-       'rgba(255, 193, 7, 0.95)'    // Late (amber)
+       'rgba(13, 202, 240, 0.95)'    // Leave (blue)
      ],
   borderWidth: 0,
    hoverOffset: 6

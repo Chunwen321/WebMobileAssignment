@@ -375,4 +375,82 @@ public class Helper(IWebHostEnvironment en,
 
         SendEmail(mailMessage);
     }
+
+    public void SendLeaveApprovalEmail(string toEmail, string userName, DateTime startDate, DateTime endDate, int totalDays, string reason, string? remarks)
+    {
+        var mailMessage = new MailMessage
+        {
+            To = { toEmail },
+            Subject = "Leave Application Approved - Tuition Attendance System",
+            Body = $@"
+                <html>
+                  <body style='font-family: Arial, sans-serif;'>
+                    <div style='max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+                      <div style='background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1)'>
+                        <h2 style='color: #28a745;'>Leave Application Approved</h2>
+                        <p>Dear <strong>{userName}</strong>,</p>
+                        <p>Your leave application has been <strong style='color: #28a745;'>approved</strong>.</p>
+                            
+                        <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+                          <p style='margin: 5px 0;'><strong>Leave Period:</strong> {startDate:dd MMM yyyy} to {endDate:dd MMM yyyy}</p>
+                          <p style='margin: 5px 0;'><strong>Total Days:</strong> {totalDays} day(s)</p>
+                          <p style='margin: 5px 0;'><strong>Reason:</strong> {reason}</p>
+                          {(string.IsNullOrEmpty(remarks) ? "" : $"<p style='margin: 5px 0;'><strong>Admin Remarks:</strong> {remarks}</p>")}
+                        </div>
+
+                        <div style='background-color: #d1ecf1; padding: 15px; border-radius: 5px; border-left: 4px solid #0c5460;'>
+                          <p style='margin: 0; color: #0c5460;'>
+                            <strong>Note:</strong> Your attendance for the approved leave period has been automatically marked as Leave 
+                            and will be counted as present for attendance rate calculations.
+                          </p>
+                        </div>
+
+                        <p style='color: #6c757d; font-size: 12px; margin-top: 30px;'>
+                          This is an automated email from the Tuition Attendance System.
+                        </p>
+                      </div>
+                    </div>
+                  </body>
+                </html>",
+            IsBodyHtml = true
+        };
+        SendEmail(mailMessage);
+    }
+
+    public void SendLeaveRejectionEmail(string toEmail, string userName, DateTime startDate, DateTime endDate, int totalDays, string reason, string? remarks)
+    {
+        var mailMessage = new MailMessage
+        {
+            To = { toEmail },
+            Subject = "Leave Application Rejected - Tuition Attendance System",
+            Body = $@"
+                <html>
+                  <body style='font-family: Arial, sans-serif;'>
+                    <div style='max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
+                      <div style='background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1)'>
+                        <h2 style='color: #dc3545;'>Leave Application Rejected</h2>
+                        <p>Dear <strong>{userName}</strong>,</p>
+                        <p>We regret to inform you that your leave application has been <strong style='color: #dc3545;'>rejected</strong>.</p>
+                            
+                        <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+                          <p style='margin: 5px 0;'><strong>Leave Period:</strong> {startDate:dd MMM yyyy} to {endDate:dd MMM yyyy}</p>
+                          <p style='margin: 5px 0;'><strong>Total Days:</strong> {totalDays} day(s)</p>
+                          <p style='margin: 5px 0;'><strong>Reason:</strong> {reason}</p>
+                          {(string.IsNullOrEmpty(remarks) ? "" : $"<p style='margin: 5px 0;'><strong>Admin Remarks:</strong> {remarks}</p>")}
+                        </div>
+
+                        <p>If you have any questions, please contact the administration office.</p>
+                        <p><em>You may reapply for leave for the same dates if needed.</em></p>
+
+                        <p style='color: #6c757d; font-size: 12px; margin-top: 30px;'>
+                          This is an automated email from the Tuition Attendance System.
+                        </p>
+                      </div>
+                    </div>
+                  </body>
+                </html>",
+            IsBodyHtml = true
+        };
+        SendEmail(mailMessage);
+    }
 }

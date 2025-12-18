@@ -151,16 +151,16 @@
                     </div>
                 </div>
 
-                <!-- Late -->
+                <!-- Leave -->
                 <div class="col-lg-3 col-md-6">
-                    <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #00d9ff 0%, #1ed3f3 100%);">
                         <i class="bi bi-clock-fill" style="font-size: 2.5rem; color: white;"></i>
-                        <h3 class="mt-2 mb-0 text-white">@ViewBag.LateToday</h3>
-                        <small class="text-white">Late</small>
+                        <h3 class="mt-2 mb-0 text-white">@ViewBag.LeaveToday</h3>
+                        <small class="text-white">Leave</small>
                         @if (ViewBag.AttendanceToday > 0)
                         {
                             <div class="text-white mt-1">
-                                <strong>@(((decimal)ViewBag.LateToday / ViewBag.AttendanceToday * 100).ToString("F1"))%</strong>
+                                <strong>@(((decimal)(ViewBag.LeaveToday ?? 0) / ViewBag.AttendanceToday * 100).ToString("F1"))%</strong>
                             </div>
                         }
                     </div>
@@ -234,7 +234,6 @@
                                             {
                                                 "present" => "success",
                                                 "absent" => "danger",
-                                                "late" => "warning",
                                                 "leave" => "info",
                                                 _ => "secondary"
                                             };
@@ -242,7 +241,6 @@
                                             {
                                                 "present" => "bi-check-circle-fill",
                                                 "absent" => "bi-x-circle-fill",
-                                                "late" => "bi-clock-fill",
                                                 "leave" => "bi-calendar-check-fill",
                                                 _ => "bi-question-circle-fill"
                                             };

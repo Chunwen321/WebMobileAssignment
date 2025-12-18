@@ -50,8 +50,8 @@
 
                     <!-- Subject -->
                     <div class="col-md-6 mb-3">
-                        <label for="subjectId" class="form-label">Subject</label>
-                        <select id="subjectId" name="subjectId" class="form-select">
+                        <label for="subjectId" class="form-label">Subject <span class="text-danger">*</span></label>
+                        <select id="subjectId" name="subjectId" class="form-select" required>
                             <option value="">-- Select Subject --</option>
                             @if (ViewBag.Subjects != null)
                             {
@@ -63,16 +63,16 @@
                                 }
                             }
                         </select>
-                        <small class="text-muted">Optional: Link to a subject category</small>
+                        <small class="text-muted">Subject category for this class</small>
                     </div>
                 </div>
 
                 <div class="row">
                     <!-- Teacher Assignment -->
                     <div class="col-md-6 mb-3">
-                        <label for="teacherId" class="form-label">Assigned Teacher</label>
-                        <select id="teacherId" name="teacherId" class="form-select">
-                            <option value="">-- No Teacher Assigned --</option>
+                        <label for="teacherId" class="form-label">Assigned Teacher <span class="text-danger">*</span></label>
+                        <select id="teacherId" name="teacherId" class="form-select" required>
+                            <option value="">-- Select Teacher --</option>
                             @if (ViewBag.Teachers != null)
                             {
                                 @foreach (var teacher in ViewBag.Teachers)
@@ -87,13 +87,25 @@
                                 }
                             }
                         </select>
-                        <small class="text-muted">Teacher can be assigned later if not selected now</small>
+                        <small class="text-muted">Teacher assigned to this class</small>
                     </div>
 
                     <!-- Room Number -->
                     <div class="col-md-6 mb-3">
-                        <label for="roomNumber" class="form-label">Room Number</label>
-                        <input type="text" id="roomNumber" name="roomNumber" class="form-control" placeholder="e.g. A101, Lab 3" value="@ViewBag.RoomNumber" />
+                        <label for="roomNumber" class="form-label">Venue/Room <span class="text-danger">*</span></label>
+                        <select id="roomNumber" name="roomNumber" class="form-select" required>
+                            <option value="">-- Select Venue --</option>
+                            <option value="R110" selected="@(ViewBag.RoomNumber == "R110")">R110</option>
+                            <option value="R210" selected="@(ViewBag.RoomNumber == "R210")">R210</option>
+                            <option value="R310" selected="@(ViewBag.RoomNumber == "R310")">R310</option>
+                            <option value="Lab 1" selected="@(ViewBag.RoomNumber == "Lab 1")">Lab 1</option>
+                            <option value="Lab 2" selected="@(ViewBag.RoomNumber == "Lab 2")">Lab 2</option>
+                            <option value="Lab 3" selected="@(ViewBag.RoomNumber == "Lab 3")">Lab 3</option>
+                            <option value="Auditorium" selected="@(ViewBag.RoomNumber == "Auditorium")">Auditorium</option>
+                            <option value="Gymnasium" selected="@(ViewBag.RoomNumber == "Gymnasium")">Gymnasium</option>
+                            <option value="Music Room" selected="@(ViewBag.RoomNumber == "Music Room")">Music Room</option>
+                            <option value="Art Studio" selected="@(ViewBag.RoomNumber == "Art Studio")">Art Studio</option>
+                        </select>
                         <small class="text-muted">Physical location where class is held</small>
                     </div>
                 </div>
@@ -105,8 +117,8 @@
                 <div class="row">
                     <!-- Day of Week -->
                     <div class="col-md-4 mb-3">
-                        <label for="day" class="form-label">Day of Week</label>
-                        <select id="day" name="day" class="form-select">
+                        <label for="day" class="form-label">Day of Week <span class="text-danger">*</span></label>
+                        <select id="day" name="day" class="form-select" required>
                             <option value="">-- Select Day --</option>
                             <option value="Monday" selected="@(ViewBag.Day == "Monday")">Monday</option>
                             <option value="Tuesday" selected="@(ViewBag.Day == "Tuesday")">Tuesday</option>
@@ -121,15 +133,15 @@
 
                     <!-- Start Time -->
                     <div class="col-md-4 mb-3">
-                        <label for="startTime" class="form-label">Start Time</label>
-                        <input type="time" id="startTime" name="startTime" class="form-control" value="@ViewBag.StartTime" />
+                        <label for="startTime" class="form-label">Start Time <span class="text-danger">*</span></label>
+                        <input type="time" id="startTime" name="startTime" class="form-control" value="@ViewBag.StartTime" required />
                         <small class="text-muted">Class start time</small>
                     </div>
 
                     <!-- End Time -->
                     <div class="col-md-4 mb-3">
-                        <label for="endTime" class="form-label">End Time</label>
-                        <input type="time" id="endTime" name="endTime" class="form-control" value="@ViewBag.EndTime" />
+                        <label for="endTime" class="form-label">End Time <span class="text-danger">*</span></label>
+                        <input type="time" id="endTime" name="endTime" class="form-control" value="@ViewBag.EndTime" required />
                         <small class="text-muted">Class end time</small>
                     </div>
                 </div>
@@ -151,6 +163,24 @@
                             <i class="bi bi-info-circle me-2"></i>
                             <strong>Note:</strong> Current capacity starts at 0 and increases as students enroll in this class.
                         </div>
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-toggle-on text-danger me-2"></i>Status
+                </h6>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                   id="isActive" name="isActive" value="true" checked />
+                            <label class="form-check-label" for="isActive">
+                                Class is Active
+                            </label>
+                        </div>
+                        <small class="text-muted">
+                            Inactive classes won't show in attendance for future dates
+                        </small>
                     </div>
                 </div>
 
