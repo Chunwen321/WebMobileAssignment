@@ -130,6 +130,11 @@ public class User
 
     public bool IsActive { get; set; } = true;
 
+    // Login attempt tracking
+    public int FailedLoginAttempts { get; set; } = 0;
+    public DateTime? LockoutEnd { get; set; }
+    public DateTime? LastFailedLogin { get; set; }
+
     // Navigation property
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     public ICollection<LeaveApplication> LeaveApplications { get; set; } = new List<LeaveApplication>();
