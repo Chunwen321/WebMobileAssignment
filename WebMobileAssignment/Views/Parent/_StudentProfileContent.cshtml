@@ -3,7 +3,7 @@
     var totalAttendance = ViewBag.TotalAttendance ?? 0;
  var presentCount = ViewBag.PresentCount ?? 0;
     var absentCount = ViewBag.AbsentCount ?? 0;
- var lateCount = ViewBag.LateCount ?? 0;
+ var leaveCount = ViewBag.LeaveCount ?? 0;
   var attendanceRate = ViewBag.AttendanceRate ?? 0;
  
     // Pagination for enrolled classes
@@ -213,8 +213,8 @@ data-page="@(classPage - 1)"
       </div>
   </div>
   <div class="col-md-3">
-  <div class="text-center p-3" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
-              <h3 class="mb-0" style="color: #ffc107;">@lateCount</h3>
+  <div class="text-center p-3" style="background: rgba(13, 202, 240, 0.1); border-radius: 8px;">
+              <h3 class="mb-0" style="color: #0dcaf0;">@leaveCount</h3>
    <small class="text-muted">Leave</small>
     </div>
       </div>

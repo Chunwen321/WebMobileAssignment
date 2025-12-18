@@ -64,7 +64,7 @@ ViewBag.ActiveMenu = "Classes";
      var totalAttendance = classAttendances.Count;
             var presentCount = classAttendances.Count(a => a.Status == "Present");
        var absentCount = classAttendances.Count(a => a.Status == "Absent");
-         var lateCount = classAttendances.Count(a => a.Status == "Late");
+         var leaveCount = classAttendances.Count(a => a.Status == "Leave");
  var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 0) : 0;
        
    // Determine status
@@ -155,7 +155,7 @@ ViewBag.ActiveMenu = "Classes";
   <i class="bi bi-clock-fill"></i>
   </div>
   <div class="stat-info">
-          <div class="stat-value">@lateCount</div>
+          <div class="stat-value">@leaveCount</div>
     <div class="stat-label">Leave</div>
   </div>
   </div>

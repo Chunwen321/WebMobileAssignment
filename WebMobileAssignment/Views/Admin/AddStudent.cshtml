@@ -78,16 +78,14 @@
                     </div>
                     
                     <div class="col-md-8">
-                        <div class="alert alert-info border-0" style="background-color: #d1ecf1;">
+                        <div class="alert alert-info border-0">
                             <h6 class="alert-heading">
-                                <i class="bi bi-lightbulb-fill me-2 text-info"></i>Profile Picture Guidelines
+                                <i class="bi bi-lightbulb-fill me-2"></i>Profile Picture Guidelines
                             </h6>
                             <ul class="mb-0">
                                 <li>Upload a clear photo of the student</li>
-                                <li><strong>NEW:</strong> Use your webcam to take a photo directly</li>
-                                <li><strong>NEW:</strong> Click "Edit Photo" to crop, rotate, and adjust your image</li>
-                                <li>Image will be automatically uploaded to cloud storage (AWS S3)</li>
-                                <li>Square images work best (will be displayed as circle)</li>
+                                <li>Use your webcam to take a photo directly</li>
+                                <li>Click "Edit Photo" to crop, rotate, and adjust your image</li>
                                 <li>Supported formats: JPG, PNG, GIF, WEBP</li>
                                 <li>Maximum file size: 5 MB</li>
                                 <li>If not uploaded, a default icon will be used</li>
@@ -163,23 +161,23 @@
 
                 <!-- Parent Information -->
                 <h6 class="text-danger mb-3 mt-4 border-bottom pb-2">
-                    <i class="bi bi-people-fill me-2"></i>Parent/Guardian Information
+                    <i class="bi bi-people-fill me-2"></i>Parent/Guardian Information <span class="text-danger">*</span>
                 </h6>
 
                 <div class="row mb-3">
                     <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <strong>Parent Options:</strong> You can either select an existing parent from the dropdown below, search for a parent by email, or create a new parent by filling in all the fields.
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Parent Required:</strong> Every student must have a parent/guardian. You can either select an existing parent from the dropdown below, search for a parent by email, or create a new parent by filling in all the required fields.
                         </div>
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label class="form-label">Select Existing Parent</label>
+                        <label class="form-label">Select Existing Parent <span class="text-danger">*</span></label>
                         <select id="parentSelect" name="parentId" class="form-select">
-                            <option value="">-- Create New Parent or Search --</option>
+                            <option value="">-- Select or Create New Parent --</option>
                             @if (ViewBag.Parents != null)
                             {
                                 @foreach (var parent in ViewBag.Parents)
@@ -267,14 +265,13 @@
                         </div>
                         
                         <div class="col-md-8">
-                            <div class="alert alert-warning border-0" style="background-color: #fff3cd;">
+                            <div class="alert alert-warning border-0">
                                 <h6 class="alert-heading">
-                                    <i class="bi bi-lightbulb-fill me-2 text-warning"></i>Parent Profile Picture (Optional)
+                                    <i class="bi bi-lightbulb-fill me-2"></i>Parent Profile Picture (Optional)
                                 </h6>
                                 <ul class="mb-0 small">
                                     <li>Upload a photo for the parent/guardian account</li>
                                     <li>This is <strong>optional</strong> - if not uploaded, default icon will be used</li>
-                                    <li>Square images work best (displayed as circle)</li>
                                     <li>Max size: 5 MB | Formats: JPG, PNG, GIF, WEBP</li>
                                     <li>Only applies when creating a <strong>new parent</strong> account</li>
                                 </ul>

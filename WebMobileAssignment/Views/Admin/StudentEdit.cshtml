@@ -97,14 +97,17 @@
                                     <i class="bi bi-crop"></i> Edit Photo
                                 </button>
                                 
-                                <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-secondary" style="display: none;">
-                                    <i class="bi bi-x"></i> Clear
-                                </button>
+                                @if (string.IsNullOrEmpty(Model.User.ProfilePicture) || Model.User.ProfilePicture.StartsWith("/images/"))
+                                {
+                                    <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-secondary" style="display: none;">
+                                        <i class="bi bi-x"></i> Clear
+                                    </button>
+                                }
                                 
                                 @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
                                 {
                                     <button type="button" id="deleteProfilePictureBtn" class="btn btn-outline-danger">
-                                        <i class="bi bi-trash"></i> Remove from S3
+                                        <i class="bi bi-trash"></i> Remove
                                     </button>
                                 }
                             </div>
@@ -127,16 +130,14 @@
                     </div>
                     
                     <div class="col-md-8">
-                        <div class="alert alert-info border-0" style="background-color: #d1ecf1;">
+                        <div class="alert alert-info border-0">
                             <h6 class="alert-heading">
-                                <i class="bi bi-lightbulb-fill me-2 text-info"></i>Profile Picture Guidelines
+                                <i class="bi bi-lightbulb-fill me-2"></i>Profile Picture Guidelines
                             </h6>
                             <ul class="mb-0">
                                 <li>Upload a clear photo of the student</li>
-                                <li><strong>NEW:</strong> Use your webcam to take a photo directly</li>
-                                <li><strong>NEW:</strong> Click "Edit Photo" to crop, rotate, and adjust your image</li>
-                                <li>Image will be automatically uploaded to cloud storage (AWS S3)</li>
-                                <li>Square images work best (will be displayed as circle)</li>
+                                <li>Use your webcam to take a photo directly</li>
+                                <li>Click "Edit Photo" to crop, rotate, and adjust your image</li>
                                 <li>Supported formats: JPG, PNG, GIF, WEBP</li>
                                 <li>Maximum file size: 5 MB</li>
                             </ul>
@@ -352,8 +353,17 @@
         @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
         {
             <text>
-            document.getElementById('btnEditPhoto').style.display = 'block';
-            document.getElementById('clearProfilePictureBtn').style.display = 'block';
+            const btnEdit = document.getElementById('btnEditPhoto');
+            if (btnEdit) btnEdit.style.display = 'block';
+            </text>
+        }
+        else
+        {
+            <text>
+            const btnEdit = document.getElementById('btnEditPhoto');
+            const btnClear = document.getElementById('clearProfilePictureBtn');
+            if (btnEdit) btnEdit.style.display = 'none';
+            if (btnClear) btnClear.style.display = 'none';
             </text>
         }
 
@@ -363,8 +373,10 @@
             WebcamCapture.init('profilePicturePreview', 'profilePictureFile', function(file) {
                 console.log('Photo captured from webcam:', file.name);
                 // Show edit and clear buttons after webcam capture
-                document.getElementById('btnEditPhoto').style.display = 'block';
-                document.getElementById('clearProfilePictureBtn').style.display = 'block';
+                const btnEdit = document.getElementById('btnEditPhoto');
+                const btnClear = document.getElementById('clearProfilePictureBtn');
+                if (btnEdit) btnEdit.style.display = 'block';
+                if (btnClear) btnClear.style.display = 'block';
             });
 
             // Webcam button click handler
@@ -431,6 +443,8 @@
             }
 
             function updateClassOptionsStyles() {
+                if (!classSelect) return;
+                
                 const options = classSelect.querySelectorAll('option');
                 options.forEach(option => {
                     const availableSlots = parseInt(option.getAttribute('data-capacity')) || 0;
@@ -448,6 +462,11 @@
             }
 
             function updateSelectedClassesList() {
+                if (!classSelect || !selectedClassesList || !selectedCount) {
+                    console.warn('Class enrollment elements not found');
+                    return;
+                }
+                
                 const selectedOptions = Array.from(classSelect.selectedOptions);
                 
                 if (selectedOptions.length === 0) {
@@ -455,16 +474,20 @@
                     selectedCount.textContent = '0';
                 } else {
                     const html = selectedOptions.map((option) => {
-                        const availableSlots = option.getAttribute('data-capacity');
-                        const maxCapacity = option.getAttribute('data-max');
-                        const currentCapacity = option.getAttribute('data-current');
-                        const classText = option.text;
+                        const availableSlots = option.getAttribute('data-capacity') || '0';
+                        const maxCapacity = option.getAttribute('data-max') || '0';
+                        const currentCapacity = option.getAttribute('data-current') || '0';
+                        const classText = option.text || '';
+                        const classValue = option.value || '';
+                        
+                        // Extract class name (before the first " - " or parenthesis)
+                        const className = classText.split(' (')[0].trim();
                         
                         return `<div class="mb-2 p-2 bg-white border rounded">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <i class="bi bi-book me-1 text-danger"></i>
-                                            <strong>${classText.split(' - ')[0]}</strong>
+                                            <strong>${className}</strong>
                                         </div>
                                         <span class="badge bg-success">${currentCapacity}/${maxCapacity}</span>
                                     </div>

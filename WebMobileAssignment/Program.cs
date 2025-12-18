@@ -1,6 +1,10 @@
 using WebMobileAssignment;
 using WebMobileAssignment.Models;
 using WebMobileAssignment.Services;
+using QuestPDF.Infrastructure;
+
+// Configure QuestPDF License
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 

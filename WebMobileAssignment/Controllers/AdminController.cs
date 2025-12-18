@@ -6,6 +6,9 @@ using WebMobileAssignment.Services;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace WebMobileAssignment.Controllers
 {
@@ -47,8 +50,8 @@ namespace WebMobileAssignment.Controllers
                 .Where(a => a.Date.Date == DateTime.Today && a.Status == "Absent")
                 .CountAsync();
 
-            var lateToday = await _context.Attendances
-                .Where(a => a.Date.Date == DateTime.Today && a.Status == "Late")
+            var leaveToday = await _context.Attendances
+                .Where(a => a.Date.Date == DateTime.Today && a.Status == "Leave")
                 .CountAsync();
 
             var recentAttendance = await _context.Attendances
@@ -66,7 +69,7 @@ namespace WebMobileAssignment.Controllers
             ViewBag.AttendanceToday = attendanceToday;
             ViewBag.PresentToday = presentToday;
             ViewBag.AbsentToday = absentToday;
-            ViewBag.LateToday = lateToday;
+            ViewBag.LeaveToday = leaveToday;
 
             return View(recentAttendance);
         }
@@ -85,6 +88,17 @@ namespace WebMobileAssignment.Controllers
                     .ThenInclude(e => e.Class)
                 .OrderBy(s => s.StudentId)
                 .ToListAsync();
+
+            // Filter out unenrolled classes for all students
+            foreach (var student in students)
+            {
+                if (student.Enrollments != null)
+                {
+                    student.Enrollments = student.Enrollments
+                        .Where(e => e.UnenrolledDate == null)
+                        .ToList();
+                }
+            }
 
             return View(students);
         }
@@ -162,6 +176,16 @@ namespace WebMobileAssignment.Controllers
             IFormFile? profilePicture,
             IFormFile? parentProfilePicture)
         {
+            // Validate parent requirement - must have either existing parent or new parent details
+            bool hasExistingParent = !string.IsNullOrWhiteSpace(parentId);
+            bool creatingNewParent = !string.IsNullOrWhiteSpace(newParentEmail);
+            
+            if (!hasExistingParent && !creatingNewParent)
+            {
+                ModelState.AddModelError("parentId", "Parent is required. Please select an existing parent or provide new parent details.");
+                ModelState.AddModelError("newParentEmail", "Parent is required. Please select an existing parent or provide new parent details.");
+            }
+            
             // If parentId is empty and newParentEmail provided, we'll create a parent
             if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
             {
@@ -178,7 +202,7 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrEmpty(parentId))
             {
                 ModelState.Remove("parentId");
-                parentId = null;
+                parentId = null!;
             }
 
             if (classIds == null || !classIds.Any())
@@ -214,12 +238,18 @@ namespace WebMobileAssignment.Controllers
             {
                 if (string.IsNullOrWhiteSpace(newParentFullName))
                     ModelState.AddModelError("newParentFullName", "Parent full name is required when creating a new parent");
-                
-                // Remove validation for optional parent fields
-                ModelState.Remove("newParentPhone");
-                ModelState.Remove("newParentAddress");
-                ModelState.Remove("newParentDateOfBirth");
-                ModelState.Remove("newParentGender");
+                    
+                if (string.IsNullOrWhiteSpace(newParentPhone))
+                    ModelState.AddModelError("newParentPhone", "Parent phone number is required when creating a new parent");
+                    
+                if (string.IsNullOrWhiteSpace(newParentAddress))
+                    ModelState.AddModelError("newParentAddress", "Parent address is required when creating a new parent");
+                    
+                if (!newParentDateOfBirth.HasValue)
+                    ModelState.AddModelError("newParentDateOfBirth", "Parent date of birth is required when creating a new parent");
+                    
+                if (string.IsNullOrWhiteSpace(newParentGender))
+                    ModelState.AddModelError("newParentGender", "Parent gender is required when creating a new parent");
             }
             else
             {
@@ -370,7 +400,7 @@ namespace WebMobileAssignment.Controllers
                         StudentId = studentId,
                         UserId = userId,
                         ParentId = parentId,
-                        DateOfBirth = dateOfBirth.Value,
+                        DateOfBirth = dateOfBirth!.Value,
                         Gender = gender,
                         EnrollmentDate = enrollmentDate ?? DateTime.Now
                     };
@@ -395,12 +425,17 @@ namespace WebMobileAssignment.Controllers
                     {
                         foreach (var classId in classIds)
                         {
+                            // Generate enrollment ID
+                            var enrollmentId = IdGenerator.GenerateEnrollmentId(_context);
+                            
                             // Create enrollment
                             var enrollment = new Enrollment
                             {
+                                EnrollmentId = enrollmentId,
                                 StudentId = studentId,
                                 ClassId = classId,
-                                EnrolledDate = DateTime.Now
+                                EnrolledDate = DateTime.Now,
+                                UnenrolledDate = null // Student is enrolled
                             };
                             _context.Enrollments.Add(enrollment);
 
@@ -456,6 +491,14 @@ namespace WebMobileAssignment.Controllers
 
             if (student == null) return NotFound();
 
+            // Filter out unenrolled classes
+            if (student.Enrollments != null)
+            {
+                student.Enrollments = student.Enrollments
+                    .Where(e => e.UnenrolledDate == null)
+                    .ToList();
+            }
+
             ViewBag.ActiveMenu = "StudentManagement";
             ViewBag.Title = "Edit Student";
             ViewBag.Parents = await _context.Parents.Include(p => p.User).ToListAsync();
@@ -472,8 +515,6 @@ namespace WebMobileAssignment.Controllers
         {
             var student = await _context.Students
                 .Include(s => s.User)
-                .Include(s => s.Enrollments)
-                    .ThenInclude(e => e.Class)
                 .FirstOrDefaultAsync(s => s.StudentId == studentId);
 
             if (student == null)
@@ -546,6 +587,7 @@ namespace WebMobileAssignment.Controllers
                         catch (Exception uploadEx)
                         {
                             Console.WriteLine($"Warning: Failed to upload profile picture: {uploadEx.Message}");
+                            // Don't fail the operation if upload fails - use default
                         }
                     }
 
@@ -559,33 +601,37 @@ namespace WebMobileAssignment.Controllers
                     student.ParentId = string.IsNullOrEmpty(parentId) ? null : parentId;
                     student.DateOfBirth = dateOfBirth;
                     student.Gender = gender;
-
-                    _context.Update(student);
-
+                    
                     int addedCount = 0;
                     int removedCount = 0;
 
-                    // Handle removal of enrollments
+                    // Handle removal of enrollments - use ExecuteUpdate to avoid tracking conflicts
                     if (!string.IsNullOrEmpty(removeClassIds))
                     {
-                        var classIdsToRemove = removeClassIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var classIdToRemove in classIdsToRemove)
+                        var classIdsToRemove = removeClassIds.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                        
+                        // Get enrollments to remove without tracking
+                        var enrollmentsToRemove = await _context.Enrollments
+                            .AsNoTracking()
+                            .Where(e => e.StudentId == studentId && 
+                                       classIdsToRemove.Contains(e.ClassId) && 
+                                       e.UnenrolledDate == null)
+                            .Select(e => new { e.EnrollmentId, e.ClassId })
+                            .ToListAsync();
+
+                        foreach (var enrollment in enrollmentsToRemove)
                         {
-                            var enrollmentToRemove = student.Enrollments
-                                .FirstOrDefault(e => e.ClassId == classIdToRemove);
+                            // Use ExecuteUpdate to update without tracking
+                            await _context.Enrollments
+                                .Where(e => e.EnrollmentId == enrollment.EnrollmentId)
+                                .ExecuteUpdateAsync(s => s.SetProperty(e => e.UnenrolledDate, DateTime.Now));
 
-                            if (enrollmentToRemove != null)
-                            {
-                                _context.Enrollments.Remove(enrollmentToRemove);
+                            // Decrease class current capacity using ExecuteUpdate to avoid tracking
+                            await _context.Classes
+                                .Where(c => c.ClassId == enrollment.ClassId && c.CurrentCapacity > 0)
+                                .ExecuteUpdateAsync(s => s.SetProperty(c => c.CurrentCapacity, c => c.CurrentCapacity - 1));
 
-                                // Decrease class current capacity
-                                var classToUpdate = await _context.Classes.FindAsync(classIdToRemove);
-                                if (classToUpdate != null && classToUpdate.CurrentCapacity > 0)
-                                {
-                                    classToUpdate.CurrentCapacity--;
-                                }
-                                removedCount++;
-                            }
+                            removedCount++;
                         }
                     }
 
@@ -595,31 +641,41 @@ namespace WebMobileAssignment.Controllers
                         foreach (var classId in classIds)
                         {
                             // Check if already enrolled in this class
-                            var existingEnrollment = student.Enrollments
-                                .FirstOrDefault(e => e.ClassId == classId);
+                            var isAlreadyEnrolled = await _context.Enrollments
+                                .AsNoTracking()
+                                .AnyAsync(e => e.StudentId == studentId && 
+                                             e.ClassId == classId && 
+                                             e.UnenrolledDate == null);
 
-                            if (existingEnrollment == null)
+                            if (!isAlreadyEnrolled)
                             {
+                                // Generate unique enrollment ID
+                                var enrollmentId = IdGenerator.GenerateEnrollmentId(_context);
+                                
                                 // Add new enrollment
                                 var enrollment = new Enrollment
                                 {
+                                    EnrollmentId = enrollmentId,
                                     StudentId = studentId,
                                     ClassId = classId,
-                                    EnrolledDate = DateTime.Now
+                                    EnrolledDate = DateTime.Now,
+                                    UnenrolledDate = null
                                 };
                                 _context.Enrollments.Add(enrollment);
 
-                                // Increase class current capacity
+                                // Update class current capacity
                                 var classToUpdate = await _context.Classes.FindAsync(classId);
                                 if (classToUpdate != null)
                                 {
                                     classToUpdate.CurrentCapacity++;
                                 }
+
                                 addedCount++;
                             }
                         }
                     }
-
+                    
+                    // Save all changes (student info + enrollments) in one transaction
                     await _context.SaveChangesAsync();
 
                     var message = $"Student '{fullName}' updated successfully!";
@@ -647,8 +703,25 @@ namespace WebMobileAssignment.Controllers
                 }
             }
 
+            // Reload for display if validation fails
             ViewBag.Parents = await _context.Parents.Include(p => p.User).ToListAsync();
             ViewBag.Classes = await _context.Classes.ToListAsync();
+            
+            // Reload student with enrollments for display
+            student = await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                .FirstOrDefaultAsync(s => s.StudentId == studentId);
+            
+            // Filter out unenrolled classes
+            if (student?.Enrollments != null)
+            {
+                student.Enrollments = student.Enrollments
+                    .Where(e => e.UnenrolledDate == null)
+                    .ToList();
+            }
+                
             return View(student);
         }
 
@@ -672,6 +745,14 @@ namespace WebMobileAssignment.Controllers
 
             if (student == null) return NotFound();
 
+            // Filter out unenrolled classes (where UnenrolledDate is set)
+            if (student.Enrollments != null)
+            {
+                student.Enrollments = student.Enrollments
+                    .Where(e => e.UnenrolledDate == null)
+                    .ToList();
+            }
+
             // Get attendance statistics - Count "Leave" as present
             var attendanceStats = await _context.Attendances
                 .Where(a => a.StudentId == id)
@@ -683,9 +764,7 @@ namespace WebMobileAssignment.Controllers
             var presentCount = attendanceStats.FirstOrDefault(s => s.Status == "Present")?.Count ?? 0;
             var leaveCount = attendanceStats.FirstOrDefault(s => s.Status == "Leave")?.Count ?? 0;
             var absentCount = attendanceStats.FirstOrDefault(s => s.Status == "Absent")?.Count ?? 0;
-            var lateCount = attendanceStats.FirstOrDefault(s => s.Status == "Late")?.Count ?? 0;
-            
-            // Count both Present and Leave as present for attendance rate
+            // Calculate attendance rate with Present and Leave as attended
             var totalPresentIncludingLeave = presentCount + leaveCount;
             var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)totalPresentIncludingLeave / totalAttendance * 100, 1) : 0;
 
@@ -693,7 +772,7 @@ namespace WebMobileAssignment.Controllers
             ViewBag.TotalAttendance = totalAttendance;
             ViewBag.PresentCount = totalPresentIncludingLeave; // Show combined count
             ViewBag.AbsentCount = absentCount;
-            ViewBag.LateCount = lateCount;
+            ViewBag.LeaveCount = leaveCount;
             ViewBag.AttendanceRate = attendanceRate;
             ViewBag.YearsSinceEnrollment = student.EnrollmentDate.HasValue
                 ? Math.Round((DateTime.Now - student.EnrollmentDate.Value).TotalDays / 365.25, 1)
@@ -741,11 +820,15 @@ namespace WebMobileAssignment.Controllers
                 {
                     var studentName = student.User.FullName;
 
-                    // Decrease capacity for all enrolled classes before deletion
+                    // Set UnenrolledDate for all active enrollments before deletion
                     if (student.Enrollments != null && student.Enrollments.Any())
                     {
-                        foreach (var enrollment in student.Enrollments)
+                        foreach (var enrollment in student.Enrollments.Where(e => e.UnenrolledDate == null))
                         {
+                            enrollment.UnenrolledDate = DateTime.Now;
+                            _context.Update(enrollment);
+                            
+                            // Decrease capacity for all enrolled classes
                             var classToUpdate = await _context.Classes.FindAsync(enrollment.ClassId);
                             if (classToUpdate != null && classToUpdate.CurrentCapacity > 0)
                             {
@@ -754,14 +837,14 @@ namespace WebMobileAssignment.Controllers
                         }
                     }
 
-                    _context.Users.Remove(student.User); // Cascade delete will remove student and enrollments
+                    _context.Users.Remove(student.User); // Cascade delete will remove student and related data
                     await _context.SaveChangesAsync();
 
                     TempData["SuccessMessage"] = $"Student '{studentName}' deleted successfully!";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Student not found. It may have already been deleted.";
+                    TempData["ErrorMessage"] = "Student not found.";
                 }
             }
             catch (Exception ex)
@@ -782,10 +865,13 @@ namespace WebMobileAssignment.Controllers
             return View(teachers);
         }
 
-        public IActionResult TeacherCreate()
+        public async Task<IActionResult> TeacherCreate()
         {
             ViewBag.ActiveMenu = "TeacherManagement";
             ViewBag.Title = "Create Teacher";
+            
+            // Fetch subjects from database for dropdown
+            ViewBag.Subjects = await _context.Subjects.OrderBy(s => s.SubjectName).ToListAsync();
 
             return View();
         }
@@ -794,9 +880,9 @@ namespace WebMobileAssignment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TeacherCreate(
             string fullName, string email,
-            string? phoneNumber, string? subjectTeach, DateTime? hireDate,
-            string? title, string? education, string? skill, string? bio,
-            DateTime? dateOfBirth, string? gender, string? status,
+            string phoneNumber, string subjectTeach, DateTime? hireDate,
+            string title, string education, string? skill, string? bio,
+            DateTime? dateOfBirth, string gender, string? status,
             IFormFile? profilePicture)
         {
             // Manual validation for required fields
@@ -805,6 +891,24 @@ namespace WebMobileAssignment.Controllers
 
             if (string.IsNullOrWhiteSpace(email))
                 ModelState.AddModelError("email", "Email is required");
+                
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                ModelState.AddModelError("phoneNumber", "Phone number is required");
+                
+            if (string.IsNullOrWhiteSpace(subjectTeach))
+                ModelState.AddModelError("subjectTeach", "Subject is required");
+                
+            if (string.IsNullOrWhiteSpace(title))
+                ModelState.AddModelError("title", "Title is required");
+                
+            if (string.IsNullOrWhiteSpace(education))
+                ModelState.AddModelError("education", "Highest education is required");
+                
+            if (string.IsNullOrWhiteSpace(gender))
+                ModelState.AddModelError("gender", "Gender is required");
+                
+            if (!dateOfBirth.HasValue)
+                ModelState.AddModelError("dateOfBirth", "Date of birth is required");
 
             if (!hireDate.HasValue)
                 ModelState.AddModelError("hireDate", "Hire date is required");
@@ -869,7 +973,7 @@ namespace WebMobileAssignment.Controllers
                         UserId = userId,
                         PhoneNumber = phoneNumber,
                         SubjectTeach = subjectTeach,
-                        HireDate = hireDate.Value,
+                        HireDate = hireDate!.Value,
                         Title = title,
                         Education = education,
                         Skill = skill,
@@ -907,13 +1011,16 @@ namespace WebMobileAssignment.Controllers
             ViewBag.PhoneNumber = phoneNumber;
             ViewBag.SubjectTeach = subjectTeach;
             ViewBag.HireDate = hireDate?.ToString("yyyy-MM-dd");
-            ViewBag.Title = title;
+            ViewBag.TeacherTitle = title;
             ViewBag.Education = education;
             ViewBag.Skill = skill;
             ViewBag.Bio = bio;
             ViewBag.DateOfBirth = dateOfBirth?.ToString("yyyy-MM-dd");
             ViewBag.Gender = gender;
             ViewBag.Status = status;
+            
+            // Re-fetch subjects for dropdown
+            ViewBag.Subjects = await _context.Subjects.OrderBy(s => s.SubjectName).ToListAsync();
 
             return View();
         }
@@ -930,6 +1037,9 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "TeacherManagement";
             ViewBag.Title = "Edit Teacher";
+            
+            // Fetch subjects from database for dropdown
+            ViewBag.Subjects = await _context.Subjects.OrderBy(s => s.SubjectName).ToListAsync();
 
             return View(teacher);
         }
@@ -938,9 +1048,9 @@ namespace WebMobileAssignment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TeacherEdit(
             string teacherId, string fullName, string email,
-            string? phoneNumber, string? subjectTeach, DateTime? hireDate,
-            string? title, string? education, string? skill, string? bio,
-            DateTime? dateOfBirth, string? gender, string? status,
+            string phoneNumber, string subjectTeach, DateTime? hireDate,
+            string title, string education, string? skill, string? bio,
+            DateTime? dateOfBirth, string gender, string? status,
             IFormFile? profilePicture)
         {
             var teacher = await _context.Teachers
@@ -959,6 +1069,24 @@ namespace WebMobileAssignment.Controllers
 
             if (string.IsNullOrWhiteSpace(email))
                 ModelState.AddModelError("email", "Email is required");
+                
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                ModelState.AddModelError("phoneNumber", "Phone number is required");
+                
+            if (string.IsNullOrWhiteSpace(subjectTeach))
+                ModelState.AddModelError("subjectTeach", "Subject is required");
+                
+            if (string.IsNullOrWhiteSpace(title))
+                ModelState.AddModelError("title", "Title is required");
+                
+            if (string.IsNullOrWhiteSpace(education))
+                ModelState.AddModelError("education", "Highest education is required");
+                
+            if (string.IsNullOrWhiteSpace(gender))
+                ModelState.AddModelError("gender", "Gender is required");
+                
+            if (!dateOfBirth.HasValue)
+                ModelState.AddModelError("dateOfBirth", "Date of birth is required");
 
             if (!hireDate.HasValue)
                 ModelState.AddModelError("hireDate", "Hire date is required");
@@ -1002,7 +1130,7 @@ namespace WebMobileAssignment.Controllers
                     teacher.User.PhoneNumber = phoneNumber;
                     teacher.User.DateOfBirth = dateOfBirth;
                     teacher.User.Gender = gender;
-                    teacher.User.Status = status;
+                    teacher.User.Status = status!;
                     teacher.User.IsActive = status == "active";
 
                     // Update Teacher professional information
@@ -1038,6 +1166,10 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "TeacherManagement";
             ViewBag.Title = "Edit Teacher";
+            
+            // Re-fetch subjects for dropdown
+            ViewBag.Subjects = await _context.Subjects.OrderBy(s => s.SubjectName).ToListAsync();
+            
             return View(teacher);
         }
 
@@ -1068,14 +1200,14 @@ namespace WebMobileAssignment.Controllers
             var totalAttendanceMarked = attendanceStats.Sum(s => s.Count);
             var presentCount = attendanceStats.FirstOrDefault(s => s.Status == "Present")?.Count ?? 0;
             var absentCount = attendanceStats.FirstOrDefault(s => s.Status == "Absent")?.Count ?? 0;
-            var lateCount = attendanceStats.FirstOrDefault(s => s.Status == "Late")?.Count ?? 0;
+            var leaveCount = attendanceStats.FirstOrDefault(s => s.Status == "Leave")?.Count ?? 0;
 
             ViewBag.TotalClassesAssigned = teacher.Classes?.Count ?? 0;
             ViewBag.TotalStudentsTeaching = teacher.Classes?.Sum(c => c.CurrentCapacity) ?? 0;
             ViewBag.TotalAttendanceMarked = totalAttendanceMarked;
             ViewBag.PresentCount = presentCount;
             ViewBag.AbsentCount = absentCount;
-            ViewBag.LateCount = lateCount;
+            ViewBag.LeaveCount = leaveCount;
             ViewBag.YearsOfService = teacher.HireDate.HasValue
                 ? Math.Round((DateTime.Now - teacher.HireDate.Value).TotalDays / 365.25, 1)
                 : 0;
@@ -1200,7 +1332,7 @@ namespace WebMobileAssignment.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ParentCreate(string fullName, string email, 
-            string? phoneNumber, string? address, DateTime? dateOfBirth, string? gender,
+            string phoneNumber, string address, DateTime? dateOfBirth, string gender,
             IFormFile? profilePicture)
         {
             // Manual validation for required fields
@@ -1209,6 +1341,18 @@ namespace WebMobileAssignment.Controllers
 
             if (string.IsNullOrWhiteSpace(email))
                 ModelState.AddModelError("email", "Email is required");
+                
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                ModelState.AddModelError("phoneNumber", "Phone number is required");
+                
+            if (string.IsNullOrWhiteSpace(address))
+                ModelState.AddModelError("address", "Address is required");
+                
+            if (!dateOfBirth.HasValue)
+                ModelState.AddModelError("dateOfBirth", "Date of birth is required");
+                
+            if (string.IsNullOrWhiteSpace(gender))
+                ModelState.AddModelError("gender", "Gender is required");
 
             // Remove validation for optional profile picture
             ModelState.Remove("profilePicture");
@@ -1319,7 +1463,7 @@ namespace WebMobileAssignment.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ParentEdit(string parentId, string fullName, string email, 
-            string? phoneNumber, string? address, DateTime? dateOfBirth, string? gender, string status,
+            string phoneNumber, string address, DateTime? dateOfBirth, string gender, string status,
             IFormFile? profilePicture)
         {
             var parent = await _context.Parents
@@ -1338,6 +1482,18 @@ namespace WebMobileAssignment.Controllers
 
             if (string.IsNullOrWhiteSpace(email))
                 ModelState.AddModelError("email", "Email is required");
+                
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                ModelState.AddModelError("phoneNumber", "Phone number is required");
+                
+            if (string.IsNullOrWhiteSpace(address))
+                ModelState.AddModelError("address", "Address is required");
+                
+            if (!dateOfBirth.HasValue)
+                ModelState.AddModelError("dateOfBirth", "Date of birth is required");
+                
+            if (string.IsNullOrWhiteSpace(gender))
+                ModelState.AddModelError("gender", "Gender is required");
 
             if (string.IsNullOrWhiteSpace(status))
                 ModelState.AddModelError("status", "Status is required");
@@ -1526,48 +1682,105 @@ namespace WebMobileAssignment.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClassCreate(string className, string teacherId, string roomNumber,
-            string day, string startTime, string endTime, string subjectId, int maxCapacity = 30)
+            string day, string startTime, string endTime, string subjectId, int maxCapacity = 30, bool isActive = true)
         {
-            // Manual validation
+            // Manual validation for all required fields
             if (string.IsNullOrWhiteSpace(className))
                 ModelState.AddModelError("className", "Class name is required");
+                
+            if (string.IsNullOrWhiteSpace(teacherId))
+                ModelState.AddModelError("teacherId", "Teacher is required");
+                
+            if (string.IsNullOrWhiteSpace(subjectId))
+                ModelState.AddModelError("subjectId", "Subject is required");
+                
+            if (string.IsNullOrWhiteSpace(roomNumber))
+                ModelState.AddModelError("roomNumber", "Venue/Room is required");
+                
+            if (string.IsNullOrWhiteSpace(day))
+                ModelState.AddModelError("day", "Day of week is required");
+                
+            if (string.IsNullOrWhiteSpace(startTime))
+                ModelState.AddModelError("startTime", "Start time is required");
+                
+            if (string.IsNullOrWhiteSpace(endTime))
+                ModelState.AddModelError("endTime", "End time is required");
 
             if (maxCapacity < 1)
                 ModelState.AddModelError("maxCapacity", "Maximum capacity must be at least 1");
+                
+            // Parse time strings to TimeSpan for validation
+            TimeSpan? parsedStartTime = null;
+            TimeSpan? parsedEndTime = null;
+
+            if (!string.IsNullOrEmpty(startTime) && TimeSpan.TryParse(startTime, out var st))
+            {
+                parsedStartTime = st;
+            }
+
+            if (!string.IsNullOrEmpty(endTime) && TimeSpan.TryParse(endTime, out var et))
+            {
+                parsedEndTime = et;
+            }
+            
+            // Validate that end time is after start time
+            if (parsedStartTime.HasValue && parsedEndTime.HasValue && parsedEndTime.Value <= parsedStartTime.Value)
+            {
+                ModelState.AddModelError("endTime", "End time must be after start time");
+            }
+            
+            // Check for schedule conflicts: same day, same time, same venue
+            if (!string.IsNullOrWhiteSpace(day) && !string.IsNullOrWhiteSpace(roomNumber) && parsedStartTime.HasValue && parsedEndTime.HasValue)
+            {
+                var conflictingClasses = await _context.Classes
+                    .Where(c => c.Day == day && c.RoomNumber == roomNumber && c.StartTime.HasValue && c.EndTime.HasValue)
+                    .ToListAsync();
+                    
+                foreach (var existingClass in conflictingClasses)
+                {
+                    // Check if time ranges overlap
+                    if ((parsedStartTime.Value < existingClass.EndTime.Value && parsedEndTime.Value > existingClass.StartTime.Value))
+                    {
+                        ModelState.AddModelError("", $"Schedule conflict: {existingClass.ClassName} is already scheduled in {roomNumber} on {day} from {existingClass.StartTime.Value:hh\\:mm} to {existingClass.EndTime.Value:hh\\:mm}");
+                        break;
+                    }
+                }
+            }
 
             if (ModelState.IsValid)
             {
-                var classCount = await _context.Classes.CountAsync();
-                var classId = $"C{(classCount + 1):D3}";
-
-                // Parse time strings to TimeSpan
-                TimeSpan? parsedStartTime = null;
-                TimeSpan? parsedEndTime = null;
-
-                if (!string.IsNullOrEmpty(startTime) && TimeSpan.TryParse(startTime, out var st))
-                {
-                    parsedStartTime = st;
-                }
-
-                if (!string.IsNullOrEmpty(endTime) && TimeSpan.TryParse(endTime, out var et))
-                {
-                    parsedEndTime = et;
-                }
+                var classId = IdGenerator.GenerateClassId(_context);
 
                 var @class = new Class
                 {
                     ClassId = classId,
                     ClassName = className,
-                    TeacherId = string.IsNullOrEmpty(teacherId) ? null : teacherId,
-                    SubjectId = string.IsNullOrEmpty(subjectId) ? null : subjectId,
+                    TeacherId = teacherId,
+                    SubjectId = subjectId,
                     RoomNumber = roomNumber,
                     Day = day,
                     StartTime = parsedStartTime,
                     EndTime = parsedEndTime,
                     MaxCapacity = maxCapacity,
-                    CurrentCapacity = 0
+                    CurrentCapacity = 0,
+                    IsActive = isActive
                 };
                 _context.Classes.Add(@class);
+
+                // Create initial active history record if class is active
+                if (isActive)
+                {
+                    var historyCount = await _context.ClassActiveHistories.CountAsync();
+                    var history = new ClassActiveHistory
+                    {
+                        HistoryId = $"CAH{(historyCount + 1):D5}",
+                        ClassId = classId,
+                        ActiveFrom = DateTime.Today,
+                        ActiveTo = null,
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.ClassActiveHistories.Add(history);
+                }
 
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Class created successfully!";
@@ -1590,6 +1803,7 @@ namespace WebMobileAssignment.Controllers
                     .ThenInclude(t => t.User)
                 .Include(c => c.Subject)
                 .Include(c => c.Enrollments)
+                .Include(c => c.ActiveHistories)
                 .FirstOrDefaultAsync(c => c.ClassId == id);
 
             if (@class == null) return NotFound();
@@ -1606,7 +1820,7 @@ namespace WebMobileAssignment.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClassEdit(string classId, string className, string teacherId,
-            string subjectId, string roomNumber, string day, string startTime, string endTime, int maxCapacity)
+            string subjectId, string roomNumber, string day, string startTime, string endTime, int maxCapacity, bool isActive)
         {
             var @class = await _context.Classes
                 .Include(c => c.Enrollments)
@@ -1643,6 +1857,50 @@ namespace WebMobileAssignment.Controllers
                         parsedEndTime = et;
                     }
 
+                    var wasActive = @class.IsActive;
+                    var isNowActive = isActive;
+
+                    if (wasActive != isNowActive)
+                    {
+                        if (isNowActive)
+                        {
+                            // Class is being activated - create new active period
+                            var historyCount = await _context.ClassActiveHistories.CountAsync();
+                            var history = new ClassActiveHistory
+                            {
+                                HistoryId = $"CAH{(historyCount + 1):D5}",
+                                ClassId = classId,
+                                ActiveFrom = DateTime.Today,
+                                ActiveTo = null, // Still active
+                                CreatedDate = DateTime.Now
+                            };
+                            _context.ClassActiveHistories.Add(history);
+                        }
+                        else
+                        {
+                            // Class is being deactivated - close the current active period and unenroll all students
+                            var currentActivePeriod = await _context.ClassActiveHistories
+                                .Where(h => h.ClassId == classId && h.ActiveTo == null)
+                                .OrderByDescending(h => h.ActiveFrom)
+                                .FirstOrDefaultAsync();
+
+                            if (currentActivePeriod != null)
+                            {
+                                currentActivePeriod.ActiveTo = DateTime.Today;
+                                _context.Update(currentActivePeriod);
+                            }
+
+                            // Unenroll all students from this class
+                            var enrollmentsToRemove = @class.Enrollments.ToList();
+                            foreach (var enrollment in enrollmentsToRemove)
+                            {
+                                _context.Enrollments.Remove(enrollment);
+                            }
+                            // Reset current capacity to 0
+                            @class.CurrentCapacity = 0;
+                        }
+                    }
+
                     // Update class information
                     @class.ClassName = className;
                     @class.TeacherId = string.IsNullOrEmpty(teacherId) ? null : teacherId;
@@ -1652,6 +1910,7 @@ namespace WebMobileAssignment.Controllers
                     @class.StartTime = parsedStartTime;
                     @class.EndTime = parsedEndTime;
                     @class.MaxCapacity = maxCapacity;
+                    @class.IsActive = isActive;
 
                     _context.Update(@class);
                     await _context.SaveChangesAsync();
@@ -1704,68 +1963,6 @@ namespace WebMobileAssignment.Controllers
             return View(@class);
         }
 
-        public async Task<IActionResult> ClassDelete(string id)
-        {
-            if (string.IsNullOrEmpty(id)) return NotFound();
-
-            var @class = await _context.Classes
-                .Include(c => c.Teacher)
-                    .ThenInclude(t => t.User)
-                .Include(c => c.Subject)
-                .Include(c => c.Enrollments)
-                    .ThenInclude(e => e.Student)
-                    .ThenInclude(s => s.User)
-                .FirstOrDefaultAsync(m => m.ClassId == id);
-
-            if (@class == null) return NotFound();
-
-            ViewBag.ActiveMenu = "ClassManagement";
-            ViewBag.ActiveSubmenu = "Classes";
-            ViewBag.Title = "Delete Class";
-
-            return View(@class);
-        }
-
-        [HttpPost, ActionName("ClassDelete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ClassDeleteConfirmed(string id)
-        {
-            try
-            {
-                var @class = await _context.Classes
-                    .Include(c => c.Enrollments)
-                    .Include(c => c.Attendances)
-                    .FirstOrDefaultAsync(c => c.ClassId == id);
-
-                if (@class != null)
-                {
-                    var className = @class.ClassName;
-                    var enrollmentCount = @class.Enrollments?.Count ?? 0;
-                    var attendanceCount = @class.Attendances?.Count ?? 0;
-
-                    // Cascade delete will remove enrollments and attendances
-                    _context.Classes.Remove(@class);
-                    await _context.SaveChangesAsync();
-
-                    TempData["SuccessMessage"] = $"Class '{className}' deleted successfully! " +
-                        $"{enrollmentCount} enrollment(s) and {attendanceCount} attendance record(s) removed.";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Class not found. It may have already been deleted.";
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = $"Error deleting class: {ex.Message}";
-                if (ex.InnerException != null)
-                {
-                    TempData["ErrorMessage"] += $" Details: {ex.InnerException.Message}";
-                }
-            }
-
-            return RedirectToAction(nameof(ClassIndex));
-        }
 
         public async Task<IActionResult> ScheduleIndex()
         {
@@ -1856,7 +2053,8 @@ namespace WebMobileAssignment.Controllers
                 .Include(s => s.Classes)
                 .FirstOrDefaultAsync(s => s.SubjectId == id);
 
-            if (subject == null) return NotFound();
+            if (subject == null)
+                return NotFound();
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
@@ -2006,7 +2204,98 @@ namespace WebMobileAssignment.Controllers
             return RedirectToAction(nameof(SubjectIndex));
         }
 
-        // ==================== ATTENDANCE MANAGEMENT ====================        // Take Attendance with PIN Code
+        // ==================== ATTENDANCE MANAGEMENT ====================        
+        // Generate PIN for attendance session
+        [HttpPost]
+        public async Task<IActionResult> GenerateAttendancePin(string classId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(classId))
+                {
+                    return Json(new { success = false, message = "Class ID is required" });
+                }
+
+                // Get the class
+                var classEntity = await _context.Classes
+                    .Include(c => c.Teacher)
+                    .FirstOrDefaultAsync(c => c.ClassId == classId);
+
+                if (classEntity == null)
+                {
+                    return Json(new { success = false, message = "Class not found" });
+                }
+
+                // Check if class has a schedule
+                if (!classEntity.StartTime.HasValue || !classEntity.EndTime.HasValue)
+                {
+                    return Json(new { success = false, message = "Class schedule not configured" });
+                }
+
+                // Check if today matches the class day
+                var todayDay = DateTime.Now.DayOfWeek.ToString();
+                if (!string.IsNullOrEmpty(classEntity.Day) && !classEntity.Day.Equals(todayDay, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Json(new { success = false, message = $"PIN can only be generated on {classEntity.Day}, not {todayDay}" });
+                }
+
+                // Check if current time is within class hours
+                var currentTime = DateTime.Now.TimeOfDay;
+                if (currentTime < classEntity.StartTime.Value || currentTime > classEntity.EndTime.Value)
+                {
+                    return Json(new { success = false, message = $"PIN can only be generated during class hours ({classEntity.StartTime.Value:hh\\:mm} - {classEntity.EndTime.Value:hh\\:mm})" });
+                }
+
+                // Check if PIN already exists for today
+                var existingSession = await _context.AttendanceSessions
+                    .FirstOrDefaultAsync(s => s.ClassId == classId && 
+                                            s.IsActive && 
+                                            s.CreatedDate.Date == DateTime.Today);
+
+                if (existingSession != null)
+                {
+                    return Json(new { success = false, message = "PIN has already been generated for this class today" });
+                }
+
+                // Generate random 6-digit PIN
+                var pinCode = IdGenerator.GenerateAttendancePinCode(_context);
+
+                // Create attendance session
+                var sessionId = IdGenerator.GenerateSessionId(_context);
+
+                var session = new AttendanceSession
+                {
+                    SessionId = sessionId,
+                    PinCode = pinCode,
+                    ClassId = classId,
+                    CreatedByTeacherId = classEntity.TeacherId,
+                    CreatedDate = DateTime.Now,
+                    ExpiryDate = DateTime.Today.Add(classEntity.EndTime.Value), // Expires at class end time
+                    IsActive = true,
+                    SessionType = "Class"
+                };
+
+                _context.AttendanceSessions.Add(session);
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    pinCode = pinCode,
+                    sessionId = sessionId,
+                    expiryDate = session.ExpiryDate.ToString("yyyy-MM-dd HH:mm:ss"),
+                    message = "PIN generated successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error generating PIN: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return Json(new { success = false, message = $"Error generating PIN: {ex.Message}" });
+            }
+        }
+
+        // Take Attendance with PIN Code
         public async Task<IActionResult> AttendanceTake(DateTime? selectedDate)
         {
             ViewBag.ActiveMenu = "AttendanceManagement";
@@ -2018,22 +2307,61 @@ namespace WebMobileAssignment.Controllers
             ViewBag.SelectedDate = targetDate;
             ViewBag.SelectedDay = targetDate.DayOfWeek.ToString();
 
-            // Load all classes
-            ViewBag.Classes = await _context.Classes
+            // Load all classes with their active histories
+            var allClasses = await _context.Classes
                 .Include(c => c.Teacher)
                 .ThenInclude(t => t.User)
                 .Include(c => c.Enrollments)
+                .ThenInclude(e => e.Student)
+                .Include(c => c.ActiveHistories)
                 .OrderBy(c => c.ClassName)
                 .ToListAsync();
 
+            // Filter classes based on whether they were active on the selected date
+            // AND filter enrollments to only show students enrolled on that date
+            var filteredClasses = allClasses
+                .Where(c => WasClassActiveOnDate(c, targetDate))
+                .Select(c => new Class
+                {
+                    ClassId = c.ClassId,
+                    ClassName = c.ClassName,
+                    Day = c.Day,
+                    StartTime = c.StartTime,
+                    EndTime = c.EndTime,
+                    RoomNumber = c.RoomNumber,
+                    Teacher = c.Teacher,
+                    // Filter enrollments to only those active on the target date
+                    Enrollments = c.Enrollments
+                        .Where(e => e.EnrolledDate.Date <= targetDate.Date && 
+                                   (e.UnenrolledDate == null || e.UnenrolledDate.Value.Date > targetDate.Date))
+                        .ToList()
+                })
+                .ToList();
+
+            ViewBag.Classes = filteredClasses;
+
             // Load ONLY sessions created on the selected date
-            // CreatedDate must match the selected date exactly
             ViewBag.Sessions = await _context.AttendanceSessions
                 .Include(s => s.Class)
                 .Where(s => s.IsActive && s.CreatedDate.Date == targetDate.Date)
                 .ToListAsync();
 
             return View();
+        }
+
+        private bool WasClassActiveOnDate(Class classEntity, DateTime date)
+        {
+            // If no active histories exist, fall back to current IsActive status
+            // (for classes created before this feature was implemented)
+            if (classEntity.ActiveHistories == null || !classEntity.ActiveHistories.Any())
+            {
+                return classEntity.IsActive;
+            }
+
+            // Check if the date falls within any active period
+            return classEntity.ActiveHistories.Any(h =>
+                h.ActiveFrom.Date <= date.Date &&
+                (h.ActiveTo == null || h.ActiveTo.Value.Date >= date.Date));
         }
 
         // Attendance Class Detail - for generating PIN
@@ -2048,6 +2376,7 @@ namespace WebMobileAssignment.Controllers
                 .Include(c => c.Enrollments)
                     .ThenInclude(e => e.Student)
                     .ThenInclude(s => s.User)
+                .Include(c => c.ActiveHistories)
                 .FirstOrDefaultAsync(c => c.ClassId == id);
 
             if (classEntity == null) return NotFound();
@@ -2055,12 +2384,37 @@ namespace WebMobileAssignment.Controllers
             ViewBag.ActiveMenu = "AttendanceManagement";
             ViewBag.ActiveSubmenu = "Take";
 
-            // Use selected date or default to today
-            var targetDate = selectedDate ?? DateTime.Today;
+            DateTime targetDate = selectedDate ?? DateTime.Today;
+            bool wasActiveOnDate = WasClassActiveOnDate(classEntity, targetDate);
+
+            ViewBag.WasActiveOnDate = wasActiveOnDate;
             ViewBag.SelectedDate = targetDate;
 
+            // Load the session created on the selected date for this class
+            var sessionOnSelectedDate = await _context.AttendanceSessions
+                .FirstOrDefaultAsync(s => s.IsActive && 
+                           s.ClassId == id && 
+                           s.CreatedDate.Date == targetDate.Date);
+
+            // Filter enrollments to show students who:
+            // 1. Were enrolled on or before the selected date, AND
+            // 2. Either still enrolled (UnenrolledDate == null) OR
+            // 3. Were unenrolled on a different date OR
+            // 4. Were unenrolled on the same date but AFTER the class started
+            var classStartDateTime = classEntity.StartTime.HasValue 
+                ? targetDate.Date.Add(classEntity.StartTime.Value) 
+                : targetDate.Date;
+            
+            var filteredEnrollments = classEntity.Enrollments
+                .Where(e => e.EnrolledDate.Date <= targetDate.Date && 
+                           (e.UnenrolledDate == null || 
+                            e.UnenrolledDate.Value.Date > targetDate.Date ||
+                            (e.UnenrolledDate.Value.Date == targetDate.Date && e.UnenrolledDate.Value > classStartDateTime)))
+                .ToList();
+            
+            ViewBag.FilteredEnrollments = filteredEnrollments;
+
             // Load ONLY the session created on the selected date for this class
-            // This ensures we show the correct PIN for the selected date
             ViewBag.Sessions = await _context.AttendanceSessions
                 .Where(s => s.IsActive && 
                            s.ClassId == id && 
@@ -2074,9 +2428,48 @@ namespace WebMobileAssignment.Controllers
                 .ToListAsync();
 
             // Load attendance records for this class on the selected date
-            ViewBag.TodayAttendances = await _context.Attendances
+            var todayAttendances = await _context.Attendances
                 .Where(a => a.ClassId == id && a.Date.Date == targetDate.Date)
                 .ToListAsync();
+
+            // Create attendance summary: include marked attendance and add "Not Marked" for students without records
+            var attendanceSummary = new List<AttendanceSummaryDto>();
+            var markedStudentIds = todayAttendances.Select(a => a.StudentId).ToHashSet();
+
+            // Add all marked attendances
+            foreach (var att in todayAttendances)
+            {
+                attendanceSummary.Add(new AttendanceSummaryDto
+                {
+                    AttendanceId = att.AttendanceId,
+                    StudentId = att.StudentId,
+                    ClassId = att.ClassId,
+                    Date = att.Date,
+                    Status = att.Status,
+                    TakenOn = att.TakenOn,
+                    MarkedByTeacherId = att.MarkedByTeacherId
+                });
+            }
+
+            // Add "Not Marked" for students without attendance records
+            foreach (var enrollment in filteredEnrollments)
+            {
+                if (!markedStudentIds.Contains(enrollment.StudentId))
+                {
+                    attendanceSummary.Add(new AttendanceSummaryDto
+                    {
+                        AttendanceId = null,
+                        StudentId = enrollment.StudentId,
+                        ClassId = id,
+                        Date = targetDate,
+                        Status = "Not Marked",
+                        TakenOn = null,
+                        MarkedByTeacherId = null
+                    });
+                }
+            }
+
+            ViewBag.TodayAttendances = attendanceSummary.OrderBy(a => a.StudentId).ToList();
 
             return View(classEntity);
         }
@@ -2100,6 +2493,12 @@ namespace WebMobileAssignment.Controllers
 
                 foreach (var att in request.Attendances)
                 {
+                    // Skip "Not Marked" status - don't save it to database
+                    if (att.Status == "Not Marked")
+                    {
+                        continue;
+                    }
+
                     // Check if attendance already exists for this student on this date
                     var existing = await _context.Attendances
                         .FirstOrDefaultAsync(a => a.StudentId == att.StudentId &&
@@ -2121,7 +2520,7 @@ namespace WebMobileAssignment.Controllers
                     {
                         // Create new attendance record
                         currentAttendanceCount++;
-                        var attId = $"ATT{currentAttendanceCount:D5}";
+                        var attId = $"ATT{(currentAttendanceCount + 1):D5}";
 
                         var attendance = new Attendance
                         {
@@ -2332,13 +2731,13 @@ namespace WebMobileAssignment.Controllers
             var totalRecords = records.Count;
             var presentCount = records.Count(a => a.Status == "Present");
             var absentCount = records.Count(a => a.Status == "Absent");
-            var lateCount = records.Count(a => a.Status == "Late");
+            var leaveCount = records.Count(a => a.Status == "Leave");
             var attendanceRate = totalRecords > 0 ? Math.Round((decimal)presentCount / totalRecords * 100, 1) : 0;
 
             ViewBag.TotalRecords = totalRecords;
             ViewBag.PresentCount = presentCount;
             ViewBag.AbsentCount = absentCount;
-            ViewBag.LateCount = lateCount;
+            ViewBag.LeaveCount = leaveCount;
             ViewBag.AttendanceRate = attendanceRate;
             ViewBag.Students = await _context.Students.Include(s => s.User).ToListAsync();
             ViewBag.Classes = await _context.Classes.ToListAsync();
@@ -2368,7 +2767,7 @@ namespace WebMobileAssignment.Controllers
 
             var thisMonthPresent = thisMonthAttendances.Count(a => a.Status == "Present");
             var thisMonthAbsent = thisMonthAttendances.Count(a => a.Status == "Absent");
-            var thisMonthLate = thisMonthAttendances.Count(a => a.Status == "Late");
+            var thisMonthLeave = thisMonthAttendances.Count(a => a.Status == "Leave");
             var thisMonthTotal = thisMonthAttendances.Count;
             var thisMonthRate = thisMonthTotal > 0 ? Math.Round((decimal)thisMonthPresent / thisMonthTotal * 100, 1) : 0;
 
@@ -2387,7 +2786,7 @@ namespace WebMobileAssignment.Controllers
                 {
                     present = weekAttendances.Count(a => a.Status == "Present"),
                     absent = weekAttendances.Count(a => a.Status == "Absent"),
-                    late = weekAttendances.Count(a => a.Status == "Late")
+                    leave = weekAttendances.Count(a => a.Status == "Leave")
                 });
             }
             ViewBag.WeeklyData = weeklyData;
@@ -2443,10 +2842,706 @@ namespace WebMobileAssignment.Controllers
             ViewBag.TotalAttendanceRecords = totalAttendanceRecords;
             ViewBag.ThisMonthPresent = thisMonthPresent;
             ViewBag.ThisMonthAbsent = thisMonthAbsent;
-            ViewBag.ThisMonthLate = thisMonthLate;
+            ViewBag.ThisMonthLeave = thisMonthLeave;
             ViewBag.ThisMonthRate = thisMonthRate;
 
             return View();
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ExportReportToExcel()
+        {
+            try
+            {
+                // Gather data
+                var totalStudents = await _context.Students.CountAsync();
+                var totalTeachers = await _context.Teachers.CountAsync();
+                var totalClasses = await _context.Classes.CountAsync();
+                var totalAttendance = await _context.Attendances.CountAsync();
+                
+                // This Month Attendance
+                var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+                var thisMonthAttendances = await _context.Attendances
+                    .Where(a => a.Date >= startOfMonth && a.Date <= endOfMonth)
+                    .ToListAsync();
+                
+                var presentCount = thisMonthAttendances.Count(a => a.Status == "Present");
+                var absentCount = thisMonthAttendances.Count(a => a.Status == "Absent");
+                var leaveCount = thisMonthAttendances.Count(a => a.Status == "Leave");
+                var totalRecords = thisMonthAttendances.Count;
+                var attendanceRate = totalRecords > 0 
+                    ? Math.Round((decimal)presentCount / totalRecords * 100, 1) 
+                    : 0;
+                
+                // Top Students
+                var topStudentsData = await _context.Students
+                    .Include(s => s.User)
+                    .Include(s => s.Attendances)
+                    .Where(s => s.Attendances.Any())
+                    .ToListAsync();
+                
+                var topStudents = topStudentsData
+                    .Select(s => new
+                    {
+                        s.StudentId,
+                        FullName = s.User.FullName,
+                        Total = s.Attendances.Count,
+                        Present = s.Attendances.Count(a => a.Status == "Present"),
+                        Rate = s.Attendances.Count > 0 
+                            ? Math.Round((decimal)s.Attendances.Count(a => a.Status == "Present") / s.Attendances.Count * 100, 1) 
+                            : 0
+                    })
+                    .OrderByDescending(s => s.Rate)
+                    .ThenByDescending(s => s.Total)
+                    .Take(10)
+                    .ToList();
+                
+                // Class Performance
+                var classesData = await _context.Classes
+                    .Include(c => c.Enrollments)
+                    .Include(c => c.Teacher).ThenInclude(t => t.User)
+                    .Include(c => c.Subject)
+                    .ToListAsync();
+                
+                var classes = classesData.Select(cls => new
+                {
+                    cls.ClassId,
+                    cls.ClassName,
+                    TeacherName = cls.Teacher?.User?.FullName ?? "N/A",
+                    SubjectName = cls.Subject?.SubjectName ?? "N/A",
+                    cls.CurrentCapacity,
+                    cls.MaxCapacity,
+                    FillRate = cls.MaxCapacity > 0 
+                        ? Math.Round((decimal)cls.CurrentCapacity / cls.MaxCapacity * 100, 1) 
+                        : 0,
+                    Status = cls.CurrentCapacity >= cls.MaxCapacity ? "Full" :
+                            cls.CurrentCapacity >= (cls.MaxCapacity * 0.9) ? "Almost Full" : "Active"
+                }).OrderByDescending(c => c.CurrentCapacity).ToList();
+                
+                // Generate PDF
+                var document = Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4);
+                        page.Margin(50);
+                        page.PageColor(Colors.White);
+                        page.DefaultTextStyle(x => x.FontSize(10).FontColor(Colors.Black));
+                        
+                        page.Header().Row(row =>
+                        {
+                            row.RelativeItem().Column(column =>
+                            {
+                                column.Item().Text("ATTENDANCE MANAGEMENT SYSTEM")
+                                    .FontSize(20).Bold().FontColor(Colors.Blue.Darken2);
+                                column.Item().Text("Comprehensive Report")
+                                    .FontSize(14).FontColor(Colors.Grey.Darken1);
+                                column.Item().Text($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
+                                    .FontSize(9).FontColor(Colors.Grey.Medium);
+                            });
+                        });
+                        
+                        page.Content().PaddingVertical(20).Column(column =>
+                        {
+                            // System Overview Section
+                            column.Item().Text("SYSTEM OVERVIEW").FontSize(14).Bold().FontColor(Colors.Blue.Medium);
+                            column.Item().PaddingVertical(5);
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(1);
+                                });
+                                
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Blue.Lighten3).Padding(5)
+                                        .Text("Metric").Bold();
+                                    header.Cell().Background(Colors.Blue.Lighten3).Padding(5)
+                                        .AlignRight().Text("Count").Bold();
+                                });
+                                
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("Total Students");
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text(totalStudents.ToString());
+                                
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("Total Teachers");
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text(totalTeachers.ToString());
+                                
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("Total Classes");
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text(totalClasses.ToString());
+                                
+                                table.Cell().Padding(5).Text("Total Attendance Records");
+                                table.Cell().Padding(5).AlignRight().Text(totalAttendance.ToString());
+                            });
+                            
+                            column.Item().PaddingVertical(15);
+                            
+                            // Attendance Summary
+                            column.Item().Text($"ATTENDANCE SUMMARY - {DateTime.Now:MMMM yyyy}")
+                                .FontSize(14).Bold().FontColor(Colors.Blue.Medium);
+                            column.Item().PaddingVertical(5);
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(1);
+                                });
+                                
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Green.Lighten3).Padding(5)
+                                        .Text("Status").Bold();
+                                    header.Cell().Background(Colors.Green.Lighten3).Padding(5)
+                                        .AlignRight().Text("Count").Bold();
+                                });
+                                
+                                table.Cell().Background(Colors.Green.Lighten4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+                                    .Padding(5).Text("Present");
+                                table.Cell().Background(Colors.Green.Lighten4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+                                    .Padding(5).AlignRight().Text(presentCount.ToString());
+                                
+                                table.Cell().Background(Colors.Red.Lighten4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+                                    .Padding(5).Text("Absent");
+                                table.Cell().Background(Colors.Red.Lighten4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+                                    .Padding(5).AlignRight().Text(absentCount.ToString());
+                                
+                                table.Cell().Background(Colors.Yellow.Lighten4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+                                    .Padding(5).Text("Leave");
+                                table.Cell().Background(Colors.Yellow.Lighten4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+                                    .Padding(5).AlignRight().Text(leaveCount.ToString());
+                                
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("Total Records");
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text(totalRecords.ToString());
+                                
+                                table.Cell().Background(Colors.Blue.Lighten4).Padding(5).Text("Attendance Rate").Bold();
+                                table.Cell().Background(Colors.Blue.Lighten4).Padding(5).AlignRight().Text($"{attendanceRate}%").Bold();
+                            });
+                            
+                            column.Item().PaddingVertical(15);
+                            column.Item().PageBreak();
+                            
+                            // Top Students
+                            column.Item().Text("TOP PERFORMING STUDENTS (BY ATTENDANCE)")
+                                .FontSize(14).Bold().FontColor(Colors.Blue.Medium);
+                            column.Item().PaddingVertical(5);
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(1);
+                                });
+                                
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Orange.Lighten3).Padding(5).Text("Student ID").Bold();
+                                    header.Cell().Background(Colors.Orange.Lighten3).Padding(5).Text("Name").Bold();
+                                    header.Cell().Background(Colors.Orange.Lighten3).Padding(5).AlignRight().Text("Total").Bold();
+                                    header.Cell().Background(Colors.Orange.Lighten3).Padding(5).AlignRight().Text("Present").Bold();
+                                    header.Cell().Background(Colors.Orange.Lighten3).Padding(5).AlignRight().Text("Rate %").Bold();
+                                });
+                                
+                                foreach (var student in topStudents)
+                                {
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(student.StudentId);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(student.FullName);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text(student.Total.ToString());
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text(student.Present.ToString());
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text($"{student.Rate}%");
+                                }
+                            });
+                            
+                            column.Item().PaddingVertical(15);
+                            
+                            // Class Enrollment Summary
+                            column.Item().Text("CLASS ENROLLMENT SUMMARY")
+                                .FontSize(14).Bold().FontColor(Colors.Blue.Medium);
+                            column.Item().PaddingVertical(5);
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(1);
+                                    columns.RelativeColumn(1);
+                                });
+                                
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Purple.Lighten3).Padding(3).Text("ID").FontSize(8).Bold();
+                                    header.Cell().Background(Colors.Purple.Lighten3).Padding(3).Text("Class").FontSize(8).Bold();
+                                    header.Cell().Background(Colors.Purple.Lighten3).Padding(3).Text("Teacher").FontSize(8).Bold();
+                                    header.Cell().Background(Colors.Purple.Lighten3).Padding(3).Text("Subject").FontSize(8).Bold();
+                                    header.Cell().Background(Colors.Purple.Lighten3).Padding(3).AlignRight().Text("Current").FontSize(8).Bold();
+                                    header.Cell().Background(Colors.Purple.Lighten3).Padding(3).AlignRight().Text("Max").FontSize(8).Bold();
+                                    header.Cell().Background(Colors.Purple.Lighten3).Padding(3).AlignRight().Text("Fill%").FontSize(8).Bold();
+                                    header.Cell().Background(Colors.Purple.Lighten3).Padding(3).Text("Status").FontSize(8).Bold();
+                                });
+                                
+                                foreach (var cls in classes)
+                                {
+                                    var bgColor = cls.Status == "Full" ? Colors.Red.Lighten4 :
+                                                 cls.Status == "Almost Full" ? Colors.Orange.Lighten4 : Colors.White;
+                                    
+                                    table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(cls.ClassId).FontSize(8);
+                                    table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(cls.ClassName).FontSize(8);
+                                    table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(cls.TeacherName).FontSize(8);
+                                    table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(cls.SubjectName).FontSize(8);
+                                    table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).AlignRight().Text(cls.CurrentCapacity.ToString()).FontSize(8);
+                                    table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).AlignRight().Text(cls.MaxCapacity.ToString()).FontSize(8);
+                                    table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).AlignRight().Text($"{cls.FillRate}%").FontSize(8);
+                                    table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(cls.Status).FontSize(8);
+                                }
+                            });
+                        });
+                        
+                        page.Footer().AlignCenter().Text(text =>
+                        {
+                            text.Span("Page ");
+                            text.CurrentPageNumber();
+                            text.Span(" of ");
+                            text.TotalPages();
+                        });
+                    });
+                });
+                
+                var pdfBytes = document.GeneratePdf();
+                return File(pdfBytes, "application/pdf", $"Comprehensive_Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error generating report: {ex.Message}";
+                return RedirectToAction(nameof(Reports));
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ExportStudentReport()
+        {
+            try
+            {
+                var studentsData = await _context.Students
+                    .Include(s => s.User)
+                    .Include(s => s.Enrollments)
+                    .Include(s => s.Attendances)
+                    .OrderBy(s => s.StudentId)
+                    .ToListAsync();
+                
+                var students = studentsData.Select(student => new
+                {
+                    student.StudentId,
+                    FullName = student.User.FullName,
+                    Email = student.User.Email,
+                    Phone = student.User.PhoneNumber ?? "N/A",
+                    student.Gender,
+                    Status = student.User.Status,
+                    EnrollmentDate = student.EnrollmentDate?.ToString("yyyy-MM-dd") ?? "N/A",
+                    TotalClasses = student.Enrollments?.Count(e => e.UnenrolledDate == null) ?? 0,
+                    TotalAttendance = student.Attendances?.Count ?? 0,
+                    Present = student.Attendances?.Count(a => a.Status == "Present") ?? 0,
+                    Absent = student.Attendances?.Count(a => a.Status == "Absent") ?? 0,
+                    Leave = student.Attendances?.Count(a => a.Status == "Leave") ?? 0,
+                    Rate = (student.Attendances?.Count ?? 0) > 0 
+                        ? Math.Round((decimal)(student.Attendances?.Count(a => a.Status == "Present") ?? 0) / student.Attendances.Count * 100, 1) 
+                        : 0
+                }).ToList();
+                
+                // Generate PDF
+                var document = Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4.Landscape());
+                        page.Margin(40);
+                        page.PageColor(Colors.White);
+                        page.DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.Black));
+                        
+                        page.Header().Row(row =>
+                        {
+                            row.RelativeItem().Column(column =>
+                            {
+                                column.Item().Text("STUDENT ATTENDANCE DETAILED REPORT")
+                                    .FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                                column.Item().Text($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
+                                    .FontSize(9).FontColor(Colors.Grey.Medium);
+                                column.Item().Text($"Total Students: {students.Count}")
+                                    .FontSize(10).Bold().FontColor(Colors.Blue.Medium);
+                            });
+                        });
+                        
+                        page.Content().PaddingVertical(15).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(1.5f);
+                                columns.RelativeColumn(0.8f);
+                                columns.RelativeColumn(0.8f);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(0.8f);
+                                columns.RelativeColumn(0.8f);
+                                columns.RelativeColumn(0.8f);
+                                columns.RelativeColumn(0.8f);
+                                columns.RelativeColumn(0.8f);
+                                columns.RelativeColumn(1);
+                            });
+                            
+                            table.Header(header =>
+                            {
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Student ID").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Full Name").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Email").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Phone").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Gender").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Status").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Enrollment").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).AlignRight().Text("Classes").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).AlignRight().Text("Total").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).AlignRight().Text("Present").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).AlignRight().Text("Absent").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).AlignRight().Text("Leave").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Blue.Medium).Padding(4).AlignRight().Text("Rate %").FontSize(8).Bold().FontColor(Colors.White);
+                            });
+                            
+                            bool isAlternate = false;
+                            foreach (var student in students)
+                            {
+                                var bgColor = isAlternate ? Colors.Grey.Lighten4 : Colors.White;
+                                var statusColor = student.Status == "Active" ? Colors.Green.Lighten4 : Colors.Red.Lighten4;
+                                var rateColor = student.Rate >= 80 ? Colors.Green.Lighten4 :
+                                               student.Rate >= 60 ? Colors.Orange.Lighten4 : Colors.Red.Lighten4;
+                                
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(student.StudentId).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(student.FullName).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(student.Email).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(student.Phone).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(student.Gender).FontSize(7);
+                                table.Cell().Background(statusColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(student.Status).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(student.EnrollmentDate).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(student.TotalClasses.ToString()).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(student.TotalAttendance.ToString()).FontSize(7);
+                                table.Cell().Background(Colors.Green.Lighten4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(student.Present.ToString()).FontSize(7);
+                                table.Cell().Background(Colors.Red.Lighten4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(student.Absent.ToString()).FontSize(7);
+                                table.Cell().Background(Colors.Yellow.Lighten4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(student.Leave.ToString()).FontSize(7);
+                                table.Cell().Background(rateColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text($"{student.Rate}%").FontSize(7).Bold();
+                                
+                                isAlternate = !isAlternate;
+                            }
+                        });
+                        
+                        page.Footer().AlignCenter().Text(text =>
+                        {
+                            text.Span("Page ");
+                            text.CurrentPageNumber();
+                            text.Span(" of ");
+                            text.TotalPages();
+                        });
+                    });
+                });
+                
+                var pdfBytes = document.GeneratePdf();
+                return File(pdfBytes, "application/pdf", $"Student_Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error generating student report: {ex.Message}";
+                return RedirectToAction(nameof(Reports));
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ExportClassReport()
+        {
+            try
+            {
+                var classesData = await _context.Classes
+                    .Include(c => c.Teacher).ThenInclude(t => t.User)
+                    .Include(c => c.Subject)
+                    .Include(c => c.Enrollments)
+                    .OrderBy(c => c.ClassId)
+                    .ToListAsync();
+                
+                // Create a typed list for class data
+                var classes = new List<(string ClassId, string ClassName, string SubjectName, string TeacherName, 
+                    string Room, string Schedule, int CurrentCapacity, int MaxCapacity, decimal FillRate, 
+                    int AttendanceCount, string Status)>();
+                    
+                foreach (var cls in classesData)
+                {
+                    var fillRate = cls.MaxCapacity > 0 
+                        ? Math.Round((decimal)cls.CurrentCapacity / cls.MaxCapacity * 100, 1) 
+                        : 0;
+                    
+                    var attendanceCount = await _context.Attendances.CountAsync(a => a.ClassId == cls.ClassId);
+                    var schedule = $"{cls.Day} {cls.StartTime?.ToString(@"hh\:mm")}-{cls.EndTime?.ToString(@"hh\:mm")}";
+                    
+                    classes.Add((
+                        cls.ClassId,
+                        cls.ClassName,
+                        cls.Subject?.SubjectName ?? "N/A",
+                        cls.Teacher?.User?.FullName ?? "N/A",
+                        cls.RoomNumber ?? "N/A",
+                        schedule,
+                        cls.CurrentCapacity,
+                        cls.MaxCapacity,
+                        fillRate,
+                        attendanceCount,
+                        cls.IsActive ? "Active" : "Inactive"
+                    ));
+                }
+                
+                // Generate PDF
+                var document = Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4.Landscape());
+                        page.Margin(40);
+                        page.PageColor(Colors.White);
+                        page.DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.Black));
+                        
+                        page.Header().Row(row =>
+                        {
+                            row.RelativeItem().Column(column =>
+                            {
+                                column.Item().Text("CLASS PERFORMANCE DETAILED REPORT")
+                                    .FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                                column.Item().Text($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
+                                    .FontSize(9).FontColor(Colors.Grey.Medium);
+                                column.Item().Text($"Total Classes: {classes.Count}")
+                                    .FontSize(10).Bold().FontColor(Colors.Blue.Medium);
+                            });
+                        });
+                        
+                        page.Content().PaddingVertical(15).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(2.5f);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(1);
+                            });
+                            
+                            table.Header(header =>
+                            {
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).Text("Class ID").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).Text("Class Name").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).Text("Subject").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).Text("Teacher").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).Text("Room").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).Text("Schedule").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).AlignRight().Text("Current").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).AlignRight().Text("Max").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).AlignRight().Text("Fill%").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).AlignRight().Text("Attend").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Purple.Medium).Padding(4).Text("Status").FontSize(8).Bold().FontColor(Colors.White);
+                            });
+                            
+                            bool isAlternate = false;
+                            foreach (var cls in classes)
+                            {
+                                var bgColor = isAlternate ? Colors.Grey.Lighten4 : Colors.White;
+                                var fillColor = cls.FillRate >= 100 ? Colors.Red.Lighten4 :
+                                               cls.FillRate >= 90 ? Colors.Orange.Lighten4 :
+                                               cls.FillRate >= 70 ? Colors.Yellow.Lighten4 : Colors.Green.Lighten4;
+                                var statusColor = cls.Status == "Active" ? Colors.Green.Lighten4 : Colors.Grey.Lighten3;
+                                
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(cls.ClassId).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(cls.ClassName).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(cls.SubjectName).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(cls.TeacherName).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(cls.Room).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(cls.Schedule).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(cls.CurrentCapacity.ToString()).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(cls.MaxCapacity.ToString()).FontSize(7);
+                                table.Cell().Background(fillColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text($"{cls.FillRate}%").FontSize(7).Bold();
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignRight().Text(cls.AttendanceCount.ToString()).FontSize(7);
+                                table.Cell().Background(statusColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(cls.Status).FontSize(7);
+                                
+                                isAlternate = !isAlternate;
+                            }
+                        });
+                        
+                        page.Footer().AlignCenter().Text(text =>
+                        {
+                            text.Span("Page ");
+                            text.CurrentPageNumber();
+                            text.Span(" of ");
+                            text.TotalPages();
+                        });
+                    });
+                });
+                
+                var pdfBytes = document.GeneratePdf();
+                return File(pdfBytes, "application/pdf", $"Class_Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error generating class report: {ex.Message}";
+                return RedirectToAction(nameof(Reports));
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ExportAttendanceReport(DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                var start = startDate ?? DateTime.Now.AddMonths(-1);
+                var end = endDate ?? DateTime.Now;
+                
+                var attendancesData = await _context.Attendances
+                    .Include(a => a.Student).ThenInclude(s => s.User)
+                    .Include(a => a.Class)
+                    .Where(a => a.Date >= start && a.Date <= end)
+                    .OrderBy(a => a.Date)
+                    .ThenBy(a => a.ClassId)
+                    .ThenBy(a => a.StudentId)
+                    .ToListAsync();
+                
+                var attendances = attendancesData.Select(att => new
+                {
+                    att.AttendanceId,
+                    Date = att.Date.ToString("yyyy-MM-dd"),
+                    StudentId = att.Student?.StudentId ?? "N/A",
+                    StudentName = att.Student?.User?.FullName ?? "N/A",
+                    ClassId = att.Class?.ClassId ?? "N/A",
+                    ClassName = att.Class?.ClassName ?? "N/A",
+                    att.Status,
+                    TakenOn = att.TakenOn.ToString("yyyy-MM-dd HH:mm"),
+                    MarkedBy = att.MarkedByTeacherId ?? "System"
+                }).ToList();
+                
+                // Calculate statistics
+                var totalRecords = attendances.Count;
+                var presentCount = attendances.Count(a => a.Status == "Present");
+                var absentCount = attendances.Count(a => a.Status == "Absent");
+                var leaveCount = attendances.Count(a => a.Status == "Leave");
+                var attendanceRate = totalRecords > 0 
+                    ? Math.Round((decimal)presentCount / totalRecords * 100, 1) 
+                    : 0;
+                
+                // Generate PDF
+                var document = Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4.Landscape());
+                        page.Margin(40);
+                        page.PageColor(Colors.White);
+                        page.DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.Black));
+                        
+                        page.Header().Row(row =>
+                        {
+                            row.RelativeItem().Column(column =>
+                            {
+                                column.Item().Text("ATTENDANCE RECORDS DETAILED REPORT")
+                                    .FontSize(18).Bold().FontColor(Colors.Blue.Darken2);
+                                column.Item().Text($"Period: {start:yyyy-MM-dd} to {end:yyyy-MM-dd}")
+                                    .FontSize(11).FontColor(Colors.Blue.Medium);
+                                column.Item().Text($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
+                                    .FontSize(9).FontColor(Colors.Grey.Medium);
+                            });
+                            
+                            row.ConstantItem(200).Column(column =>
+                            {
+                                column.Item().AlignRight().Text("Summary Statistics").FontSize(10).Bold();
+                                column.Item().AlignRight().Text($"Total Records: {totalRecords}").FontSize(9);
+                                column.Item().AlignRight().Text($"Present: {presentCount}").FontSize(9).FontColor(Colors.Green.Darken1);
+                                column.Item().AlignRight().Text($"Absent: {absentCount}").FontSize(9).FontColor(Colors.Red.Darken1);
+                                column.Item().AlignRight().Text($"Leave: {leaveCount}").FontSize(9).FontColor(Colors.Orange.Darken1);
+                                column.Item().AlignRight().Text($"Rate: {attendanceRate}%").FontSize(9).Bold();
+                            });
+                        });
+                        
+                        page.Content().PaddingVertical(15).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(1.5f);
+                                columns.RelativeColumn(1.2f);
+                                columns.RelativeColumn(1.2f);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(1.2f);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(1);
+                                columns.RelativeColumn(1.5f);
+                                columns.RelativeColumn(1.2f);
+                            });
+                            
+                            table.Header(header =>
+                            {
+                                header.Cell().Background(Colors.Teal.Medium).Padding(4).Text("Attendance ID").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Teal.Medium).Padding(4).Text("Date").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Teal.Medium).Padding(4).Text("Student ID").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Teal.Medium).Padding(4).Text("Student Name").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Teal.Medium).Padding(4).Text("Class ID").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Teal.Medium).Padding(4).Text("Class Name").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Teal.Medium).Padding(4).Text("Status").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Teal.Medium).Padding(4).Text("Taken On").FontSize(8).Bold().FontColor(Colors.White);
+                                header.Cell().Background(Colors.Teal.Medium).Padding(4).Text("Marked By").FontSize(8).Bold().FontColor(Colors.White);
+                            });
+                            
+                            bool isAlternate = false;
+                            foreach (var att in attendances)
+                            {
+                                var bgColor = isAlternate ? Colors.Grey.Lighten4 : Colors.White;
+                                var statusColor = att.Status == "Present" ? Colors.Green.Lighten4 :
+                                                 att.Status == "Absent" ? Colors.Red.Lighten4 : Colors.Yellow.Lighten4;
+                                
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(att.AttendanceId).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(att.Date).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(att.StudentId).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(att.StudentName).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(att.ClassId).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(att.ClassName).FontSize(7);
+                                table.Cell().Background(statusColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(att.Status).FontSize(7).Bold();
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(att.TakenOn).FontSize(7);
+                                table.Cell().Background(bgColor).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(att.MarkedBy).FontSize(7);
+                                
+                                isAlternate = !isAlternate;
+                            }
+                        });
+                        
+                        page.Footer().AlignCenter().Text(text =>
+                        {
+                            text.Span("Page ");
+                            text.CurrentPageNumber();
+                            text.Span(" of ");
+                            text.TotalPages();
+                        });
+                    });
+                });
+                
+                var pdfBytes = document.GeneratePdf();
+                return File(pdfBytes, "application/pdf", $"Attendance_Records_{start:yyyyMMdd}_to_{end:yyyyMMdd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error generating attendance records report: {ex.Message}";
+                return RedirectToAction(nameof(Reports));
+            }
         }
 
         // ==================== LEAVE MANAGEMENT ====================
@@ -2579,8 +3674,6 @@ namespace WebMobileAssignment.Controllers
 
                 if (student != null && student.Enrollments.Any())
                 {
-                    // Get current attendance count for ID generation
-                    var currentAttendanceCount = await _context.Attendances.CountAsync();
                     int attendanceRecordsCreated = 0;
 
                     // For each day in the leave period
@@ -2605,10 +3698,10 @@ namespace WebMobileAssignment.Controllers
                                 if (existingAttendance == null)
                                 {
                                     // Create new attendance record with "Leave" status
-                                    currentAttendanceCount++;
+                                    var attendanceId = IdGenerator.GenerateAttendanceId(_context);
                                     var attendance = new Attendance
                                     {
-                                        AttendanceId = $"ATT{currentAttendanceCount:D5}",
+                                        AttendanceId = attendanceId,
                                         StudentId = student.StudentId,
                                         ClassId = enrollment.ClassId,
                                         Date = date,
@@ -2635,10 +3728,10 @@ namespace WebMobileAssignment.Controllers
                 }
 
                 // Create notification for student
-                var notificationCount = await _context.Notifications.CountAsync();
+                var notificationId = IdGenerator.GenerateNotificationId(_context);
                 var notification = new Notification
                 {
-                    NotificationId = $"N{(notificationCount + 1):D5}",
+                    NotificationId = notificationId,
                     UserId = leave.UserId,
                     Description = $"Your leave application from {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy} has been approved." + 
                                   (string.IsNullOrEmpty(remarks) ? "" : $" Remarks: {remarks}"),
@@ -2652,43 +3745,15 @@ namespace WebMobileAssignment.Controllers
                 // Send email to student
                 try
                 {
-                    var mailMessage = new System.Net.Mail.MailMessage
-                    {
-                        To = { leave.User.Email },
-                        Subject = "Leave Application Approved - Tuition Attendance System",
-                        Body = $@"
-                            <html>
-                              <body style='font-family: Arial, sans-serif;'>
-                                <div style='max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
-                                  <div style='background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1)'>
-                                    <h2 style='color: #28a745;'>Leave Application Approved</h2>
-                                    <p>Dear <strong>{leave.User.FullName}</strong>,</p>
-                                    <p>Your leave application has been <strong style='color: #28a745;'>approved</strong>.</p>
-                                        
-                                    <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                      <p style='margin: 5px 0;'><strong>Leave Period:</strong> {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy}</p>
-                                      <p style='margin: 5px 0;'><strong>Total Days:</strong> {leave.TotalDays} day(s)</p>
-                                      <p style='margin: 5px 0;'><strong>Reason:</strong> {leave.Reason}</p>
-                                      {(string.IsNullOrEmpty(remarks) ? "" : $"<p style='margin: 5px 0;'><strong>Admin Remarks:</strong> {remarks}</p>")}
-                                    </div>
-
-                                    <div style='background-color: #d1ecf1; padding: 15px; border-radius: 5px; border-left: 4px solid #0c5460;'>
-                                      <p style='margin: 0; color: #0c5460;'>
-                                        <strong>Note:</strong> Your attendance for the approved leave period has been automatically marked as Leave 
-                                        and will be counted as present for attendance rate calculations.
-                                      </p>
-                                    </div>
-
-                                    <p style='color: #6c757d; font-size: 12px; margin-top: 30px;'>
-                                      This is an automated email from the Tuition Attendance System.
-                                    </p>
-                                  </div>
-                                </div>
-                              </body>
-                            </html>",
-                        IsBodyHtml = true
-                    };
-                    _helper.SendEmail(mailMessage);
+                    _helper.SendLeaveApprovalEmail(
+                        leave.User.Email,
+                        leave.User.FullName,
+                        leave.StartDate,
+                        leave.EndDate,
+                        leave.TotalDays,
+                        leave.Reason,
+                        remarks
+                    );
                 }
                 catch (Exception emailEx)
                 {
@@ -2734,10 +3799,10 @@ namespace WebMobileAssignment.Controllers
                 leave.Remarks = remarks; // Save admin remarks
 
                 // Create notification for student
-                var notificationCount = await _context.Notifications.CountAsync();
+                var notificationId = IdGenerator.GenerateNotificationId(_context);
                 var notification = new Notification
                 {
-                    NotificationId = $"N{(notificationCount + 1):D5}",
+                    NotificationId = notificationId,
                     UserId = leave.UserId,
                     Description = $"Your leave application from {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy} has been rejected." + 
                                   (string.IsNullOrEmpty(remarks) ? "" : $" Reason: {remarks}"),
@@ -2751,39 +3816,15 @@ namespace WebMobileAssignment.Controllers
                 // Send email notification
                 try
                 {
-                    var mailMessage = new System.Net.Mail.MailMessage
-                    {
-                        To = { leave.User.Email },
-                        Subject = "Leave Application Rejected - Tuition Attendance System",
-                        Body = $@"
-                            <html>
-                              <body style='font-family: Arial, sans-serif;'>
-                                <div style='max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;'>
-                                  <div style='background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1)'>
-                                    <h2 style='color: #dc3545;'>Leave Application Rejected</h2>
-                                    <p>Dear <strong>{leave.User.FullName}</strong>,</p>
-                                    <p>We regret to inform you that your leave application has been <strong style='color: #dc3545;'>rejected</strong>.</p>
-                                        
-                                    <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                      <p style='margin: 5px 0;'><strong>Leave Period:</strong> {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy}</p>
-                                      <p style='margin: 5px 0;'><strong>Total Days:</strong> {leave.TotalDays} day(s)</p>
-                                      <p style='margin: 5px 0;'><strong>Reason:</strong> {leave.Reason}</p>
-                                      {(string.IsNullOrEmpty(remarks) ? "" : $"<p style='margin: 5px 0;'><strong>Admin Remarks:</strong> {remarks}</p>")}
-                                    </div>
-
-                                    <p>If you have any questions, please contact the administration office.</p>
-                                    <p><em>You may reapply for leave for the same dates if needed.</em></p>
-
-                                    <p style='color: #6c757d; font-size: 12px; margin-top: 30px;'>
-                                      This is an automated email from the Tuition Attendance System.
-                                    </p>
-                                  </div>
-                                </div>
-                              </body>
-                            </html>",
-                        IsBodyHtml = true
-                    };
-                    _helper.SendEmail(mailMessage);
+                    _helper.SendLeaveRejectionEmail(
+                        leave.User.Email,
+                        leave.User.FullName,
+                        leave.StartDate,
+                        leave.EndDate,
+                        leave.TotalDays,
+                        leave.Reason,
+                        remarks
+                    );
                 }
                 catch (Exception emailEx)
                 {
@@ -2982,7 +4023,7 @@ namespace WebMobileAssignment.Controllers
 
         public class DeleteProfilePictureRequest
         {
-            public string UserId { get; set; }
+            public required string UserId { get; set; }
         }
 
         // ==================== NOTIFICATIONS ====================
@@ -3100,6 +4141,74 @@ namespace WebMobileAssignment.Controllers
             }
         }
 
+        // Delete notification
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteNotification(string notificationId)
+        {
+            try
+            {
+                var userEmail = User.Identity.Name;
+                var admin = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == userEmail && u.UserType == "Admin");
+
+                if (admin == null)
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                var notification = await _context.Notifications
+                    .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == admin.UserId);
+
+                if (notification == null)
+                {
+                    return Json(new { success = false, message = "Notification not found" });
+                }
+
+                _context.Notifications.Remove(notification);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Delete all read notifications
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAllRead()
+        {
+            try
+            {
+                var userEmail = User.Identity.Name;
+                var admin = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == userEmail && u.UserType == "Admin");
+
+                if (admin == null)
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                var notifications = await _context.Notifications
+                    .Where(n => n.UserId == admin.UserId && n.Status == "read")
+                    .ToListAsync();
+
+                _context.Notifications.RemoveRange(notifications);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, count = notifications.Count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         // Get unread notification count (for layout badge)
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetUnreadNotificationCount()
@@ -3189,109 +4298,150 @@ namespace WebMobileAssignment.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
         {
-            // Validate required fields
-            if (string.IsNullOrWhiteSpace(currentPassword))
-                ModelState.AddModelError("currentPassword", "Current password is required");
-
-            if (string.IsNullOrWhiteSpace(newPassword))
-                ModelState.AddModelError("newPassword", "New password is required");
-
-            if (string.IsNullOrWhiteSpace(confirmPassword))
-                ModelState.AddModelError("confirmPassword", "Confirm password is required");
-
-            if (newPassword != confirmPassword)
-                ModelState.AddModelError("confirmPassword", "Passwords do not match");
-
-            if (newPassword != null && newPassword.Length < 6)
-                ModelState.AddModelError("newPassword", "Password must be at least 6 characters long");
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    // Get current admin user
-                    var userEmail = User.Identity.Name;
-                    var user = await _context.Users
-                        .FirstOrDefaultAsync(u => u.Email == userEmail);
-
-                    if (user == null)
-                    {
-                        TempData["ErrorMessage"] = "User not found.";
-                        return RedirectToAction("ChangePassword");
-                    }
-
-                    // Verify current password
-                    if (!_helper.VerifyPassword(currentPassword, user.PasswordHash))
-                    {
-                        ModelState.AddModelError("currentPassword", "Current password is incorrect");
-                        ViewBag.ActiveMenu = "Settings";
-                        ViewBag.ActiveSubmenu = "ChangePassword";
-                        ViewBag.Title = "Change Password";
-                        return View();
-                    }
-
-                    // Update password
-                    user.PasswordHash = _helper.HashPassword(newPassword);
-                    _context.Update(user);
-                    await _context.SaveChangesAsync();
-
-                    TempData["SuccessMessage"] = "Password changed successfully!";
-                    return RedirectToAction("ChangePassword");
-                }
-                catch (Exception ex)
-                {
-                    TempData["ErrorMessage"] = $"Error changing password: {ex.Message}";
-                }
-            }
-
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "ChangePassword";
             ViewBag.Title = "Change Password";
-            return View();
+
+            // Validate input
+            if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
+            {
+                TempData["ErrorMessage"] = "Please enter all password fields.";
+                return View();
+            }
+
+            // Verify passwords match
+            if (newPassword != confirmPassword)
+            {
+                TempData["ErrorMessage"] = "Passwords do not match.";
+                return View();
+            }
+
+            // Verify password length
+            if (newPassword.Length < 8)
+            {
+                TempData["ErrorMessage"] = "Password must be at least 8 characters long.";
+                return View();
+            }
+
+            try
+            {
+                // Get current admin user from database
+                var userEmail = User.Identity?.Name;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    TempData["ErrorMessage"] = "Unable to identify current user.";
+                    return View();
+                }
+
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == userEmail);
+
+                if (user == null || !user.IsActive)
+                {
+                    TempData["ErrorMessage"] = "User not found or account is inactive.";
+                    return View();
+                }
+
+                // Verify current password - Try both hashed and plain text for backward compatibility
+                bool isPasswordValid = false;
+
+                // First try with proper password hashing (PasswordHasher)
+                if (user.PasswordHash.StartsWith("AQA") || user.PasswordHash.Length > 50)
+                {
+                    // Looks like a hashed password
+                    isPasswordValid = _helper.VerifyPassword(user.PasswordHash, currentPassword);
+                }
+                else
+                {
+                    // Plain text password (for backward compatibility with existing data)
+                    isPasswordValid = user.PasswordHash == currentPassword;
+                }
+
+                if (!isPasswordValid)
+                {
+                    TempData["ErrorMessage"] = "Current password is incorrect.";
+                    return View();
+                }
+
+                // Hash and update new password
+                user.PasswordHash = _helper.HashPassword(newPassword);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Password changed successfully!";
+
+                // Optionally, send a confirmation email
+                try
+                {
+                    _helper.SendPasswordChangeConfirmationEmail(user.Email, user.FullName);
+                }
+                catch (Exception emailEx)
+                {
+                    Console.WriteLine($"Confirmation email failed: {emailEx.Message}");
+                    // Don't show error to user since password was changed successfully
+                }
+
+                return RedirectToAction("ChangePassword");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Change password error: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while changing your password. Please try again later.";
+                return View();
+            }
         }
+
         // ==================== REQUEST MODELS ====================
+
+        // DTO for attendance summary with "Not Marked" support
+        public class AttendanceSummaryDto
+        {
+            public string? AttendanceId { get; set; }
+            public required string StudentId { get; set; }
+            public required string ClassId { get; set; }
+            public required DateTime Date { get; set; }
+            public required string Status { get; set; } // "Present", "Absent", "Late", "Leave", "Not Marked"
+            public DateTime? TakenOn { get; set; }
+            public string? MarkedByTeacherId { get; set; }
+        }
 
         // Request models for bulk operations
         public class BulkAttendanceRequest
         {
-            public string ClassId { get; set; }
-            public string PinCode { get; set; }
-            public string Date { get; set; }
-            public List<AttendanceItem> Attendances { get; set; }
+            public required string ClassId { get; set; }
+            public required string PinCode { get; set; }
+            public required string Date { get; set; }
+            public required List<AttendanceItem> Attendances { get; set; }
         }
 
         public class AttendanceItem
         {
-            public string StudentId { get; set; }
-            public string Status { get; set; }
+            public required string StudentId { get; set; }
+            public required string Status { get; set; }
         }
 
         // Request model for manual attendance saving
         public class ManualAttendanceRequest
         {
-            public string ClassId { get; set; }
-            public string PinCode { get; set; }
-            public string Date { get; set; }
-            public List<ManualAttendanceItem> Attendances { get; set; }
+            public required string ClassId { get; set; }
+            public required string PinCode { get; set; }
+            public required string Date { get; set; }
+            public required List<ManualAttendanceItem> Attendances { get; set; }
         }
 
         public class ManualAttendanceItem
         {
-            public string StudentId { get; set; }
-            public string Status { get; set; }
+            public required string StudentId { get; set; }
+            public required string Status { get; set; }
         }
 
         // Request model for single attendance saving
         public class SingleAttendanceRequest
         {
-            public string ClassId { get; set; }
-            public string StudentId { get; set; }
-            public string Date { get; set; }
-            public string Status { get; set; }
+            public required string ClassId { get; set; }
+            public required string StudentId { get; set; }
+            public required string Date { get; set; }
+            public required string Status { get; set; }
         }
     }
 }
     
-
-
-

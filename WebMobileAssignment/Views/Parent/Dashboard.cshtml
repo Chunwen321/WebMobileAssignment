@@ -34,9 +34,9 @@
     </div>
 
  <div class="col-md-3">
-      <div class="stat-card" style="border-left-color: #ffc107;">
+      <div class="stat-card" style="border-left-color: #0dcaf0;">
  <div class="stat-label">Total Leave</div>
-  <div class="stat-value" id="lateCountStat">@(ViewBag.LateCount ?? 0)</div>
+  <div class="stat-value" id="leaveCountStat">@(ViewBag.LeaveCount ?? 0)</div>
      <div class="stat-change">
  <i class="bi bi-calendar-x"></i>
  <span>On leave</span>
@@ -137,8 +137,8 @@ else
    <strong id="absentCount">@(ViewBag.AbsentCount ?? 0)</strong>
     </div>
    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-     <span class="text-muted"><i class="bi bi-calendar-x me-2 text-warning"></i>Leave</span>
-   <strong id="leaveCount">@(ViewBag.LateCount ?? 0)</strong>
+     <span class="text-muted"><i class="bi bi-calendar-x me-2 text-info"></i>Leave</span>
+   <strong id="leaveCount">@(ViewBag.LeaveCount ?? 0)</strong>
     </div>
 </div>
    <a id="viewProfileBtn" asp-controller="Parent" asp-action="StudentProfile" asp-route-studentId="@ViewBag.CurrentStudentId" class="btn btn-outline-primary w-100 mt-3">
@@ -171,7 +171,7 @@ Attendance Overview
      style="max-height: 300px;"
     data-present="@(ViewBag.PresentCount ?? 0)"
       data-absent="@(ViewBag.AbsentCount ?? 0)"
- data-late="@(ViewBag.LateCount ?? 0)"
+ data-leave="@(ViewBag.LeaveCount ?? 0)"
         data-total="@(ViewBag.TotalAttendance ?? 0)"></canvas>
       <div class="text-center mt-2">
    <small class="text-muted" id="totalAttendanceText">Based on @(ViewBag.TotalAttendance ?? 0) total records</small>
@@ -219,20 +219,20 @@ Attendance Overview
             </div>
      
      <!-- Leave -->
-       <div class="p-3 d-flex align-items-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px; border-left: 4px solid #ffc107;">
+       <div class="p-3 d-flex align-items-center" style="background: rgba(13, 202, 240, 0.1); border-radius: 8px; border-left: 4px solid #0dcaf0;">
 <div class="flex-grow-1">
-       <h4 class="mb-0" style="color: #ffc107;" id="lateRate">
+       <h4 class="mb-0" style="color: #0dcaf0;" id="leaveRate">
     @{
-    var lateRate = ViewBag.TotalAttendance > 0 
-        ? Math.Round((decimal)(ViewBag.LateCount ?? 0) / ViewBag.TotalAttendance * 100, 1) 
+    var leaveRate = (ViewBag.TotalAttendance ?? 0) > 0 
+        ? Math.Round((decimal)(ViewBag.LeaveCount ?? 0) / (int)(ViewBag.TotalAttendance ?? 0) * 100, 1) 
  : 0;
      }
-         @lateRate%
+         @leaveRate%
     </h4>
     <small class="text-muted">Leave</small>
    </div>
      <div class="ms-3">
-  <i class="bi bi-calendar-x" style="font-size: 2rem; color: #ffc107;"></i>
+  <i class="bi bi-calendar-x" style="font-size: 2rem; color: #0dcaf0;"></i>
      </div>
        </div>
  </div>
@@ -368,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Update stats
         document.getElementById('presentCountStat').textContent = data.presentCount;
     document.getElementById('absentCountStat').textContent = data.absentCount;
-        document.getElementById('lateCountStat').textContent = data.lateCount;
+        document.getElementById('leaveCountStat').textContent = data.leaveCount;
   document.getElementById('attendanceRateStat').textContent = data.attendanceRate + '%';
 
    // Update child summary
@@ -377,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('totalClasses').textContent = data.totalClasses;
         document.getElementById('presentCount').textContent = data.presentCount;
      document.getElementById('absentCount').textContent = data.absentCount;
-        document.getElementById('leaveCount').textContent = data.lateCount;
+        document.getElementById('leaveCount').textContent = data.leaveCount;
  
    // Update profile picture
         const studentAvatar = document.getElementById('studentAvatar');
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update chart data
         document.getElementById('presentRate').textContent = data.presentRate + '%';
         document.getElementById('absentRate').textContent = data.absentRate + '%';
-     document.getElementById('lateRate').textContent = data.lateRate + '%';
+        document.getElementById('leaveRate').textContent = data.leaveRate + '%';
         document.getElementById('totalAttendanceText').textContent = `Based on ${data.totalAttendance} total records`;
 
  // Re-render attendance chart with new data
@@ -406,12 +406,12 @@ if (typeof renderAttendanceChart === 'function') {
    renderAttendanceChart('attendanceOverviewChart', {
   presentCount: data.presentCount,
     absentCount: data.absentCount,
-   lateCount: data.lateCount,
+   leaveCount: data.leaveCount,
 totalAttendance: data.totalAttendance
     });
     } else {
 // Fallback to recreating the chart directly
-       updateAttendanceChart(data.presentCount, data.absentCount, data.lateCount, data.totalAttendance);
+       updateAttendanceChart(data.presentCount, data.absentCount, data.leaveCount, data.totalAttendance);
      }
 
         // Update navigation buttons
@@ -545,7 +545,7 @@ nextBtn.setAttribute('data-action', 'next');
 const ctx = canvas.getContext('2d');
         const presentCount = parseInt(canvas.dataset.present, 10) || 0;
   const absentCount = parseInt(canvas.dataset.absent, 10) || 0;
-     const lateCount = parseInt(canvas.dataset.late, 10) || 0;
+     const leaveCount = parseInt(canvas.dataset.leave, 10) || 0;
         const totalCount = parseInt(canvas.dataset.total, 10) || 0;
 
    // Calculate percentages
@@ -554,7 +554,7 @@ const ctx = canvas.getContext('2d');
   dataPercents = [
   Math.round((presentCount / totalCount) * 100),
       Math.round((absentCount / totalCount) * 100),
-       Math.round((lateCount / totalCount) * 100)
+       Math.round((leaveCount / totalCount) * 100)
        ];
  }
 
@@ -571,7 +571,7 @@ const ctx = canvas.getContext('2d');
  backgroundColor: [
   'rgba(25, 135, 84, 0.95)',  // Present
          'rgba(220, 53, 69, 0.95)',  // Absent
-    'rgba(255, 193, 7, 0.95)'    // Leave
+    'rgba(13, 202, 240, 0.95)'    // Leave
      ],
   borderWidth: 0,
   hoverOffset: 6
@@ -618,14 +618,14 @@ const ctx = canvas.getContext('2d');
         addChartCenterLabel(canvas, dataPercents[0], 'Present');
     }
 
-    function updateAttendanceChart(presentCount, absentCount, lateCount, totalCount) {
+    function updateAttendanceChart(presentCount, absentCount, leaveCount, totalCount) {
         const canvas = document.getElementById('attendanceOverviewChart');
   if (!canvas) return;
 
         // Update data attributes
    canvas.dataset.present = presentCount;
         canvas.dataset.absent = absentCount;
-canvas.dataset.late = lateCount;
+canvas.dataset.leave = leaveCount;
         canvas.dataset.total = totalCount;
 
     // Reinitialize the chart
