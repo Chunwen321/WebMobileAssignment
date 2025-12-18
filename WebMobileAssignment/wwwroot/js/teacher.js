@@ -1,5 +1,11 @@
 // Teacher Portal JavaScript
 
+// Initialize dark mode on page load (before DOMContentLoaded to prevent flash)
+(function() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+})();
+
 document.addEventListener('DOMContentLoaded', function () {
     // Sidebar Toggle for Mobile
     const sidebarToggle = document.getElementById('sidebarToggle');

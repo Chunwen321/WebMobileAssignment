@@ -5,9 +5,9 @@
  * SIDEBAR COLORS (matching login page teacher icon)
  */
 :root {
-    /* Primary Sidebar */
-    --sidebar-bg-start: #2c3e50;
-    --sidebar-bg-end: #34495e;
+    /* Primary Sidebar - Light theme: Pure white */
+    --sidebar-bg-start: #ffffff;
+    --sidebar-bg-end: #ffffff;
 
     --teacher-accent: #0d6efd; /* main blue */
     --teacher-accent-hover: rgba(13, 110, 253, 0.1);
@@ -19,12 +19,579 @@
     --color-warning: #ffc107;
     --color-info: #0d6efd;
     /* Background */
-    --page-bg: #f5f7fa;
+    --page-bg: #ffffff;
     --card-bg: #ffffff;
     /* Text Colors */
-    --text-primary: #2c3e50;
-    --text-secondary: #6c757d;
-    --text-muted: #6c757d;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --text-muted: #666666;
+    
+    /* Border Colors */
+    --border-color: #cccccc;
+    --border-light: #e0e0e0;
+}
+
+/* ==================== DARK MODE VARIABLES ==================== */
+[data-theme="dark"] {
+    /* Sidebar - Very dark in dark mode */
+    --sidebar-bg-start: #0f0f0f;
+    --sidebar-bg-end: #1a1a1a;
+    
+    /* Backgrounds */
+    --page-bg: #1a1a1a;
+    --card-bg: #2d2d2d;
+    
+    /* Text Colors */
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-muted: #888888;
+    
+    /* Border Colors */
+    --border-color: #404040;
+    --border-light: #353535;
+}
+
+/* ==================== DARK MODE TRANSITIONS ==================== */
+body,
+.dashboard-card,
+.list-group-item,
+.form-select,
+.form-control,
+.form-check-label,
+.table,
+.text-muted,
+.text-secondary,
+h1, h2, h3, h4, h5, h6,
+p, span, label {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* ==================== LIGHT THEME TEXT STYLING ==================== */
+body,
+h1, h2, h3, h4, h5, h6,
+p, span, label,
+.card-title,
+.card-header-custom {
+    color: #000000;
+}
+
+.text-muted,
+.form-text {
+    color: #666666 !important;
+}
+
+.text-secondary {
+    color: #333333 !important;
+}
+
+small {
+    color: #666666;
+}
+
+/* ==================== DARK MODE STYLING ==================== */
+[data-theme="dark"] body {
+    background: var(--page-bg);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .teacher-layout {
+    background: var(--page-bg);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .dashboard-card {
+    background: #2d2d2d !important;
+    color: #e0e0e0 !important;
+    border-color: #404040 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .card-header-custom {
+    border-bottom: 1px solid #383838 !important;
+    background: transparent !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin-bottom: 16px !important;
+}
+
+[data-theme="dark"] .card-title {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .dashboard-card {
+    background: linear-gradient(135deg, #2d2d2d 0%, #252525 100%) !important;
+    color: #f0f0f0 !important;
+    border: 1px solid #383838 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .dashboard-card:hover {
+    box-shadow: 0 12px 40px rgba(13, 110, 253, 0.15) !important;
+    border-color: #0d6efd !important;
+    transform: translateY(-2px) !important;
+}
+
+[data-theme="dark"] .card {
+    background: linear-gradient(135deg, #2d2d2d 0%, #252525 100%) !important;
+    color: #f0f0f0 !important;
+    border: 1px solid #383838 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .card-body {
+    background: linear-gradient(135deg, #2d2d2d 0%, #252525 100%) !important;
+    color: #f0f0f0 !important;
+}
+
+[data-theme="dark"] .card-header {
+    background: rgba(0, 0, 0, 0.2) !important;
+    color: #f0f0f0 !important;
+    border-color: #383838 !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+[data-theme="dark"] .list-group {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .list-group-item {
+    background: transparent !important;
+    color: #e0e0e0 !important;
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] .list-group-item:hover {
+    background: rgba(13, 110, 253, 0.1) !important;
+}
+
+[data-theme="dark"] .list-group-item.active {
+    background: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+[data-theme="dark"] .modal-content {
+    background: #2d2d2d !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .modal-header {
+    background: #252525 !important;
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] .modal-header .btn-close {
+    filter: invert(1) !important;
+}
+
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-control {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .form-select:focus,
+[data-theme="dark"] .form-control:focus {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border-color: #0d6efd;
+}
+
+[data-theme="dark"] .table {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background: #252525;
+}
+
+[data-theme="dark"] .table thead {
+    background: #1e1e1e;
+    border-bottom: 2px solid #0d6efd;
+}
+
+[data-theme="dark"] .table thead th {
+    color: #64b5f6;
+    font-weight: 600;
+    padding: 12px;
+    border-color: #0d6efd;
+}
+
+[data-theme="dark"] .table tbody tr {
+    border-bottom: 1px solid #353535;
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+    background: #2d2d2d;
+}
+
+[data-theme="dark"] .table tbody td {
+    border-color: #353535;
+    padding: 10px 12px;
+    color: #d0d0d0;
+}
+
+[data-theme="dark"] .table-sm tbody td {
+    border-color: #353535;
+}
+
+[data-theme="dark"] .alert-info {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1a2f4d 100%) !important;
+    border-color: #0d6efd !important;
+    border-left: 4px solid #0d6efd !important;
+    color: #e0e0e0 !important;
+    border-radius: 8px !important;
+}
+
+[data-theme="dark"] .alert {
+    border-radius: 8px !important;
+    background-color: #2d2d2d !important;
+    border-color: #383838 !important;
+    color: #f0f0f0 !important;
+}
+
+[data-theme="dark"] .form-check-label {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .info-row {
+    border-bottom-color: #383838 !important;
+}
+
+[data-theme="dark"] .info-label {
+    color: #a8a8a8 !important;
+}
+
+[data-theme="dark"] .info-value {
+    color: #f0f0f0 !important;
+}
+
+[data-theme="dark"] .stat-item {
+    border-bottom-color: #383838 !important;
+}
+
+[data-theme="dark"] .stat-item-label {
+    color: #a8a8a8 !important;
+}
+
+[data-theme="dark"] .stat-item-value {
+    color: #64b5f6 !important;
+}
+
+/* Dark Mode Text Styling */
+[data-theme="dark"] body,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] label,
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .card-header-custom {
+    color: #f0f0f0 !important;
+}
+
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] .form-text {
+    color: #a8a8a8 !important;
+}
+
+[data-theme="dark"] .text-secondary {
+    color: #d8d8d8 !important;
+}
+
+[data-theme="dark"] small {
+    color: #a8a8a8 !important;
+}
+
+/* Dark Mode Topbar & Button Styling */
+[data-theme="dark"] .topbar {
+    background: #1e1e1e;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid #353535;
+}
+
+[data-theme="dark"] .topbar-title h1 {
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .sidebar-toggle {
+    background: #2d2d2d;
+    border: 1px solid #404040;
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .sidebar-toggle:hover {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+
+[data-theme="dark"] .topbar-btn {
+    background: #2d2d2d;
+    border: 1px solid #404040;
+    color: #b0b0b0;
+}
+
+[data-theme="dark"] .topbar-btn:hover {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+
+/* Dark Mode Table Styling - Borders Only */
+[data-theme="dark"] .table {
+    background: transparent !important;
+    color: #e0e0e0 !important;
+    border-collapse: collapse !important;
+}
+
+[data-theme="dark"] .table thead {
+    background: transparent !important;
+    border-bottom: 2px solid #0d6efd !important;
+}
+
+[data-theme="dark"] .table thead th {
+    background: transparent !important;
+    color: #64b5f6 !important;
+    font-weight: 700 !important;
+    padding: 12px !important;
+    border: none !important;
+    border-bottom: 2px solid #0d6efd !important;
+    text-align: left !important;
+}
+
+[data-theme="dark"] .table tbody {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .table tbody tr {
+    border-bottom: 1px solid #404040 !important;
+    background: transparent !important;
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+    background: rgba(13, 110, 253, 0.05) !important;
+}
+
+[data-theme="dark"] .table tbody td {
+    border: none !important;
+    padding: 12px !important;
+    color: #e0e0e0 !important;
+    vertical-align: middle !important;
+    background: transparent !important;
+}
+
+[data-theme="dark"] .table-sm thead th {
+    padding: 10px !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid #0d6efd !important;
+}
+
+[data-theme="dark"] .table-sm tbody td {
+    padding: 8px 10px !important;
+    border: none !important;
+    background: transparent !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .table-responsive {
+    background: transparent !important;
+}
+
+/* Ensure all table elements use borders only */
+[data-theme="dark"] table {
+    background: transparent !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] table > thead > tr > th {
+    background: transparent !important;
+    color: #64b5f6 !important;
+    border: none !important;
+    border-bottom: 2px solid #0d6efd !important;
+}
+
+[data-theme="dark"] table > tbody > tr > td {
+    border: none !important;
+    color: #e0e0e0 !important;
+    background: transparent !important;
+}
+
+[data-theme="dark"] table > tbody > tr {
+    background: transparent !important;
+    border-bottom: 1px solid #404040 !important;
+}
+
+[data-theme="dark"] table > tbody > tr:hover {
+    background: rgba(13, 110, 253, 0.05) !important;
+}
+
+
+[data-theme="dark"] .table-sm tbody td {
+    padding: 8px 10px;
+    border-color: #353535;
+}
+
+[data-theme="dark"] .table-responsive {
+    background: #252525;
+}
+
+/* Dark Mode Form Styling */
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-check-input {
+    background: #2d2d2d;
+    color: #e0e0e0;
+    border: 1px solid #404040;
+}
+
+[data-theme="dark"] .form-select option {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: #888888;
+}
+
+/* Dark Mode Input & Search Styling */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="search"] {
+    background: #2d2d2d !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #404040 !important;
+}
+
+[data-theme="dark"] input[type="text"]:focus,
+[data-theme="dark"] input[type="date"]:focus,
+[data-theme="dark"] input[type="search"]:focus {
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+}
+[data-theme="dark"] .badge {
+    opacity: 0.95;
+}
+
+[data-theme="dark"] .badge-success {
+    background: #2e8b57;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .badge-danger {
+    background: #c41c3b;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .badge-warning {
+    background: #b8860b;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .badge-info {
+    background: #1e6ba8;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .badge-bg-success {
+    background: #2e8b57 !important;
+}
+
+[data-theme="dark"] .badge-bg-danger {
+    background: #c41c3b !important;
+}
+
+[data-theme="dark"] .badge.bg-light {
+    background: #383838 !important;
+    color: #f0f0f0 !important;
+}
+
+[data-theme="dark"] .badge.bg-light.text-dark {
+    color: #f0f0f0 !important;
+}
+
+/* Dark Mode Button Styling */
+[data-theme="dark"] .btn-outline-primary {
+    color: #64b5f6;
+    border-color: #0d6efd;
+}
+
+[data-theme="dark"] .btn-outline-primary:hover {
+    background: rgba(13, 110, 253, 0.2);
+    border-color: #64b5f6;
+}
+
+/* Dark Mode Sidebar Styling */
+[data-theme="dark"] .sidebar {
+    background: linear-gradient(180deg, #0f0f0f, #1a1a1a);
+    border-right: 1px solid #2a2a2a !important;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .sidebar-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .sidebar-brand {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .sidebar-item {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .sidebar-item:hover {
+    background: rgba(13, 110, 253, 0.15);
+}
+
+[data-theme="dark"] .sidebar-item.active {
+    background: rgba(13, 110, 253, 0.2);
+    border-left: 3px solid #0d6efd;
+    color: #64b5f6;
+}
+
+/* Light Mode Sidebar Styling */
+.sidebar {
+    background: linear-gradient(180deg, #ffffff, #ffffff);
+    border-right: 1px solid #cccccc;
+    box-shadow: 1px 0 4px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-header {
+    border-bottom: 1px solid #cccccc;
+}
+
+.sidebar-brand {
+    color: #000000;
+}
+
+.sidebar-item {
+    color: #333333;
+}
+
+.sidebar-item:hover {
+    background: rgba(13, 110, 253, 0.08);
+    color: #0d6efd;
+}
+
+.sidebar-item.active {
+    background: rgba(13, 110, 253, 0.12);
+    border-left: 3px solid #0d6efd;
+    color: #0d6efd;
+    font-weight: 500;
 }
 
 /* ==================== CLASS DETAIL CARD STYLES ==================== */
@@ -33,7 +600,7 @@
     justify-content: space-between;
     margin-bottom: 12px;
     padding-bottom: 10px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .info-row:last-child {
@@ -42,12 +609,12 @@
 
 .info-label {
     font-weight: 600;
-    color: #666;
+    color: #333333;
     font-size: 0.9rem;
 }
 
 .info-value {
-    color: #333;
+    color: #000000;
 }
 
 .attendance-stats {
@@ -60,7 +627,7 @@
     display: flex;
     justify-content: space-between;
     padding: 8px 0;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .stat-item:last-child {
@@ -69,7 +636,7 @@
 
 .stat-item-label {
     font-weight: 500;
-    color: #666;
+    color: #333333;
     font-size: 0.9rem;
 }
 
@@ -136,7 +703,7 @@
 .teacher-layout {
     margin: 0;
     padding: 0;
-    background: #f5f7fa;
+    background: #ffffff;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -153,17 +720,17 @@
     top: 0;
     height: 100vh;
     width: 280px;
-    background: #1c1a1a;
+    background: linear-gradient(180deg, var(--sidebar-bg-start), var(--sidebar-bg-end));
     display: flex;
     flex-direction: column;
     z-index: 1000;
-    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .sidebar-header {
     padding: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #e9ecef;
 }
 
 .sidebar-brand {
@@ -172,7 +739,7 @@
     gap: 0.75rem;
     font-size: 1.25rem;
     font-weight: 700;
-    color: white;
+    color: #2c3e50;
 }
 
     .sidebar-brand i {
@@ -193,11 +760,11 @@
 }
 
 .sidebar-nav::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.05);
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.25);
     border-radius: 3px;
 }
 
@@ -206,7 +773,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.875rem 1.5rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: #6c757d;
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -215,6 +782,19 @@
     width: 100%;
     text-align: left;
     position: relative;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-item:hover {
+    background: rgba(13, 110, 253, 0.08);
+    color: #0d6efd;
+}
+
+.sidebar-item.active {
+    background: rgba(13, 110, 253, 0.12);
+    border-left: 3px solid #0d6efd;
+    color: #0d6efd;
+    font-weight: 500;
 }
 
 .sidebar-item-content {
@@ -394,15 +974,16 @@
 
 /* Top Bar */
 .topbar {
-    background: white;
+    background: #ffffff;
     padding: 1rem 1.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: sticky;
     top: 0;
     z-index: 100;
+    border-bottom: 1px solid #cccccc;
 }
 
 .sidebar-toggle {
@@ -410,16 +991,18 @@
     width: 40px;
     height: 40px;
     border-radius: 8px;
-    background: #f8f9fa;
-    border: none;
-    color: #2c3e50;
+    background: #f0f0f0;
+    border: 1px solid #cccccc;
+    color: #000000;
     font-size: 1.25rem;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .sidebar-toggle:hover {
-    background: #e9ecef;
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
 }
 
 .topbar-title {
@@ -429,7 +1012,7 @@
 .topbar-title h1 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: #000000;
     margin: 0;
 }
 
@@ -444,9 +1027,9 @@
     width: 40px;
     height: 40px;
     border-radius: 8px;
-    background: #f8f9fa;
-    border: none;
-    color: #6c757d;
+    background: #f0f0f0;
+    border: 1px solid #cccccc;
+    color: #333333;
     font-size: 1.125rem;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -454,6 +1037,7 @@
 
 .topbar-btn:hover {
     background: #0d6efd;
+    border-color: #0d6efd;
     color: white;
 }
 
@@ -479,9 +1063,11 @@
     background: white;
     border-radius: 12px;
     padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     transition: all 0.3s ease;
     height: 100%;
+    color: #000000;
+    border: 1px solid #cccccc;
 }
 
 .dashboard-card:hover {
@@ -495,13 +1081,13 @@
     justify-content: space-between;
     margin-bottom: 1.25rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid #f8f9fa;
+    border-bottom: 2px solid #e0e0e0;
 }
 
 .card-title {
     font-size: 1.125rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: #000000;
     margin: 0;
     display: flex;
     align-items: center;
@@ -570,6 +1156,27 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+}
+
+/* Dark Mode Stat Cards */
+[data-theme="dark"] .stat-card {
+    background: linear-gradient(135deg, #2d2d2d 0%, #252525 100%) !important;
+    border-left: 4px solid #0d6efd !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid #383838 !important;
+    border-left: 4px solid #0d6efd !important;
+}
+
+[data-theme="dark"] .stat-label {
+    color: #a8a8a8 !important;
+}
+
+[data-theme="dark"] .stat-value {
+    color: #f0f0f0 !important;
+}
+
+[data-theme="dark"] .stat-change {
+    color: #d0d0d0 !important;
 }
 
 .stat-change.positive {
@@ -667,6 +1274,34 @@
     margin-bottom: 0 !important;
 }
 
+/* ==================== INPUT GROUP STYLING ==================== */
+
+/* Light mode input group */
+.input-group-text {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    color: #666666;
+}
+
+/* Dark mode input group */
+[data-theme="dark"] .input-group-text {
+    background: #2d2d2d !important;
+    border: 1px solid #404040 !important;
+    color: #a8a8a8 !important;
+}
+
+/* Display value styling */
+.display-value {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #222222;
+    padding: 0.5rem 0;
+}
+
+[data-theme="dark"] .display-value {
+    color: #f0f0f0 !important;
+}
+
 /* Responsive Design */
 @media (max-width: 992px) {
     .sidebar {
@@ -740,4 +1375,15 @@
     .sidebar-overlay.show {
         display: block;
     }
+}
+
+/* ==================== FORM LABEL DARK MODE ==================== */
+
+[data-theme="dark"] .form-label {
+    color: #f0f0f0 !important;
+}
+
+/* Additional styling for form groups in dark mode */
+[data-theme="dark"] .form-label.text-muted {
+    color: #a8a8a8 !important;
 }
