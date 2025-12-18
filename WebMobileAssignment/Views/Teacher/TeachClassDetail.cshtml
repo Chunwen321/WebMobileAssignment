@@ -95,15 +95,15 @@
                         @if (Model?.Attendances != null)
                         {
                             var absentCount = Model.Attendances.Count(a => a.Status == "Absent");
-                            var lateCount = Model.Attendances.Count(a => a.Status == "Late");
+                            var leaveCount = Model.Attendances.Count(a => a.Status == "Leave");
                             
                             <div class="stat-item">
                                 <span class="stat-item-label">Absent:</span>
                                 <span class="stat-item-value text-danger">@absentCount</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-item-label">Late:</span>
-                                <span class="stat-item-value text-warning">@lateCount</span>
+                                <span class="stat-item-label">Leave:</span>
+                                <span class="stat-item-value text-warning">@leaveCount</span>
                             </div>
                         }
                     </div>
@@ -217,11 +217,10 @@
                         <table class="table table-hover mb-0">
                             <thead>
                                 <tr>
-                                    <th width="20%">Date</th>
-                                    <th width="20%">Present</th>
-                                    <th width="20%">Absent</th>
-                                    <th width="20%">Late</th>
-                                    <th width="20%">Rate</th>
+                                    <th width="25%">Date</th>
+                                    <th width="25%">Present</th>
+                                    <th width="25%">Absent</th>
+                                    <th width="25%">Leave</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -236,16 +235,17 @@
                                 {
                                     var presentCount = dateGrp.Count(a => a.Status == "Present");
                                     var absentCount = dateGrp.Count(a => a.Status == "Absent");
-                                    var lateCount = dateGrp.Count(a => a.Status == "Late");
+                                    var leaveCount = dateGrp.Count(a => a.Status == "Leave");
                                     var totalCount = dateGrp.Count();
                                     var rateCount = totalCount > 0 ? Math.Round((decimal)(presentCount * 100) / totalCount, 2) : 0;
+                                    var sessionDate = dateGrp.Key;
+                                    var detailsUrl = Url.Action("TeachAttendanceClassDetail", "Teacher", new { id = Model.ClassId, selectedDate = sessionDate.ToString("yyyy-MM-dd") });
                                     
-                                    <tr>
-                                        <td><strong>@dateGrp.Key.ToString("MMM dd, yyyy")</strong></td>
+                                    <tr class="clickable-row" data-href="@detailsUrl">
+                                        <td><strong>@sessionDate.ToString("MMM dd, yyyy")</strong></td>
                                         <td><span class="badge bg-success">@presentCount</span></td>
                                         <td><span class="badge bg-danger">@absentCount</span></td>
-                                        <td><span class="badge bg-warning text-dark">@lateCount</span></td>
-                                        <td>@rateCount%</td>
+                                        <td><span class="badge bg-warning text-dark">@leaveCount</span></td>
                                     </tr>
                                 }
                             </tbody>
@@ -266,3 +266,40 @@
         </div>
     }
 </div>
+
+<!-- Styles for Clickable Rows -->
+<style>
+    .clickable-row {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .clickable-row:hover {
+        background-color: #f8f9fa !important;
+    }
+
+    .clickable-row:active {
+        background-color: #e9ecef !important;
+    }
+</style>
+
+<!-- Script for Clickable Rows -->
+<script>
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', function() {
+            const url = this.getAttribute('data-href');
+            if (url) {
+                window.open(url, '_blank');
+            }
+        });
+
+        row.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const url = this.getAttribute('data-href');
+                if (url) {
+                    window.open(url, '_blank');
+                }
+            }
+        });
+    });
+</script>

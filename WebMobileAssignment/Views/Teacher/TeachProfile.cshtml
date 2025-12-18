@@ -5,153 +5,360 @@
     Layout = "~/Views/Shared/_TeacherLayout.cshtml";
 }
 
-<div class="row g-3">
-    <div class="col-lg-4">
-        <div class="dashboard-card text-center">
-            <div class="card-header-custom">
-                <h3 class="card-title">
-                    <i class="bi bi-person-badge-fill"></i>
-                    Profile Information
-                </h3>
+<div class="row g-3 align-items-stretch">
+    <!-- Profile Information -->
+    <div class="col-lg-8 d-flex">
+        <div class="dashboard-card settings-account-card flex-fill">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person-circle"></i>
+                    Teacher Information
+                </h5>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="editProfileBtn" onclick="toggleEditMode()">
+                    <i class="bi bi-pencil-square me-1"></i>
+                    <span id="editBtnText">Edit Profile</span>
+                </button>
             </div>
-            <div class="user-avatar mx-auto mb-3" style="width: 120px; height: 120px; font-size: 3rem; background: #0d6efd;">
-                <i class="bi bi-person-fill"></i>
+
+            <!-- Display Mode -->
+            <div id="displayMode">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Full Name</label>
+                        <div class="display-value">@Model?.User?.FullName</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Email Address</label>
+                        <div class="display-value">@Model?.User?.Email</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Phone Number</label>
+                        <div class="display-value">@(Model?.User?.PhoneNumber ?? "Not provided")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Date of Birth</label>
+                        <div class="display-value">
+                            @if (Model?.User?.DateOfBirth.HasValue == true)
+                            {
+                                @Model.User.DateOfBirth.Value.ToString("MMMM dd, yyyy")
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not set</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Gender</label>
+                        <div class="display-value">@(Model?.User?.Gender ?? "Not specified")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Teacher ID</label>
+                        <div class="display-value">@Model?.TeacherId</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Title / Position</label>
+                        <div class="display-value">@(Model?.Title ?? "Not specified")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Total Classes</label>
+                        <div class="display-value">@(Model?.Classes?.Count ?? 0)</div>
+                    </div>
+                </div>
             </div>
-            <h5 class="mb-2">@Model?.User?.FullName</h5>
-            <p class="text-muted mb-3">Teacher ID: @Model?.TeacherId</p>
-            <p class="text-muted mb-4">@(Model?.Title ?? "Instructor")</p>
+
+            <!-- Edit Mode -->
+            <form method="post" asp-action="UpdateTeacherProfile" asp-controller="Teacher" id="editMode" style="display: none;">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" name="fullName" value="@Model?.User?.FullName" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" class="form-control" name="email" value="@Model?.User?.Email" required readonly>
+                        </div>
+                        <small class="text-muted">Email cannot be changed</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                            <input type="tel" class="form-control" name="phoneNumber" value="@(Model?.User?.PhoneNumber ?? "")" placeholder="Enter phone number">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Date of Birth</label>
+                        <input type="date" class="form-control" name="dateOfBirth" value="@(Model?.User?.DateOfBirth?.ToString("yyyy-MM-dd"))">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Gender</label>
+                        <select class="form-select" name="gender">
+                            <option value="">Select Gender</option>
+                            <option value="Male" selected="@(Model?.User?.Gender == "Male")">Male</option>
+                            <option value="Female" selected="@(Model?.User?.Gender == "Female")">Female</option>
+                            <option value="Other" selected="@(Model?.User?.Gender == "Other")">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Title / Position</label>
+                        <input type="text" class="form-control" name="title" value="@(Model?.Title ?? "")" placeholder="e.g., Senior Instructor">
+                    </div>
+                    <div class="col-12 mb-0">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Save Changes
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="cancelEdit()">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="col-lg-8">
-        <div class="dashboard-card">
+    <!-- Profile Picture Sidebar -->
+    <div class="col-lg-4 d-flex">
+        <div class="dashboard-card flex-fill">
             <div class="card-header-custom">
-                <h3 class="card-title">
-                    <i class="bi bi-file-earmark-person-fill"></i>
-                    Personal Information
-                </h3>
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person-circle"></i>
+                    Profile Picture
+                </h5>
             </div>
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" class="form-control" value="@Model?.User?.FullName" disabled />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Teacher ID</label>
-                    <input type="text" class="form-control" value="@Model?.TeacherId" disabled />
-                </div>
-            </div>
+            <div class="text-center mb-3 mt-3">
+                @{
+                    var profilePictureUrl = Model?.User?.ProfilePicture;
+                    var hasCustomPicture = !string.IsNullOrEmpty(profilePictureUrl) && !profilePictureUrl.StartsWith("/images/");
+                }
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" class="form-control" value="@Model?.User?.Email" disabled />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Title</label>
-                    <input type="text" class="form-control" value="@(Model?.Title ?? "N/A")" disabled />
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">User ID</label>
-                    <input type="text" class="form-control" value="@Model?.UserId" disabled />
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">User Type</label>
-                    <input type="text" class="form-control" value="@(Model?.User?.UserType ?? "N/A")" disabled />
-                </div>
-            </div>
-
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>Note:</strong> To edit your profile information, please contact your administrator.
-            </div>
-        </div>
-
-        <!-- Professional Information -->
-        <div class="dashboard-card mt-3">
-            <div class="card-header-custom">
-                <h3 class="card-title">
-                    <i class="bi bi-info-circle-fill"></i>
-                    Professional Information
-                </h3>
-            </div>
-
-            @{
-                var totalClasses = Model?.Classes?.Count ?? 0;
-                var totalStudents = Model?.Classes?.SelectMany(c => c.Enrollments).Count() ?? 0;
-                var totalSessions = Model?.Classes?.SelectMany(c => c.Attendances).Count() ?? 0;
-                var attendances = Model?.Classes?.SelectMany(c => c.Attendances).ToList() ?? new List<Attendance>();
-                var avgAttendance = attendances.Count > 0
-                    ? Math.Round((decimal)(attendances.Count(a => a.Status == "Present") * 100) / attendances.Count(), 2)
-                    : 0;
-            }
-
-            <div class="list-group list-group-flush">
-                <div class="list-group-item px-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted"><i class="bi bi-briefcase-fill me-2"></i>Total Classes Teaching</span>
-                        <strong>@totalClasses</strong>
+                @if (hasCustomPicture)
+                {
+                    <img id="profilePicturePreview" 
+                         src="@profilePictureUrl" 
+                         alt="@Model?.User?.FullName" 
+                         class="img-thumbnail rounded-circle mb-3" 
+                         style="width: 150px; height: 150px; object-fit: cover; cursor: pointer;"
+                         onclick="document.getElementById('profilePictureFile').click()">
+                }
+                else
+                {
+                    <div id="profilePicturePreview" 
+                         class="user-avatar mx-auto mb-3" 
+                         style="width: 150px; height: 150px; font-size: 4rem; background: #0d6efd; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; border-radius: 50%;"
+                         onclick="document.getElementById('profilePictureFile').click()">
+                        <i class="bi bi-person-fill"></i>
                     </div>
-                </div>
-                <div class="list-group-item px-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted"><i class="bi bi-people-fill me-2"></i>Total Students</span>
-                        <strong>@totalStudents</strong>
-                    </div>
-                </div>
-                <div class="list-group-item px-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted"><i class="bi bi-calendar-event-fill me-2"></i>Sessions Conducted</span>
-                        <strong>@totalSessions</strong>
-                    </div>
-                </div>
-                <div class="list-group-item px-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted"><i class="bi bi-graph-up me-2"></i>Avg. Attendance Rate</span>
-                        <strong><span class="badge @(avgAttendance >= 90 ? "bg-success" : avgAttendance >= 80 ? "bg-warning" : "bg-danger")">@avgAttendance%</span></strong>
-                    </div>
-                </div>
-            </div>
-        </div>
+                }
 
-        <!-- Classes Overview -->
-        <div class="dashboard-card mt-3">
-            <div class="card-header-custom">
-                <h3 class="card-title">
-                    <i class="bi bi-book-fill"></i>
-                    Classes Teaching
-                </h3>
-            </div>
+                <input type="file" 
+                       id="profilePictureFile"
+                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                       style="display: none;">
 
-            @if (Model?.Classes != null && Model.Classes.Count > 0)
-            {
-                <div class="list-group list-group-flush">
-                    @foreach (var cls in Model.Classes)
+                <div class="d-grid gap-2 mt-3 px-3">
+                    <button type="button" class="btn btn-primary" onclick="document.getElementById('profilePictureFile').click()">
+                        <i class="bi bi-upload"></i> Choose Photo
+                    </button>
+                    @if (hasCustomPicture)
                     {
-                        var studentCount = cls.Enrollments?.Count ?? 0;
-                        var sessionCount = cls.Attendances?.Count ?? 0;
-                        <div class="list-group-item px-0">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>@cls.ClassName</strong>
-                                    <br />
-                                    <small class="text-muted">@studentCount students • @sessionCount sessions</small>
-                                </div>
-                                <a asp-controller="Teacher" asp-action="TeachClassDetail" asp-route-id="@cls.ClassId" 
-                                   class="btn btn-sm btn-outline-primary">View</a>
-                            </div>
-                        </div>
+                        <button type="button" id="deleteProfilePictureBtn" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i> Remove Photo
+                        </button>
                     }
                 </div>
-            }
-            else
-            {
-                <div class="alert alert-info mb-0">No classes assigned</div>
-            }
+
+                <!-- Upload Progress -->
+                <div id="uploadProgress" class="d-none mt-3">
+                    <div class="progress" style="height: 24px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             id="progressBar" 
+                             role="progressbar" 
+                             style="width: 0%" 
+                             aria-valuenow="0" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Status Message -->
+                <div id="uploadStatus" class="mt-3 text-center"></div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .display-value {
+        font-weight: 500;
+        color: #212529;
+        padding: 0.5rem 0;
+    }
+
+    .settings-account-card {
+        background: #fff;
+    }
+</style>
+
+<script>
+    function toggleEditMode() {
+        const displayMode = document.getElementById('displayMode');
+        const editMode = document.getElementById('editMode');
+        const editBtn = document.getElementById('editProfileBtn');
+        const editBtnText = document.getElementById('editBtnText');
+
+        if (editMode.style.display === 'none') {
+            displayMode.style.display = 'none';
+            editMode.style.display = 'block';
+            editBtnText.textContent = 'Cancel';
+            editBtn.classList.remove('btn-outline-primary');
+            editBtn.classList.add('btn-outline-danger');
+        } else {
+            cancelEdit();
+        }
+    }
+
+    function cancelEdit() {
+        const displayMode = document.getElementById('displayMode');
+        const editMode = document.getElementById('editMode');
+        const editBtn = document.getElementById('editProfileBtn');
+        const editBtnText = document.getElementById('editBtnText');
+
+        displayMode.style.display = 'block';
+        editMode.style.display = 'none';
+        editBtnText.textContent = 'Edit Profile';
+        editBtn.classList.add('btn-outline-primary');
+        editBtn.classList.remove('btn-outline-danger');
+    }
+
+    function showUploadStatus(message, alertType) {
+        const statusDiv = document.getElementById('uploadStatus');
+        statusDiv.innerHTML = `<div class="alert alert-${alertType} mb-0" role="alert"><i class="bi bi-${alertType === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}</div>`;
+    }
+
+    function uploadProfilePicture(croppedFile) {
+        const formData = new FormData();
+        formData.append('file', croppedFile);
+
+        const progressDiv = document.getElementById('uploadProgress');
+        const progressBar = document.getElementById('progressBar');
+
+        progressDiv.classList.remove('d-none');
+
+        fetch('@Url.Action("UploadProfilePicture", "Teacher")', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            }
+        })
+        .then(response => {
+            progressBar.style.width = '100%';
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showUploadStatus('Profile picture uploaded successfully!', 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showUploadStatus(data.message || 'Upload failed. Please try again.', 'danger');
+                progressDiv.classList.add('d-none');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showUploadStatus('An error occurred during upload. Please try again.', 'danger');
+            progressDiv.classList.add('d-none');
+        });
+    }
+
+    // Handle delete profile picture
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteBtn = document.getElementById('deleteProfilePictureBtn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function () {
+                if (confirm('Are you sure you want to remove your profile picture?')) {
+                    fetch('@Url.Action("DeleteProfilePicture", "Teacher")', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showUploadStatus('Profile picture removed successfully!', 'success');
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            showUploadStatus(data.message || 'Failed to remove picture.', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showUploadStatus('An error occurred. Please try again.', 'danger');
+                    });
+                }
+            });
+        }
+    });
+</script>
+
+@section Scripts {
+    <!-- Cropper.js CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+    <!-- Image Cropper Script -->
+    <script src="~/js/cropper.js"></script>
+
+    <script>
+        // ==================== INITIALIZE CROPPER ====================
+        ImageCropper.init(function(croppedFile) {
+            console.log('Cropped file ready:', croppedFile.name, croppedFile.size);
+            // Upload the cropped image
+            uploadProfilePicture(croppedFile);
+        });
+
+        // ==================== PROFILE PICTURE UPLOAD WITH CROPPER ====================
+        (function() {
+            const fileInput = document.getElementById('profilePictureFile');
+
+            // File selection handler - OPEN CROPPER
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    console.log('File selected:', file.name, file.type, file.size);
+
+                    // Validate file type
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!validTypes.includes(file.type)) {
+                        showUploadStatus('Invalid file type. Please upload JPG, PNG, GIF, or WEBP image.', 'danger');
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    // Validate file size (5 MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        showUploadStatus('File size must not exceed 5 MB.', 'danger');
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    // Open cropper modal
+                    ImageCropper.openModal(file);
+                });
+            }
+        })();
+    </script>
+}

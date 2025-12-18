@@ -357,17 +357,59 @@ namespace WebMobileAssignment.Controllers
             if (user == null)
                 return Unauthorized();
             
-            var attendances = await _db.Attendances
-                .Include(a => a.Student)
-                    .ThenInclude(s => s.User)
-                .Include(a => a.Class)
-                .Include(a => a.MarkedByTeacher)
-                    .ThenInclude(t => t.User)
-                .Where(a => a.MarkedByTeacher != null && a.MarkedByTeacher.User.UserId == user.UserId)
-                .OrderByDescending(a => a.Date)
+            var teacher = await _db.Teachers
+                .FirstOrDefaultAsync(t => t.UserId == user.UserId);
+            
+            if (teacher == null)
+                return Unauthorized();
+            
+            // Get all classes for this teacher
+            var teacherClassIds = await _db.Classes
+                .Where(c => c.TeacherId == teacher.TeacherId)
+                .Select(c => c.ClassId)
                 .ToListAsync();
             
-            ViewBag.Attendances = attendances;
+            // Get all sessions for teacher's classes, ordered by most recent first
+            var sessions = await _db.AttendanceSessions
+                .Include(s => s.Class)
+                .Where(s => teacherClassIds.Contains(s.ClassId))
+                .OrderByDescending(s => s.CreatedDate)
+                .ToListAsync();
+            
+            // Build session list with attendance rates
+            var sessionList = new List<dynamic>();
+            
+            foreach (var session in sessions)
+            {
+                var classData = session.Class;
+                
+                // Get all enrollments for this class
+                var enrollmentCount = await _db.Enrollments
+                    .CountAsync(e => e.ClassId == session.ClassId);
+                
+                // Get attendance records for this session (same date as session created)
+                var attendances = await _db.Attendances
+                    .Where(a => a.ClassId == session.ClassId && 
+                               a.Date.Date == session.CreatedDate.Date)
+                    .ToListAsync();
+                
+                var presentCount = attendances.Count(a => a.Status == "Present");
+                
+                sessionList.Add(new
+                {
+                    ClassId = session.ClassId,
+                    ClassName = classData?.ClassName,
+                    RoomNumber = classData?.RoomNumber,
+                    StartTime = classData?.StartTime,
+                    EndTime = classData?.EndTime,
+                    CreatedDate = session.CreatedDate,
+                    EnrollmentCount = enrollmentCount,
+                    PresentCount = presentCount,
+                    AttendanceRate = enrollmentCount > 0 ? Math.Round((decimal)(presentCount * 100) / enrollmentCount, 1) : 0
+                });
+            }
+            
+            ViewBag.Sessions = sessionList;
             return View("TeachAttendanceHistory");
         }
 
@@ -432,7 +474,7 @@ namespace WebMobileAssignment.Controllers
                     
                     var present = studentAttendances.Count(a => a.Status == "Present");
                     var absent = studentAttendances.Count(a => a.Status == "Absent");
-                    var late = studentAttendances.Count(a => a.Status == "Late");
+                    var leave = studentAttendances.Count(a => a.Status == "Leave");
                     var total = studentAttendances.Count;
                     var rate = total > 0 ? Math.Round((decimal)(present * 100) / total, 2) : 0;
                     
@@ -442,7 +484,7 @@ namespace WebMobileAssignment.Controllers
                         StudentName = enrollment.Student?.User?.FullName,
                         Present = present,
                         Absent = absent,
-                        Late = late,
+                        Leave = leave,
                         Total = total,
                         Rate = rate
                     });
@@ -480,6 +522,13 @@ namespace WebMobileAssignment.Controllers
                 .Include(s => s.User)
                 .Include(s => s.Parent)
                     .ThenInclude(p => p.User)
+                .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                        .ThenInclude(c => c.Teacher)
+                            .ThenInclude(t => t.User)
+                .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                        .ThenInclude(c => c.Attendances)
                 .Where(s => s.Enrollments.Any(e => e.Class.TeacherId == teacher.TeacherId))
                 .OrderBy(s => s.User.FullName)
                 .ToListAsync();
@@ -565,6 +614,154 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.Success = "Password changed successfully.";
             return View("TeachChangePassword");
+        }
+
+        // Upload Profile Picture
+        [HttpPost]
+        public async Task<IActionResult> UploadProfilePicture(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                {
+                    return Json(new { success = false, message = "No file selected." });
+                }
+
+                // Validate file type
+                var allowedMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+                if (!allowedMimeTypes.Contains(file.ContentType.ToLower()))
+                {
+                    return Json(new { success = false, message = "Please upload a valid image file (JPEG, PNG, GIF, or WebP)." });
+                }
+
+                // Validate file size (5MB max)
+                if (file.Length > 5 * 1024 * 1024)
+                {
+                    return Json(new { success = false, message = "File size must not exceed 5MB." });
+                }
+
+                // Get current user
+                var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Json(new { success = false, message = "User not found." });
+                }
+
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "User not found." });
+                }
+
+                // Create uploads directory if it doesn't exist
+                var uploadsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
+                Directory.CreateDirectory(uploadsDirectory);
+
+                // Generate unique filename
+                var fileName = $"{user.UserId}_{Guid.NewGuid()}_{file.FileName}";
+                var filePath = Path.Combine(uploadsDirectory, fileName);
+
+                // Save file
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Update user profile picture URL
+                user.ProfilePicture = $"/uploads/profiles/{fileName}";
+                _db.Users.Update(user);
+                await _db.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Profile picture uploaded successfully.", pictureUrl = user.ProfilePicture });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateTeacherProfile(string fullName, string phoneNumber, DateTime? dateOfBirth, string gender, string title)
+        {
+            try
+            {
+                var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return RedirectToAction("TeachProfile");
+                }
+
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+                if (user == null)
+                {
+                    return RedirectToAction("TeachProfile");
+                }
+
+                // Update user information
+                user.FullName = fullName;
+                user.PhoneNumber = phoneNumber;
+                user.DateOfBirth = dateOfBirth;
+                user.Gender = gender;
+
+                // Update teacher title
+                var teacher = await _db.Teachers.FirstOrDefaultAsync(t => t.UserId == user.UserId);
+                if (teacher != null)
+                {
+                    teacher.Title = title;
+                    _db.Teachers.Update(teacher);
+                }
+
+                _db.Users.Update(user);
+                await _db.SaveChangesAsync();
+
+                TempData["Success"] = "Profile updated successfully!";
+                return RedirectToAction("TeachProfile");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"An error occurred: {ex.Message}";
+                return RedirectToAction("TeachProfile");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProfilePicture()
+        {
+            try
+            {
+                var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Json(new { success = false, message = "User not found." });
+                }
+
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "User not found." });
+                }
+
+                // Delete the profile picture file
+                if (!string.IsNullOrEmpty(user.ProfilePicture) && !user.ProfilePicture.StartsWith("/images/"))
+                {
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.ProfilePicture.TrimStart('/'));
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                }
+
+                // Clear profile picture URL
+                user.ProfilePicture = null;
+                _db.Users.Update(user);
+                await _db.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Profile picture removed successfully." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
         }
     }
 }

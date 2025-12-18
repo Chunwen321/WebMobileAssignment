@@ -182,7 +182,7 @@
                             <th>Time</th>
                             <th>Present</th>
                             <th>Absent</th>
-                            <th>Late</th>
+                            <th>Leave</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -193,14 +193,14 @@
                             {
                                 var present = att.Class.Attendances?.Count(a => a.Date.Date == att.Date.Date && a.Status == "Present") ?? 0;
                                 var absent = att.Class.Attendances?.Count(a => a.Date.Date == att.Date.Date && a.Status == "Absent") ?? 0;
-                                var late = att.Class.Attendances?.Count(a => a.Date.Date == att.Date.Date && a.Status == "Late") ?? 0;
+                                var leave = att.Class.Attendances?.Count(a => a.Date.Date == att.Date.Date && a.Status == "Leave") ?? 0;
                                 <tr>
                                     <td><i class="bi bi-calendar3 me-2 text-muted"></i>@att.Date.ToString("yyyy-MM-dd")</td>
                                     <td>@att.Class.ClassName</td>
                                     <td>@(att.Class.StartTime?.ToString(@"hh\:mm") ?? "N/A") - @(att.Class.EndTime?.ToString(@"hh\:mm") ?? "N/A")</td>
                                     <td><strong>@present</strong></td>
                                     <td><strong>@absent</strong></td>
-                                    <td><strong>@late</strong></td>
+                                    <td><strong>@leave</strong></td>
                                     <td><span class="badge bg-success">Submitted</span></td>
                                 </tr>
                             }
