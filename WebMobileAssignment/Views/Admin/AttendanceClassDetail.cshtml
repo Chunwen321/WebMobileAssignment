@@ -83,7 +83,7 @@
                             <div class="info-value">
                                 @if (Model.StartTime.HasValue && Model.EndTime.HasValue)
                                 {
-                                    <span>@Model.Day - @Model.StartTime.Value.ToString(@"hh\:mm") to @Model.EndTime.Value.ToString(@"hh\:mm")</span>
+                                    <span>@Model.Day - @Model.StartTime.Value.ToString("hh\\:mm") to @Model.EndTime.Value.ToString("hh\\:mm")</span>
                                 }
                                 else
                                 {
@@ -169,7 +169,7 @@
                         
                         <div class="alert alert-danger mt-3 mb-0">
                             <i class="bi bi-clock-history"></i>
-                            <small>This PIN expired at @Model.EndTime.Value.ToString(@"hh\:mm") when the class ended. Students can no longer use this PIN.</small>
+                            <small>This PIN expired at @Model.EndTime.Value.ToString("hh\\:mm") when the class ended. Students can no longer use this PIN.</small>
                         </div>
                     }
                     else
@@ -199,7 +199,7 @@
                         {
                             <div class="alert alert-success mt-3 mb-0">
                                 <i class="bi bi-check-circle"></i>
-                                <small>PIN is active until @Model.EndTime.Value.ToString(@"hh\:mm") (class ends)</small>
+                                <small>PIN is active until @Model.EndTime.Value.ToString("hh\\:mm") (class ends)</small>
                             </div>
                         }
                     }
@@ -231,11 +231,11 @@
                         <p class="mb-0 small">PIN can only be generated during class hours.</p>
                         @if (Model.StartTime.HasValue && currentTime < Model.StartTime.Value)
                         {
-                            <p class="mb-0 small mt-2">Starts at <strong>@Model.StartTime.Value.ToString(@"hh\:mm")</strong></p>
+                            <p class="mb-0 small mt-2">Starts at <strong>@Model.StartTime.Value.ToString("hh\\:mm")</strong></p>
                         }
                         else if (Model.EndTime.HasValue)
                         {
-                            <p class="mb-0 small mt-2">Class ended at <strong>@Model.EndTime.Value.ToString(@"hh\:mm")</strong></p>
+                            <p class="mb-0 small mt-2">Class ended at <strong>@Model.EndTime.Value.ToString("hh\\:mm")</strong></p>
                         }
                     </div>
                 }
@@ -784,7 +784,7 @@
                 // Check if class has ended (only auto-mark after class time)
                 @if (Model.EndTime.HasValue && selectedDate.Date == DateTime.Today)
                 {
-                    @:const classEndTime = '@Model.EndTime.Value.ToString(@"HH\:mm")';
+                    @:const classEndTime = '@Model.EndTime.Value.ToString("hh\\:mm")';
                     @:const now = new Date();
                     @:const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
                     @:

@@ -83,7 +83,7 @@
                             <div class="info-value">
                                 @if (Model.StartTime.HasValue && Model.EndTime.HasValue)
                                 {
-                                    <span>@Model.Day - @Model.StartTime.Value.ToString(@"hh\:mm") to @Model.EndTime.Value.ToString(@"hh\:mm")</span>
+                                    <span>@Model.Day - @Model.StartTime.Value.ToString("hh\\:mm") to @Model.EndTime.Value.ToString("hh\\:mm")</span>
                                 }
                                 else
                                 {

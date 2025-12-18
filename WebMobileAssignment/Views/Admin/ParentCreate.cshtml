@@ -53,10 +53,17 @@
                                        id="profilePicture" 
                                        name="profilePicture"
                                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
-                                       style="display: none;"
-                                       onchange="previewProfilePicture(event)">
+                                       style="display: none;">
                                 
-                                <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-danger" style="display: none;" onclick="clearProfilePicture()">
+                                <button type="button" id="btnWebcam" class="btn btn-outline-primary">
+                                    <i class="bi bi-camera-fill"></i> Take Photo
+                                </button>
+                                
+                                <button type="button" id="btnEditPhoto" class="btn btn-outline-success" style="display: none;">
+                                    <i class="bi bi-crop"></i> Edit Photo
+                                </button>
+                                
+                                <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-danger" style="display: none;">
                                     <i class="bi bi-x"></i> Remove
                                 </button>
                             </div>
@@ -75,6 +82,8 @@
                             </h6>
                             <ul class="mb-0">
                                 <li>Upload a clear photo of the parent/guardian</li>
+                                <li><strong>NEW:</strong> Use your webcam to take a photo directly</li>
+                                <li><strong>NEW:</strong> Click "Edit Photo" to crop, rotate, and adjust your image</li>
                                 <li>Image will be automatically uploaded to cloud storage (AWS S3)</li>
                                 <li>Square images work best (will be displayed as circle)</li>
                                 <li>Supported formats: JPG, PNG, GIF, WEBP</li>
@@ -175,45 +184,48 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
-    <script>
-        // Profile Picture Preview Functions
-        function previewProfilePicture(event) {
-            const file = event.target.files[0];
-            const preview = document.getElementById('profilePicturePreview');
-            const clearBtn = document.getElementById('clearProfilePictureBtn');
-            
-            if (file) {
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('File size must not exceed 5MB');
-                    event.target.value = '';
-                    return;
-                }
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Replace icon div with image
-                    preview.outerHTML = `<img id="profilePicturePreview" 
-                                             src="${e.target.result}" 
-                                             alt="Profile Picture" 
-                                             class="img-thumbnail rounded-circle mb-3" 
-                                             style="width: 200px; height: 200px; object-fit: cover;">`;
-                    clearBtn.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+    <!-- Cropper.js CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 
-        function clearProfilePicture() {
-            const fileInput = document.getElementById('profilePicture');
-            const preview = document.getElementById('profilePicturePreview');
-            const clearBtn = document.getElementById('clearProfilePictureBtn');
-            
-            fileInput.value = '';
-            // Replace image with icon
-            preview.outerHTML = `<div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
-                                   <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
-                                 </div>`;
-            clearBtn.style.display = 'none';
-        }
+    <!-- Webcam Capture Script -->
+    <script src="~/js/webcam-capture.js"></script>
+
+    <!-- Image Cropper Module -->
+    <script src="~/js/image-cropper.js"></script>
+
+    <!-- Inject Modals -->
+    <div id="imageCropperModals"></div>
+    <script>
+        document.getElementById('imageCropperModals').innerHTML = ImageCropper.getModalHTML();
+    </script>
+
+    <script>
+        // ==================== INITIALIZE IMAGE CROPPER ====================
+        ImageCropper.init({
+            targetId: 'parent',
+            previewElementId: 'profilePicturePreview',
+            fileInputId: 'profilePicture',
+            clearButtonId: 'clearProfilePictureBtn',
+            editButtonId: 'btnEditPhoto',
+            previewWidth: 200,
+            previewHeight: 200
+        });
+
+        // ==================== WEBCAM FUNCTIONALITY ====================
+        (function() {
+            WebcamCapture.init('profilePicturePreview', 'profilePicture', function(file) {
+                console.log('Photo captured from webcam:', file.name);
+                document.getElementById('clearProfilePictureBtn').style.display = 'block';
+                document.getElementById('btnEditPhoto').style.display = 'block';
+            });
+
+            const webcamBtn = document.getElementById('btnWebcam');
+            if (webcamBtn) {
+                webcamBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal();
+                });
+            }
+        })();
     </script>
 }

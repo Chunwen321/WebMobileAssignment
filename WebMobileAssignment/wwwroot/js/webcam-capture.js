@@ -1,27 +1,34 @@
 /**
  * Webcam Capture Module
  * Provides webcam functionality for profile picture upload
+ * Supports multiple independent webcam instances
  * Author: WebMobileAssignment
  */
 
 const WebcamCapture = (function() {
-    let stream = null;
-    let video = null;
-    let canvas = null;
-    let capturedBlob = null;
+    const instances = new Map(); // Store multiple webcam instances
 
     /**
      * Initialize webcam capture for a specific preview element
      * @param {string} previewId - ID of the preview element
      * @param {string} fileInputId - ID of the file input element
      * @param {function} onCaptureSuccess - Callback when photo is captured
+     * @param {string} modalId - Optional custom modal ID (default: 'webcamModal')
      */
-    function init(previewId, fileInputId, onCaptureSuccess) {
+    function init(previewId, fileInputId, onCaptureSuccess, modalId = 'webcamModal') {
         const config = {
             previewId: previewId,
             fileInputId: fileInputId,
-            onCaptureSuccess: onCaptureSuccess || function() {}
+            modalId: modalId,
+            onCaptureSuccess: onCaptureSuccess || function() {},
+            stream: null,
+            video: null,
+            canvas: null,
+            capturedBlob: null
         };
+
+        // Store instance
+        instances.set(modalId, config);
 
         createWebcamModal(config);
     }
@@ -30,34 +37,45 @@ const WebcamCapture = (function() {
      * Create the webcam modal HTML
      */
     function createWebcamModal(config) {
+        const modalId = config.modalId;
+        
         // Check if modal already exists
-        if (document.getElementById('webcamModal')) {
+        if (document.getElementById(modalId)) {
             return;
         }
 
+        const videoId = modalId + 'Video';
+        const canvasId = modalId + 'Canvas';
+        const loadingId = modalId + 'Loading';
+        const errorId = modalId + 'Error';
+        const errorMsgId = modalId + 'ErrorMessage';
+        const captureBtnId = modalId + 'BtnCapture';
+        const retakeBtnId = modalId + 'BtnRetake';
+        const useBtnId = modalId + 'BtnUse';
+
         const modalHTML = `
-            <div class="modal fade" id="webcamModal" tabindex="-1" aria-labelledby="webcamModalLabel" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}Label" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
                         <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title" id="webcamModalLabel">
+                            <h5 class="modal-title" id="${modalId}Label">
                                 <i class="bi bi-camera-fill me-2"></i>Take Photo
                             </h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <div id="webcamContainer" class="text-center">
-                                <video id="webcamVideo" autoplay playsinline class="img-fluid rounded mb-3" style="max-width: 100%; max-height: 400px; display: none;"></video>
-                                <canvas id="webcamCanvas" class="img-fluid rounded mb-3" style="max-width: 100%; max-height: 400px; display: none;"></canvas>
-                                <div id="webcamLoading" class="text-center py-5">
+                            <div id="${modalId}Container" class="text-center">
+                                <video id="${videoId}" autoplay playsinline class="img-fluid rounded mb-3" style="max-width: 100%; max-height: 400px; display: none;"></video>
+                                <canvas id="${canvasId}" class="img-fluid rounded mb-3" style="max-width: 100%; max-height: 400px; display: none;"></canvas>
+                                <div id="${loadingId}" class="text-center py-5">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <p class="mt-3 text-muted">Starting camera...</p>
                                 </div>
-                                <div id="webcamError" class="alert alert-danger d-none">
+                                <div id="${errorId}" class="alert alert-danger d-none">
                                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                    <span id="webcamErrorMessage"></span>
+                                    <span id="${errorMsgId}"></span>
                                 </div>
                             </div>
                         </div>
@@ -65,13 +83,13 @@ const WebcamCapture = (function() {
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                 <i class="bi bi-x-circle me-1"></i>Cancel
                             </button>
-                            <button type="button" class="btn btn-warning" id="btnRetake" style="display: none;">
+                            <button type="button" class="btn btn-warning" id="${retakeBtnId}" style="display: none;">
                                 <i class="bi bi-arrow-counterclockwise me-1"></i>Retake
                             </button>
-                            <button type="button" class="btn btn-primary" id="btnCapture">
+                            <button type="button" class="btn btn-primary" id="${captureBtnId}">
                                 <i class="bi bi-camera me-1"></i>Capture Photo
                             </button>
-                            <button type="button" class="btn btn-success" id="btnUsePhoto" style="display: none;">
+                            <button type="button" class="btn btn-success" id="${useBtnId}" style="display: none;">
                                 <i class="bi bi-check-circle me-1"></i>Use This Photo
                             </button>
                         </div>
@@ -83,26 +101,26 @@ const WebcamCapture = (function() {
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
         // Initialize modal events
-        const modal = document.getElementById('webcamModal');
+        const modal = document.getElementById(modalId);
         modal.addEventListener('shown.bs.modal', function() {
             startWebcam(config);
         });
         modal.addEventListener('hidden.bs.modal', function() {
-            stopWebcam();
+            stopWebcam(config);
         });
 
         // Capture button
-        document.getElementById('btnCapture').addEventListener('click', function() {
+        document.getElementById(captureBtnId).addEventListener('click', function() {
             capturePhoto(config);
         });
 
         // Retake button
-        document.getElementById('btnRetake').addEventListener('click', function() {
+        document.getElementById(retakeBtnId).addEventListener('click', function() {
             retakePhoto(config);
         });
 
         // Use photo button
-        document.getElementById('btnUsePhoto').addEventListener('click', function() {
+        document.getElementById(useBtnId).addEventListener('click', function() {
             usePhoto(config);
         });
     }
@@ -111,15 +129,21 @@ const WebcamCapture = (function() {
      * Start webcam
      */
     async function startWebcam(config) {
-        video = document.getElementById('webcamVideo');
-        canvas = document.getElementById('webcamCanvas');
-        const loading = document.getElementById('webcamLoading');
-        const errorDiv = document.getElementById('webcamError');
-        const errorMsg = document.getElementById('webcamErrorMessage');
+        const videoId = config.modalId + 'Video';
+        const canvasId = config.modalId + 'Canvas';
+        const loadingId = config.modalId + 'Loading';
+        const errorId = config.modalId + 'Error';
+        const errorMsgId = config.modalId + 'ErrorMessage';
+
+        config.video = document.getElementById(videoId);
+        config.canvas = document.getElementById(canvasId);
+        const loading = document.getElementById(loadingId);
+        const errorDiv = document.getElementById(errorId);
+        const errorMsg = document.getElementById(errorMsgId);
 
         try {
             // Request camera access
-            stream = await navigator.mediaDevices.getUserMedia({
+            config.stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     width: { ideal: 1280 },
                     height: { ideal: 720 },
@@ -128,8 +152,8 @@ const WebcamCapture = (function() {
                 audio: false
             });
 
-            video.srcObject = stream;
-            video.style.display = 'block';
+            config.video.srcObject = config.stream;
+            config.video.style.display = 'block';
             loading.style.display = 'none';
             errorDiv.classList.add('d-none');
 
@@ -151,43 +175,47 @@ const WebcamCapture = (function() {
     /**
      * Stop webcam
      */
-    function stopWebcam() {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
+    function stopWebcam(config) {
+        if (config.stream) {
+            config.stream.getTracks().forEach(track => track.stop());
+            config.stream = null;
         }
-        if (video) {
-            video.srcObject = null;
+        if (config.video) {
+            config.video.srcObject = null;
         }
-        capturedBlob = null;
+        config.capturedBlob = null;
     }
 
     /**
      * Capture photo from webcam
      */
     function capturePhoto(config) {
-        if (!video) return;
+        if (!config.video) return;
+
+        const captureBtnId = config.modalId + 'BtnCapture';
+        const retakeBtnId = config.modalId + 'BtnRetake';
+        const useBtnId = config.modalId + 'BtnUse';
 
         // Set canvas size to match video
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        config.canvas.width = config.video.videoWidth;
+        config.canvas.height = config.video.videoHeight;
 
         // Draw video frame to canvas
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const ctx = config.canvas.getContext('2d');
+        ctx.drawImage(config.video, 0, 0, config.canvas.width, config.canvas.height);
 
         // Hide video, show canvas
-        video.style.display = 'none';
-        canvas.style.display = 'block';
+        config.video.style.display = 'none';
+        config.canvas.style.display = 'block';
 
         // Update buttons
-        document.getElementById('btnCapture').style.display = 'none';
-        document.getElementById('btnRetake').style.display = 'inline-block';
-        document.getElementById('btnUsePhoto').style.display = 'inline-block';
+        document.getElementById(captureBtnId).style.display = 'none';
+        document.getElementById(retakeBtnId).style.display = 'inline-block';
+        document.getElementById(useBtnId).style.display = 'inline-block';
 
         // Convert canvas to blob
-        canvas.toBlob(function(blob) {
-            capturedBlob = blob;
+        config.canvas.toBlob(function(blob) {
+            config.capturedBlob = blob;
         }, 'image/jpeg', 0.9);
     }
 
@@ -195,28 +223,32 @@ const WebcamCapture = (function() {
      * Retake photo
      */
     function retakePhoto(config) {
-        canvas.style.display = 'none';
-        video.style.display = 'block';
+        const captureBtnId = config.modalId + 'BtnCapture';
+        const retakeBtnId = config.modalId + 'BtnRetake';
+        const useBtnId = config.modalId + 'BtnUse';
+
+        config.canvas.style.display = 'none';
+        config.video.style.display = 'block';
 
         // Update buttons
-        document.getElementById('btnCapture').style.display = 'inline-block';
-        document.getElementById('btnRetake').style.display = 'none';
-        document.getElementById('btnUsePhoto').style.display = 'none';
+        document.getElementById(captureBtnId).style.display = 'inline-block';
+        document.getElementById(retakeBtnId).style.display = 'none';
+        document.getElementById(useBtnId).style.display = 'none';
 
-        capturedBlob = null;
+        config.capturedBlob = null;
     }
 
     /**
      * Use captured photo
      */
     function usePhoto(config) {
-        if (!capturedBlob) return;
+        if (!config.capturedBlob) return;
 
         const preview = document.getElementById(config.previewId);
         const fileInput = document.getElementById(config.fileInputId);
 
         // Create a File object from the blob
-        const file = new File([capturedBlob], `webcam-photo-${Date.now()}.jpg`, {
+        const file = new File([config.capturedBlob], `webcam-photo-${Date.now()}.jpg`, {
             type: 'image/jpeg',
             lastModified: Date.now()
         });
@@ -231,17 +263,28 @@ const WebcamCapture = (function() {
         reader.onload = function(e) {
             if (preview.tagName === 'IMG') {
                 preview.src = e.target.result;
+                // Add click-to-enlarge functionality
+                preview.style.cursor = 'pointer';
+                preview.setAttribute('onclick', `enlargeImage(this.src)`);
+                preview.setAttribute('title', 'Click to enlarge');
             } else {
-                // Replace icon div with image
+                // Determine size based on preview element size
+                const size = preview.style.width || '200px';
+                const fontSize = size === '150px' ? '7.5rem' : '10rem';
+                
+                // Replace icon div with image with click-to-enlarge
                 preview.outerHTML = `<img id="${config.previewId}" 
                                          src="${e.target.result}" 
                                          alt="Profile Picture" 
                                          class="img-thumbnail rounded-circle mb-3" 
-                                         style="width: 200px; height: 200px; object-fit: cover;">`;
+                                         style="width: ${size}; height: ${size}; object-fit: cover; cursor: pointer;"
+                                         onclick="enlargeImage(this.src)"
+                                         title="Click to enlarge">`;
             }
 
-            // Show clear button if exists
-            const clearBtn = document.getElementById('clearProfilePictureBtn');
+            // Show clear button if exists (try both possible IDs)
+            const clearBtn = document.getElementById('clearProfilePictureBtn') || 
+                           document.getElementById('clearParentProfilePictureBtn');
             if (clearBtn) {
                 clearBtn.style.display = 'block';
             }
@@ -256,23 +299,38 @@ const WebcamCapture = (function() {
         reader.readAsDataURL(file);
 
         // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('webcamModal'));
+        const modal = bootstrap.Modal.getInstance(document.getElementById(config.modalId));
         modal.hide();
     }
 
     /**
      * Open webcam modal
+     * @param {string} modalId - Optional modal ID (default: 'webcamModal')
      */
-    function openModal() {
-        const modal = new bootstrap.Modal(document.getElementById('webcamModal'));
-        modal.show();
+    function openModal(modalId = 'webcamModal') {
+        const modalElement = document.getElementById(modalId);
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } else {
+            console.error(`Modal with ID "${modalId}" not found`);
+        }
+    }
+
+    /**
+     * Stop all webcam streams
+     */
+    function stopAllWebcams() {
+        instances.forEach((config) => {
+            stopWebcam(config);
+        });
     }
 
     // Public API
     return {
         init: init,
         openModal: openModal,
-        stopWebcam: stopWebcam
+        stopAllWebcams: stopAllWebcams
     };
 })();
 

@@ -439,6 +439,10 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("ThemePreference")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.Property<string>("UserType")
                         .IsRequired()
                         .HasMaxLength(20)
