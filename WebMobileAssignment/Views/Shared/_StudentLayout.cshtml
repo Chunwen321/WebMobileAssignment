@@ -156,16 +156,26 @@
             @{
                 var displayName = "Student";
                 var displayRole = "Student";
+                var displayProfilePicture = "/images/default-avatar.png";
 
                 if (ViewBag.Student != null && ViewBag.Student.User != null)
                 {
                     displayName = ViewBag.Student.User.FullName ?? "Student";
                     displayRole = ViewBag.Student.User.Email ?? "Student";
+                    
+                    if (!string.IsNullOrEmpty(ViewBag.Student.User.ProfilePicture) && 
+                        !ViewBag.Student.User.ProfilePicture.StartsWith("/images/"))
+                    {
+                        displayProfilePicture = ViewBag.Student.User.ProfilePicture;
+                    }
                 }
             }
             <div class="user-info">
-                <div class="user-avatar">
-                    <i class="bi bi-person-fill"></i>
+                <div class="user-avatar" style="background-image: url('@displayProfilePicture'); background-size: cover; background-position: center; border-radius: 50%; width: 40px; height: 40px; min-width: 40px;">
+                    @if (string.IsNullOrEmpty(ViewBag.Student?.User?.ProfilePicture) || ViewBag.Student.User.ProfilePicture.StartsWith("/images/"))
+                    {
+                        <i class="bi bi-person-fill"></i>
+                    }
                 </div>
                 <div class="user-details">
                     <div class="user-name">@displayName</div>

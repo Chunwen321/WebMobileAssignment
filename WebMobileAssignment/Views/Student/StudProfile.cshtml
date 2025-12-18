@@ -59,7 +59,14 @@
             <div class="text-center mb-3">
                 <div>
                     <label for="profilePhotoInput" class="mx-auto d-block mb-3" style="width:120px; height:120px; cursor:pointer;">
-                        <img id="profilePhoto" src="/images/default-avatar.png" alt="avatar" class="profile-img mx-auto d-block" style="width:120px; height:120px; object-fit:cover;" />
+                        @if (!string.IsNullOrEmpty(user?.ProfilePicture) && !user.ProfilePicture.StartsWith("/images/"))
+                        {
+                            <img id="profilePhoto" src="@user.ProfilePicture" alt="avatar" class="profile-img mx-auto d-block" style="width:120px; height:120px; object-fit:cover; border-radius: 50%;" />
+                        }
+                        else
+                        {
+                            <img id="profilePhoto" src="/images/default-avatar.png" alt="avatar" class="profile-img mx-auto d-block" style="width:120px; height:120px; object-fit:cover;" />
+                        }
                     </label>
                 </div>
 

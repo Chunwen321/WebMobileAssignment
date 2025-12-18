@@ -122,6 +122,22 @@ namespace WebMobileAssignment.Controllers
             ViewBag.AttendanceRate = attendanceRate;
             ViewBag.EnrolledClasses = enrolledClasses;
             ViewBag.RecentAttendances = recentAttendances;
+            
+            // Get attendance data for different time periods
+            var today = DateTime.Today;
+            var last7Days = today.AddDays(-6); // includes today = 7 days
+            var last30Days = today.AddDays(-29); // includes today = 30 days
+            var last3Months = today.AddMonths(-3);
+
+            var attendances7Days = allAttendances.Where(a => a.Date.Date >= last7Days).ToList();
+            var attendances30Days = allAttendances.Where(a => a.Date.Date >= last30Days).ToList();
+            var attendances3Months = allAttendances.Where(a => a.Date.Date >= last3Months).ToList();
+
+            // Time period data as JSON for JavaScript
+            ViewBag.Attendances7Days = System.Text.Json.JsonSerializer.Serialize(attendances7Days.GroupBy(a => a.Date.Date).Select(g => new { Date = g.Key, Present = g.Count(a => a.Status == "Present"), Absent = g.Count(a => a.Status == "Absent"), Leave = g.Count(a => a.Status == "Leave") }));
+            ViewBag.Attendances30Days = System.Text.Json.JsonSerializer.Serialize(attendances30Days.GroupBy(a => a.Date.Date).Select(g => new { Date = g.Key, Present = g.Count(a => a.Status == "Present"), Absent = g.Count(a => a.Status == "Absent"), Leave = g.Count(a => a.Status == "Leave") }));
+            ViewBag.Attendances3Months = System.Text.Json.JsonSerializer.Serialize(attendances3Months.GroupBy(a => a.Date.Date).Select(g => new { Date = g.Key, Present = g.Count(a => a.Status == "Present"), Absent = g.Count(a => a.Status == "Absent"), Leave = g.Count(a => a.Status == "Leave") }));
+            
             ViewBag.ActiveMenu = "Dashboard";
 
             return View("StudDashboard", student);
