@@ -1,0 +1,45 @@
+@inject WebMobileAssignment.Services.LocalizationService Localization
+
+<div class="dropdown">
+    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-globe me-1"></i>
+        @{
+            var currentLang = Localization.CurrentLanguage;
+            var languages = Localization.GetAvailableLanguages();
+            var currentLanguage = languages.FirstOrDefault(l => l.Code == currentLang);
+        }
+        @if (currentLanguage != null)
+        {
+            <span>@currentLanguage.Flag @currentLanguage.Name</span>
+        }
+        else
+        {
+            <span>🇬🇧 English</span>
+        }
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+        @foreach (var lang in languages)
+        {
+            <li>
+                <form method="post" action="/Admin/ChangeLanguage" class="d-inline">
+                    <input type="hidden" name="language" value="@lang.Code" />
+                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                    <button type="submit" class="dropdown-item @(currentLang == lang.Code ? "active" : "")">
+                        <span class="me-2">@lang.Flag</span>
+                        @lang.Name
+                        @if (currentLang == lang.Code)
+                        {
+                            <i class="bi bi-check float-end"></i>
+                        }
+                    </button>
+                </form>
+            </li>
+        }
+        <li><hr class="dropdown-divider"></li>
+        <li>
+            <a class="dropdown-item text-primary" href="#" onclick="autoTranslate('ms'); return false;">
+                <i class="bi bi-translate me-2"></i>Auto-Generate Malay
+            </a>
+        </li>
+    </ul>
+</div>

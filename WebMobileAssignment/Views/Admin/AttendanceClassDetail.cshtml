@@ -660,6 +660,7 @@
                     contentType: 'application/json',
                     data: JSON.stringify({
                         classId: classId,
+                        pinCode: '@(sessionOnSelectedDate?.PinCode ?? "")',
                         date: selectedDate,
                         attendances: studentsToMark
                     }),
@@ -736,6 +737,7 @@
                     contentType: 'application/json',
                     data: JSON.stringify({
                         classId: classId,
+                        pinCode: '@(sessionOnSelectedDate?.PinCode ?? "")',
                         date: selectedDate,
                         attendances: studentsToMark
                     }),
