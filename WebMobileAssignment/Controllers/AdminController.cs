@@ -233,6 +233,13 @@ namespace WebMobileAssignment.Controllers
                 status = "active"; // Default value
             }
 
+            // Validate that EITHER parentId is provided OR new parent details are provided
+            if (string.IsNullOrEmpty(parentId) && string.IsNullOrWhiteSpace(newParentEmail))
+            {
+                ModelState.AddModelError("parentId", "Please select an existing parent or create a new parent");
+                ModelState.AddModelError("newParentEmail", "Please select an existing parent or enter new parent email");
+            }
+
             // Validate new parent fields if creating a new parent
             if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
             {
@@ -251,7 +258,7 @@ namespace WebMobileAssignment.Controllers
                 if (string.IsNullOrWhiteSpace(newParentGender))
                     ModelState.AddModelError("newParentGender", "Parent gender is required when creating a new parent");
             }
-            else
+            else if (!string.IsNullOrEmpty(parentId))
             {
                 // If we have a parentId (existing parent), remove validation errors for new parent fields
                 ModelState.Remove("newParentFullName");
@@ -291,12 +298,16 @@ namespace WebMobileAssignment.Controllers
                 {
                     // Generate random temporary password for new user
                     var temporaryPassword = _helper.RandomPassword();
+                    bool isNewParentCreated = false;
+                    string? newlyCreatedParentUserId = null;
 
                     // If need to create new parent
                     if (string.IsNullOrEmpty(parentId) && !string.IsNullOrWhiteSpace(newParentEmail))
                     {
+                        isNewParentCreated = true;
                         // create parent user and parent with all fields using IdGenerator
                         var parentUserId = IdGenerator.GenerateUserId(_context);
+                        newlyCreatedParentUserId = parentUserId;
                         var parentIdGen = IdGenerator.GenerateParentId(_context);
 
                         var parentTempPassword = _helper.RandomPassword();
@@ -321,6 +332,7 @@ namespace WebMobileAssignment.Controllers
                             UserId = parentUserId,
                             FullName = newParentFullName,
                             Email = newParentEmail,
+                            PhoneNumber = newParentPhone,
                             PasswordHash = _helper.HashPassword(parentTempPassword),
                             DateOfBirth = newParentDateOfBirth, // Include date of birth
                             Gender = newParentGender, // Include gender
@@ -355,6 +367,28 @@ namespace WebMobileAssignment.Controllers
                         }
 
                         parentId = parent.ParentId;
+                        
+                        // Notify admins about new parent registration
+                        if (isNewParentCreated)
+                        {
+                            var adminUsersForParent = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
+                            foreach (var admin in adminUsersForParent)
+                            {
+                                var parentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                                var parentNotification = new Notification
+                                {
+                                    NotificationId = parentNotificationId,
+                                    UserId = admin.UserId,
+                                    Type = "Parent Registration",
+                                    Description = $"New parent registered: {newParentFullName} ({newParentEmail})",
+                                    RelatedEntityId = parentUserId,
+                                    Status = "unread",
+                                    CreatedDate = DateTime.Now
+                                };
+                                _context.Notifications.Add(parentNotification);
+                            }
+                            await _context.SaveChangesAsync();
+                        }
                     }
 
                     // Generate IDs for student using IdGenerator
@@ -443,13 +477,94 @@ namespace WebMobileAssignment.Controllers
                             var classToUpdate = await _context.Classes.FindAsync(classId);
                             if (classToUpdate != null)
                             {
+                                // Calculate old utilization rate before incrementing
+                                var oldUtilizationRate = (double)classToUpdate.CurrentCapacity / classToUpdate.MaxCapacity;
+                                
                                 classToUpdate.CurrentCapacity++;
+                                
+                                // Calculate new utilization rate after incrementing
+                                var newUtilizationRate = (double)classToUpdate.CurrentCapacity / classToUpdate.MaxCapacity;
+                                
+                                // Send notification only when capacity reaches or crosses 90% threshold
+                                if (oldUtilizationRate < 0.90 && newUtilizationRate >= 0.90)
+                                {
+                                    var adminUsersForCapacity = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
+                                    foreach (var admin in adminUsersForCapacity)
+                                    {
+                                        var capacityNotificationId = IdGenerator.GenerateNotificationId(_context);
+                                        var capacityNotification = new Notification
+                                        {
+                                            NotificationId = capacityNotificationId,
+                                            UserId = admin.UserId,
+                                            Type = "Class Capacity Alert",
+                                            Description = $"Class '{classToUpdate.ClassName}' has reached {newUtilizationRate:P0} capacity ({classToUpdate.CurrentCapacity}/{classToUpdate.MaxCapacity})",
+                                            RelatedEntityId = classToUpdate.ClassId,
+                                            Status = "unread",
+                                            CreatedDate = DateTime.Now
+                                        };
+                                        _context.Notifications.Add(capacityNotification);
+                                    }
+                                }
                             }
 
                             enrolledCount++;
                         }
                         await _context.SaveChangesAsync();
+                        
+                        // Notify parent about child enrollment in classes
+                        if (classIds != null && classIds.Any() && !string.IsNullOrEmpty(parentId))
+                        {
+                            var parent = await _context.Parents
+                                .Include(p => p.User)
+                                .FirstOrDefaultAsync(p => p.ParentId == parentId);
+                            
+                            if (parent?.User != null)
+                            {
+                                var enrolledClasses = await _context.Classes
+                                    .Where(c => classIds.Contains(c.ClassId))
+                                    .ToListAsync();
+                                
+                                foreach (var cls in enrolledClasses)
+                                {
+                                    var parentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                                    var parentNotification = new Notification
+                                    {
+                                        NotificationId = parentNotificationId,
+                                        UserId = parent.UserId,
+                                        Type = "Student Enrollment",
+                                        Description = $"Your child {fullName} has been enrolled in {cls.ClassName}",
+                                        RelatedEntityId = cls.ClassId,
+                                        AffectedEntityId = studentId,
+                                        Status = "unread",
+                                        CreatedDate = DateTime.Now
+                                    };
+                                    _context.Notifications.Add(parentNotification);
+                                }
+                                await _context.SaveChangesAsync();
+                            }
+                        }
                     }
+
+                    // Notify admins about new student registration
+                    var adminUsers = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
+                    var enrolledClassIds = classIds != null && classIds.Any() ? string.Join(",", classIds) : null;
+                    foreach (var admin in adminUsers)
+                    {
+                        var adminNotificationId = IdGenerator.GenerateNotificationId(_context);
+                        var adminNotification = new Notification
+                        {
+                            NotificationId = adminNotificationId,
+                            UserId = admin.UserId,
+                            Type = "Student Registration",
+                            Description = $"New student registered: {fullName} ({email}) with {enrolledCount} class enrollment(s)",
+                            RelatedEntityId = studentId,
+                            AffectedEntityId = enrolledClassIds,
+                            Status = "unread",
+                            CreatedDate = DateTime.Now
+                        };
+                        _context.Notifications.Add(adminNotification);
+                    }
+                    await _context.SaveChangesAsync();
 
                     TempData["SuccessMessage"] = $"Student '{fullName}' added successfully with {enrolledCount} class enrollment(s)! A temporary password has been sent to {email}.";
 
@@ -604,6 +719,7 @@ namespace WebMobileAssignment.Controllers
                     
                     int addedCount = 0;
                     int removedCount = 0;
+                    var newlyEnrolledClassIds = new List<string>();
 
                     // Handle removal of enrollments - use ExecuteUpdate to avoid tracking conflicts
                     if (!string.IsNullOrEmpty(removeClassIds))
@@ -670,12 +786,124 @@ namespace WebMobileAssignment.Controllers
                                     classToUpdate.CurrentCapacity++;
                                 }
 
+                                // Track newly enrolled class
+                                newlyEnrolledClassIds.Add(classId);
                                 addedCount++;
                             }
                         }
                     }
                     
-                    // Save all changes (student info + enrollments) in one transaction
+                    // Send notifications to teachers and parents about student enrollments
+                    if (addedCount > 0 && newlyEnrolledClassIds.Any())
+                    {
+                        var classesWithTeachers = await _context.Classes
+                            .Include(c => c.Teacher)
+                            .ThenInclude(t => t.User)
+                            .Where(c => newlyEnrolledClassIds.Contains(c.ClassId))
+                            .ToListAsync();
+                        
+                        // Get student with parent info
+                        var studentWithParent = await _context.Students
+                            .Include(s => s.Parent)
+                            .ThenInclude(p => p.User)
+                            .FirstOrDefaultAsync(s => s.StudentId == studentId);
+                        
+                        foreach (var cls in classesWithTeachers)
+                        {
+                            // Notify teacher
+                            if (cls.Teacher?.User != null)
+                            {
+                                var notificationId = IdGenerator.GenerateNotificationId(_context);
+                                var teacherNotification = new Notification
+                                {
+                                    NotificationId = notificationId,
+                                    UserId = cls.Teacher.UserId,
+                                    Type = "Student Enrollment",
+                                    Description = $"New student {fullName} has been enrolled in your class {cls.ClassName}",
+                                    RelatedEntityId = cls.ClassId,
+                                    AffectedEntityId = student.StudentId,
+                                    Status = "unread",
+                                    CreatedDate = DateTime.Now
+                                };
+                                _context.Notifications.Add(teacherNotification);
+                            }
+                            
+                            // Notify parent
+                            if (studentWithParent?.Parent?.User != null)
+                            {
+                                var parentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                                var parentNotification = new Notification
+                                {
+                                    NotificationId = parentNotificationId,
+                                    UserId = studentWithParent.Parent.UserId,
+                                    Type = "Student Enrollment",
+                                    Description = $"Your child {fullName} has been enrolled in {cls.ClassName}",
+                                    RelatedEntityId = cls.ClassId,
+                                    AffectedEntityId = student.StudentId,
+                                    Status = "unread",
+                                    CreatedDate = DateTime.Now
+                                };
+                                _context.Notifications.Add(parentNotification);
+                            }
+                            
+                            // Check capacity alert for admin
+                            if (cls.CurrentCapacity >= cls.MaxCapacity * 0.9) // 90% capacity
+                            {
+                                var adminUsers = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
+                                foreach (var admin in adminUsers)
+                                {
+                                    var capacityNotificationId = IdGenerator.GenerateNotificationId(_context);
+                                    var capacityNotification = new Notification
+                                    {
+                                        NotificationId = capacityNotificationId,
+                                        UserId = admin.UserId,
+                                        Type = "Class Capacity Alert",
+                                        Description = $"Class {cls.ClassName} is at {cls.CurrentCapacity}/{cls.MaxCapacity} capacity ({(cls.CurrentCapacity * 100 / cls.MaxCapacity)}%)",
+                                        RelatedEntityId = cls.ClassId,
+                                        Status = "unread",
+                                        CreatedDate = DateTime.Now
+                                    };
+                                    _context.Notifications.Add(capacityNotification);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Notify parent about child unenrollment
+                    if (removedCount > 0 && !string.IsNullOrEmpty(removeClassIds))
+                    {
+                        var studentWithParent = await _context.Students
+                            .Include(s => s.Parent)
+                            .ThenInclude(p => p.User)
+                            .FirstOrDefaultAsync(s => s.StudentId == studentId);
+                        
+                        if (studentWithParent?.Parent?.User != null)
+                        {
+                            var removedClassIdList = removeClassIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                            var removedClasses = await _context.Classes
+                                .Where(c => removedClassIdList.Contains(c.ClassId))
+                                .ToListAsync();
+                            
+                            foreach (var cls in removedClasses)
+                            {
+                                var parentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                                var parentNotification = new Notification
+                                {
+                                    NotificationId = parentNotificationId,
+                                    UserId = studentWithParent.Parent.UserId,
+                                    Type = "Student Unenrollment",
+                                    Description = $"Your child {fullName} has been removed from {cls.ClassName}",
+                                    RelatedEntityId = cls.ClassId,
+                                    AffectedEntityId = student.StudentId,
+                                    Status = "unread",
+                                    CreatedDate = DateTime.Now
+                                };
+                                _context.Notifications.Add(parentNotification);
+                            }
+                        }
+                    }
+
+                    // Save all changes (student info + enrollments + notifications) in one transaction
                     await _context.SaveChangesAsync();
 
                     var message = $"Student '{fullName}' updated successfully!";
@@ -993,6 +1221,25 @@ namespace WebMobileAssignment.Controllers
                         Console.WriteLine($"Warning: Failed to send welcome email to {email}: {emailEx.Message}");
                         // Don't fail the operation if email fails
                     }
+                    
+                    // Notify admins about new teacher registration
+                    var adminUsers = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
+                    foreach (var admin in adminUsers)
+                    {
+                        var adminNotificationId = IdGenerator.GenerateNotificationId(_context);
+                        var adminNotification = new Notification
+                        {
+                            NotificationId = adminNotificationId,
+                            UserId = admin.UserId,
+                            Type = "Teacher Registration",
+                            Description = $"New teacher registered: {fullName} ({email}) - {title}, {subjectTeach}",
+                            RelatedEntityId = userId,
+                            Status = "unread",
+                            CreatedDate = DateTime.Now
+                        };
+                        _context.Notifications.Add(adminNotification);
+                    }
+                    await _context.SaveChangesAsync();
                     
                     TempData["SuccessMessage"] = $"Teacher '{fullName}' added successfully! A temporary password has been sent to {email}.";
                     return RedirectToAction(nameof(TeacherIndex));
@@ -1421,6 +1668,25 @@ namespace WebMobileAssignment.Controllers
                         // Don't fail the operation if email fails
                     }
                     
+                    // Notify admins about new parent registration
+                    var adminUsers = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
+                    foreach (var admin in adminUsers)
+                    {
+                        var adminNotificationId = IdGenerator.GenerateNotificationId(_context);
+                        var adminNotification = new Notification
+                        {
+                            NotificationId = adminNotificationId,
+                            UserId = admin.UserId,
+                            Type = "Parent Registration",
+                            Description = $"New parent registered: {fullName} ({email})",
+                            RelatedEntityId = userId,
+                            Status = "unread",
+                            CreatedDate = DateTime.Now
+                        };
+                        _context.Notifications.Add(adminNotification);
+                    }
+                    await _context.SaveChangesAsync();
+                    
                     TempData["SuccessMessage"] = $"Parent '{fullName}' added successfully! A temporary password has been sent to {email}.";
                     return RedirectToAction(nameof(ParentIndex));
                 }
@@ -1782,6 +2048,29 @@ namespace WebMobileAssignment.Controllers
                     _context.ClassActiveHistories.Add(history);
                 }
 
+                // Send notification to teacher about class assignment
+                if (!string.IsNullOrEmpty(teacherId))
+                {
+                    var teacher = await _context.Teachers
+                        .Include(t => t.User)
+                        .FirstOrDefaultAsync(t => t.TeacherId == teacherId);
+                    
+                    if (teacher != null)
+                    {
+                        var notificationId = IdGenerator.GenerateNotificationId(_context);
+                        var teacherNotification = new Notification
+                        {
+                            NotificationId = notificationId,
+                            UserId = teacher.UserId,
+                            Type = "Class Assignment",
+                            Description = $"You have been assigned to teach {className} on {day} from {parsedStartTime:hh\\:mm} to {parsedEndTime:hh\\:mm} at {roomNumber}",
+                            Status = "unread",
+                            CreatedDate = DateTime.Now
+                        };
+                        _context.Notifications.Add(teacherNotification);
+                    }
+                }
+
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Class created successfully!";
                 return RedirectToAction(nameof(ClassIndex));
@@ -1802,7 +2091,9 @@ namespace WebMobileAssignment.Controllers
                 .Include(c => c.Teacher)
                     .ThenInclude(t => t.User)
                 .Include(c => c.Subject)
-                .Include(c => c.Enrollments)
+                .Include(c => c.Enrollments.Where(e => e.UnenrolledDate == null))
+                    .ThenInclude(e => e.Student)
+                    .ThenInclude(s => s.User)
                 .Include(c => c.ActiveHistories)
                 .FirstOrDefaultAsync(c => c.ClassId == id);
 
@@ -1813,6 +2104,7 @@ namespace WebMobileAssignment.Controllers
             ViewBag.Title = "Edit Class";
             ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.Subjects = await _context.Subjects.ToListAsync();
+            ViewBag.Students = await _context.Students.Include(s => s.User).OrderBy(s => s.User.FullName).ToListAsync();
 
             return View(@class);
         }
@@ -1820,7 +2112,8 @@ namespace WebMobileAssignment.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClassEdit(string classId, string className, string teacherId,
-            string subjectId, string roomNumber, string day, string startTime, string endTime, int maxCapacity, bool isActive)
+            string subjectId, string roomNumber, string day, string startTime, string endTime, int maxCapacity, bool isActive,
+            List<string>? studentIds, string? removeStudentIds)
         {
             var @class = await _context.Classes
                 .Include(c => c.Enrollments)
@@ -1836,8 +2129,27 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrWhiteSpace(className))
                 ModelState.AddModelError("className", "Class name is required");
 
-            if (maxCapacity < @class.CurrentCapacity)
-                ModelState.AddModelError("maxCapacity", $"Maximum capacity cannot be less than current enrollment ({@class.CurrentCapacity})");
+            // Calculate the new capacity considering student additions/removals
+            int capacityAdjustment = 0;
+            if (!string.IsNullOrEmpty(removeStudentIds))
+            {
+                var studentIdsToRemove = removeStudentIds.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                capacityAdjustment -= studentIdsToRemove.Count;
+            }
+            if (studentIds != null && studentIds.Any())
+            {
+                // Only count students who aren't already enrolled
+                var alreadyEnrolledIds = await _context.Enrollments
+                    .Where(e => e.ClassId == classId && studentIds.Contains(e.StudentId) && e.UnenrolledDate == null)
+                    .Select(e => e.StudentId)
+                    .ToListAsync();
+                capacityAdjustment += studentIds.Count - alreadyEnrolledIds.Count;
+            }
+            
+            var projectedCapacity = @class.CurrentCapacity + capacityAdjustment;
+            
+            if (maxCapacity < projectedCapacity)
+                ModelState.AddModelError("maxCapacity", $"Maximum capacity cannot be less than projected enrollment ({projectedCapacity})");
 
             if (ModelState.IsValid)
             {
@@ -1855,6 +2167,111 @@ namespace WebMobileAssignment.Controllers
                     if (!string.IsNullOrEmpty(endTime) && TimeSpan.TryParse(endTime, out var et))
                     {
                         parsedEndTime = et;
+                    }
+
+                    int addedCount = 0;
+                    int removedCount = 0;
+
+                    // Handle removal of students - use ExecuteUpdate to avoid tracking conflicts
+                    if (!string.IsNullOrEmpty(removeStudentIds))
+                    {
+                        var studentIdsToRemove = removeStudentIds.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                        
+                        // Get enrollments to remove without tracking
+                        var enrollmentsToRemove = await _context.Enrollments
+                            .AsNoTracking()
+                            .Where(e => e.ClassId == classId && 
+                                       studentIdsToRemove.Contains(e.StudentId) && 
+                                       e.UnenrolledDate == null)
+                            .Select(e => e.EnrollmentId)
+                            .ToListAsync();
+
+                        foreach (var enrollmentId in enrollmentsToRemove)
+                        {
+                            // Use ExecuteUpdate to update without tracking
+                            await _context.Enrollments
+                                .Where(e => e.EnrollmentId == enrollmentId)
+                                .ExecuteUpdateAsync(s => s.SetProperty(e => e.UnenrolledDate, DateTime.Now));
+
+                            removedCount++;
+                        }
+                        
+                        // Decrease class current capacity
+                        @class.CurrentCapacity -= removedCount;
+                    }
+
+                    // Handle addition of new students
+                    if (studentIds != null && studentIds.Any())
+                    {
+                        foreach (var studentId in studentIds)
+                        {
+                            // Check if already enrolled in this class
+                            var isAlreadyEnrolled = await _context.Enrollments
+                                .AsNoTracking()
+                                .AnyAsync(e => e.ClassId == classId && 
+                                             e.StudentId == studentId && 
+                                             e.UnenrolledDate == null);
+
+                            if (!isAlreadyEnrolled)
+                            {
+                                // Generate unique enrollment ID
+                                var enrollmentId = IdGenerator.GenerateEnrollmentId(_context);
+                                
+                                // Add new enrollment
+                                var enrollment = new Enrollment
+                                {
+                                    EnrollmentId = enrollmentId,
+                                    StudentId = studentId,
+                                    ClassId = classId,
+                                    EnrolledDate = DateTime.Now,
+                                    UnenrolledDate = null
+                                };
+                                _context.Enrollments.Add(enrollment);
+
+                                addedCount++;
+                            }
+                        }
+                        
+                        // Increase class current capacity
+                        @class.CurrentCapacity += addedCount;
+                        
+                        // Notify parents about their children's enrollment in this class
+                        if (addedCount > 0 && studentIds != null && studentIds.Any())
+                        {
+                            var studentsWithParents = await _context.Students
+                                .Include(s => s.User)
+                                .Include(s => s.Parent)
+                                .ThenInclude(p => p.User)
+                                .Where(s => studentIds.Contains(s.StudentId))
+                                .ToListAsync();
+                            
+                            foreach (var student in studentsWithParents)
+                            {
+                                // Check if this student was just enrolled (within last 5 minutes)
+                                var wasJustEnrolled = await _context.Enrollments
+                                    .AnyAsync(e => e.StudentId == student.StudentId && 
+                                                  e.ClassId == classId && 
+                                                  e.UnenrolledDate == null &&
+                                                  e.EnrolledDate > DateTime.Now.AddMinutes(-5));
+                                
+                                if (wasJustEnrolled && student.Parent?.User != null)
+                                {
+                                    var parentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                                    var parentNotification = new Notification
+                                    {
+                                        NotificationId = parentNotificationId,
+                                        UserId = student.Parent.UserId,
+                                        Type = "Student Enrollment",
+                                        Description = $"Your child {student.User.FullName} has been enrolled in {@class.ClassName}",
+                                        RelatedEntityId = @class.ClassId,
+                                        AffectedEntityId = student.StudentId,
+                                        Status = "unread",
+                                        CreatedDate = DateTime.Now
+                                    };
+                                    _context.Notifications.Add(parentNotification);
+                                }
+                            }
+                        }
                     }
 
                     var wasActive = @class.IsActive;
@@ -1890,16 +2307,56 @@ namespace WebMobileAssignment.Controllers
                                 _context.Update(currentActivePeriod);
                             }
 
-                            // Unenroll all students from this class
-                            var enrollmentsToRemove = @class.Enrollments.ToList();
-                            foreach (var enrollment in enrollmentsToRemove)
+                            // Unenroll all remaining students from this class
+                            var remainingEnrollments = await _context.Enrollments
+                                .Where(e => e.ClassId == classId && e.UnenrolledDate == null)
+                                .ToListAsync();
+                            foreach (var enrollment in remainingEnrollments)
                             {
-                                _context.Enrollments.Remove(enrollment);
+                                enrollment.UnenrolledDate = DateTime.Now;
+                                _context.Update(enrollment);
                             }
+                            
+                            // Notify parents about unenrollment when class is deactivated
+                            if (remainingEnrollments.Any())
+                            {
+                                var studentIdsToNotify = remainingEnrollments.Select(e => e.StudentId).ToList();
+                                var studentsWithParents = await _context.Students
+                                    .Include(s => s.User)
+                                    .Include(s => s.Parent)
+                                    .ThenInclude(p => p.User)
+                                    .Where(s => studentIdsToNotify.Contains(s.StudentId))
+                                    .ToListAsync();
+                                
+                                foreach (var student in studentsWithParents)
+                                {
+                                    if (student.Parent?.User != null)
+                                    {
+                                        var parentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                                        var parentNotification = new Notification
+                                        {
+                                            NotificationId = parentNotificationId,
+                                            UserId = student.Parent.UserId,
+                                            Type = "Student Unenrollment",
+                                            Description = $"Your child {student.User.FullName} has been unenrolled from {@class.ClassName} (class deactivated)",
+                                            RelatedEntityId = @class.ClassId,
+                                            AffectedEntityId = student.StudentId,
+                                            Status = "unread",
+                                            CreatedDate = DateTime.Now
+                                        };
+                                        _context.Notifications.Add(parentNotification);
+                                    }
+                                }
+                            }
+                            
                             // Reset current capacity to 0
                             @class.CurrentCapacity = 0;
                         }
                     }
+
+                    // Check if teacher assignment changed
+                    var oldTeacherId = @class.TeacherId;
+                    var teacherChanged = oldTeacherId != teacherId;
 
                     // Update class information
                     @class.ClassName = className;
@@ -1913,9 +2370,115 @@ namespace WebMobileAssignment.Controllers
                     @class.IsActive = isActive;
 
                     _context.Update(@class);
+                    
+                    // Prepare all notifications to be added in batch
+                    var notificationsToAdd = new List<Notification>();
+
+                    // Send notification to new teacher if assigned
+                    if (teacherChanged && !string.IsNullOrEmpty(teacherId))
+                    {
+                        var newTeacher = await _context.Teachers
+                            .Include(t => t.User)
+                            .FirstOrDefaultAsync(t => t.TeacherId == teacherId);
+                        
+                        if (newTeacher != null)
+                        {
+                            notificationsToAdd.Add(new Notification
+                            {
+                                NotificationId = "", // Will be set below
+                                UserId = newTeacher.UserId,
+                                Type = "Class Assignment",
+                                Description = $"You have been assigned to teach {className} on {day} from {parsedStartTime:hh\\:mm} to {parsedEndTime:hh\\:mm} at {roomNumber}",
+                                Status = "unread",
+                                CreatedDate = DateTime.Now
+                            });
+                        }
+                    }
+
+                    // Send notifications to students about enrollment
+                    if (addedCount > 0 && studentIds != null)
+                    {
+                        var newlyEnrolledStudents = await _context.Enrollments
+                            .Include(e => e.Student)
+                            .ThenInclude(s => s.User)
+                            .Where(e => studentIds.Contains(e.StudentId) && e.ClassId == classId && 
+                                   e.EnrolledDate > DateTime.Now.AddMinutes(-5))
+                            .Select(e => e.Student)
+                            .ToListAsync();
+                        
+                        foreach (var student in newlyEnrolledStudents)
+                        {
+                            if (student?.User != null)
+                            {
+                                notificationsToAdd.Add(new Notification
+                                {
+                                    NotificationId = "",
+                                    UserId = student.UserId,
+                                    Type = "Class Enrollment",
+                                    Description = $"You have been enrolled in {className} ({day} {parsedStartTime:hh\\:mm}-{parsedEndTime:hh\\:mm})",
+                                    Status = "unread",
+                                    CreatedDate = DateTime.Now
+                                });
+                            }
+                        }
+                    }
+
+                    // Notify teacher about student enrollments if teacher is assigned
+                    if ((addedCount > 0 || removedCount > 0) && !string.IsNullOrEmpty(@class.TeacherId))
+                    {
+                        var teacher = await _context.Teachers
+                            .Include(t => t.User)
+                            .FirstOrDefaultAsync(t => t.TeacherId == @class.TeacherId);
+                        
+                        if (teacher != null)
+                        {
+                            var description = addedCount > 0 && removedCount > 0 
+                                ? $"{addedCount} student(s) enrolled and {removedCount} student(s) unenrolled from your class {className}"
+                                : addedCount > 0 
+                                ? $"{addedCount} student(s) enrolled in your class {className}"
+                                : $"{removedCount} student(s) unenrolled from your class {className}";
+                            
+                            // Get affected student IDs
+                            string affectedIds = "";
+                            if (addedCount > 0 && studentIds != null)
+                            {
+                                affectedIds = string.Join(",", studentIds);
+                            }
+                            else if (removedCount > 0 && !string.IsNullOrEmpty(removeStudentIds))
+                            {
+                                affectedIds = removeStudentIds;
+                            }
+                            
+                            notificationsToAdd.Add(new Notification
+                            {
+                                NotificationId = "",
+                                UserId = teacher.UserId,
+                                Type = addedCount > 0 ? "Student Enrollment" : "Student Unenrollment",
+                                Description = description,
+                                RelatedEntityId = @class.ClassId,
+                                AffectedEntityId = affectedIds,
+                                Status = "unread",
+                                CreatedDate = DateTime.Now
+                            });
+                        }
+                    }
+
+                    // Add all notifications with proper IDs
+                    foreach (var notification in notificationsToAdd)
+                    {
+                        notification.NotificationId = IdGenerator.GenerateNotificationId(_context);
+                        _context.Notifications.Add(notification);
+                    }
+
                     await _context.SaveChangesAsync();
 
-                    TempData["SuccessMessage"] = $"Class '{className}' updated successfully!";
+                    var message = $"Class '{className}' updated successfully!";
+                    if (addedCount > 0 || removedCount > 0)
+                    {
+                        message += $" Added {addedCount} student(s), removed {removedCount} student(s).";
+                    }
+                    
+                    TempData["SuccessMessage"] = message;
                     return RedirectToAction(nameof(ClassIndex));
                 }
                 catch (DbUpdateConcurrencyException)
@@ -1938,6 +2501,18 @@ namespace WebMobileAssignment.Controllers
             ViewBag.ActiveSubmenu = "Classes";
             ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.Subjects = await _context.Subjects.ToListAsync();
+            ViewBag.Students = await _context.Students.Include(s => s.User).OrderBy(s => s.User.FullName).ToListAsync();
+            
+            // Reload class with enrollments for display
+            @class = await _context.Classes
+                .Include(c => c.Teacher)
+                    .ThenInclude(t => t.User)
+                .Include(c => c.Subject)
+                .Include(c => c.Enrollments.Where(e => e.UnenrolledDate == null))
+                    .ThenInclude(e => e.Student)
+                    .ThenInclude(s => s.User)
+                .FirstOrDefaultAsync(c => c.ClassId == classId);
+            
             return View(@class);
         }
 
@@ -2505,6 +3080,12 @@ namespace WebMobileAssignment.Controllers
                                                   a.ClassId == request.ClassId &&
                                                   a.Date.Date == selectedDate.Date);
 
+                    // Skip if student is on Leave - cannot change leave status
+                    if (existing != null && existing.Status == "Leave")
+                    {
+                        continue;
+                    }
+
                     if (existing != null)
                     {
                         // Update existing attendance
@@ -2637,6 +3218,12 @@ namespace WebMobileAssignment.Controllers
                                               a.ClassId == request.ClassId &&
                                               a.Date.Date == selectedDate.Date);
 
+                // Prevent changing attendance if student is on Leave
+                if (existing != null && existing.Status == "Leave")
+                {
+                    return Json(new { success = false, message = "Cannot change attendance for student on leave" });
+                }
+
                 if (existing != null)
                 {
                     // Update existing attendance
@@ -2666,6 +3253,12 @@ namespace WebMobileAssignment.Controllers
 
                 // Save changes
                 await _context.SaveChangesAsync();
+                
+                // Send notifications for absent attendance and check low attendance
+                if (request.Status == "Absent")
+                {
+                    await SendAttendanceNotifications(request.StudentId, request.ClassId, selectedDate, "Absent");
+                }
 
                 return Json(new
                 {
@@ -2676,6 +3269,109 @@ namespace WebMobileAssignment.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = ex.Message });
+            }
+        }
+        
+        // Helper method to send attendance notifications
+        private async Task SendAttendanceNotifications(string studentId, string classId, DateTime date, string status)
+        {
+            try
+            {
+                var student = await _context.Students
+                    .Include(s => s.User)
+                    .Include(s => s.Parent)
+                    .ThenInclude(p => p.User)
+                    .FirstOrDefaultAsync(s => s.StudentId == studentId);
+                
+                var classEntity = await _context.Classes.FirstOrDefaultAsync(c => c.ClassId == classId);
+                
+                if (student == null || classEntity == null) return;
+                
+                // Notify student about absent attendance
+                var studentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                var studentNotification = new Notification
+                {
+                    NotificationId = studentNotificationId,
+                    UserId = student.UserId,
+                    Type = "Attendance Marked",
+                    Description = $"You were marked {status} for {classEntity.ClassName} on {date:dd MMM yyyy}",
+                    Status = "unread",
+                    CreatedDate = DateTime.Now
+                };
+                _context.Notifications.Add(studentNotification);
+                
+                // Notify parent if exists
+                if (student.Parent?.User != null)
+                {
+                    var parentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                    var parentNotification = new Notification
+                    {
+                        NotificationId = parentNotificationId,
+                        UserId = student.Parent.UserId,
+                        Type = "Child Attendance Alert",
+                        Description = $"Your child {student.User.FullName} was marked {status} for {classEntity.ClassName} on {date:dd MMM yyyy}",
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(parentNotification);
+                }
+                
+                // Check for low attendance (below 60%)
+                var totalClasses = await _context.Attendances
+                    .Where(a => a.StudentId == studentId && a.ClassId == classId)
+                    .CountAsync();
+                
+                if (totalClasses >= 5) // Only check if at least 5 classes
+                {
+                    var presentCount = await _context.Attendances
+                        .Where(a => a.StudentId == studentId && a.ClassId == classId && 
+                               (a.Status == "Present" || a.Status == "Late"))
+                        .CountAsync();
+                    
+                    var attendanceRate = (double)presentCount / totalClasses * 100;
+                    
+                    if (attendanceRate < 60)
+                    {
+                        // Notify admins
+                        var adminUsers = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
+                        foreach (var admin in adminUsers)
+                        {
+                            var adminNotificationId = IdGenerator.GenerateNotificationId(_context);
+                            var adminNotification = new Notification
+                            {
+                                NotificationId = adminNotificationId,
+                                UserId = admin.UserId,
+                                Type = "Low Attendance Alert",
+                                Description = $"Student {student.User.FullName} has low attendance in {classEntity.ClassName}: {attendanceRate:F1}% ({presentCount}/{totalClasses})",
+                                Status = "unread",
+                                CreatedDate = DateTime.Now
+                            };
+                            _context.Notifications.Add(adminNotification);
+                        }
+                        
+                        // Notify parent
+                        if (student.Parent?.User != null)
+                        {
+                            var parentLowAttendanceId = IdGenerator.GenerateNotificationId(_context);
+                            var parentLowAttendance = new Notification
+                            {
+                                NotificationId = parentLowAttendanceId,
+                                UserId = student.Parent.UserId,
+                                Type = "Low Attendance Warning",
+                                Description = $"Warning: Your child {student.User.FullName} has low attendance in {classEntity.ClassName}: {attendanceRate:F1}% ({presentCount}/{totalClasses} classes attended)",
+                                Status = "unread",
+                                CreatedDate = DateTime.Now
+                            };
+                            _context.Notifications.Add(parentLowAttendance);
+                        }
+                    }
+                }
+                
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending attendance notifications: {ex.Message}");
             }
         }
 
@@ -3733,12 +4429,46 @@ namespace WebMobileAssignment.Controllers
                 {
                     NotificationId = notificationId,
                     UserId = leave.UserId,
+                    Type = "Leave Approved",
                     Description = $"Your leave application from {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy} has been approved." + 
                                   (string.IsNullOrEmpty(remarks) ? "" : $" Remarks: {remarks}"),
+                    RelatedEntityId = leave.LeaveId,
                     Status = "unread",
                     CreatedDate = DateTime.Now
                 };
                 _context.Notifications.Add(notification);
+                
+                // Notify parent if student has one
+                var studentForParentNotif = await _context.Students
+                    .Include(s => s.Parent)
+                    .ThenInclude(p => p.User)
+                    .FirstOrDefaultAsync(s => s.UserId == leave.UserId);
+                
+                if (studentForParentNotif?.Parent?.User != null)
+                {
+                    var parentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                    var parentNotification = new Notification
+                    {
+                        NotificationId = parentNotificationId,
+                        UserId = studentForParentNotif.Parent.UserId,
+                        Type = "Child Leave Approved",
+                        Description = $"Leave application for your child {leave.User.FullName} from {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy} has been approved.",
+                        RelatedEntityId = leave.LeaveId,
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(parentNotification);
+                }
+
+                // Delete only the admin leave application notifications
+                var adminLeaveNotifications = await _context.Notifications
+                    .Where(n => n.RelatedEntityId == leave.LeaveId && n.Type == "Leave Application")
+                    .ToListAsync();
+                
+                if (adminLeaveNotifications.Any())
+                {
+                    _context.Notifications.RemoveRange(adminLeaveNotifications);
+                }
 
                 await _context.SaveChangesAsync();
 
@@ -3804,12 +4534,47 @@ namespace WebMobileAssignment.Controllers
                 {
                     NotificationId = notificationId,
                     UserId = leave.UserId,
+                    Type = "Leave Rejected",
                     Description = $"Your leave application from {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy} has been rejected." + 
                                   (string.IsNullOrEmpty(remarks) ? "" : $" Reason: {remarks}"),
+                    RelatedEntityId = leave.LeaveId,
                     Status = "unread",
                     CreatedDate = DateTime.Now
                 };
                 _context.Notifications.Add(notification);
+                
+                // Notify parent if student has one
+                var student = await _context.Students
+                    .Include(s => s.Parent)
+                    .ThenInclude(p => p.User)
+                    .FirstOrDefaultAsync(s => s.UserId == leave.UserId);
+                
+                if (student?.Parent?.User != null)
+                {
+                    var parentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                    var parentNotification = new Notification
+                    {
+                        NotificationId = parentNotificationId,
+                        UserId = student.Parent.UserId,
+                        Type = "Child Leave Rejected",
+                        Description = $"Leave application for your child {leave.User.FullName} from {leave.StartDate:dd MMM yyyy} to {leave.EndDate:dd MMM yyyy} has been rejected." +
+                                      (string.IsNullOrEmpty(remarks) ? "" : $" Reason: {remarks}"),
+                        RelatedEntityId = leave.LeaveId,
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(parentNotification);
+                }
+
+                // Delete only the admin leave application notifications
+                var adminLeaveNotifications = await _context.Notifications
+                    .Where(n => n.RelatedEntityId == leave.LeaveId && n.Type == "Leave Application")
+                    .ToListAsync();
+                
+                if (adminLeaveNotifications.Any())
+                {
+                    _context.Notifications.RemoveRange(adminLeaveNotifications);
+                }
 
                 await _context.SaveChangesAsync();
 
@@ -4057,7 +4822,7 @@ namespace WebMobileAssignment.Controllers
 
             // Count leave application notifications
             var leaveCount = notifications.Count(n =>
-                n.Description.ToLower().Contains("leave application") &&
+                (n.Type == "Leave Application" || n.Type == "Student Leave Application") &&
                 n.Status == "unread");
 
             ViewBag.TotalNotifications = totalNotifications;
@@ -4202,6 +4967,311 @@ namespace WebMobileAssignment.Controllers
                 await _context.SaveChangesAsync();
 
                 return Json(new { success = true, count = notifications.Count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Get notification details
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetNotificationDetails(string notificationId)
+        {
+            try
+            {
+                var userEmail = User.Identity.Name;
+                var admin = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == userEmail && u.UserType == "Admin");
+
+                if (admin == null)
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                var notification = await _context.Notifications
+                    .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == admin.UserId);
+
+                if (notification == null)
+                {
+                    return Json(new { success = false, message = "Notification not found" });
+                }
+
+                // Build detailed data based on notification type
+                object detailData = null;
+
+                switch (notification.Type)
+                {
+                    case "Class Assignment":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var classInfo = await _context.Classes
+                                .Include(c => c.Teacher)
+                                    .ThenInclude(t => t.User)
+                                .FirstOrDefaultAsync(c => c.ClassId == notification.RelatedEntityId);
+
+                            if (classInfo != null)
+                            {
+                                detailData = new
+                                {
+                                    className = classInfo.ClassName,
+                                    teacher = classInfo.Teacher?.User?.FullName,
+                                    room = classInfo.RoomNumber,
+                                    day = classInfo.Day,
+                                    time = classInfo.StartTime != null && classInfo.EndTime != null 
+                                        ? $"{classInfo.StartTime:hh\\:mm} - {classInfo.EndTime:hh\\:mm}"
+                                        : "Not set",
+                                    capacity = $"{classInfo.CurrentCapacity}/{classInfo.MaxCapacity}",
+                                    subject = classInfo.Subject?.SubjectName
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Student Enrollment":
+                    case "Student Unenrollment":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var classInfo = await _context.Classes
+                                .Include(c => c.Enrollments)
+                                    .ThenInclude(e => e.Student)
+                                        .ThenInclude(s => s.User)
+                                .Include(c => c.Teacher)
+                                    .ThenInclude(t => t.User)
+                                .Include(c => c.Subject)
+                                .FirstOrDefaultAsync(c => c.ClassId == notification.RelatedEntityId);
+
+                            if (classInfo != null)
+                            {
+                                // Split the comma-separated student IDs
+                                var affectedStudentIds = notification.AffectedEntityId?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+                                
+                                var enrolledStudents = classInfo.Enrollments
+                                    .Where(e => affectedStudentIds.Contains(e.Student.StudentId))
+                                    .Select(e => new
+                                    {
+                                        studentId = e.Student.StudentId,
+                                        studentName = e.Student.User.FullName,
+                                        email = e.Student.User.Email,
+                                        enrolledDate = e.EnrolledDate.ToString("dd MMM yyyy")
+                                    }).ToList();
+
+                                detailData = new
+                                {
+                                    teacherName = classInfo.Teacher?.User?.FullName,
+                                    teacherGender = classInfo.Teacher?.User?.Gender,
+                                    className = classInfo.ClassName,
+                                    totalEnrolled = classInfo.CurrentCapacity,
+                                    capacity = classInfo.MaxCapacity,
+                                    day = classInfo.Day,
+                                    startTime = classInfo.StartTime?.ToString(@"hh\:mm"),
+                                    endTime = classInfo.EndTime?.ToString(@"hh\:mm"),
+                                    room = classInfo.RoomNumber,
+                                    subject = classInfo.Subject?.SubjectName,
+                                    students = enrolledStudents
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Leave Application":
+                    case "Student Leave Application":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var leave = await _context.LeaveApplications
+                                .Include(l => l.User)
+                                .FirstOrDefaultAsync(l => l.LeaveId == notification.RelatedEntityId);
+
+                            if (leave != null)
+                            {
+                                detailData = new
+                                {
+                                    leaveId = leave.LeaveId,
+                                    applicant = leave.User.FullName,
+                                    email = leave.User.Email,
+                                    startDate = leave.StartDate.ToString("dd MMM yyyy"),
+                                    endDate = leave.EndDate.ToString("dd MMM yyyy"),
+                                    totalDays = leave.TotalDays,
+                                    reason = leave.Reason,
+                                    status = leave.Status,
+                                    createdDate = leave.CreatedDate.ToString("dd MMM yyyy hh:mm tt"),
+                                    remarks = leave.Remarks
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Leave Approved":
+                    case "Leave Rejected":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var leave = await _context.LeaveApplications
+                                .Include(l => l.User)
+                                .FirstOrDefaultAsync(l => l.LeaveId == notification.RelatedEntityId);
+
+                            if (leave != null)
+                            {
+                                detailData = new
+                                {
+                                    leaveId = leave.LeaveId,
+                                    startDate = leave.StartDate.ToString("dd MMM yyyy"),
+                                    endDate = leave.EndDate.ToString("dd MMM yyyy"),
+                                    totalDays = leave.TotalDays,
+                                    reason = leave.Reason,
+                                    status = leave.Status,
+                                    remarks = leave.Remarks
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Student Registration":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var student = await _context.Students
+                                .Include(s => s.User)
+                                .FirstOrDefaultAsync(s => s.StudentId == notification.RelatedEntityId);
+
+                            if (student != null)
+                            {
+                                List<object> enrolledClasses = new List<object>();
+                                
+                                // Get class details from AffectedEntityId
+                                if (!string.IsNullOrEmpty(notification.AffectedEntityId))
+                                {
+                                    var classIds = notification.AffectedEntityId.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                                    var classes = await _context.Classes
+                                        .Include(c => c.Teacher)
+                                            .ThenInclude(t => t.User)
+                                        .Include(c => c.Subject)
+                                        .Where(c => classIds.Contains(c.ClassId))
+                                        .ToListAsync();
+
+                                    enrolledClasses = classes.Select(c => new
+                                    {
+                                        classId = c.ClassId,
+                                        className = c.ClassName,
+                                        teacher = c.Teacher?.User?.FullName ?? "N/A",
+                                        venue = c.RoomNumber ?? "N/A",
+                                        day = c.Day ?? "N/A",
+                                        time = c.StartTime != null && c.EndTime != null 
+                                            ? $"{c.StartTime.Value:hh\\:mm} - {c.EndTime.Value:hh\\:mm}" 
+                                            : "N/A",
+                                        capacity = $"{c.CurrentCapacity}/{c.MaxCapacity}",
+                                        subject = c.Subject?.SubjectName ?? "N/A"
+                                    }).Cast<object>().ToList();
+                                }
+
+                                detailData = new
+                                {
+                                    userId = student.User.UserId,
+                                    fullName = student.User.FullName,
+                                    email = student.User.Email,
+                                    phoneNumber = student.User.PhoneNumber,
+                                    userType = student.User.UserType,
+                                    status = student.User.Status,
+                                    createdDate = student.User.CreatedDate.ToString("dd MMM yyyy"),
+                                    enrolledClassesCount = enrolledClasses.Count,
+                                    enrolledClasses = enrolledClasses
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Teacher Registration":
+                    case "Parent Registration":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var user = await _context.Users
+                                .FirstOrDefaultAsync(u => u.UserId == notification.RelatedEntityId);
+
+                            if (user != null)
+                            {
+                                detailData = new
+                                {
+                                    userId = user.UserId,
+                                    fullName = user.FullName,
+                                    email = user.Email,
+                                    phoneNumber = user.PhoneNumber,
+                                    userType = user.UserType,
+                                    status = user.Status,
+                                    createdDate = user.CreatedDate.ToString("dd MMM yyyy")
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Attendance Marked":
+                    case "Low Attendance Alert":
+                    case "Low Attendance Warning":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var student = await _context.Students
+                                .Include(s => s.User)
+                                .Include(s => s.Attendances)
+                                    .ThenInclude(a => a.Class)
+                                .FirstOrDefaultAsync(s => s.StudentId == notification.RelatedEntityId);
+
+                            if (student != null)
+                            {
+                                var totalClasses = student.Attendances.Count();
+                                var presentCount = student.Attendances.Count(a => a.Status == "Present");
+                                var absentCount = student.Attendances.Count(a => a.Status == "Absent");
+                                var attendanceRate = totalClasses > 0 ? (presentCount * 100.0 / totalClasses) : 0;
+
+                                detailData = new
+                                {
+                                    studentId = student.StudentId,
+                                    studentName = student.User.FullName,
+                                    email = student.User.Email,
+                                    totalClasses = totalClasses,
+                                    presentCount = presentCount,
+                                    absentCount = absentCount,
+                                    attendanceRate = $"{attendanceRate:F1}%"
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Class Capacity Alert":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var classInfo = await _context.Classes
+                                .Include(c => c.Teacher)
+                                    .ThenInclude(t => t.User)
+                                .FirstOrDefaultAsync(c => c.ClassId == notification.RelatedEntityId);
+
+                            if (classInfo != null)
+                            {
+                                var utilizationRate = (classInfo.CurrentCapacity * 100.0 / classInfo.MaxCapacity);
+
+                                detailData = new
+                                {
+                                    className = classInfo.ClassName,
+                                    teacher = classInfo.Teacher?.User?.FullName,
+                                    currentEnrollment = classInfo.CurrentCapacity,
+                                    maxCapacity = classInfo.MaxCapacity,
+                                    utilizationRate = $"{utilizationRate:F1}%",
+                                    room = classInfo.RoomNumber
+                                };
+                            }
+                        }
+                        break;
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    notification = new
+                    {
+                        id = notification.NotificationId,
+                        type = notification.Type,
+                        description = notification.Description,
+                        status = notification.Status,
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy hh:mm tt")
+                    },
+                    details = detailData
+                });
             }
             catch (Exception ex)
             {

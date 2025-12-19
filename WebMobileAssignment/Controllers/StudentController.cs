@@ -742,6 +742,51 @@ namespace WebMobileAssignment.Controllers
 
                 // Save to database
                 _context.LeaveApplications.Add(leaveApplication);
+
+                // Create notifications for admins
+                var admins = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
+                foreach (var admin in admins)
+                {
+                    var adminNotificationId = IdGenerator.GenerateNotificationId(_context);
+                    var adminNotification = new Notification
+                    {
+                        NotificationId = adminNotificationId,
+                        UserId = admin.UserId,
+                        Type = "Leave Application",
+                        Description = $"{student.User.FullName} has applied for leave from {startDate:dd MMM yyyy} to {endDate:dd MMM yyyy}. Reason: {reason}",
+                        RelatedEntityId = leaveId,
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(adminNotification);
+                }
+
+                // Create notifications for teachers of enrolled classes
+                var enrolledClasses = await _context.Enrollments
+                    .Include(e => e.Class)
+                        .ThenInclude(c => c.Teacher)
+                    .Where(e => e.StudentId == student.StudentId && e.UnenrolledDate == null)
+                    .ToListAsync();
+
+                foreach (var enrollment in enrolledClasses)
+                {
+                    if (enrollment.Class?.Teacher?.UserId != null)
+                    {
+                        var teacherNotificationId = IdGenerator.GenerateNotificationId(_context);
+                        var teacherNotification = new Notification
+                        {
+                            NotificationId = teacherNotificationId,
+                            UserId = enrollment.Class.Teacher.UserId,
+                            Type = "Student Leave Application",
+                            Description = $"{student.User.FullName} from class {enrollment.Class.ClassName} has applied for leave from {startDate:dd MMM yyyy} to {endDate:dd MMM yyyy}. Reason: {reason}",
+                            RelatedEntityId = leaveId,
+                            Status = "unread",
+                            CreatedDate = DateTime.Now
+                        };
+                        _context.Notifications.Add(teacherNotification);
+                    }
+                }
+
                 await _context.SaveChangesAsync();
 
                 return Json(new

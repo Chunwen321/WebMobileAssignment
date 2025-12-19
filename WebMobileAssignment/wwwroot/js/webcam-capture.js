@@ -142,6 +142,11 @@ const WebcamCapture = (function() {
         const errorMsg = document.getElementById(errorMsgId);
 
         try {
+            // Check if getUserMedia is supported
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('Camera API not supported. Please use HTTPS or a modern browser.');
+            }
+
             // Request camera access
             config.stream = await navigator.mediaDevices.getUserMedia({
                 video: {
@@ -163,9 +168,21 @@ const WebcamCapture = (function() {
             errorDiv.classList.remove('d-none');
             
             if (err.name === 'NotAllowedError') {
-                errorMsg.textContent = 'Camera access denied. Please allow camera access in your browser settings.';
+                errorMsg.innerHTML = '<strong>Camera access denied.</strong><br>Please allow camera access in your browser settings.';
             } else if (err.name === 'NotFoundError') {
-                errorMsg.textContent = 'No camera found. Please connect a camera and try again.';
+                errorMsg.innerHTML = '<strong>No camera found.</strong><br>Please connect a camera and try again.';
+            } else if (err.message && err.message.includes('not supported')) {
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const httpsUrl = window.location.href.replace('http://', 'https://').replace(':5045', ':7079');
+                
+                if (isLocalhost) {
+                    errorMsg.innerHTML = '<strong>Camera not available.</strong><br>Please ensure your browser supports camera access.';
+                } else {
+                    errorMsg.innerHTML = '<strong>Camera requires HTTPS.</strong><br>' +
+                        'For security, cameras only work over HTTPS on remote connections.<br><br>' +
+                        '<a href="' + httpsUrl + '" class="btn btn-sm btn-primary mt-2">' +
+                        '<i class="bi bi-shield-lock"></i> Switch to HTTPS</a>';
+                }
             } else {
                 errorMsg.textContent = 'Failed to access camera: ' + err.message;
             }

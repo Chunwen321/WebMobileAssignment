@@ -135,7 +135,7 @@ return id;
             string id;
             do
             {
-                id = $"LEV{_leaveApplicationCounter:D4}";
+                id = $"L{_leaveApplicationCounter:D4}";
                 _leaveApplicationCounter++;
             } while (db.LeaveApplications.Any(l => l.LeaveId == id));
             return id;

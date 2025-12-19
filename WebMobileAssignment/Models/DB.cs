@@ -389,6 +389,15 @@ public class Notification
     [MaxLength(10)]
     public string Status { get; set; } = "unread"; // read / unread
 
+    [MaxLength(50)]
+    public string? Type { get; set; } // announcement, leave, enrollment, attendance, system, etc.
+
+    [MaxLength(20)]
+    public string? RelatedEntityId { get; set; } // Primary entity: ClassId for enrollment, LeaveId for leave, etc.
+
+    [MaxLength(500)]
+    public string? AffectedEntityId { get; set; } // Comma-separated student IDs for enrollment notifications
+
     public DateTime CreatedDate { get; set; } = DateTime.Now;
 }
 
@@ -463,6 +472,7 @@ public class LeaveApplication
     // Admin remarks when approving/rejecting
     [MaxLength(1000)]
     public string? Remarks { get; set; }
+}
 
 /// <summary>
 /// Tracks the activation/deactivation history of classes.

@@ -1,54 +1,6 @@
 @{
     ViewBag.Title = "Notifications";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
-}
-
-@section Styles {
-<style>
-    /* Dark mode support for notification details */
-    body.dark-mode .bg-white {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: #e0e0e0;
-    }
-    
-    body.dark-mode .bg-light {
-        background-color: rgba(255, 255, 255, 0.03) !important;
-        color: #e0e0e0;
-    }
-    
-    body.dark-mode .modal-content {
-        background-color: #1a1a1a;
-        color: #e0e0e0;
-    }
-    
-    body.dark-mode .modal-header {
-        background-color: #2a2a2a;
-        border-bottom-color: #404040;
-    }
-    
-    body.dark-mode .modal-footer {
-        border-top-color: #404040;
-    }
-    
-    body.dark-mode .card {
-        background-color: rgba(255, 255, 255, 0.03);
-        color: #e0e0e0;
-    }
-    
-    body.dark-mode .text-muted {
-        color: #999 !important;
-    }
-    
-    /* Detail section styling */
-    .detail-section {
-        background-color: #f8f9fa;
-    }
-    
-    body.dark-mode .detail-section {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: #e0e0e0;
-    }
-</style>
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
 }
 
 @{
@@ -216,7 +168,7 @@
                                     }
                                     @if (isLeave)
                                     {
-                                        <a href="@Url.Action("LeaveIndex", "Admin")" class="btn btn-sm btn-outline-warning" onclick="event.stopPropagation();">
+                                        <a href="@Url.Action("LeaveIndex", "Teacher")" class="btn btn-sm btn-outline-warning" onclick="event.stopPropagation();">
                                             <i class="bi bi-arrow-right me-1"></i>View Leave Applications
                                         </a>
                                     }
@@ -251,7 +203,12 @@
                         var iconType = isLeave ? "warning" : (isSystem ? "primary" : "success");
                         var timeAgo = GetTimeAgo(notification.CreatedDate);
 
-                        <div class="notification-item unread">
+                        <div class="notification-item unread notification-record" 
+                             data-type="@(isLeave ? "leave" : (isSystem ? "system" : "general"))" 
+                             data-status="unread"
+                             data-notification-id="@notification.NotificationId"
+                             style="cursor: pointer;"
+                             onclick="showNotificationDetails('@notification.NotificationId')">
                             <div class="notification-header">
                                 <div class="d-flex align-items-center gap-2 w-100">
                                     <div class="notification-icon @iconType">
@@ -269,16 +226,16 @@
                             </div>
                             <div class="notification-footer">
                                 <div class="d-flex gap-2 flex-wrap">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="markAsRead('@notification.NotificationId')">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); markAsRead('@notification.NotificationId')">
                                         <i class="bi bi-check me-1"></i>Mark as Read
                                     </button>
                                     @if (isLeave)
                                     {
-                                        <a href="@Url.Action("LeaveIndex", "Admin")" class="btn btn-sm btn-outline-warning">
+                                        <a href="@Url.Action("LeaveIndex", "Teacher")" class="btn btn-sm btn-outline-warning" onclick="event.stopPropagation();">
                                             <i class="bi bi-arrow-right me-1"></i>View Leave Applications
                                         </a>
                                     }
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteNotification('@notification.NotificationId')">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteNotification('@notification.NotificationId')">
                                         <i class="bi bi-trash me-1"></i>Delete
                                     </button>
                                 </div>
@@ -297,15 +254,20 @@
         </div>
 
         <div class="tab-pane fade" id="leave" role="tabpanel" aria-labelledby="leave-tab">
-            @if (notifications.Any(n => n.Type == "Leave Application" || n.Type == "Student Leave Application"))
+            @if (notifications.Any(n => n.Description.ToLower().Contains("leave application")))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Type == "Leave Application" || n.Type == "Student Leave Application"))
+                    @foreach (var notification in notifications.Where(n => n.Description.ToLower().Contains("leave application")))
                     {
                         var isUnread = notification.Status == "unread";
                         var timeAgo = GetTimeAgo(notification.CreatedDate);
 
-                        <div class="notification-item type-leave @(isUnread ? "unread" : "read")">
+                        <div class="notification-item type-leave notification-record @(isUnread ? "unread" : "read")" 
+                             data-type="leave" 
+                             data-status="@(isUnread ? "unread" : "read")"
+                             data-notification-id="@notification.NotificationId"
+                             style="cursor: pointer;"
+                             onclick="showNotificationDetails('@notification.NotificationId')">
                             <div class="notification-header">
                                 <div class="d-flex align-items-center gap-2 w-100">
                                     <div class="notification-icon warning">
@@ -328,14 +290,14 @@
                                 <div class="d-flex gap-2 flex-wrap">
                                     @if (isUnread)
                                     {
-                                        <button class="btn btn-sm btn-outline-primary" onclick="markAsRead('@notification.NotificationId')">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); markAsRead('@notification.NotificationId')">
                                             <i class="bi bi-check me-1"></i>Mark as Read
                                         </button>
                                     }
-                                    <a href="@Url.Action("LeaveIndex", "Admin")" class="btn btn-sm btn-outline-warning">
+                                    <a href="@Url.Action("LeaveIndex", "Teacher")" class="btn btn-sm btn-outline-warning" onclick="event.stopPropagation();">
                                         <i class="bi bi-arrow-right me-1"></i>View All Leave Applications
                                     </a>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteNotification('@notification.NotificationId')">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteNotification('@notification.NotificationId')">
                                         <i class="bi bi-trash me-1"></i>Delete
                                     </button>
                                 </div>
@@ -362,7 +324,12 @@
                         var isUnread = notification.Status == "unread";
                         var timeAgo = GetTimeAgo(notification.CreatedDate);
 
-                        <div class="notification-item type-system @(isUnread ? "unread" : "read")">
+                        <div class="notification-item type-system notification-record @(isUnread ? "unread" : "read")" 
+                             data-type="system" 
+                             data-status="@(isUnread ? "unread" : "read")"
+                             data-notification-id="@notification.NotificationId"
+                             style="cursor: pointer;"
+                             onclick="showNotificationDetails('@notification.NotificationId')">
                             <div class="notification-header">
                                 <div class="d-flex align-items-center gap-2 w-100">
                                     <div class="notification-icon primary">
@@ -385,11 +352,11 @@
                                 <div class="d-flex gap-2 flex-wrap">
                                     @if (isUnread)
                                     {
-                                        <button class="btn btn-sm btn-outline-primary" onclick="markAsRead('@notification.NotificationId')">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); markAsRead('@notification.NotificationId')">
                                             <i class="bi bi-check me-1"></i>Mark as Read
                                         </button>
                                     }
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteNotification('@notification.NotificationId')">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteNotification('@notification.NotificationId')">
                                         <i class="bi bi-trash me-1"></i>Delete
                                     </button>
                                 </div>
@@ -410,7 +377,7 @@
 </div>
 
 <!-- Notification Details Modal -->
-<div class="modal fade" id="notificationDetailModal" tabindex="-1" aria-labelledby="notificationDetailModalLabel">
+<div class="modal fade" id="notificationDetailModal" tabindex="-1" aria-labelledby="notificationDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -472,7 +439,7 @@
 <script>
     function markAsRead(notificationId) {
         $.ajax({
-            url: '@Url.Action("MarkAsRead", "Admin")',
+            url: '@Url.Action("MarkAsRead", "Teacher")',
             type: 'POST',
             data: {
                 notificationId: notificationId,
@@ -494,7 +461,7 @@
     function markAllAsRead() {
         if (confirm('Mark all notifications as read?')) {
             $.ajax({
-                url: '@Url.Action("MarkAllAsRead", "Admin")',
+                url: '@Url.Action("MarkAllAsRead", "Teacher")',
                 type: 'POST',
                 data: {
                     __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
@@ -516,7 +483,7 @@
     function deleteNotification(notificationId) {
         if (confirm('Are you sure you want to delete this notification?')) {
             $.ajax({
-                url: '@Url.Action("DeleteNotification", "Admin")',
+                url: '@Url.Action("DeleteNotification", "Teacher")',
                 type: 'POST',
                 data: {
                     notificationId: notificationId,
@@ -539,7 +506,7 @@
     function deleteAllRead() {
         if (confirm('Delete all read notifications? This cannot be undone.')) {
             $.ajax({
-                url: '@Url.Action("DeleteAllRead", "Admin")',
+                url: '@Url.Action("DeleteAllRead", "Teacher")',
                 type: 'POST',
                 data: {
                     __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
@@ -558,26 +525,6 @@
         }
     }
 
-    function filterByType(type) {
-        // Tab switching is handled by Bootstrap
-    }
-
-    function filterNotifications() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const notifications = document.querySelectorAll('.notification-record');
-
-        notifications.forEach(notification => {
-            const title = notification.querySelector('.notification-content h6').textContent.toLowerCase();
-            const description = notification.querySelector('.notification-description').textContent.toLowerCase();
-
-            if (title.includes(searchTerm) || description.includes(searchTerm)) {
-                notification.style.display = '';
-            } else {
-                notification.style.display = 'none';
-            }
-        });
-    }
-
     function showNotificationDetails(notificationId) {
         // Show modal with loading state
         const modal = new bootstrap.Modal(document.getElementById('notificationDetailModal'));
@@ -585,7 +532,7 @@
 
         // Mark notification as read
         $.ajax({
-            url: '@Url.Action("MarkAsRead", "Admin")',
+            url: '@Url.Action("MarkAsRead", "Teacher")',
             type: 'POST',
             data: {
                 notificationId: notificationId,
@@ -594,19 +541,16 @@
             success: function(response) {
                 if (response.success) {
                     // Update the notification card to show as read
-                    const notificationCard = $('[data-notification-id="' + notificationId + '"]');
-                    notificationCard.removeClass('unread').addClass('read');
-                    notificationCard.attr('data-status', 'read');
-                    notificationCard.find('.badge.bg-danger').remove();
-                    // Remove the "Mark as Read" button
-                    notificationCard.find('.btn-outline-primary:contains("Mark as Read")').remove();
+                    const notificationCard = $('[onclick*="' + notificationId + '"]');
+                    notificationCard.removeClass('unread-notification');
+                    notificationCard.find('.unread-badge').remove();
                 }
             }
         });
 
         // Fetch notification details
         $.ajax({
-            url: '@Url.Action("GetNotificationDetails", "Admin")',
+            url: '@Url.Action("GetNotificationDetails", "Teacher")',
             type: 'GET',
             data: { notificationId: notificationId },
             success: function(response) {
@@ -628,12 +572,11 @@
         const details = response.details;
         let html = '';
 
-        console.log('Building notification HTML for type:', notification.type);
-        console.log('Details object:', details);
+        console.log('Notification Type:', notification.type);
+        console.log('Details:', details);
 
         if (!details) {
             // Only show basic info if no details available
-            console.warn('No details available for notification');
             html += '<div class="mb-3">';
             html += '<div class="d-flex justify-content-between align-items-start mb-2">';
             html += '<span class="badge bg-primary">' + notification.type + '</span>';
@@ -660,9 +603,6 @@
                 html += buildLeaveDetails(details);
                 break;
             case 'Student Registration':
-                console.log('Building Student Registration details');
-                html += buildStudentRegistrationDetails(details);
-                break;
             case 'Teacher Registration':
             case 'Parent Registration':
                 html += buildUserRegistrationDetails(details);
@@ -686,14 +626,13 @@
         let html = '<h6 class="mb-3"><i class="bi bi-book me-2"></i>Class Details</h6>';
         html += '<div class="row g-3">';
         html += '<div class="col-md-6"><strong>Class Name:</strong><br/>' + details.className + '</div>';
-        html += '<div class="col-md-6"><strong>Class Code:</strong><br/>' + details.classCode + '</div>';
         html += '<div class="col-md-6"><strong>Teacher:</strong><br/>' + (details.teacher || 'N/A') + '</div>';
-        html += '<div class="col-md-6"><strong>Venue:</strong><br/>' + (details.venue || 'N/A') + '</div>';
+        html += '<div class="col-md-6"><strong>Room:</strong><br/>' + (details.room || 'N/A') + '</div>';
         html += '<div class="col-md-6"><strong>Day:</strong><br/>' + (details.day || 'N/A') + '</div>';
         html += '<div class="col-md-6"><strong>Time:</strong><br/>' + (details.time || 'N/A') + '</div>';
         html += '<div class="col-md-6"><strong>Capacity:</strong><br/>' + details.capacity + '</div>';
-        if (details.description) {
-            html += '<div class="col-12"><strong>Description:</strong><br/>' + details.description + '</div>';
+        if (details.subject) {
+            html += '<div class="col-12"><strong>Subject:</strong><br/>' + details.subject + '</div>';
         }
         html += '</div>';
         return html;
@@ -807,162 +746,98 @@
 
     function buildLeaveDetails(details) {
         let html = '<h6 class="mb-3"><i class="bi bi-calendar-x me-2"></i>Leave Application Details</h6>';
-        html += '<div class="card border-0 bg-light mb-3">';
-        html += '<div class="card-body">';
         html += '<div class="row g-3">';
         if (details.leaveId) {
-            html += '<div class="col-md-6"><i class="bi bi-hash text-primary me-2"></i><strong>Leave ID:</strong><br/><span class="ms-4">' + details.leaveId + '</span></div>';
+            html += '<div class="col-md-6"><strong>Leave ID:</strong><br/>' + details.leaveId + '</div>';
         }
         if (details.applicant) {
-            html += '<div class="col-md-6"><i class="bi bi-person text-primary me-2"></i><strong>Applicant:</strong><br/><span class="ms-4">' + details.applicant + '</span></div>';
-            html += '<div class="col-md-6"><i class="bi bi-envelope text-primary me-2"></i><strong>Email:</strong><br/><span class="ms-4">' + details.email + '</span></div>';
+            html += '<div class="col-md-6"><strong>Applicant:</strong><br/>' + details.applicant + '</div>';
+            html += '<div class="col-md-6"><strong>Email:</strong><br/>' + details.email + '</div>';
         }
-        html += '<div class="col-md-6"><i class="bi bi-calendar-check text-success me-2"></i><strong>Start Date:</strong><br/><span class="ms-4">' + details.startDate + '</span></div>';
-        html += '<div class="col-md-6"><i class="bi bi-calendar-x text-danger me-2"></i><strong>End Date:</strong><br/><span class="ms-4">' + details.endDate + '</span></div>';
-        html += '<div class="col-md-6"><i class="bi bi-calendar3 text-info me-2"></i><strong>Total Days:</strong><br/><span class="ms-4 fs-5 fw-bold">' + details.totalDays + '</span></div>';
-        html += '<div class="col-md-6"><i class="bi bi-check-circle me-2"></i><strong>Status:</strong><br/><span class="ms-4"><span class="badge bg-' + 
-                (details.status === 'Approved' ? 'success' : (details.status === 'Rejected' ? 'danger' : 'warning')) + ' fs-6">' + 
-                details.status + '</span></span></div>';
-        html += '</div>';
+        html += '<div class="col-md-6"><strong>Start Date:</strong><br/>' + details.startDate + '</div>';
+        html += '<div class="col-md-6"><strong>End Date:</strong><br/>' + details.endDate + '</div>';
+        html += '<div class="col-md-6"><strong>Total Days:</strong><br/>' + details.totalDays + '</div>';
+        html += '<div class="col-md-6"><strong>Status:</strong><br/><span class="badge bg-' + 
+                (details.status === 'Approved' ? 'success' : (details.status === 'Rejected' ? 'danger' : 'warning')) + '">' + 
+                details.status + '</span></div>';
         if (details.reason) {
-            html += '<div class="mt-3 p-3 detail-section rounded"><strong><i class="bi bi-chat-left-text text-primary me-2"></i>Reason:</strong><br/><p class="mb-0 mt-2 ms-4">' + details.reason + '</p></div>';
+            html += '<div class="col-12"><strong>Reason:</strong><br/>' + details.reason + '</div>';
         }
         if (details.remarks) {
-            html += '<div class="mt-3 p-3 detail-section rounded"><strong><i class="bi bi-sticky text-warning me-2"></i>Remarks:</strong><br/><p class="mb-0 mt-2 ms-4">' + details.remarks + '</p></div>';
+            html += '<div class="col-12"><strong>Remarks:</strong><br/>' + details.remarks + '</div>';
         }
         if (details.createdDate) {
-            html += '<div class="mt-3"><small class="text-muted"><i class="bi bi-clock-history me-1"></i>Applied On: ' + details.createdDate + '</small></div>';
+            html += '<div class="col-12"><strong>Applied On:</strong><br/>' + details.createdDate + '</div>';
         }
-        html += '</div></div>';
+        html += '</div>';
         return html;
     }
 
     function buildUserRegistrationDetails(details) {
-        let html = '<h6 class="mb-3"><i class="bi bi-person-plus me-2"></i>New User Registration</h6>';
-        html += '<div class="card border-0 bg-light">';
-        html += '<div class="card-body">';
-        html += '<div class="text-center mb-4">';
-        html += '<div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">';
-        html += '<i class="bi bi-person-fill fs-1"></i></div>';
-        html += '<h5 class="mt-3 mb-1">' + details.fullName + '</h5>';
-        html += '<span class="badge bg-primary">' + details.userType + '</span>';
-        html += '</div>';
+        let html = '<h6 class="mb-3"><i class="bi bi-person-plus me-2"></i>User Registration Details</h6>';
         html += '<div class="row g-3">';
-        html += '<div class="col-md-6"><i class="bi bi-hash text-primary me-2"></i><strong>User ID:</strong><br/><span class="ms-4">' + details.userId + '</span></div>';
-        html += '<div class="col-md-6"><i class="bi bi-envelope text-primary me-2"></i><strong>Email:</strong><br/><span class="ms-4">' + details.email + '</span></div>';
-        html += '<div class="col-md-6"><i class="bi bi-telephone text-primary me-2"></i><strong>Phone:</strong><br/><span class="ms-4">' + (details.phoneNumber || 'N/A') + '</span></div>';
-        html += '<div class="col-md-6"><i class="bi bi-check-circle me-2"></i><strong>Status:</strong><br/><span class="ms-4"><span class="badge bg-' + 
-                (details.status === 'active' ? 'success' : 'secondary') + ' fs-6">' + details.status.toUpperCase() + '</span></span></div>';
-        html += '<div class="col-12"><small class="text-muted"><i class="bi bi-clock-history me-1"></i>Registered On: ' + details.createdDate + '</small></div>';
+        html += '<div class="col-md-6"><strong>User ID:</strong><br/>' + details.userId + '</div>';
+        html += '<div class="col-md-6"><strong>Full Name:</strong><br/>' + details.fullName + '</div>';
+        html += '<div class="col-md-6"><strong>Email:</strong><br/>' + details.email + '</div>';
+        html += '<div class="col-md-6"><strong>Phone:</strong><br/>' + (details.phoneNumber || 'N/A') + '</div>';
+        html += '<div class="col-md-6"><strong>User Type:</strong><br/>' + details.userType + '</div>';
+        html += '<div class="col-md-6"><strong>Status:</strong><br/><span class="badge bg-' + 
+                (details.status === 'active' ? 'success' : 'secondary') + '">' + details.status + '</span></div>';
+        html += '<div class="col-12"><strong>Created Date:</strong><br/>' + details.createdDate + '</div>';
         html += '</div>';
-        html += '</div></div>';
-        return html;
-    }
-
-    function buildStudentRegistrationDetails(details) {
-        let html = '<h6 class="mb-3"><i class="bi bi-person-plus me-2"></i>New Student Registration</h6>';
-        html += '<div class="card border-0 bg-light">';
-        html += '<div class="card-body">';
-        html += '<div class="text-center mb-4">';
-        html += '<div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">';
-        html += '<i class="bi bi-person-fill fs-1"></i></div>';
-        html += '<h5 class="mt-3 mb-1">' + details.fullName + '</h5>';
-        html += '<span class="badge bg-success">Student</span>';
-        html += '</div>';
-        html += '<div class="row g-3">';
-        html += '<div class="col-md-6"><i class="bi bi-hash text-primary me-2"></i><strong>User ID:</strong><br/><span class="ms-4">' + details.userId + '</span></div>';
-        html += '<div class="col-md-6"><i class="bi bi-envelope text-primary me-2"></i><strong>Email:</strong><br/><span class="ms-4">' + details.email + '</span></div>';
-        html += '<div class="col-md-6"><i class="bi bi-telephone text-primary me-2"></i><strong>Phone:</strong><br/><span class="ms-4">' + (details.phoneNumber || 'N/A') + '</span></div>';
-        html += '<div class="col-md-6"><i class="bi bi-check-circle me-2"></i><strong>Status:</strong><br/><span class="ms-4"><span class="badge bg-' + 
-                (details.status === 'active' ? 'success' : 'secondary') + ' fs-6">' + details.status.toUpperCase() + '</span></span></div>';
-        
-        if (details.enrolledClassesCount !== undefined && details.enrolledClassesCount > 0) {
-            html += '<div class="col-12 mt-3">';
-            html += '<div class="alert alert-info mb-0">';
-            html += '<i class="bi bi-book-fill me-2"></i><strong>Enrolled Classes: ' + details.enrolledClassesCount + '</strong>';
-            if (details.enrolledClasses && details.enrolledClasses.length > 0) {
-                html += '<div class="mt-3 d-flex flex-wrap gap-2">';
-                details.enrolledClasses.forEach(cls => {
-                    var tooltipContent = '<div class="text-start">';
-                    tooltipContent += '<strong>Class ID:</strong> ' + cls.classId + '<br/>';
-                    tooltipContent += '<strong>Teacher:</strong> ' + cls.teacher + '<br/>';
-                    tooltipContent += '<strong>Subject:</strong> ' + cls.subject + '<br/>';
-                    tooltipContent += '<strong>Room:</strong> ' + cls.venue + '<br/>';
-                    tooltipContent += '<strong>Schedule:</strong> ' + cls.day + ' ' + cls.time + '<br/>';
-                    tooltipContent += '<strong>Capacity:</strong> ' + cls.capacity;
-                    tooltipContent += '</div>';
-                    
-                    html += '<span class="badge bg-primary fs-6 px-3 py-2" data-bs-toggle="tooltip" data-bs-html="true" title="' + tooltipContent.replace(/"/g, '&quot;') + '">';
-                    html += '<i class="bi bi-book me-1"></i>' + cls.className;
-                    html += '</span>';
-                });
-                html += '</div>';
-            }
-            html += '</div>';
-            html += '</div>';
-        }
-        html += '<div class="col-12"><small class="text-muted"><i class="bi bi-clock-history me-1"></i>Registered On: ' + details.createdDate + '</small></div>';
-        html += '</div>';
-        html += '</div></div>';
-        
-        // Initialize tooltips after HTML is added
-        setTimeout(() => {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-                new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        }, 100);
-        
         return html;
     }
 
     function buildAttendanceDetails(details) {
-        const rate = parseFloat(details.attendanceRate);
-        let html = '<h6 class="mb-3"><i class="bi bi-clipboard-check me-2"></i>Student Attendance Report</h6>';
-        if (rate < 60) {
-            html += '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i><strong>Critical:</strong> Attendance rate is below minimum requirement (60%).</div>';
-        } else if (rate < 80) {
-            html += '<div class="alert alert-warning"><i class="bi bi-exclamation-circle me-2"></i><strong>Warning:</strong> Attendance rate needs improvement.</div>';
-        }
-        html += '<div class="card border-0 bg-light">';
-        html += '<div class="card-body">';
-        html += '<div class="row g-3 mb-4">';
-        html += '<div class="col-md-6"><i class="bi bi-person-badge text-primary me-2"></i><strong>Student ID:</strong><br/><span class="ms-4">' + details.studentId + '</span></div>';
-        html += '<div class="col-md-6"><i class="bi bi-person text-primary me-2"></i><strong>Student Name:</strong><br/><span class="ms-4">' + details.studentName + '</span></div>';
-        html += '<div class="col-12"><i class="bi bi-envelope text-primary me-2"></i><strong>Email:</strong><br/><span class="ms-4">' + details.email + '</span></div>';
+        let html = '<h6 class="mb-3"><i class="bi bi-clipboard-check me-2"></i>Attendance Details</h6>';
+        html += '<div class="row g-3">';
+        html += '<div class="col-md-6"><strong>Student ID:</strong><br/>' + details.studentId + '</div>';
+        html += '<div class="col-md-6"><strong>Student Name:</strong><br/>' + details.studentName + '</div>';
+        html += '<div class="col-md-6"><strong>Email:</strong><br/>' + details.email + '</div>';
+        html += '<div class="col-md-6"><strong>Attendance Rate:</strong><br/><span class="badge bg-' + 
+                (parseFloat(details.attendanceRate) >= 80 ? 'success' : (parseFloat(details.attendanceRate) >= 60 ? 'warning' : 'danger')) + 
+                '">' + details.attendanceRate + '</span></div>';
+        html += '<div class="col-md-4"><strong>Total Classes:</strong><br/>' + details.totalClasses + '</div>';
+        html += '<div class="col-md-4"><strong>Present:</strong><br/><span class="text-success">' + details.presentCount + '</span></div>';
+        html += '<div class="col-md-4"><strong>Absent:</strong><br/><span class="text-danger">' + details.absentCount + '</span></div>';
         html += '</div>';
-        html += '<div class="mb-3"><strong>Attendance Rate:</strong></div>';
-        html += '<div class="progress" style="height: 30px;">';
-        html += '<div class="progress-bar bg-' + (rate >= 80 ? 'success' : (rate >= 60 ? 'warning' : 'danger')) + '" role="progressbar" style="width: ' + rate + '%" aria-valuenow="' + rate + '" aria-valuemin="0" aria-valuemax="100">';
-        html += '<strong>' + details.attendanceRate + '</strong></div></div>';
-        html += '<div class="row g-3 mt-3 text-center">';
-        html += '<div class="col-4"><div class="p-3 bg-white rounded"><div class="fs-2 fw-bold text-primary">' + details.totalClasses + '</div><small class="text-muted">Total Classes</small></div></div>';
-        html += '<div class="col-4"><div class="p-3 bg-white rounded"><div class="fs-2 fw-bold text-success">' + details.presentCount + '</div><small class="text-muted">Present</small></div></div>';
-        html += '<div class="col-4"><div class="p-3 bg-white rounded"><div class="fs-2 fw-bold text-danger">' + details.absentCount + '</div><small class="text-muted">Absent</small></div></div>';
-        html += '</div>';
-        html += '</div></div>';
         return html;
     }
 
     function buildClassCapacityDetails(details) {
-        let html = '<h6 class="mb-3"><i class="bi bi-bar-chart me-2"></i>Class Capacity Alert</h6>';
-        html += '<div class="alert alert-warning">';
-        html += '<i class="bi bi-exclamation-triangle me-2"></i>';
-        html += '<strong>Warning:</strong> This class is approaching or has reached maximum capacity.';
-        html += '</div>';
+        let html = '<h6 class="mb-3"><i class="bi bi-bar-chart me-2"></i>Class Capacity Details</h6>';
         html += '<div class="row g-3">';
         html += '<div class="col-md-6"><strong>Class Name:</strong><br/>' + details.className + '</div>';
         html += '<div class="col-md-6"><strong>Teacher:</strong><br/>' + (details.teacher || 'N/A') + '</div>';
-        if (details.room) {
-            html += '<div class="col-md-6"><strong>Room:</strong><br/>' + details.room + '</div>';
-        }
-        html += '<div class="col-md-6"><strong>Current Enrollment:</strong><br/><span class="text-warning fw-bold">' + details.currentEnrollment + '</span></div>';
+        html += '<div class="col-md-6"><strong>Room:</strong><br/>' + (details.room || 'N/A') + '</div>';
+        html += '<div class="col-md-6"><strong>Current Enrollment:</strong><br/>' + details.currentEnrollment + '</div>';
         html += '<div class="col-md-6"><strong>Max Capacity:</strong><br/>' + details.maxCapacity + '</div>';
-        html += '<div class="col-md-6"><strong>Utilization Rate:</strong><br/><span class="badge bg-' + 
-                (parseFloat(details.utilizationRate) >= 100 ? 'danger' : 'warning') + ' fs-6">' + 
+        html += '<div class="col-12"><strong>Utilization Rate:</strong><br/><span class="badge bg-' + 
+                (parseFloat(details.utilizationRate) >= 90 ? 'danger' : 'warning') + ' fs-6">' + 
                 details.utilizationRate + '</span></div>';
         html += '</div>';
         return html;
     }
+
+    function filterByType(type) {
+        // Tab switching is handled by Bootstrap
+    }
+
+    function filterNotifications() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const notifications = document.querySelectorAll('.notification-record');
+
+        notifications.forEach(notification => {
+            const title = notification.querySelector('.notification-content h6').textContent.toLowerCase();
+            const description = notification.querySelector('.notification-description').textContent.toLowerCase();
+
+            if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                notification.style.display = '';
+            } else {
+                notification.style.display = 'none';
+            }
+        });
+    }
 </script>
 }
+
