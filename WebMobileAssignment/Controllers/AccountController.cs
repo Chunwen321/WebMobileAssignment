@@ -21,8 +21,15 @@ namespace WebMobileAssignment.Controllers
         }
 
         // GET: /Account/Login
-        public IActionResult Login()
+        public IActionResult Login(string? returnUrl = null)
         {
+            // If user is trying to access a protected page without being logged in,
+            // redirect to Access Denied page
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                return RedirectToAction("AccessDenied", new { returnUrl = returnUrl });
+            }
+
             ViewBag.ReCaptchaSiteKey = _configuration["ReCaptcha:SiteKey"];
             return View();
         }
@@ -179,116 +186,177 @@ namespace WebMobileAssignment.Controllers
             
             ViewBag.ReCaptchaSiteKey = _configuration["ReCaptcha:SiteKey"];
 
-            // Verify reCAPTCHA v2 only if it's configured
-            var siteKey = _configuration["ReCaptcha:SiteKey"];
+          // Verify reCAPTCHA v2 only if it's configured
+     var siteKey = _configuration["ReCaptcha:SiteKey"];
             Console.WriteLine($"Site Key configured: {!string.IsNullOrEmpty(siteKey)}");
 
-     if (!string.IsNullOrEmpty(siteKey) && siteKey != "YOUR_SITE_KEY_HERE" && !string.IsNullOrEmpty(recaptchaToken))
-     {
-           Console.WriteLine($"?? Verifying reCAPTCHA v2 token...");
-              var isRecaptchaValid = await _reCaptchaService.VerifyTokenAsync(recaptchaToken);
+            if (!string.IsNullOrEmpty(siteKey) && siteKey != "YOUR_SITE_KEY_HERE" && !string.IsNullOrEmpty(recaptchaToken))
+            {
+     Console.WriteLine($"Verifying reCAPTCHA v2 token...");
+          var isRecaptchaValid = await _reCaptchaService.VerifyTokenAsync(recaptchaToken);
 
-         if (!isRecaptchaValid)
-        {
-    Console.WriteLine($"? reCAPTCHA v2 verification FAILED for: {email}");
-          ViewBag.ErrorMessage = "Security verification failed. Please try again.";
-         return View();
+                if (!isRecaptchaValid)
+     {
+            Console.WriteLine($"reCAPTCHA v2 verification FAILED for: {email}");
+ ViewBag.ErrorMessage = "Security verification failed. Please try again.";
+          return View();
       }
 
-    // Log successful reCAPTCHA verification
-  Console.WriteLine($"? reCAPTCHA v2 verification PASSED for email: {email}");
-   }
+          Console.WriteLine($"reCAPTCHA v2 verification PASSED for email: {email}");
+    }
             else if (string.IsNullOrEmpty(recaptchaToken))
-     {
-     // Log when reCAPTCHA token is missing
-      Console.WriteLine($"?? Warning: reCAPTCHA token is MISSING for login attempt: {email}");
-          }
-else
-      {
-  Console.WriteLine($"?? reCAPTCHA skipped (not configured or invalid site key)");
-   }
-
- Console.WriteLine($"=== LOGIN ATTEMPT CONTINUING ===\n");
-
-      // Validate input
-   if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-   {
-        ViewBag.ErrorMessage = "Please enter both email and password.";
-          return View();
-  }
-
-            try
             {
-                // Find user by email
-                var user = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+      Console.WriteLine($"Warning: reCAPTCHA token is MISSING for login attempt: {email}");
+   }
+            else
+   {
+  Console.WriteLine($"reCAPTCHA skipped (not configured or invalid site key)");
+      }
 
-                if (user == null)
-                {
-                    ViewBag.ErrorMessage = "Invalid email or password.";
-                    return View();
-                }
+            Console.WriteLine($"=== LOGIN ATTEMPT CONTINUING ===\n");
 
-                // Verify password - Try both hashed and plain text for backward compatibility
-                bool isPasswordValid = false;
+ // Validate input
+   if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+           ViewBag.ErrorMessage = "Please enter both email and password.";
+          return View();
+            }
 
-                // First try with proper password hashing (PasswordHasher)
-                if (user.PasswordHash.StartsWith("AQA") || user.PasswordHash.Length > 50)
-                {
-                    // Looks like a hashed password
-                    isPasswordValid = _helper.VerifyPassword(user.PasswordHash, password);
-                }
+     try
+     {
+       // Find user by email
+              var user = await _context.Users
+        .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+     if (user == null)
+     {
+            // For security: don't reveal that the email doesn't exist
+            // Use generic error message without showing attempts
+            Console.WriteLine($"Login failed: Email not found - {email}");
+            ViewBag.ErrorMessage = "Invalid email or password.";
+            // Clear the form by redirecting to a fresh login page
+            ModelState.Clear();
+           return View();
+        }
+
+   // Check if account is locked
+             if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.Now)
+       {
+       var remainingTime = user.LockoutEnd.Value - DateTime.Now;
+            var minutes = (int)Math.Ceiling(remainingTime.TotalMinutes);
+        
+       Console.WriteLine($"Account locked for {email}. Remaining time: {minutes} minutes");
+        ViewBag.ErrorMessage = $"Your account has been locked due to multiple failed login attempts. Please try again in {minutes} minute(s).";
+        // Keep the email but clear password
+        ViewBag.Email = email;
+  return View();
+          }
+
+     // Reset failed attempts if lockout period has expired
+  if (user.LockoutEnd.HasValue && user.LockoutEnd.Value <= DateTime.Now)
+ {
+       user.FailedLoginAttempts = 0;
+                user.LockoutEnd = null;
+                  user.LastFailedLogin = null;
+           await _context.SaveChangesAsync();
+              Console.WriteLine($"Lockout expired for {email}. Reset failed attempts.");
+    }
+
+     // Verify password - Try both hashed and plain text for backward compatibility
+  bool isPasswordValid = false;
+
+  // First try with proper password hashing (PasswordHasher)
+         if (user.PasswordHash.StartsWith("AQA") || user.PasswordHash.Length > 50)
+       {
+      // Looks like a hashed password
+         isPasswordValid = _helper.VerifyPassword(user.PasswordHash, password);
+       }
                 else
+      {
+      // Plain text password (for backward compatibility with existing data)
+      isPasswordValid = user.PasswordHash == password;
+          }
+
+      if (!isPasswordValid)
+            {
+          // Increment failed login attempts
+  user.FailedLoginAttempts++;
+           user.LastFailedLogin = DateTime.Now;
+
+        // Lock account if 5 or more failed attempts
+             if (user.FailedLoginAttempts >= 5)
+     {
+        user.LockoutEnd = DateTime.Now.AddMinutes(15); // Lock for 15 minutes
+           await _context.SaveChangesAsync();
+           
+       Console.WriteLine($"Account locked for {email} after {user.FailedLoginAttempts} failed attempts");
+    ViewBag.ErrorMessage = "Your account has been locked due to multiple failed login attempts. Please try again in 15 minutes.";
+        // Keep the email but clear password
+        ViewBag.Email = email;
+ return View();
+      }
+
+    await _context.SaveChangesAsync();
+ 
+          var remainingAttempts = 5 - user.FailedLoginAttempts;
+  Console.WriteLine($"Failed login for {email}. Attempts: {user.FailedLoginAttempts}/5. Remaining: {remainingAttempts}");
+                    
+      ViewBag.ErrorMessage = $"Invalid email or password. You have {remainingAttempts} attempt(s) remaining before your account is locked.";
+        // Keep the email but clear password
+        ViewBag.Email = email;
+     return View();
+        }
+
+                // Successful login - Reset failed attempts
+  if (user.FailedLoginAttempts > 0)
+        {
+         Console.WriteLine($"Successful login for {email}. Resetting failed attempts (was: {user.FailedLoginAttempts})");
+     user.FailedLoginAttempts = 0;
+          user.LastFailedLogin = null;
+          user.LockoutEnd = null;
+           await _context.SaveChangesAsync();
+    }
+
+       // Check if user is active
+        if (!user.IsActive || user.Status != "active")
                 {
-                    // Plain text password (for backward compatibility with existing data)
-                    isPasswordValid = user.PasswordHash == password;
-                }
+    ViewBag.ErrorMessage = "Your account is not active. Please contact administrator.";
+        return View();
+         }
 
-                if (!isPasswordValid)
-                {
-                    ViewBag.ErrorMessage = "Invalid email or password.";
-                    return View();
-                }
+            // Redirect based on user type from Users table
+    string userType = user.UserType.ToLower();
 
-                // Check if user is active
-                if (!user.IsActive || user.Status != "active")
-                {
-                    ViewBag.ErrorMessage = "Your account is not active. Please contact administrator.";
-                    return View();
-                }
+  switch (userType)
+ {
+            case "admin":
+      _helper.SignIn(user.Email, "Admin", rememberMe);
+     return RedirectToAction("Dashboard", "Admin");
 
-                // Redirect based on user type from Users table
-                string userType = user.UserType.ToLower();
+               case "teacher":
+  _helper.SignIn(user.Email, "Teacher", rememberMe);
+           return RedirectToAction("TeachDashboard", "Teacher");
 
-                switch (userType)
-                {
-                    case "admin":
-                        _helper.SignIn(user.Email, "Admin", rememberMe);
-                        return RedirectToAction("Dashboard", "Admin");
+     case "student":
+     _helper.SignIn(user.Email, "Student", rememberMe);
+           return RedirectToAction("StudDashboard", "Student");
 
-                    case "teacher":
-                        _helper.SignIn(user.Email, "Teacher", rememberMe);
-                        return RedirectToAction("TeachDashboard", "Teacher");
+     case "parent":
+          _helper.SignIn(user.Email, "Parent", rememberMe);
+            return RedirectToAction("Dashboard", "Parent");
 
-                    case "student":
-                        _helper.SignIn(user.Email, "Student", rememberMe);
-                        return RedirectToAction("StudDashboard", "Student");
-
-                    case "parent":
-                        _helper.SignIn(user.Email, "Parent", rememberMe);
-                        return RedirectToAction("Dashboard", "Parent");
-
-                    default:
-                        ViewBag.ErrorMessage = "Invalid user type. Please contact administrator.";
-                        return View();
-                }
+  default:
+             ViewBag.ErrorMessage = "Invalid user type. Please contact administrator.";
+        return View();
+           }
             }
             catch (Exception ex)
-            {
-                // Log the error in production
-                ViewBag.ErrorMessage = $"An error occurred during login: {ex.Message}";
-                return View();
-            }
+          {
+         // Log the error in production
+           Console.WriteLine($"Login error: {ex.Message}");
+       ViewBag.ErrorMessage = $"An error occurred during login: {ex.Message}";
+           return View();
+   }
         }
 
         // POST: /Account/Logout
@@ -296,6 +364,19 @@ else
         {
             _helper.SignOut();
             return RedirectToAction("Login");
+        }
+
+        // GET: /Account/AccessDenied
+        public IActionResult AccessDenied(string? returnUrl = null)
+        {
+            ViewBag.ReturnUrl = returnUrl;
+            
+            // Optional: Force logout if user tries to access unauthorized page
+    // This prevents them from staying logged in but blocked
+    _helper.SignOut();
+        
+        ViewBag.ErrorMessage = "Access Denied. You do not have permission to access this page.";
+  return View();
         }
     }
 }

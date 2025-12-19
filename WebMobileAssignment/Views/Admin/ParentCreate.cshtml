@@ -17,7 +17,7 @@
 <div class="row">
     <div class="col-12">
         <div class="dashboard-card bg-white p-4 rounded shadow-sm">
-            <form asp-action="ParentCreate" method="post">
+            <form asp-action="ParentCreate" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 
                 @if (!ViewData.ModelState.IsValid)
@@ -34,9 +34,70 @@
                     </div>
                 }
 
-                <h6 class="text-muted mb-3"><i class="bi bi-person-badge"></i> Basic Information</h6>
+                <!-- Profile Picture Section -->
+                <h6 class="text-danger mb-3 border-bottom pb-2">
+                    <i class="bi bi-person-badge-fill me-2"></i>Profile Picture
+                </h6>
+                <div class="row mb-4">
+                    <div class="col-md-4 text-center">
+                        <div class="profile-picture-container">
+                            <div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
+                                <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <label for="profilePicture" class="btn btn-danger">
+                                    <i class="bi bi-upload"></i> Choose Photo
+                                </label>
+                                <input type="file" 
+                                       id="profilePicture" 
+                                       name="profilePicture"
+                                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                                       style="display: none;">
+                                
+                                <button type="button" id="btnWebcam" class="btn btn-outline-primary">
+                                    <i class="bi bi-camera-fill"></i> Take Photo
+                                </button>
+                                
+                                <button type="button" id="btnEditPhoto" class="btn btn-outline-success" style="display: none;">
+                                    <i class="bi bi-crop"></i> Edit Photo
+                                </button>
+                                
+                                <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-danger" style="display: none;">
+                                    <i class="bi bi-x"></i> Remove
+                                </button>
+                            </div>
+                            
+                            <small class="text-muted d-block mt-3">
+                                <i class="bi bi-info-circle"></i> Max size: 5 MB<br>
+                                Formats: JPG, PNG, GIF, WEBP
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="alert alert-info border-0">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-lightbulb-fill me-2"></i>Profile Picture Guidelines
+                            </h6>
+                            <ul class="mb-0">
+                                <li>Upload a clear photo of the parent/guardian</li>
+                                <li>Use your webcam to take a photo directly</li>
+                                <li>Click "Edit Photo" to crop, rotate, and adjust your image</li>
+                                <li>Supported formats: JPG, PNG, GIF, WEBP</li>
+                                <li>Maximum file size: 5 MB</li>
+                                <li>If not uploaded, a default icon will be used</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Basic Information -->
+                <h6 class="text-danger mb-3 border-bottom pb-2">
+                    <i class="bi bi-person-badge me-2"></i>Basic Information
+                </h6>
                 <div class="row">
-                    <!-- Name -->
+                    <!-- Full Name -->
                     <div class="col-md-6 mb-3">
                         <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
                         <input type="text" id="fullName" name="fullName" class="form-control" placeholder="e.g. Mary Johnson" value="@ViewBag.FullName" required />
@@ -52,8 +113,8 @@
                 <div class="row">
                     <!-- Phone Number -->
                     <div class="col-md-6 mb-3">
-                        <label for="phoneNumber" class="form-label">Phone Number</label>
-                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="e.g. +60123456789" value="@ViewBag.PhoneNumber" />
+                        <label for="phoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="e.g. +60123456789" value="@ViewBag.PhoneNumber" required />
                         <small class="text-muted">Used for notifications and emergency contact</small>
                     </div>
 
@@ -68,18 +129,21 @@
                     </div>
                 </div>
 
-                <h6 class="text-muted mb-3 mt-4"><i class="bi bi-person-lines-fill"></i> Personal Details</h6>
+                <!-- Personal Details -->
+                <h6 class="text-danger mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-person-lines-fill me-2"></i>Personal Details
+                </h6>
                 <div class="row">
                     <!-- Date of Birth -->
                     <div class="col-md-6 mb-3">
-                        <label for="dateOfBirth" class="form-label">Date of Birth</label>
-                        <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" value="@ViewBag.DateOfBirth" />
+                        <label for="dateOfBirth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                        <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" value="@ViewBag.DateOfBirth" required />
                     </div>
 
                     <!-- Gender -->
                     <div class="col-md-6 mb-3">
-                        <label for="gender" class="form-label">Gender</label>
-                        <select id="gender" name="gender" class="form-select">
+                        <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                        <select id="gender" name="gender" class="form-select" required>
                             <option value="">Select Gender</option>
                             <option value="Male" selected="@(ViewBag.Gender == "Male")">Male</option>
                             <option value="Female" selected="@(ViewBag.Gender == "Female")">Female</option>
@@ -91,8 +155,8 @@
                 <div class="row">
                     <!-- Address -->
                     <div class="col-12 mb-3">
-                        <label for="address" class="form-label">Address</label>
-                        <textarea id="address" name="address" class="form-control" rows="3" placeholder="Enter full address">@ViewBag.Address</textarea>
+                        <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                        <textarea id="address" name="address" class="form-control" rows="3" placeholder="Enter full address" required>@ViewBag.Address</textarea>
                         <small class="text-muted">Street address, city, state, postal code</small>
                     </div>
                 </div>
@@ -117,4 +181,49 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <!-- Cropper.js CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+    <!-- Webcam Capture Script -->
+    <script src="~/js/webcam-capture.js"></script>
+
+    <!-- Image Cropper Module -->
+    <script src="~/js/image-cropper.js"></script>
+
+    <!-- Inject Modals -->
+    <div id="imageCropperModals"></div>
+    <script>
+        document.getElementById('imageCropperModals').innerHTML = ImageCropper.getModalHTML();
+    </script>
+
+    <script>
+        // ==================== INITIALIZE IMAGE CROPPER ====================
+        ImageCropper.init({
+            targetId: 'parent',
+            previewElementId: 'profilePicturePreview',
+            fileInputId: 'profilePicture',
+            clearButtonId: 'clearProfilePictureBtn',
+            editButtonId: 'btnEditPhoto',
+            previewWidth: 200,
+            previewHeight: 200
+        });
+
+        // ==================== WEBCAM FUNCTIONALITY ====================
+        (function() {
+            WebcamCapture.init('profilePicturePreview', 'profilePicture', function(file) {
+                console.log('Photo captured from webcam:', file.name);
+                document.getElementById('clearProfilePictureBtn').style.display = 'block';
+                document.getElementById('btnEditPhoto').style.display = 'block';
+            });
+
+            const webcamBtn = document.getElementById('btnWebcam');
+            if (webcamBtn) {
+                webcamBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal();
+                });
+            }
+        })();
+    </script>
 }

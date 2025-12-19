@@ -9,14 +9,14 @@ var student = ViewBag.Student as WebMobileAssignment.Models.Student;
     var allStudents = ViewBag.AllStudents as List<WebMobileAssignment.Models.Student> ?? new List<WebMobileAssignment.Models.Student>();
     var totalAttendance = ViewBag.TotalAttendance ?? 0;
     var presentCount = ViewBag.PresentCount ?? 0;
-    var absentCount = ViewBag.AbsentCount ?? 0;
-var lateCount = ViewBag.LateCount ?? 0;
-    var attendanceRate = ViewBag.AttendanceRate ?? 0;
+ var absentCount = ViewBag.AbsentCount ?? 0;
+var leaveCount = ViewBag.LeaveCount ?? 0;
+var attendanceRate = ViewBag.AttendanceRate ?? 0;
     
     // Get current student index
     var currentIndex = allStudents.FindIndex(s => s.StudentId == student?.StudentId);
     var totalChildren = allStudents.Count;
-    var hasPrevious = currentIndex > 0;
+  var hasPrevious = currentIndex > 0;
   var hasNext = currentIndex < totalChildren - 1;
     var previousStudentId = hasPrevious ? allStudents[currentIndex - 1].StudentId : null;
     var nextStudentId = hasNext ? allStudents[currentIndex + 1].StudentId : null;
@@ -35,20 +35,21 @@ var lateCount = ViewBag.LateCount ?? 0;
 @if (allStudents.Count > 1)
 {
     <div class="mb-4">
-   <div class="dashboard-card child-navigation-card">
+ <div class="dashboard-card child-navigation-card">
         <div class="child-nav-container" id="childNavContainer">
      <button class="child-nav-btn child-nav-prev @(!hasPrevious ? "disabled" : "")" 
       id="btnPrevious"
-              data-student-id="@previousStudentId"
-                @(!hasPrevious ? "disabled" : "")>
+      data-student-id="@previousStudentId"
+           @(!hasPrevious ? "disabled" : "")
+ type="button">
   <i class="bi bi-chevron-left"></i>
-           <span>Previous</span>
+   <span>Previous</span>
     </button>
     
-        <div class="child-info" id="childInfo">
+      <div class="child-info" id="childInfo">
  <div class="child-icon">
       <i class="bi bi-person-fill"></i>
-         </div>
+   </div>
     <div class="child-details">
    <h5 class="child-name" id="childName">@student.User.FullName</h5>
      <p class="child-meta" id="childMeta">Child @(currentIndex + 1) of @totalChildren</p>
@@ -58,11 +59,12 @@ var lateCount = ViewBag.LateCount ?? 0;
     <button class="child-nav-btn child-nav-next @(!hasNext ? "disabled" : "")" 
         id="btnNext"
       data-student-id="@nextStudentId"
-    @(!hasNext ? "disabled" : "")>
+    @(!hasNext ? "disabled" : "")
+    type="button">
          <span>Next</span>
-         <i class="bi bi-chevron-right"></i>
+  <i class="bi bi-chevron-right"></i>
     </button>
-            </div>
+         </div>
       </div>
     </div>
 }
@@ -72,104 +74,151 @@ var lateCount = ViewBag.LateCount ?? 0;
 </div>
 
 <!-- Loading Overlay -->
-<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; justify-content: center; align-items: center;">
-    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-     <span class="visually-hidden">Loading...</span>
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+    <div class="text-center">
+        <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-white mt-2">Loading...</p>
     </div>
 </div>
 
 @section Scripts {
 <script>
-    $(document).ready(function() {
-        console.log('StudentProfile: Script loaded');
-console.log('jQuery version:', $.fn.jquery);
-        
-        // Handle Previous button click
-        $('#btnPrevious').click(function(e) {
+// Student Profile AJAX Navigation
+document.addEventListener('DOMContentLoaded', function() {
+    const btnPrevious = document.getElementById('btnPrevious');
+    const btnNext = document.getElementById('btnNext');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    // Initialize pagination on page load
+    if (typeof initializeEnrolledClassesPagination === 'function') {
+        initializeEnrolledClassesPagination();
+    }
+
+    // Handle Previous button
+    if (btnPrevious) {
+   btnPrevious.addEventListener('click', function(e) {
       e.preventDefault();
-       console.log('Previous button clicked');
-     if (!$(this).hasClass('disabled')) {
-              var studentId = $(this).data('student-id');
-      console.log('Previous Student ID:', studentId);
-      loadStudentProfile(studentId);
-          } else {
-     console.log('Previous button is disabled');
+            e.stopPropagation();
+
+          if (!this.disabled && !this.classList.contains('disabled')) {
+         const studentId = this.getAttribute('data-student-id');
+          if (studentId) {
+     loadStudentProfile(studentId);
+    }
       }
-        });
+     });
+    }
 
-        // Handle Next button click
-    $('#btnNext').click(function(e) {
+  // Handle Next button
+    if (btnNext) {
+ btnNext.addEventListener('click', function(e) {
             e.preventDefault();
-       console.log('Next button clicked');
-      if (!$(this).hasClass('disabled')) {
-    var studentId = $(this).data('student-id');
- console.log('Next Student ID:', studentId);
-                loadStudentProfile(studentId);
-            } else {
-         console.log('Next button is disabled');
+   e.stopPropagation();
+    
+if (!this.disabled && !this.classList.contains('disabled')) {
+       const studentId = this.getAttribute('data-student-id');
+      if (studentId) {
+ loadStudentProfile(studentId);
    }
-  });
+  }
+      });
+    }
 
-        function loadStudentProfile(studentId) {
-   console.log('Loading student profile for ID:', studentId);
-            
-     // Show loading overlay
-  $('#loadingOverlay').css('display', 'flex');
+    function loadStudentProfile(studentId) {
+ // Show loading overlay
+  if (loadingOverlay) {
+  loadingOverlay.style.display = 'flex';
+        }
 
-            $.ajax({
-      url: '@Url.Action("GetStudentProfileContent", "Parent")',
-         type: 'GET',
-      data: { studentId: studentId },
-    success: function(response) {
-        console.log('AJAX Success:', response);
-      if (response.success) {
-  // Update the profile content
-     $('#profileContent').html(response.html);
+     // Disable buttons during loading
+    if (btnPrevious) btnPrevious.disabled = true;
+  if (btnNext) btnNext.disabled = true;
 
-               // Update navigation info
-   $('#childName').text(response.navigation.studentName);
-         $('#childMeta').text('Child ' + response.navigation.currentIndex + ' of ' + response.navigation.totalChildren);
+   fetch(`/Parent/GetStudentProfileContent?studentId=${studentId}`)
+      .then(response => response.json())
+     .then(data => {
+       if (data.success) {
+  // Update profile content
+          const profileContent = document.getElementById('profileContent');
+   if (profileContent) {
+       profileContent.innerHTML = data.html;
+    
+       // Re-initialize pagination after content is loaded
+ if (typeof initializeEnrolledClassesPagination === 'function') {
+          initializeEnrolledClassesPagination();
+             }
+   }
+
+    // Update navigation info
+  const childName = document.getElementById('childName');
+          if (childName) {
+   childName.textContent = data.navigation.studentName;
+       }
+
+          const childMeta = document.getElementById('childMeta');
+if (childMeta) {
+    childMeta.textContent = `Child ${data.navigation.currentIndex} of ${data.navigation.totalChildren}`;
+   }
 
     // Update Previous button
-          if (response.navigation.hasPrevious) {
-           $('#btnPrevious').removeClass('disabled').prop('disabled', false)
-   .data('student-id', response.navigation.previousStudentId);
-   } else {
-         $('#btnPrevious').addClass('disabled').prop('disabled', true)
-       .data('student-id', '');
-     }
-
-         // Update Next button
-               if (response.navigation.hasNext) {
-        $('#btnNext').removeClass('disabled').prop('disabled', false)
-            .data('student-id', response.navigation.nextStudentId);
-             } else {
-     $('#btnNext').addClass('disabled').prop('disabled', true)
-            .data('student-id', '');
-      }
-
-   // Update URL without reloading
-         if (history.pushState) {
-   var newUrl = '@Url.Action("StudentProfile", "Parent")?studentId=' + studentId;
-    history.pushState({ studentId: studentId }, '', newUrl);
-              }
-            } else {
-      console.error('Error in response:', response.message);
-            alert('Error: ' + response.message);
-     }
-  },
-          error: function(xhr, status, error) {
- console.error('AJAX Error:', error);
-      console.error('Status:', status);
-           console.error('Response:', xhr.responseText);
-        alert('Failed to load student profile. Please try again.');
-     },
-          complete: function() {
-       // Hide loading overlay
-           $('#loadingOverlay').hide();
+           if (btnPrevious) {
+   if (data.navigation.hasPrevious) {
+        btnPrevious.classList.remove('disabled');
+    btnPrevious.disabled = false;
+  btnPrevious.setAttribute('data-student-id', data.navigation.previousStudentId);
+        } else {
+        btnPrevious.classList.add('disabled');
+    btnPrevious.disabled = true;
+        btnPrevious.setAttribute('data-student-id', '');
+   }
        }
-    });
+
+  // Update Next button
+   if (btnNext) {
+  if (data.navigation.hasNext) {
+       btnNext.classList.remove('disabled');
+     btnNext.disabled = false;
+     btnNext.setAttribute('data-student-id', data.navigation.nextStudentId);
+   } else {
+  btnNext.classList.add('disabled');
+         btnNext.disabled = true;
+   btnNext.setAttribute('data-student-id', '');
+ }
         }
+
+  // Update URL without reloading
+     if (history.pushState) {
+    const newUrl = `/Parent/StudentProfile?studentId=${studentId}`;
+           history.pushState({ studentId: studentId }, '', newUrl);
+   }
+     } else {
+           alert('Error: ' + (data.message || 'Failed to load student profile'));
+       }
+     })
+    .catch(error => {
+ console.error('Error:', error);
+    alert('An error occurred while loading data. Please try again.');
+        })
+        .finally(() => {
+          // Hide loading overlay
+ if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+   }
+
+ // Re-enable buttons
+    if (btnPrevious) btnPrevious.disabled = false;
+    if (btnNext) btnNext.disabled = false;
+      });
+ }
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', function(event) {
+        if (event.state && event.state.studentId) {
+          loadStudentProfile(event.state.studentId);
+     }
     });
+});
 </script>
 }

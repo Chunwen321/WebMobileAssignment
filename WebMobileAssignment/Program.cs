@@ -1,6 +1,10 @@
 using WebMobileAssignment;
 using WebMobileAssignment.Models;
 using WebMobileAssignment.Services;
+using QuestPDF.Infrastructure;
+
+// Configure QuestPDF License
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,15 +20,15 @@ builder.Services.AddSqlServer<DB>($@"
 // Add Helper service
 builder.Services.AddScoped<Helper>();
 
-<<<<<<< Updated upstream
-=======
 // Add Report service
 builder.Services.AddScoped<ReportService>();
 
 // Add PDF service
 builder.Services.AddScoped<PdfService>();
 
->>>>>>> Stashed changes
+// Add Report service
+builder.Services.AddScoped<ReportService>();
+
 // Add ReCaptcha service with HttpClient
 builder.Services.AddHttpClient<ReCaptchaService>();
 
@@ -40,6 +44,14 @@ builder.Services.AddAuthentication("Cookies")
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromHours(24);
         options.SlidingExpiration = true;
+
+        // Add event handler to force logout on access denied
+        options.Events.OnRedirectToAccessDenied = async context =>
+        {
+            // Force sign out when access is denied
+            await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(context.HttpContext);
+            context.Response.Redirect("/Account/AccessDenied?returnUrl=" + context.Request.Path);
+        };
     });
 
 // Add HttpContextAccessor for accessing HttpContext in services

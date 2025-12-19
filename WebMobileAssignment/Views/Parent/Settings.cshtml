@@ -1,6 +1,8 @@
 @{
-    ViewBag.Title = "Settings";
+ViewBag.Title = "Account Settings";
     Layout = "~/Views/Shared/_ParentLayout.cshtml";
+    ViewBag.ActiveMenu = "Settings";
+    ViewBag.ActiveSubmenu = "AccountSettings";
 }
 
 @{
@@ -10,279 +12,439 @@
 @if (parent == null)
 {
  <div class="alert alert-warning">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        No parent information found. Please log in again.
-    </div>
-    return;
+     <i class="bi bi-exclamation-triangle me-2"></i>
+      No parent information found. Please log in again.
+ </div>
+  return;
 }
 
 <!-- Success/Error Messages -->
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle me-2"></i>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+  <i class="bi bi-check-circle me-2"></i>
     @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
 
 @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-circle me-2"></i>
-        @TempData["Error"]
+    <i class="bi bi-exclamation-circle me-2"></i>
+     @TempData["Error"]
  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
 
-<div class="row g-3">
+<div class="row g-3 align-items-stretch">
     <!-- Account Settings -->
-    <div class="col-lg-8">
-   <div class="dashboard-card settings-account-card mb-3">
-            <div class="card-header-custom">
-          <h5 class="card-title">
-         <i class="bi bi-person-circle"></i>
+    <div class="col-lg-8 d-flex">
+   <div class="dashboard-card settings-account-card mb-3 flex-fill">
+<div class="card-header-custom">
+    <h5 class="card-title">
+       <i class="bi bi-person-circle"></i>
    Account Settings
      </h5>
-         <button type="button" class="btn btn-outline-primary btn-sm" id="editProfileBtn" onclick="toggleEditMode()">
-       <i class="bi bi-pencil-square me-1"></i>
-      <span id="editBtnText">Edit Profile</span>
-                </button>
+   <button type="button" class="btn btn-outline-primary btn-sm" id="editProfileBtn" onclick="toggleEditMode()">
+     <i class="bi bi-pencil-square me-1"></i>
+  <span id="editBtnText">Edit Profile</span>
+       </button>
    </div>
 
-     <!-- Display Mode -->
-            <div id="displayMode">
-          <div class="row g-3">
-       <div class="col-md-6">
-    <label class="form-label text-muted">Full Name</label>
-         <div class="display-value">@parent.User.FullName</div>
-             </div>
+  <!-- Display Mode -->
+  <div id="displayMode">
+<div class="row g-3">
    <div class="col-md-6">
-        <label class="form-label text-muted">Email Address</label>
-            <div class="display-value">@parent.User.Email</div>
+    <label class="form-label text-muted">Full Name</label>
+   <div class="display-value">@parent.User.FullName</div>
+        </div>
+   <div class="col-md-6">
+   <label class="form-label text-muted">Email Address</label>
+  <div class="display-value">@parent.User.Email</div>
      </div>
-     <div class="col-md-6">
-          <label class="form-label text-muted">Phone Number</label>
-         <div class="display-value">@(parent.PhoneNumber ?? parent.User.PhoneNumber ?? "Not provided")</div>
+ <div class="col-md-6">
+    <label class="form-label text-muted">Phone Number</label>
+    <div class="display-value">@(parent.User.PhoneNumber ?? "Not provided")</div>
      </div>
   <div class="col-md-6">
      <label class="form-label text-muted">Date of Birth</label>
       <div class="display-value">
  @if (parent.User.DateOfBirth.HasValue)
-          {
-               @parent.User.DateOfBirth.Value.ToString("MMMM dd, yyyy")
+  {
+ @parent.User.DateOfBirth.Value.ToString("MMMM dd, yyyy")
 }
-     else
+  else
         {
      <span class="text-muted">Not set</span>
-               }
-            </div>
-        </div>
-                    <div class="col-md-6">
+     }
+      </div>
+     </div>
+           <div class="col-md-6">
       <label class="form-label text-muted">Gender</label>
-      <div class="display-value">@(parent.User.Gender ?? "Not specified")</div>
+   <div class="display-value">@(parent.User.Gender ?? "Not specified")</div>
       </div>
      <div class="col-12">
-              <label class="form-label text-muted">Address</label>
+     <label class="form-label text-muted">Address</label>
        <div class="display-value">@(parent.Address ?? "Not provided")</div>
-    </div>
-         </div>
+  </div>
+      </div>
    </div>
 
        <!-- Edit Mode -->
-     <form method="post" asp-action="UpdateProfile" asp-controller="Parent" id="editMode" style="display: none;">
+     <form method="post" asp-action="UpdateProfile" asp-controller="Parent" id="editMode" style="display: none;" enctype="multipart/form-data">
    @Html.AntiForgeryToken()
-            <div class="row g-3">
-         <div class="col-md-6">
-         <label class="form-label">Full Name</label>
+   <div class="row g-3">
+     <div class="col-md-6">
+<label class="form-label">Full Name</label>
    <input type="text" class="form-control" name="fullName" value="@parent.User.FullName" required>
            </div>
     <div class="col-md-6">
 <label class="form-label">Email Address</label>
      <div class="input-group">
-        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-    <input type="email" class="form-control" name="email" value="@parent.User.Email" required readonly>
+     <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+ <input type="email" class="form-control" name="email" value="@parent.User.Email" required readonly>
  </div>
        <small class="text-muted">Email cannot be changed</small>
-        </div>
-        <div class="col-md-6">
-         <label class="form-label">Phone Number</label>
-          <div class="input-group">
-    <span class="input-group-text"><i class="bi bi-phone"></i></span>
-            <input type="tel" class="form-control" name="phoneNumber" value="@(parent.PhoneNumber ?? parent.User.PhoneNumber)" placeholder="Enter phone number">
-           </div>
      </div>
         <div class="col-md-6">
+<label class="form-label">Phone Number</label>
+   <div class="input-group">
+    <span class="input-group-text"><i class="bi bi-phone"></i></span>
+            <input type="tel" class="form-control" name="phoneNumber" value="@(parent.User.PhoneNumber)" placeholder="Enter phone number">
+      </div>
+     </div>
+      <div class="col-md-6">
     <label class="form-label">Date of Birth</label>
         <input type="date" class="form-control" name="dateOfBirth" 
-      value="@(parent.User.DateOfBirth?.ToString("yyyy-MM-dd"))">
-         </div>
-       <div class="col-md-6">
-          <label class="form-label">Gender</label>
-            <select class="form-select" name="gender">
+    value="@(parent.User.DateOfBirth?.ToString("yyyy-MM-dd"))">
+   </div>
+<div class="col-md-6">
+  <label class="form-label">Gender</label>
+  <select class="form-select" name="gender">
      <option value="">Select Gender</option>
    <option value="Male" selected="@(parent.User.Gender == "Male")">Male</option>
    <option value="Female" selected="@(parent.User.Gender == "Female")">Female</option>
     <option value="Other" selected="@(parent.User.Gender == "Other")">Other</option>
         </select>
-        </div>
+     </div>
     <div class="col-12">
-        <label class="form-label">Address</label>
-         <textarea class="form-control" name="address" rows="2" placeholder="Enter your address">@(parent.Address)</textarea>
-        </div>
+      <label class="form-label">Address</label>
+<textarea class="form-control" name="address" rows="2" placeholder="Enter your address">@(parent.Address)</textarea>
+   </div>
     <div class="col-12 mb-0">
    <button type="submit" class="btn btn-primary">
-       <i class="bi bi-check-circle me-2"></i>Save Changes
-                 </button>
+   <i class="bi bi-check-circle me-2"></i>Save Changes
+     </button>
       <button type="button" class="btn btn-outline-secondary" onclick="cancelEdit()">
        <i class="bi bi-x-circle me-2"></i>Cancel
-              </button>
+     </button>
     </div>
   </div>
        </form>
 </div>
-
-        <!-- Change Password -->
-        <div class="dashboard-card">
-      <div class="card-header-custom">
- <h5 class="card-title">
-         <i class="bi bi-shield-lock"></i>
-    Change Password
-                </h5>
-     </div>
-
-         <form method="post" asp-action="ChangePassword" asp-controller="Parent">
-   @Html.AntiForgeryToken()
-  <div class="password-field-group mb-3">
-               <label class="form-label fw-semibold">Current Password</label>
-        <div class="password-input-wrapper">
-        <i class="bi bi-lock-fill password-icon"></i>
-     <input type="password" name="currentPassword" id="currentPassword" class="form-control password-input" placeholder="Enter current password" required>
-  <button type="button" class="password-toggle-btn" onclick="togglePassword('currentPassword')">
-        <i class="bi bi-eye" id="currentPassword-icon"></i>
- </button>
-        </div>
-  </div>
-    
-      <div class="password-field-group mb-3">
-      <label class="form-label fw-semibold">New Password</label>
-  <div class="password-input-wrapper">
-    <i class="bi bi-lock-fill password-icon"></i>
-      <input type="password" name="newPassword" id="newPassword" class="form-control password-input" placeholder="Enter new password" required>
-            <button type="button" class="password-toggle-btn" onclick="togglePassword('newPassword')">
-        <i class="bi bi-eye" id="newPassword-icon"></i>
-            </button>
-    </div>
-      <small class="form-text text-muted d-block mt-1">
-  <i class="bi bi-info-circle me-1"></i>Password must be at least 8 characters long
-  </small>
     </div>
 
-        <div class="password-field-group mb-3">
- <label class="form-label fw-semibold">Confirm New Password</label>
-    <div class="password-input-wrapper">
-    <i class="bi bi-lock-fill password-icon"></i>
-       <input type="password" name="confirmPassword" id="confirmPassword" class="form-control password-input" placeholder="Confirm new password" required>
-            <button type="button" class="password-toggle-btn" onclick="togglePassword('confirmPassword')">
-         <i class="bi bi-eye" id="confirmPassword-icon"></i>
-            </button>
-     </div>
-</div>
-    
-       <button type="submit" class="btn btn-update-password">
-         <i class="bi bi-key-fill me-2"></i>Update Password
-    </button>
-         </form>
-  </div>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="col-lg-4">
-     <!-- Profile Summary -->
-        <div class="dashboard-card">
-       <div class="text-center mb-3">
-   <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;">
+    <!-- Profile Picture Sidebar -->
+    <div class="col-lg-4 d-flex">
+     <!-- Profile Picture -->
+<div class="dashboard-card flex-fill">
+   <div class="card-header-custom d-flex justify-content-between align-items-center">
+             <h5 class="card-title mb-0">
+  <i class="bi bi-person-circle"></i>
+   Profile Picture
+ </h5>
+ </div>
+ 
+     <div class="text-center mb-3 mt-3">
+    @{
+  var profilePictureUrl = parent.User?.ProfilePicture;
+  var hasCustomPicture = !string.IsNullOrEmpty(profilePictureUrl) && 
+  !profilePictureUrl.StartsWith("/images/");
+        }
+   
+        @if (hasCustomPicture)
+       {
+     <img id="profilePicturePreview" 
+ src="@profilePictureUrl" 
+  alt="@parent.User.FullName" 
+    class="img-thumbnail rounded-circle mb-3" 
+ style="width: 150px; height: 150px; object-fit: cover; cursor: pointer;"
+        onclick="document.getElementById('profilePictureFile').click()">
+       }
+      else
+     {
+<div id="profilePicturePreview" 
+   class="user-avatar mx-auto mb-3" 
+    style="width: 150px; height: 150px; font-size: 4rem; background: #ffc107; cursor: pointer;"
+      onclick="document.getElementById('profilePictureFile').click()">
  <i class="bi bi-person-fill"></i>
-           </div>
-     <h5 class="mb-1">@parent.User.FullName</h5>
- <p class="text-muted mb-0">Parent/Guardian</p>
-          </div>
-            <div class="list-group list-group-flush">
-     <div class="list-group-item px-0">
-        <small class="text-muted d-block">Parent ID</small>
-    <strong>@parent.ParentId</strong>
+       </div>
+       }
+      
+<input type="file" 
+  id="profilePictureFile"
+ accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+         style="display: none;">
+     
+       <div class="d-grid gap-2 mt-3 px-3">
+     <button type="button" class="btn btn-primary" onclick="document.getElementById('profilePictureFile').click()">
+    <i class="bi bi-upload"></i> Choose Photo
+     </button>
+    <button type="button" id="btnWebcam" class="btn btn-outline-primary">
+       <i class="bi bi-camera-fill"></i> Take Photo
+  </button>
+     @if (hasCustomPicture)
+{
+     <button type="button" id="deleteProfilePictureBtn" class="btn btn-outline-danger">
+       <i class="bi bi-trash"></i> Remove Photo
+     </button>
+       }
+  </div>
+   
+ <div id="uploadProgress" class="mt-3" style="display: none;">
+   <div class="progress">
+  <div class="progress-bar progress-bar-striped progress-bar-animated" 
+      role="progressbar" 
+ style="width: 100%">Uploading...</div>
+   </div>
+ </div>
+       
+ <div id="uploadMessage" class="mt-3"></div>
+  
+     <small class="text-muted d-block mt-3">
+          <i class="bi bi-info-circle"></i> Max size: 5 MB<br>
+   Formats: JPG, PNG, GIF, WEBP
+     </small>
       </div>
-           <div class="list-group-item px-0">
+     
+  <hr>
+  
+      <div class="text-center mb-3">
+ <h5 class="mb-1">@parent.User.FullName</h5>
+      <p class="text-muted mb-0">Parent/Guardian</p>
+     </div>
+     <div class="list-group list-group-flush">
+ <div class="list-group-item px-0">
          <small class="text-muted d-block">Member Since</small>
-       <strong>@parent.User.CreatedDate.ToString("MMMM dd, yyyy")</strong>
-                </div>
-       <div class="list-group-item px-0">
-            <small class="text-muted d-block">Account Status</small>
-                    <span class="badge bg-@(parent.User.IsActive ? "success" : "secondary")">
+     <strong>@parent.User.CreatedDate.ToString("MMMM dd, yyyy")</strong>
+        </div>
+     <div class="list-group-item px-0">
+       <small class="text-muted d-block">Account Status</small>
+          <span class="badge bg-@(parent.User.IsActive ? "success" : "secondary")">
    @(parent.User.IsActive ? "Active" : "Inactive")
-           </span>
-        </div>
-        <div class="list-group-item px-0">
+</span>
+   </div>
+     <div class="list-group-item px-0">
      <small class="text-muted d-block">Children Linked</small>
-          <strong>@(parent.Students?.Count ?? 0)</strong>
-         </div>
-            </div>
-        </div>
+       <strong>@(parent.Students?.Count ?? 0)</strong>
+  </div>
+       </div>
+   </div>
     </div>
 </div>
 
 @section Scripts {
+    <!-- Cropper.js CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+    <!-- Webcam Capture Script -->
+  <script src="~/js/webcam-capture.js"></script>
+    
+    <!-- Image Cropper Script -->
+    <script src="~/js/cropper.js"></script>
+
     <script>
-        function toggleEditMode() {
-const displayMode = document.getElementById('displayMode');
-            const editMode = document.getElementById('editMode');
-    const editBtn = document.getElementById('editProfileBtn');
-    const editBtnText = document.getElementById('editBtnText');
-      
-            if (displayMode.style.display === 'none') {
-    // Switch to display mode
-          displayMode.style.display = 'block';
-      editMode.style.display = 'none';
-         editBtn.className = 'btn btn-outline-primary btn-sm';
-       editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i><span id="editBtnText">Edit Profile</span>';
-   } else {
-   // Switch to edit mode
-        displayMode.style.display = 'none';
-      editMode.style.display = 'block';
-       editBtn.className = 'btn btn-outline-secondary btn-sm';
-                editBtn.innerHTML = '<i class="bi bi-eye me-1"></i><span id="editBtnText">View Mode</span>';
-            }
-        }
+        const userId = '@parent.User.UserId';
 
-        function cancelEdit() {
- toggleEditMode();
-        }
+        // ==================== INITIALIZE CROPPER ====================
+        ImageCropper.init(function(croppedFile) {
+ console.log('Cropped file ready:', croppedFile.name, croppedFile.size);
+     // Upload the cropped image
+            uploadProfilePicture(croppedFile);
+      });
 
-        // Password visibility toggle function
-        function togglePassword(inputId) {
-         const input = document.getElementById(inputId);
-       const icon = document.getElementById(inputId + '-icon');
-   
- if (input.type === 'password') {
-  input.type = 'text';
-      icon.classList.remove('bi-eye');
-     icon.classList.add('bi-eye-slash');
-    } else {
-  input.type = 'password';
-     icon.classList.remove('bi-eye-slash');
-       icon.classList.add('bi-eye');
-         }
+        // ==================== WEBCAM FUNCTIONALITY ====================
+        (function() {
+            // Initialize webcam capture with cropper integration
+        WebcamCapture.init('profilePicturePreview', 'profilePictureFile', function(file) {
+              console.log('Photo captured from webcam:', file.name);
+         // Open cropper modal with webcam photo
+     ImageCropper.openModal(file);
+            });
+
+            // Webcam button click handler
+            const webcamBtn = document.getElementById('btnWebcam');
+         if (webcamBtn) {
+    webcamBtn.addEventListener('click', function() {
+    WebcamCapture.openModal();
+        });
+      }
+        })();
+
+ // ==================== PROFILE PICTURE UPLOAD WITH CROPPER ====================
+        (function() {
+  const fileInput = document.getElementById('profilePictureFile');
+
+          // File selection handler - OPEN CROPPER
+if (fileInput) {
+   fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+     if (!file) return;
+
+          console.log('File selected:', file.name, file.type, file.size);
+
+      // Validate file type
+              const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+          showMessage('Invalid file type. Please upload JPG, PNG, GIF, or WEBP image.', 'danger');
+               fileInput.value = '';
+     return;
   }
 
-   // Auto-dismiss alerts after 5 seconds
-        window.addEventListener('DOMContentLoaded', (event) => {
-   setTimeout(function() {
-const alerts = document.querySelectorAll('.alert');
-       alerts.forEach(alert => {
-        const bsAlert = new bootstrap.Alert(alert);
-        bsAlert.close();
-});
+        // Validate file size (5 MB)
+         if (file.size > 5 * 1024 * 1024) {
+   showMessage('File size must not exceed 5 MB.', 'danger');
+          fileInput.value = '';
+        return;
+           }
+
+           // Open cropper modal
+         ImageCropper.openModal(file);
+  });
+            }
+
+// Delete profile picture
+          const deleteBtn = document.getElementById('deleteProfilePictureBtn');
+        if (deleteBtn) {
+                deleteBtn.addEventListener('click', deleteProfilePicture);
+         }
+        })();
+
+        // ==================== UPLOAD FUNCTIONS ====================
+ // Upload profile picture function
+        async function uploadProfilePicture(file) {
+      const progressDiv = document.getElementById('uploadProgress');
+            const messageDiv = document.getElementById('uploadMessage');
+        
+            progressDiv.style.display = 'block';
+        messageDiv.innerHTML = '';
+
+       try {
+      const formData = new FormData();
+                formData.append('file', file);
+           formData.append('userId', userId);
+
+             const response = await fetch('@Url.Action("UploadProfilePicture", "Parent")', {
+       method: 'POST',
+      body: formData
+         });
+
+     const result = await response.json();
+
+     progressDiv.style.display = 'none';
+
+  if (result.success) {
+        showMessage(result.message, 'success');
+           
+         // Update preview with new image
+     const currentPreview = document.getElementById('profilePicturePreview');
+              if (currentPreview) {
+             currentPreview.outerHTML = `<img id="profilePicturePreview" 
+      src="${result.url}?t=${Date.now()}" 
+   alt="Profile Picture" 
+    class="img-thumbnail rounded-circle mb-3" 
+     style="width: 150px; height: 150px; object-fit: cover; cursor: pointer;"
+         onclick="document.getElementById('profilePictureFile').click()">`;
+        }
+             
+    // Reload page after 2 seconds to show delete button
+setTimeout(() => {
+            window.location.reload();
+                    }, 2000);
+    } else {
+      showMessage('Upload failed: ' + result.message, 'danger');
+}
+            } catch (error) {
+   progressDiv.style.display = 'none';
+ showMessage('Upload failed: ' + error.message, 'danger');
+      }
+        }
+
+   // Delete profile picture function
+  async function deleteProfilePicture() {
+            if (!confirm('Are you sure you want to remove your profile picture?')) {
+                return;
+            }
+
+ try {
+  const response = await fetch('@Url.Action("DeleteProfilePicture", "Parent")', {
+        method: 'POST',
+headers: {
+         'Content-Type': 'application/json',
+          },
+  body: JSON.stringify({ userId: userId })
+      });
+
+ const result = await response.json();
+
+       if (result.success) {
+        showMessage(result.message, 'success');
+           setTimeout(() => {
+      window.location.reload();
+         }, 1500);
+      } else {
+               showMessage('Error: ' + result.message, 'danger');
+}
+            } catch (error) {
+        showMessage('Delete failed: ' + error.message, 'danger');
+    }
+        }
+
+  // Show message function
+      function showMessage(message, type) {
+         const messageDiv = document.getElementById('uploadMessage');
+            messageDiv.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show">
+           ${message}
+           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+         </div>`;
+        }
+
+    // ==================== PROFILE EDIT FUNCTIONS ====================
+     function toggleEditMode() {
+    const displayMode = document.getElementById('displayMode');
+ const editMode = document.getElementById('editMode');
+            const editBtn = document.getElementById('editProfileBtn');
+ 
+       if (displayMode.style.display === 'none') {
+      // Switch to display mode
+       displayMode.style.display = 'block';
+                editMode.style.display = 'none';
+    editBtn.className = 'btn btn-outline-primary btn-sm';
+editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i><span id="editBtnText">Edit Profile</span>';
+     } else {
+                // Switch to edit mode
+          displayMode.style.display = 'none';
+             editMode.style.display = 'block';
+   editBtn.className = 'btn btn-outline-secondary btn-sm';
+      editBtn.innerHTML = '<i class="bi bi-eye me-1"></i><span id="editBtnText">View Mode</span>';
+   }
+        }
+
+ function cancelEdit() {
+            toggleEditMode();
+        }
+
+        // Auto-dismiss alerts after 5 seconds
+    window.addEventListener('DOMContentLoaded', (event) => {
+      setTimeout(function() {
+    const alerts = document.querySelectorAll('.alert');
+  alerts.forEach(alert => {
+            const bsAlert = new bootstrap.Alert(alert);
+ bsAlert.close();
+                });
             }, 5000);
-});
+        });
     </script>
 }

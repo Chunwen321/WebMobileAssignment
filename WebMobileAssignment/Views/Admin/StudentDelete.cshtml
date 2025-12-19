@@ -69,10 +69,6 @@
                     <div class="col-md-6">
                         <h6 class="text-uppercase text-muted small fw-bold mb-3">Academic Information</h6>
                         <div class="mb-2">
-                            <label class="small text-muted d-block">Current Class</label>
-                            <span>@(string.IsNullOrEmpty(Model.ClassId) ? "Not assigned" : Model.ClassId)</span>
-                        </div>
-                        <div class="mb-2">
                             <label class="small text-muted d-block">Parent</label>
                             <span>@(Model.Parent?.User.FullName ?? "No parent assigned")</span>
                         </div>

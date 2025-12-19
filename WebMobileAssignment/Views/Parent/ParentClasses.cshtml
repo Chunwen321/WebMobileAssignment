@@ -1,6 +1,10 @@
 @{
     ViewBag.Title = "My Children's Classes";
-    ViewBag.ActiveMenu = "Classes";
+ViewBag.ActiveMenu = "Classes";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/parent-classes.css" />
 }
 
 @{
@@ -8,191 +12,220 @@
 }
 
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-        <h1 class="mb-2">My Children's Classes</h1>
-            <p class="text-muted">Monitor your children's enrolled classes and performance</p>
-        </div>
-    </div>
-
     @if (students.Any())
-  {
-        @foreach (var student in students)
     {
-     var enrollments = student.Enrollments.ToList();
-      
-  @if (enrollments.Any())
-   {
-<div class="row mb-5">
-   <div class="col-12">
- <h4 class="mb-3">
-      <i class="bi bi-person-circle"></i> @student.User.FullName
-    </h4>
-       </div>
-
-         @foreach (var enrollment in enrollments)
-     {
-   var classItem = enrollment.Class;
-       var teacher = classItem.Teacher;
-         var subject = classItem.Subject;
-         
-// Calculate attendance statistics for this class
-           var classAttendances = student.Attendances.Where(a => a.ClassId == classItem.ClassId).ToList();
-       var totalAttendance = classAttendances.Count;
-var presentCount = classAttendances.Count(a => a.Status == "Present");
-     var absentCount = classAttendances.Count(a => a.Status == "Absent");
-   var lateCount = classAttendances.Count(a => a.Status == "Late");
-         var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 0) : 0;
-      
-// Determine class status badge
-        var statusBadge = attendanceRate >= 80 ? "success" : (attendanceRate >= 70 ? "warning" : "danger");
-   var statusText = attendanceRate >= 80 ? "Good Standing" : (attendanceRate >= 70 ? "Needs Improvement" : "At Risk");
-    
-          // Random gradient colors for visual variety
-           var gradients = new[] {
-            "linear-gradient(135deg, #0d6efd 0%, #0d5ee8 100%)",
-            "linear-gradient(135deg, #198754 0%, #157347 100%)",
-         "linear-gradient(135deg, #ffc107 0%, #e0a800 100%)",
-    "linear-gradient(135deg, #17a2b8 0%, #138496 100%)",
-       "linear-gradient(135deg, #dc3545 0%, #c82333 100%)"
-          };
-          var gradientIndex = Math.Abs((classItem.ClassId ?? "").GetHashCode()) % gradients.Length;
-  var gradient = gradients[gradientIndex];
+@foreach (var student in students)
+        {
+         var enrollments = student.Enrollments.ToList();
    
-    <div class="col-lg-4 col-md-6 mb-4">
-       <div class="dashboard-card">
-    <div class="class-header" style="background: @gradient;">
-         <h5 class="mb-0 text-white">@classItem.ClassName</h5>
-</div>
-     <div class="card-body">
-      <div class="class-details">
-   <div class="detail-row">
-          <span class="label">Instructor:</span>
-  <span class="value">@(teacher?.User?.FullName ?? "Not Assigned")</span>
- </div>
-   <div class="detail-row">
-          <span class="label">Subject:</span>
-  <span class="value">@(subject?.SubjectName ?? "N/A")</span>
- </div>
-  <div class="detail-row">
-          <span class="label">Attendance Rate:</span>
-  <span class="value text-@(attendanceRate >= 80 ? "success" : attendanceRate >= 70 ? "warning" : "danger")">
-      @attendanceRate%
-    </span>
- </div>
-  <div class="detail-row">
-          <span class="label">Total Classes:</span>
-  <span class="value">@totalAttendance</span>
- </div>
-   <div class="detail-row">
-  <span class="label">Present:</span>
-  <span class="value text-success">@presentCount</span>
- </div>
-  <div class="detail-row">
-  <span class="label">Absent:</span>
-  <span class="value text-danger">@absentCount</span>
- </div>
- <div class="detail-row">
-  <span class="label">Late:</span>
-  <span class="value text-warning">@lateCount</span>
- </div>
-       </div>
-    <a href="@Url.Action("ParentClassDetail", "Parent", new { classId = classItem.ClassId, studentId = student.StudentId })" 
-          class="btn btn-@statusBadge btn-sm mt-3 w-100">
-         @(attendanceRate >= 80 ? "View Details" : "View Details & Improve")
-  </a>
-      </div>
-       </div>
-    </div>
-     }
+            @if (enrollments.Any())
+        {
+      <!-- Student Section Header -->
+     <div class="row mb-4">
+    <div class="col-12">
+             <div class="student-section-header">
+        <div class="student-avatar-circle">
+     @if (!string.IsNullOrEmpty(student.User.ProfilePicture) && student.User.ProfilePicture != "/images/default-avatar.png")
+     {
+   <img src="@student.User.ProfilePicture" alt="@student.User.FullName">
+         }
+  else
+      {
+    <i class="bi bi-person-fill"></i>
+        }
         </div>
+           <div class="student-info">
+       <h4 class="student-name">@student.User.FullName</h4>
+ <div class="student-meta">
+   <span class="badge badge-soft-primary">
+  <i class="bi bi-book me-1"></i>
+       @enrollments.Count @(enrollments.Count == 1 ? "Class" : "Classes")
+          </span>
+       <span class="badge badge-soft-@(student.User.IsActive ? "success" : "secondary") ms-2">
+       <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>
+    @(student.User.IsActive ? "Active" : "Inactive")
+     </span>
+                    </div>
+        </div>
+       </div>
+</div>
+    </div>
+
+   <!-- Classes Grid -->
+<div class="row g-4 mb-5">
+      @foreach (var enrollment in enrollments)
+         {
+ var classItem = enrollment.Class;
+            var teacher = classItem.Teacher;
+                var subject = classItem.Subject;
+     
+       // Calculate attendance statistics
+           var classAttendances = student.Attendances.Where(a => a.ClassId == classItem.ClassId).ToList();
+     var totalAttendance = classAttendances.Count;
+            var presentCount = classAttendances.Count(a => a.Status == "Present");
+       var absentCount = classAttendances.Count(a => a.Status == "Absent");
+         var leaveCount = classAttendances.Count(a => a.Status == "Leave");
+ var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 0) : 0;
+       
+   // Determine status
+           var statusClass = attendanceRate >= 80 ? "success" : (attendanceRate >= 70 ? "warning" : "danger");
+     var statusText = attendanceRate >= 80 ? "Excellent" : (attendanceRate >= 70 ? "Good" : "Needs Attention");
+              var statusIcon = attendanceRate >= 80 ? "emoji-smile" : (attendanceRate >= 70 ? "emoji-neutral" : "emoji-frown");
+        
+            // Gradient colors for class cards - diverse palette without red
+    var gradients = new[] {
+  new { bg = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", shadow = "rgba(102, 126, 234, 0.4)" },      // Purple
+          new { bg = "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", shadow = "rgba(240, 147, 251, 0.4)" },  // Pink-Coral
+        new { bg = "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", shadow = "rgba(79, 172, 254, 0.4)" },      // Blue-Cyan
+          new { bg = "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", shadow = "rgba(67, 233, 123, 0.4)" },      // Green-Teal
+      new { bg = "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", shadow = "rgba(250, 112, 154, 0.4)" },  // Pink-Yellow
+   new { bg = "linear-gradient(135deg, #30cfd0 0%, #330867 100%)", shadow = "rgba(48, 207, 208, 0.4)" },      // Teal-Purple
+         new { bg = "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)", shadow = "rgba(168, 237, 234, 0.4)" },  // Mint-Pink
+     new { bg = "linear-gradient(135deg, #ff9a56 0%, #ffa726 100%)", shadow = "rgba(255, 154, 86, 0.4)" },      // Orange-Amber
+  new { bg = "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)", shadow = "rgba(106, 17, 203, 0.4)" },      // Deep Purple-Blue
+           new { bg = "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)", shadow = "rgba(248, 87, 166, 0.4)" },    // Pink-Coral
+     new { bg = "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)", shadow = "rgba(0, 198, 255, 0.4)" },  // Sky Blue
+      new { bg = "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)", shadow = "rgba(247, 151, 30, 0.4)" },      // Orange-Gold
+  new { bg = "linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)", shadow = "rgba(86, 171, 47, 0.4)" },       // Green-Lime
+        new { bg = "linear-gradient(135deg, #b06ab3 0%, #4568dc 100%)", shadow = "rgba(176, 106, 179, 0.4)" },     // Lavender-Blue
+    new { bg = "linear-gradient(135deg, #f12711 0%, #f5af19 100%)", shadow = "rgba(241, 39, 17, 0.4)" },   // Sunset Orange
+        new { bg = "linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)", shadow = "rgba(196, 113, 245, 0.4)" },     // Purple-Pink
+ new { bg = "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)", shadow = "rgba(17, 153, 142, 0.4)" },      // Teal-Mint
+     new { bg = "linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%)", shadow = "rgba(252, 74, 26, 0.4)" },    // Fire Orange
+        new { bg = "linear-gradient(135deg, #4776e6 0%, #8e54e9 100%)", shadow = "rgba(71, 118, 230, 0.4)" },      // Blue-Violet
+        new { bg = "linear-gradient(135deg, #eea2a2 0%, #bbc1bf 100%)", shadow = "rgba(238, 162, 162, 0.4)" }      // Rose-Gray
+      };
+     var gradientIndex = Math.Abs((classItem.ClassId ?? "").GetHashCode()) % gradients.Length;
+           var gradient = gradients[gradientIndex];
+      
+ <div class="col-xl-4 col-lg-6 col-md-6">
+     <div class="class-card-modern" data-aos="fade-up">
+              <!-- Card Header with Gradient -->
+   <div class="class-card-header" style="background: @gradient.bg;">
+  <div class="class-icon-badge">
+   <i class="bi bi-book-fill"></i>
+   </div>
+        <h5 class="class-title">@classItem.ClassName</h5>
+    </div>
+
+ <!-- Card Body -->
+   <div class="class-card-body">
+         <!-- Teacher Info -->
+    <div class="info-row teacher-info">
+      <div class="info-icon">
+                <i class="bi bi-person-badge"></i>
+     </div>
+        <div class="info-content">
+ <span class="info-label">Instructor</span>
+          <span class="info-value">@(teacher?.User?.FullName ?? "Not Assigned")</span>
+  </div>
+      </div>
+
+     <!-- Stats Grid -->
+   <div class="stats-grid">
+  <div class="stat-item stat-total">
+     <div class="stat-icon">
+   <i class="bi bi-calendar-check"></i>
+      </div>
+  <div class="stat-info">
+      <div class="stat-value">@totalAttendance</div>
+   <div class="stat-label">Total</div>
+     </div>
+    </div>
+     <div class="stat-item stat-present">
+       <div class="stat-icon">
+      <i class="bi bi-check-circle-fill"></i>
+     </div>
+     <div class="stat-info">
+     <div class="stat-value">@presentCount</div>
+      <div class="stat-label">Present</div>
+ </div>
+           </div>
+         <div class="stat-item stat-absent">
+       <div class="stat-icon">
+        <i class="bi bi-x-circle-fill"></i>
+</div>
+          <div class="stat-info">
+   <div class="stat-value">@absentCount</div>
+          <div class="stat-label">Absent</div>
+         </div>
+         </div>
+ <div class="stat-item stat-leave">
+          <div class="stat-icon">
+  <i class="bi bi-clock-fill"></i>
+  </div>
+  <div class="stat-info">
+          <div class="stat-value">@leaveCount</div>
+    <div class="stat-label">Leave</div>
+  </div>
+  </div>
+     </div>
+
+   <!-- Action Button -->
+     <a href="@Url.Action("ParentClassDetail", "Parent", new { classId = classItem.ClassId, studentId = student.StudentId })" 
+       class="btn-view-details btn-@statusClass">
+          <i class="bi bi-arrow-right-circle me-2"></i>
+      View Details
+ <i class="bi bi-arrow-right ms-2"></i>
+    </a>
+ </div>
+       </div>
+     </div>
+    }
+          </div>
             }
         else
- {
-    <div class="row mb-5">
-         <div class="col-12">
-  <h4 class="mb-3">
-     <i class="bi bi-person-circle"></i> @student.User.FullName
-  </h4>
-  <div class="alert alert-info">
-    <i class="bi bi-info-circle me-2"></i>No classes enrolled yet.
+        {
+       <!-- No Classes State -->
+                <div class="row mb-5">
+        <div class="col-12">
+         <div class="student-section-header mb-3">
+       <div class="student-avatar-circle">
+   @if (!string.IsNullOrEmpty(student.User.ProfilePicture) && student.User.ProfilePicture != "/images/default-avatar.png")
+     {
+         <img src="@student.User.ProfilePicture" alt="@student.User.FullName">
+            }
+   else
+     {
+           <i class="bi bi-person-fill"></i>
+      }
+            </div>
+          <div class="student-info">
+ <h4 class="student-name">@student.User.FullName</h4>
+   <span class="badge badge-soft-secondary">
+    <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>
+            No Classes
+       </span>
+     </div>
   </div>
-</div>
- </div>
- }
+         <div class="empty-state-card">
+       <div class="empty-state-icon">
+        <i class="bi bi-inbox"></i>
+     </div>
+           <h5>No Classes Enrolled</h5>
+        <p class="text-muted">This student is not currently enrolled in any classes.</p>
+      </div>
+    </div>
+    </div>
+}
         }
     }
     else
     {
-        <div class="row">
+ <!-- No Children State -->
+   <div class="row">
     <div class="col-12">
-    <div class="alert alert-info text-center">
-      <i class="bi bi-info-circle me-2"></i>
-  <strong>No children found.</strong>
-              <p class="mb-0 mt-2">Please contact the administrator to link your children to your account.</p>
+    <div class="empty-state-card large">
+    <div class="empty-state-icon">
+    <i class="bi bi-people"></i>
+     </div>
+          <h4>No Children Found</h4>
+     <p class="text-muted mb-3">Please contact the administrator to link your children to your account.</p>
+     <a href="#" class="btn btn-primary btn-lg">
+         <i class="bi bi-envelope me-2"></i>Contact Support
+     </a>
+ </div>
+ </div>
       </div>
-            </div>
-        </div>
-    }
-</div>
-
-<style>
-    .class-header {
-  padding: 15px;
-    }
-
-    .class-details {
-    display: flex;
-   flex-direction: column;
-     gap: 8px;
-    }
-
-  .detail-row {
-     display: flex;
-        justify-content: space-between;
-     font-size: 0.9rem;
-        padding: 5px 0;
  }
-
-  .detail-row .label {
-      font-weight: 600;
-      color: #666;
-    }
-
-    .detail-row .value {
- text-align: right;
-    }
-
-.performance-section h6 {
-        font-weight: 700;
-      color: #333;
-  font-size: 0.95rem;
-    }
-    
-    .class-meta-inline {
-        display: flex;
-        gap: 8px;
-   align-items: center;
-    }
-    
-.class-meta-inline .badge {
-      font-size: 0.75rem;
-        padding: 0.35em 0.65em;
-    font-weight: 600;
-    }
-
-    .perf-row {
-   display: flex;
- justify-content: space-between;
-   font-size: 0.9rem;
-        padding: 5px 0;
-  }
-
-    .perf-row span:first-child {
-        color: #666;
-    }
-
-    .perf-row strong {
-   font-weight: 700;
-    }
-</style>
+</div>

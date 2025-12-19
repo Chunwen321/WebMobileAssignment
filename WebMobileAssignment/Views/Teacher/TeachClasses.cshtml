@@ -21,7 +21,8 @@
                     @foreach (var cls in (List<Class>)ViewBag.Classes)
                     {
                         var studentCount = cls.Enrollments?.Count ?? 0;
-                        var sessionCount = cls.Attendances?.Count ?? 0;
+                        var sessionCounts = ViewBag.SessionCounts as Dictionary<string, int> ?? new Dictionary<string, int>();
+                        var sessionCount = sessionCounts.ContainsKey(cls.ClassId) ? sessionCounts[cls.ClassId] : 0;
                         var avgAttendance = sessionCount > 0 
                             ? Math.Round((decimal)(cls.Attendances.Count(a => a.Status == "Present") * 100) / sessionCount, 0)
                             : 0;

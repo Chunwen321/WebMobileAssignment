@@ -19,6 +19,7 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<AttendanceSession> AttendanceSessions { get; set; }
     public DbSet<LeaveApplication> LeaveApplications { get; set; }
+    public DbSet<ClassActiveHistory> ClassActiveHistories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,7 +64,11 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
 
         // Configure Enrollment (Many-to-Many) composite key
         modelBuilder.Entity<Enrollment>()
-            .HasKey(e => new { e.StudentId, e.ClassId });
+            .HasKey(e => e.EnrollmentId);
+
+        // Add index for querying enrollments by student and class
+        modelBuilder.Entity<Enrollment>()
+            .HasIndex(e => new { e.StudentId, e.ClassId });
 
         modelBuilder.Entity<Enrollment>()
             .HasOne(e => e.Student)
@@ -83,6 +88,13 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
             .WithMany(u => u.LeaveApplications)
             .HasForeignKey(l => l.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure ClassActiveHistory relationship
+        modelBuilder.Entity<ClassActiveHistory>()
+            .HasOne(h => h.Class)
+            .WithMany(c => c.ActiveHistories)
+            .HasForeignKey(h => h.ClassId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
 
@@ -129,6 +141,11 @@ public class User
     public string Status { get; set; } = "active"; // active / inactive / suspend / withdraw
 
     public bool IsActive { get; set; } = true;
+
+    // Login attempt tracking
+    public int FailedLoginAttempts { get; set; } = 0;
+    public DateTime? LockoutEnd { get; set; }
+    public DateTime? LastFailedLogin { get; set; }
 
     // Navigation property
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
@@ -204,12 +221,6 @@ public class Student
     [ForeignKey(nameof(ParentId))]
     public Parent? Parent { get; set; }
 
-    [MaxLength(20)]
-    public string? ClassId { get; set; }
-
-    [ForeignKey(nameof(ClassId))]
-    public Class? Class { get; set; }
-
     public DateTime? DateOfBirth { get; set; }
 
     [MaxLength(10)]
@@ -231,9 +242,6 @@ public class Parent
 
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
-
-    [MaxLength(20)]
-    public string? PhoneNumber { get; set; }
 
     [MaxLength(200)]
     public string? Address { get; set; }
@@ -291,20 +299,28 @@ public class Class
 
     public int CurrentCapacity { get; set; }
 
+    public bool IsActive { get; set; } = true;
 
     // Navigation properties
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+    public ICollection<ClassActiveHistory> ActiveHistories { get; set; } = new List<ClassActiveHistory>();
 }
 
 public class Enrollment
 {
+    [Key]
+    [MaxLength(20)]
+    public string EnrollmentId { get; set; } = string.Empty;
+
+    [Required]
     [MaxLength(20)]
     public string StudentId { get; set; } = string.Empty;
 
     [ForeignKey(nameof(StudentId))]
     public Student Student { get; set; } = null!;
 
+    [Required]
     [MaxLength(20)]
     public string ClassId { get; set; } = string.Empty;
 
@@ -312,6 +328,12 @@ public class Enrollment
     public Class Class { get; set; } = null!;
 
     public DateTime EnrolledDate { get; set; } = DateTime.Now;
+
+    /// <summary>
+    /// The date when the student unenrolled from the class.
+    /// Null means the student is still enrolled.
+    /// </summary>
+    public DateTime? UnenrolledDate { get; set; }
 }
 
 public class Attendance
@@ -441,9 +463,6 @@ public class LeaveApplication
     // Admin remarks when approving/rejecting
     [MaxLength(1000)]
     public string? Remarks { get; set; }
-<<<<<<< Updated upstream
-=======
-}
 
 /// <summary>
 /// Tracks the activation/deactivation history of classes.
@@ -473,11 +492,9 @@ public class ClassActiveHistory
     /// Null means the class is still active.
     /// </summary>
     public DateTime? ActiveTo { get; set; }
-
-
     /// <summary>
     /// When this history record was created
     /// </summary>
     public DateTime CreatedDate { get; set; } = DateTime.Now;
->>>>>>> Stashed changes
+
 }

@@ -3,233 +3,732 @@
     Layout = "~/Views/Shared/_ParentLayout.cshtml";
 }
 
+@{
+    // Get the current student from the first student if available
+    var allStudents = ViewBag.AllStudents as List<WebMobileAssignment.Models.Student> ?? new List<WebMobileAssignment.Models.Student>();
+  var currentStudent = allStudents.FirstOrDefault(s => s.StudentId == ViewBag.CurrentStudentId?.ToString());
+}
+
 <div class="row g-3 mb-4">
     <!-- Attendance Stats -->
     <div class="col-md-3">
         <div class="stat-card" style="border-left-color: #198754;">
-            <div class="stat-label">Total Present</div>
-      <div class="stat-value">@(ViewBag.PresentCount ?? 0)</div>
-         <div class="stat-change positive">
-       <i class="bi bi-check-circle"></i>
+       <div class="stat-label">Total Present</div>
+      <div class="stat-value" id="presentCountStat">@(ViewBag.PresentCount ?? 0)</div>
+ <div class="stat-change positive">
+     <i class="bi bi-check-circle"></i>
        <span>Present days</span>
-            </div>
-        </div>
+   </div>
+</div>
     </div>
 
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: #dc3545;">
+  <div class="col-md-3">
+    <div class="stat-card" style="border-left-color: #dc3545;">
    <div class="stat-label">Total Absent</div>
-            <div class="stat-value">@(ViewBag.AbsentCount ?? 0)</div>
+     <div class="stat-value" id="absentCountStat">@(ViewBag.AbsentCount ?? 0)</div>
       <div class="stat-change negative">
   <i class="bi bi-x-circle"></i>
-       <span>Absent days</span>
+   <span>Absent days</span>
  </div>
-        </div>
+ </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: #ffc107;">
- <div class="stat-label">Total Late</div>
-  <div class="stat-value">@(ViewBag.LateCount ?? 0)</div>
-            <div class="stat-change">
-            <i class="bi bi-clock"></i>
- <span>Late arrivals</span>
+ <div class="col-md-3">
+      <div class="stat-card" style="border-left-color: #0dcaf0;">
+ <div class="stat-label">Total Leave</div>
+  <div class="stat-value" id="leaveCountStat">@(ViewBag.LeaveCount ?? 0)</div>
+     <div class="stat-change">
+ <i class="bi bi-calendar-x"></i>
+ <span>On leave</span>
  </div>
    </div>
     </div>
 
 <div class="col-md-3">
   <div class="stat-card" style="border-left-color: #0d6efd;">
-     <div class="stat-label">Attendance Rate</div>
-            <div class="stat-value">@(ViewBag.AttendanceRate ?? 0)%</div>
-       <div class="stat-change positive">
-                <i class="bi bi-graph-up"></i>
-        <span>Overall rate</span>
+  <div class="stat-label">Attendance Rate</div>
+ <div class="stat-value" id="attendanceRateStat">@(ViewBag.AttendanceRate ?? 0)%</div>
+  <div class="stat-change positive">
+       <i class="bi bi-graph-up"></i>
+ <span>Overall rate</span>
    </div>
-        </div>
+  </div>
     </div>
 </div>
 
 <div class="row g-3">
     <!-- Child Summary -->
-    <div class="col-lg-4">
-        <div class="dashboard-card">
-            <div class="card-header-custom">
-       <h3 class="card-title">
-            <i class="bi bi-person-badge-fill"></i>
-           Child Summary
-            </h3>
-            </div>
+  <div class="col-lg-4">
+<div class="dashboard-card h-100">
+ <div class="card-header-custom d-flex justify-content-between align-items-center">
+<h3 class="card-title mb-0">
+  <i class="bi bi-person-badge-fill"></i>
+ Child Summary
+ </h3>
+       @if (ViewBag.TotalChildren != null && ViewBag.TotalChildren > 1)
+     {
+      <div class="btn-group btn-group-sm" role="group">
+      @if (ViewBag.HasPrevious == true)
+   {
+     <button class="btn btn-outline-primary child-nav-btn" data-student-id="@ViewBag.PreviousStudentId" data-action="previous" title="Previous Child">
+<i class="bi bi-chevron-left"></i>
+  </button>
+    }
+  else
+{
+  <button class="btn btn-outline-secondary" disabled>
+<i class="bi bi-chevron-left"></i>
+    </button>
+ }
+     
+  @if (ViewBag.HasNext == true)
+  {
+       <button class="btn btn-outline-primary child-nav-btn" data-student-id="@ViewBag.NextStudentId" data-action="next" title="Next Child">
+     <i class="bi bi-chevron-right"></i>
+    </button>
+    }
+     else
+      {
+    <button class="btn btn-outline-secondary" disabled>
+  <i class="bi bi-chevron-right"></i>
+      </button>
+}
+     </div>
+ }
+     </div>
   <div class="text-center mb-3">
- <div class="user-avatar mx-auto" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;">
-    <i class="bi bi-person-fill"></i>
-      </div>
-      <h5 class="mt-3 mb-1">@(ViewBag.StudentName ?? "No student found")</h5>
-         <p class="text-muted mb-2">Student ID: @(ViewBag.StudentId ?? "N/A")</p>
-   </div>
-       <div class="list-group list-group-flush">
-            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-     <span class="text-muted"><i class="bi bi-book-fill me-2 text-primary"></i>Class</span>
-    <strong>@(ViewBag.ClassName ?? "Not enrolled")</strong>
+   @* Display actual profile picture or default avatar *@
+   @if (currentStudent != null && !string.IsNullOrEmpty(currentStudent.User?.ProfilePicture) && currentStudent.User.ProfilePicture != "/images/default-avatar.png")
+      {
+          <img id="studentAvatar" src="@currentStudent.User.ProfilePicture" 
+           alt="@currentStudent.User.FullName" 
+    class="mx-auto" 
+      style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #ffc107; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);">
+  }
+else
+      {
+          <div id="studentAvatar" class="user-avatar mx-auto" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;">
+      <i class="bi bi-person-fill"></i>
     </div>
-          <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-     <span class="text-muted"><i class="bi bi-calendar3 me-2 text-success"></i>Total Classes</span>
-     <strong>@(ViewBag.TotalClasses ?? 0)</strong>
+      }
+  <h5 class="mt-3 mb-1" id="studentName" style="color: var(--text-primary);">@(ViewBag.StudentName ?? "No student found")</h5>
+       @if (ViewBag.TotalChildren != null && ViewBag.TotalChildren > 1)
+    {
+    <p class="text-muted small mb-2" id="childCounter">
+    Child @(ViewBag.CurrentIndex + 1) of @ViewBag.TotalChildren
+      </p>
+    }
+   </div>
+ <div class="list-group list-group-flush">
+     <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+  <span class="text-muted"><i class="bi bi-calendar3 me-2 text-success"></i>Total Classes</span>
+<strong id="totalClasses">@(ViewBag.TotalClasses ?? 0)</strong>
    </div>
   <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-        <span class="text-muted"><i class="bi bi-check-circle-fill me-2 text-success"></i>Present</span>
-       <strong>@(ViewBag.PresentCount ?? 0)</strong>
-     </div>
-       <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-       <span class="text-muted"><i class="bi bi-x-circle-fill me-2 text-danger"></i>Absent</span>
-        <strong>@(ViewBag.AbsentCount ?? 0)</strong>
+   <span class="text-muted"><i class="bi bi-check-circle-fill me-2 text-success"></i>Present</span>
+     <strong id="presentCount">@(ViewBag.PresentCount ?? 0)</strong>
+ </div>
+ <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+     <span class="text-muted"><i class="bi bi-x-circle-fill me-2 text-danger"></i>Absent</span>
+   <strong id="absentCount">@(ViewBag.AbsentCount ?? 0)</strong>
     </div>
-            </div>
-          <a asp-controller="Parent" asp-action="StudentProfile" class="btn btn-outline-primary w-100 mt-3">
-       <i class="bi bi-eye-fill me-2"></i>View Full Profile
+   <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+     <span class="text-muted"><i class="bi bi-calendar-x me-2 text-info"></i>Leave</span>
+   <strong id="leaveCount">@(ViewBag.LeaveCount ?? 0)</strong>
+    </div>
+</div>
+   <a id="viewProfileBtn" asp-controller="Parent" asp-action="StudentProfile" asp-route-studentId="@ViewBag.CurrentStudentId" class="btn btn-outline-primary w-100 mt-3">
+ <i class="bi bi-eye-fill me-2"></i>View Full Profile
     </a>
-        </div>
     </div>
+  </div>
 
     <!-- Attendance Overview Chart -->
     <div class="col-lg-8">
-        <div class="dashboard-card">
-        <div class="card-header-custom">
-     <h3 class="card-title">
+        <div class="dashboard-card h-100">
+   <div class="card-header-custom d-flex justify-content-between align-items-center">
+     <h3 class="card-title mb-0">
       <i class="bi bi-bar-chart-fill"></i>
-      Attendance Overview
-        </h3>
-         <select class="form-select form-select-sm" style="width: auto;">
-       <option selected>Last 30 Days</option>
-     <option>Last 3 Months</option>
-             <option>Last 6 Months</option>
-    </select>
-      </div>
-<!-- Chart Placeholder -->
-    <div class="text-center py-5" style="background: #f8f9fa; border-radius: 8px;">
-       <i class="bi bi-graph-up" style="font-size: 4rem; color: #ffc107;"></i>
-     <p class="text-muted mt-3 mb-0">Attendance visualization</p>
-  <small class="text-muted">Based on @(ViewBag.TotalAttendance ?? 0) total records</small>
-            </div>
-            <div class="row mt-4 text-center">
-   <div class="col-4">
-<div class="p-3" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
-<h4 class="mb-0" style="color: #198754;">
-     @{
-    var presentRate = ViewBag.TotalAttendance > 0 
-      ? Math.Round((decimal)(ViewBag.PresentCount ?? 0) / ViewBag.TotalAttendance * 100, 1) 
-      : 0;
-           }
-   @presentRate%
-         </h4>
-  <small class="text-muted">Present</small>
-    </div>
+Attendance Overview
+  </h3>
+<select id="timePeriodSelector" class="form-select form-select-sm" style="width: auto;">
+     <option value="30" selected>Last 30 Days</option>
+     <option value="90">Last 3 Months</option>
+     <option value="180">Last 6 Months</option>
+  </select>
   </div>
-       <div class="col-4">
-          <div class="p-3" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
-               <h4 class="mb-0" style="color: #dc3545;">
-             @{
-     var absentRate = ViewBag.TotalAttendance > 0 
-  ? Math.Round((decimal)(ViewBag.AbsentCount ?? 0) / ViewBag.TotalAttendance * 100, 1) 
-              : 0;
-       }
-         @absentRate%
-              </h4>
-     <small class="text-muted">Absent</small>
-         </div>
-                </div>
-      <div class="col-4">
-        <div class="p-3" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
-             <h4 class="mb-0" style="color: #ffc107;">
-                 @{
-       var lateRate = ViewBag.TotalAttendance > 0 
-                ? Math.Round((decimal)(ViewBag.LateCount ?? 0) / ViewBag.TotalAttendance * 100, 1) 
- : 0;
-      }
-    @lateRate%
-    </h4>
-       <small class="text-muted">Late</small>
-       </div>
-    </div>
+
+    <!-- Chart and Stats Row -->
+  <div class="row g-3 align-items-center">
+         <!-- Chart Column (Left Side) -->
+     <div class="col-lg-7">
+          <div style="background: #f8f9fa; border-radius: 8px; padding: 28px; position: relative;">
+     <canvas id="attendanceOverviewChart" 
+     style="max-height: 300px;"
+    data-present="@(ViewBag.PresentCount ?? 0)"
+      data-absent="@(ViewBag.AbsentCount ?? 0)"
+ data-leave="@(ViewBag.LeaveCount ?? 0)"
+        data-total="@(ViewBag.TotalAttendance ?? 0)"></canvas>
+      <div class="text-center mt-2">
+   <small class="text-muted" id="totalAttendanceText">Based on @(ViewBag.TotalAttendance ?? 0) total records</small>
+          </div>
+      </div>
+</div>
+ 
+       <!-- Stats Column (Right Side) -->
+     <div class="col-lg-5">
+       <div class="d-flex flex-column gap-3">
+        <!-- Present -->
+    <div class="p-3 d-flex align-items-center" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px; border-left: 4px solid #198754;">
+         <div class="flex-grow-1">
+            <h4 class="mb-0" style="color: #198754;" id="presentRate">
+          @{
+   var presentRate = ViewBag.TotalAttendance > 0 
+   ? Math.Round((decimal)(ViewBag.PresentCount ?? 0) / ViewBag.TotalAttendance * 100, 1) 
+   : 0;
+     }
+    @presentRate%
+  </h4>
+     <small class="text-muted">Present</small>
+          </div>
+     <div class="ms-3">
+  <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i>
  </div>
+     </div>
+  
+    <!-- Absent -->
+       <div class="p-3 d-flex align-items-center" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px; border-left: 4px solid #dc3545;">
+ <div class="flex-grow-1">
+      <h4 class="mb-0" style="color: #dc3545;" id="absentRate">
+   @{
+       var absentRate = ViewBag.TotalAttendance > 0 
+           ? Math.Round((decimal)(ViewBag.AbsentCount ?? 0) / ViewBag.TotalAttendance * 100, 1) 
+    : 0;
+   }
+           @absentRate%
+        </h4>
+       <small class="text-muted">Absent</small>
+     </div>
+        <div class="ms-3">
+ <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #dc3545;"></i>
+ </div>
+            </div>
+     
+     <!-- Leave -->
+       <div class="p-3 d-flex align-items-center" style="background: rgba(13, 202, 240, 0.1); border-radius: 8px; border-left: 4px solid #0dcaf0;">
+<div class="flex-grow-1">
+       <h4 class="mb-0" style="color: #0dcaf0;" id="leaveRate">
+    @{
+    var leaveRate = (ViewBag.TotalAttendance ?? 0) > 0 
+        ? Math.Round((decimal)(ViewBag.LeaveCount ?? 0) / (int)(ViewBag.TotalAttendance ?? 0) * 100, 1) 
+ : 0;
+     }
+         @leaveRate%
+    </h4>
+    <small class="text-muted">Leave</small>
+   </div>
+     <div class="ms-3">
+  <i class="bi bi-calendar-x" style="font-size: 2rem; color: #0dcaf0;"></i>
+     </div>
+       </div>
+ </div>
+    </div>
         </div>
+</div>
     </div>
 </div>
 
 <!-- Recent Attendance -->
 <div class="row g-3 mt-3">
     <div class="col-12">
-        <div class="dashboard-card">
-        <div class="card-header-custom">
-                <h3 class="card-title">
+<div class="dashboard-card">
+    <div class="card-header-custom">
+         <h3 class="card-title">
         <i class="bi bi-clock-history"></i>
            Recent Attendance
-                </h3>
-      <a asp-controller="Parent" asp-action="AttendanceHistory" class="btn btn-sm btn-outline-primary">
-        View All <i class="bi bi-arrow-right"></i>
+     </h3>
+  <a asp-controller="Parent" asp-action="AttendanceHistory" class="btn btn-sm btn-outline-primary">
+ View All <i class="bi bi-arrow-right"></i>
     </a>
-            </div>
+        </div>
     <div class="table-responsive">
-      <table class="table table-hover align-middle">
+ <table class="table table-hover align-middle">
       <thead>
-            <tr>
+ <tr>
     <th>Date</th>
-         <th>Class</th>
-       <th>Time In</th>
+<th>Class</th>
+   <th>Time In</th>
       <th>Status</th>
    <th>Remarks</th>
-            </tr>
-                    </thead>
-        <tbody>
+         </tr>
+   </thead>
+      <tbody id="recentAttendanceTable">
           @if (ViewBag.RecentAttendance != null && ((List<WebMobileAssignment.Models.Attendance>)ViewBag.RecentAttendance).Any())
-        {
-           @foreach (var attendance in (List<WebMobileAssignment.Models.Attendance>)ViewBag.RecentAttendance)
     {
+      @foreach (var attendance in (List<WebMobileAssignment.Models.Attendance>)ViewBag.RecentAttendance)
+  {
     <tr>
-       <td><i class="bi bi-calendar3 me-2 text-muted"></i>@attendance.Date.ToString("yyyy-MM-dd")</td>
-           <td>@attendance.Class?.ClassName</td>
+     <td><i class="bi bi-calendar3 me-2 text-muted"></i>@attendance.Date.ToString("yyyy-MM-dd")</td>
+    <td>@attendance.Class?.ClassName</td>
        <td>@attendance.TakenOn.ToString("h:mm tt")</td>
-      <td>
+   <td>
    @{
-          var badgeClass = attendance.Status switch
-        {
+var badgeClass = attendance.Status switch
+{
     "Present" => "bg-success",
-      "Absent" => "bg-danger",
-  "Late" => "bg-warning",
-             _ => "bg-secondary"
-       };
+    "Absent" => "bg-danger",
+    "Leave" => "bg-warning",  // ? This is correct
+    _ => "bg-secondary"
+};
  }
-      <span class="badge @badgeClass">@attendance.Status</span>
+  <span class="badge @badgeClass">@attendance.Status</span>
    </td>
-             <td>
+    <td>
    @if (attendance.Status == "Present")
-                  {
+   {
      <text>On time</text>
  }
-           else if (attendance.Status == "Late")
+       else if (attendance.Status == "Leave")
   {
-      <text>Arrived late</text>
+<text>On leave</text>
   }
   else
    {
    <text>-</text>
-            }
+     }
   </td>
-    </tr>
-           }
-            }
-              else
+  </tr>
+   }
+  }
+       else
   {
    <tr>
  <td colspan="5" class="text-center text-muted py-4">
-      <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-        <p class="mb-0 mt-2">No attendance records found</p>
+ <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+    <p class="mb-0 mt-2">No attendance records found</p>
  </td>
-            </tr>
-            }
-       </tbody>
+   </tr>
+  }
+    </tbody>
   </table>
      </div>
-        </div>
+      </div>
     </div>
 </div>
+
+@section Scripts {
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// AJAX navigation for child switching
+document.addEventListener('DOMContentLoaded', function() {
+    // Track the current student ID in a global variable
+    let currentStudentId = '@ViewBag.CurrentStudentId';
+    
+    const childNavButtons = document.querySelectorAll('.child-nav-btn');
+    
+    // Add event listener for time period selector
+    const timePeriodSelector = document.getElementById('timePeriodSelector');
+    if (timePeriodSelector) {
+        timePeriodSelector.addEventListener('change', function() {
+            const days = this.value;
+            if (currentStudentId) {
+                loadDashboardDataWithTimePeriod(currentStudentId, days);
+            }
+        });
+    }
+ 
+    childNavButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+    const action = this.getAttribute('data-action');
+   
+    if (!studentId) return;
+    
+            // Update the current student ID
+            currentStudentId = studentId;
+      
+            // Show loading state
+          button.disabled = true;
+   button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+  
+         // Fetch data via AJAX
+            fetch(`/Parent/GetDashboardData?studentId=${studentId}`)
+    .then(response => response.json())
+       .then(data => {
+ if (data.success) {
+       updateDashboard(data.data);
+ } else {
+   alert('Error: ' + data.message);
+       }
+       })
+                .catch(error => {
+       console.error('Error:', error);
+     alert('An error occurred while loading data');
+        })
+     .finally(() => {
+        // Reset button state
+     button.disabled = false;
+            button.innerHTML = action === 'previous' 
+  ? '<i class="bi bi-chevron-left"></i>' 
+              : '<i class="bi bi-chevron-right"></i>';
+             });
+     });
+    });
+
+    function updateDashboard(data) {
+      // Update stats
+        document.getElementById('presentCountStat').textContent = data.presentCount;
+    document.getElementById('absentCountStat').textContent = data.absentCount;
+        document.getElementById('leaveCountStat').textContent = data.leaveCount;
+  document.getElementById('attendanceRateStat').textContent = data.attendanceRate + '%';
+
+   // Update child summary - preserve icons by updating only the values
+        document.getElementById('studentName').textContent = data.studentName;
+        
+        // Update totalClasses
+        const totalClassesElement = document.getElementById('totalClasses');
+        if (totalClassesElement) {
+            totalClassesElement.textContent = data.totalClasses;
+        }
+        
+        // Update presentCount
+        const presentCountElement = document.getElementById('presentCount');
+        if (presentCountElement) {
+            presentCountElement.textContent = data.presentCount;
+        }
+        
+        // Update absentCount
+        const absentCountElement = document.getElementById('absentCount');
+        if (absentCountElement) {
+            absentCountElement.textContent = data.absentCount;
+        }
+        
+        // Update leaveCount
+        const leaveCountElement = document.getElementById('leaveCount');
+        if (leaveCountElement) {
+            leaveCountElement.textContent = data.leaveCount;
+        }
+ 
+   // Update profile picture
+        const studentAvatar = document.getElementById('studentAvatar');
+    if (studentAvatar && data.profilePicture) {
+        if (data.profilePicture !== '/images/default-avatar.png') {
+ studentAvatar.outerHTML = `<img id="studentAvatar" src="${data.profilePicture}" alt="${data.studentName}" class="mx-auto" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #ffc107; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);">`;
+            } else {
+     studentAvatar.outerHTML = `<div id="studentAvatar" class="user-avatar mx-auto" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;"><i class="bi bi-person-fill"></i></div>`;
+  }
+        }
+
+   // Update child counter
+        const childCounter = document.getElementById('childCounter');
+      if (childCounter) {
+      childCounter.textContent = `Child ${data.currentIndex} of ${data.totalChildren}`;
+        }
+
+        // Update chart data
+        document.getElementById('presentRate').textContent = data.presentRate + '%';
+        document.getElementById('absentRate').textContent = data.absentRate + '%';
+        document.getElementById('leaveRate').textContent = data.leaveRate + '%';
+        document.getElementById('totalAttendanceText').textContent = `Based on ${data.totalAttendance} total records`;
+
+ // Re-render attendance chart with new data
+if (typeof renderAttendanceChart === 'function') {
+   renderAttendanceChart('attendanceOverviewChart', {
+  presentCount: data.presentCount,
+    absentCount: data.absentCount,
+   leaveCount: data.leaveCount,
+totalAttendance: data.totalAttendance
+    });
+    } else {
+// Fallback to recreating the chart directly
+       updateAttendanceChart(data.presentCount, data.absentCount, data.leaveCount, data.totalAttendance);
+     }
+
+        // Update navigation buttons
+        updateNavigationButtons(data);
+
+        // Update view profile button
+        const viewProfileBtn = document.getElementById('viewProfileBtn');
+        viewProfileBtn.href = `/Parent/StudentProfile?studentId=${data.studentId}`;
+
+    // Update recent attendance table
+        updateRecentAttendanceTable(data.recentAttendance);
+    }
+
+    function updateNavigationButtons(data) {
+        const btnGroup = document.querySelector('.btn-group');
+   if (!btnGroup) return;
+  
+        // Clear and rebuild buttons
+        btnGroup.innerHTML = '';
+      
+      // Previous button
+        if (data.hasPrevious) {
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'btn btn-outline-primary child-nav-btn';
+            prevBtn.setAttribute('data-student-id', data.previousStudentId);
+            prevBtn.setAttribute('data-action', 'previous');
+            prevBtn.title = 'Previous Child';
+      prevBtn.innerHTML = '<i class="bi bi-chevron-left"></i>';
+ prevBtn.addEventListener('click', function() {
+   const studentId = this.getAttribute('data-student-id');
+    loadChildData(studentId, this, 'previous');
+        });
+  btnGroup.appendChild(prevBtn);
+        } else {
+    const prevBtn = document.createElement('button');
+prevBtn.className = 'btn btn-outline-secondary';
+            prevBtn.disabled = true;
+      prevBtn.innerHTML = '<i class="bi bi-chevron-left"></i>';
+  btnGroup.appendChild(prevBtn);
+        }
+        
+        // Next button
+   if (data.hasNext) {
+            const nextBtn = document.createElement('button');
+        nextBtn.className = 'btn btn-outline-primary child-nav-btn';
+      nextBtn.setAttribute('data-student-id', data.nextStudentId);
+nextBtn.setAttribute('data-action', 'next');
+            nextBtn.title = 'Next Child';
+     nextBtn.innerHTML = '<i class="bi bi-chevron-right"></i>';
+            nextBtn.addEventListener('click', function() {
+ const studentId = this.getAttribute('data-student-id');
+  loadChildData(studentId, this, 'next');
+   });
+       btnGroup.appendChild(nextBtn);
+        } else {
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'btn btn-outline-secondary';
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = '<i class="bi bi-chevron-right"></i>';
+  btnGroup.appendChild(nextBtn);
+        }
+    }
+
+    function loadChildData(studentId, button, action) {
+        // Update the current student ID
+        currentStudentId = studentId;
+        
+        button.disabled = true;
+     button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+        
+   fetch(`/Parent/GetDashboardData?studentId=${studentId}`)
+     .then(response => response.json())
+    .then(data => {
+       if (data.success) {
+      updateDashboard(data.data);
+           } else {
+             alert('Error: ' + data.message);
+         }
+            })
+            .catch(error => {
+           console.error('Error:', error);
+    alert('An error occurred while loading data');
+      })
+         .finally(() => {
+      button.disabled = false;
+   button.innerHTML = action === 'previous' 
+   ? '<i class="bi bi-chevron-left"></i>' 
+   : '<i class="bi bi-chevron-right"></i>';
+   });
+    }
+
+    function loadDashboardDataWithTimePeriod(studentId, days) {
+        // Show loading overlay
+        const chartCanvas = document.getElementById('attendanceOverviewChart');
+        if (chartCanvas) {
+            chartCanvas.style.opacity = '0.5';
+        }
+        
+        fetch(`/Parent/GetDashboardData?studentId=${studentId}&days=${days}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateDashboard(data.data);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while loading data');
+            })
+            .finally(() => {
+                if (chartCanvas) {
+                    chartCanvas.style.opacity = '1';
+                }
+            });
+    }
+
+    function updateRecentAttendanceTable(attendances) {
+    const tbody = document.getElementById('recentAttendanceTable');
+        
+        if (!attendances || attendances.length === 0) {
+   tbody.innerHTML = `
+         <tr>
+ <td colspan="5" class="text-center text-muted py-4">
+  <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+     <p class="mb-0 mt-2">No attendance records found</p>
+     </td>
+      </tr>
+   `;
+    return;
+        }
+ 
+      tbody.innerHTML = '';
+        attendances.forEach(att => {
+            const badgeClass = att.status === 'Present' ? 'bg-success' :
+      att.status === 'Absent' ? 'bg-danger' :
+           att.status === 'Leave' ? 'bg-warning' : 'bg-secondary';
+    
+            const remarks = att.status === 'Present' ? 'On time' :
+        att.status === 'Leave' ? 'On leave' : '-';
+  
+     const row = document.createElement('tr');
+      row.innerHTML = `
+       <td><i class="bi bi-calendar3 me-2 text-muted"></i>${att.date}</td>
+    <td>${att.className || 'N/A'}</td>
+    <td>${att.timeIn}</td>
+                <td><span class="badge ${badgeClass}">${att.status}</span></td>
+                <td>${remarks}</td>
+            `;
+       tbody.appendChild(row);
+   });
+ }
+    // Initialize Attendance Chart
+    let attendanceChartInstance = null;
+    
+    function initAttendanceChart() {
+        const canvas = document.getElementById('attendanceOverviewChart');
+        if (!canvas) return;
+  
+const ctx = canvas.getContext('2d');
+        const presentCount = parseInt(canvas.dataset.present, 10) || 0;
+  const absentCount = parseInt(canvas.dataset.absent, 10) || 0;
+     const leaveCount = parseInt(canvas.dataset.leave, 10) || 0;
+        const totalCount = parseInt(canvas.dataset.total, 10) || 0;
+
+   // Calculate percentages
+   let dataPercents = [0, 0, 0];
+   if (totalCount > 0) {
+  dataPercents = [
+  Math.round((presentCount / totalCount) * 100),
+      Math.round((absentCount / totalCount) * 100),
+       Math.round((leaveCount / totalCount) * 100)
+       ];
+ }
+
+  // Destroy existing chart if it exists
+        if (attendanceChartInstance) {
+ attendanceChartInstance.destroy();
+  }
+
+        // Chart data
+  const data = {
+            labels: ['Present', 'Absent', 'Leave'],
+        datasets: [{
+  data: dataPercents,
+ backgroundColor: [
+  'rgba(25, 135, 84, 0.95)',  // Present
+         'rgba(220, 53, 69, 0.95)',  // Absent
+    'rgba(13, 202, 240, 0.95)'    // Leave
+     ],
+  borderWidth: 0,
+  hoverOffset: 6
+ }]
+        };
+
+   // Chart options
+   const options = {
+   responsive: true,
+      maintainAspectRatio: false,
+  cutout: '65%',
+       plugins: {
+           legend: {
+    position: 'bottom',
+             labels: {
+       usePointStyle: true,
+             padding: 16,
+     font: {
+     size: 12,
+     family: "'Segoe UI', 'Roboto', sans-serif"
+              }
+                    }
+     },
+                tooltip: {
+          callbacks: {
+               label: function (context) {
+       const label = context.label || '';
+   const value = context.parsed || 0;
+              return label + ': ' + value + '%';
+       }
+       }
+    }
+            }
+        };
+
+     // Create the chart
+        attendanceChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+   data: data,
+            options: options
+        });
+
+        // Add center label
+        addChartCenterLabel(canvas, dataPercents[0], 'Present');
+    }
+
+    function updateAttendanceChart(presentCount, absentCount, leaveCount, totalCount) {
+        const canvas = document.getElementById('attendanceOverviewChart');
+  if (!canvas) return;
+
+        // Update data attributes
+   canvas.dataset.present = presentCount;
+        canvas.dataset.absent = absentCount;
+canvas.dataset.leave = leaveCount;
+        canvas.dataset.total = totalCount;
+
+    // Reinitialize the chart
+        initAttendanceChart();
+    }
+
+    function addChartCenterLabel(canvas, percentage, label) {
+      const container = canvas.parentElement;
+        
+        // Remove existing center label if any
+        const existingLabel = container.querySelector('.chart-center');
+        if (existingLabel) {
+         existingLabel.remove();
+    }
+
+        // Create new center label
+        const div = document.createElement('div');
+        div.className = 'chart-center';
+div.style.position = 'absolute';
+ div.style.left = '50%';
+     div.style.top = '50%';
+        div.style.transform = 'translate(-50%, -50%)';
+    div.style.textAlign = 'center';
+     div.style.pointerEvents = 'none';
+
+        div.innerHTML = `
+    <div style="font-weight: 700; font-size: 1.4rem; color: #198754;">
+        ${percentage}%
+            </div>
+ <div style="font-size: 0.9rem; color: #6c757d;">
+         ${label}
+     </div>
+        `;
+
+     // Make container relative positioned
+      container.style.position = 'relative';
+  container.appendChild(div);
+    }
+
+    // Initialize chart on page load
+    initAttendanceChart();
+});
+</script>
+}

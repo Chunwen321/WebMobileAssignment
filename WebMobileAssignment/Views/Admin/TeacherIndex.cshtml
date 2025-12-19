@@ -217,9 +217,26 @@
                              data-hire="@(teacher.HireDate?.ToString("yyyy-MM-dd") ?? "")">
                             <div class="dashboard-card h-100">
                                 <div class="teacher-header">
-                                    <div class="teacher-avatar">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
+                                    @{
+                                        var profilePictureUrl = teacher.User?.ProfilePicture;
+                                        var hasCustomPicture = !string.IsNullOrEmpty(profilePictureUrl) && !profilePictureUrl.StartsWith("/images/");
+                                        var iconColor = teacher.User.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true ? "male" : 
+                                                       teacher.User.Gender?.Equals("Female", StringComparison.OrdinalIgnoreCase) == true ? "female" : "";
+                                    }
+                                    
+                                    @if (hasCustomPicture)
+                                    {
+                                        <div class="teacher-avatar-img">
+                                            <img src="@profilePictureUrl" alt="@teacher.User.FullName" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; border: 3px solid white;" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="teacher-avatar @iconColor">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                    }
+                                    
                                     <div class="teacher-status-badge">
                                         <span class="badge bg-@(teacher.User.IsActive ? "success" : "secondary")">
                                             @(teacher.User.IsActive ? "Active" : "Inactive")
@@ -465,79 +482,3 @@
         }
     </script>
 }
-
-<style>
-    .teacher-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 30px 20px;
-        text-align: center;
-        position: relative;
-        border-radius: 8px 8px 0 0;
-    }
-
-    .teacher-avatar {
-        width: 80px;
-        height: 80px;
-        background: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-        font-size: 2.5rem;
-        color: #667eea;
-    }
-
-    .teacher-status-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-    }
-
-    .teacher-stats {
-        display: flex;
-        justify-content: space-around;
-        padding: 15px 0;
-        border-top: 1px solid #e0e0e0;
-        border-bottom: 1px solid #e0e0e0;
-        margin: 15px 0;
-    }
-
-    .teacher-stats .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .teacher-stats .stat-item i {
-        font-size: 1.5rem;
-    }
-
-    .teacher-stats .stat-info {
-        text-align: left;
-    }
-
-    .teacher-stats .stat-number {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #333;
-    }
-
-    .teacher-stats .stat-label {
-        font-size: 0.75rem;
-        color: #666;
-        text-transform: uppercase;
-    }
-
-    .teacher-contact {
-        background: #f8f9fa;
-        padding: 10px;
-        border-radius: 6px;
-    }
-
-    .teacher-contact p {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-</style>

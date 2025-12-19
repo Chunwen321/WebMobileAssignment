@@ -1,78 +1,197 @@
 @using WebMobileAssignment.Models;
 @{
     ViewBag.Title = "Students";
+    ViewBag.ActiveMenu = "Students";
     Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    
+    var students = ViewBag.Students as List<Student> ?? new List<Student>();
+    var sortBy = ViewBag.SortBy as string ?? "StudentId";
+    var sortOrder = ViewBag.SortOrder as string ?? "asc";
 }
 
 <div class="row g-3">
     <div class="col-12">
         <div class="dashboard-card">
             <div class="card-header-custom">
-                <h3 class="card-title">
-                    <i class="bi bi-people-fill"></i>
-                    Students
-                </h3>
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-people-fill me-2"></i>
+                    Students (@students.Count)
+                </h5>
             </div>
 
             <!-- Filters -->
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <label class="form-label">Search by Name</label>
-                    <input type="text" class="form-control" placeholder="Enter student name..." id="searchName" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Search by ID</label>
-                    <input type="text" class="form-control" placeholder="Enter student ID..." id="searchId" />
+            <div class="p-3 border-bottom">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Search by Name</label>
+                        <input type="text" class="form-control" placeholder="Enter student name..." id="searchName" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Search by ID</label>
+                        <input type="text" class="form-control" placeholder="Enter student ID..." id="searchId" />
+                    </div>
                 </div>
             </div>
 
             <!-- Students List -->
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0 students-list-table">
                     <thead>
                         <tr>
-                            <th>Student ID</th>
-                            <th>Name</th>
-                            <th>Classes Enrolled</th>
-                            <th>Parent Name</th>
-                            <th>Attendance Rate</th>
-                            <th>Status</th>
+                            <th class="sortable-header" data-sort-key="studentId">
+                                Student ID
+                                <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.75rem;"></i>
+                            </th>
+                            <th class="sortable-header" data-sort-key="name">
+                                Name
+                                <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.75rem;"></i>
+                            </th>
+                            <th class="sortable-header" data-sort-key="classes">
+                                Classes
+                                <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.75rem;"></i>
+                            </th>
+                            <th class="sortable-header" data-sort-key="email">
+                                Email
+                                <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.75rem;"></i>
+                            </th>
+                            <th class="sortable-header" data-sort-key="enrolled">
+                                Enrolled Date
+                                <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.75rem;"></i>
+                            </th>
+                            <th class="sortable-header" data-sort-key="attendance">
+                                Attendance Rate
+                                <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.75rem;"></i>
+                            </th>
+                            <th class="sortable-header" data-sort-key="lastActivity">
+                                Last Activity
+                                <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.75rem;"></i>
+                            </th>
+                            <th class="sortable-header" data-sort-key="status">
+                                Status
+                                <i class="bi bi-arrow-down-up ms-1" style="font-size: 0.75rem;"></i>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if (ViewBag.Students != null && ((List<Student>)ViewBag.Students).Count > 0)
+                        @if (students.Count > 0)
                         {
-                            @foreach (var student in (List<Student>)ViewBag.Students)
+                            @foreach (var student in students)
                             {
-                                var classCount = student.Enrollments?.Count ?? 0;
-                                var totalAttendance = student.Enrollments?.SelectMany(e => e.Class.Attendances)
-                                    .Where(a => a.StudentId == student.StudentId).ToList() ?? new List<Attendance>();
-                                var attendanceRate = totalAttendance.Count > 0
-                                    ? Math.Round((decimal)(totalAttendance.Count(a => a.Status == "Present") * 100) / totalAttendance.Count(), 2)
-                                    : 0;
-                                var badgeClass = attendanceRate >= 90 ? "bg-success" : attendanceRate >= 80 ? "bg-warning" : "bg-danger";
+                                // Get current teacher
+                                var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
                                 
-                                <tr>
-                                    <td>@student.StudentId</td>
+                                // Count classes enrolled in THIS TEACHER's classes only
+                                var teacherClasses = student.Enrollments?
+                                    .Where(e => e.Class.Teacher?.User?.Email == userEmail)
+                                    .Count() ?? 0;
+                                
+                                // Get attendances from this teacher's classes only
+                                var totalAttendances = student.Enrollments?
+                                    .Where(e => e.Class.Teacher?.User?.Email == userEmail)
+                                    .SelectMany(e => e.Class.Attendances)
+                                    .Where(a => a.StudentId == student.StudentId)
+                                    .ToList() ?? new List<Attendance>();
+                                
+                                var presentCount = totalAttendances.Count(a => a.Status == "Present");
+                                var attendanceRate = totalAttendances.Count > 0
+                                    ? Math.Round((decimal)(presentCount * 100) / totalAttendances.Count(), 1)
+                                    : 0;
+                                
+                                // Get last attendance date
+                                var lastAttendance = totalAttendances.OrderByDescending(a => a.Date).FirstOrDefault();
+                                var lastActivityDate = lastAttendance?.Date ?? student.EnrollmentDate;
+                                var daysAgo = lastActivityDate.HasValue ? (DateTime.Now - lastActivityDate.Value).Days : -1;
+                                
+                                var attendanceRateClass = attendanceRate >= 80 ? "bg-success" : 
+                                                         attendanceRate >= 60 ? "bg-warning" : "bg-secondary";
+                                
+                                // Student status from database
+                                var studentStatus = student.User?.Status ?? "active";
+                                var statusBadgeClass = studentStatus.ToLower() == "active" ? "bg-success" :
+                                                      studentStatus.ToLower() == "inactive" ? "bg-secondary" :
+                                                      studentStatus.ToLower() == "suspend" ? "bg-warning" :
+                                                      studentStatus.ToLower() == "withdraw" ? "bg-danger" : "bg-secondary";
+                                
+                                <tr class="student-row" 
+                                    data-student-id="@student.StudentId" 
+                                    data-student-name="@student.User?.FullName" 
+                                    data-classes="@teacherClasses" 
+                                    data-email="@(student.User?.Email ?? "")"
+                                    data-enrollment="@(student.EnrollmentDate?.ToString("yyyy-MM-dd") ?? "")"
+                                    data-attendance="@attendanceRate"
+                                    data-last-activity="@(lastActivityDate?.ToString("yyyy-MM-dd") ?? "")"
+                                    data-status="@studentStatus">
+                                    <td>
+                                        <strong>@student.StudentId</strong>
+                                    </td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="user-avatar me-2" style="width: 40px; height: 40px;">
-                                                <i class="bi bi-person-fill"></i>
+                                            <div class="user-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px; font-size: 0.9rem;">
+                                                @(student.User?.FullName?.First().ToString().ToUpper() ?? "S")
                                             </div>
                                             <span>@student.User?.FullName</span>
                                         </div>
                                     </td>
-                                    <td>@classCount</td>
-                                    <td>@(student.Parent?.User?.FullName ?? "N/A")</td>
-                                    <td><span class="badge @badgeClass">@attendanceRate%</span></td>
-                                    <td><span class="badge bg-info">Active</span></td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">@teacherClasses</span>
+                                    </td>
+                                    <td>
+                                        <small>@(student.User?.Email ?? "N/A")</small>
+                                    </td>
+                                    <td>
+                                        <small>@(student.EnrollmentDate?.ToString("MMM dd, yyyy") ?? "N/A")</small>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 28px; position: relative; background-color: #e9ecef;">
+                                            <div class="progress-bar @attendanceRateClass d-flex align-items-center justify-content-center" 
+                                                 role="progressbar" 
+                                                 style="width: @Math.Max(attendanceRate, 5)%; font-weight: 700; font-size: 0.9rem; color: white; min-width: 50px; white-space: nowrap;"
+                                                 aria-valuenow="@attendanceRate" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                @attendanceRate%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (lastActivityDate.HasValue)
+                                        {
+                                            <small class="text-muted">
+                                                @if (daysAgo == 0)
+                                                {
+                                                    <span>Today</span>
+                                                }
+                                                else if (daysAgo == 1)
+                                                {
+                                                    <span>Yesterday</span>
+                                                }
+                                                else if (daysAgo < 7)
+                                                {
+                                                    <span>@daysAgo days ago</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@lastActivityDate?.ToString("MMM dd")</span>
+                                                }
+                                            </small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">No activity</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @statusBadgeClass" style="font-size: 0.8rem;">@char.ToUpper(studentStatus[0])@studentStatus.Substring(1)</span>
+                                    </td>
                                 </tr>
                             }
                         }
                         else
                         {
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">No students assigned to your classes</td>
+                                <td colspan="8" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox me-2"></i>No students assigned to your classes
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -82,27 +201,175 @@
     </div>
 </div>
 
-<script>
-    // Simple client-side filtering
-    document.getElementById('searchName').addEventListener('keyup', filterTable);
-    document.getElementById('searchId').addEventListener('keyup', filterTable);
+<!-- Styles -->
+<style>
+    .user-avatar {
+        font-weight: 600;
+    }
 
+    .progress {
+        background-color: #e9ecef;
+    }
+
+    .table-light th {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s;
+    }
+
+    .table-light th:hover {
+        background-color: #e9ecef;
+    }
+
+    .student-row {
+        transition: background-color 0.2s;
+    }
+
+    .student-row:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+</style>
+
+<!-- Filter and Sort Script -->
+<script>
+    const searchNameInput = document.getElementById('searchName');
+    const searchIdInput = document.getElementById('searchId');
+    const headerRow = document.querySelector('thead tr');
+    const sortableHeaders = document.querySelectorAll('.sortable-header');
+    let currentSortColumn = 'studentId';
+    let sortAscending = true;
+
+    // Client-side filtering
     function filterTable() {
-        const nameFilter = document.getElementById('searchName').value.toLowerCase();
-        const idFilter = document.getElementById('searchId').value.toLowerCase();
-        const rows = document.querySelectorAll('tbody tr');
+        const nameFilter = searchNameInput.value.toLowerCase();
+        const idFilter = searchIdInput.value.toLowerCase();
+        const rows = document.querySelectorAll('.student-row');
 
         rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length > 0) {
-                const studentId = cells[0].textContent.toLowerCase();
-                const studentName = cells[1].textContent.toLowerCase();
+            const studentId = row.getAttribute('data-student-id').toLowerCase();
+            const studentName = row.getAttribute('data-student-name').toLowerCase();
 
-                const nameMatch = studentName.includes(nameFilter);
-                const idMatch = studentId.includes(idFilter);
+            const idMatch = !idFilter || studentId.includes(idFilter);
+            const nameMatch = !nameFilter || studentName.includes(nameFilter);
 
-                row.style.display = (nameMatch && idMatch) ? '' : 'none';
+            row.style.display = (idMatch && nameMatch) ? '' : 'none';
+        });
+    }
+
+    searchNameInput.addEventListener('keyup', filterTable);
+    searchIdInput.addEventListener('keyup', filterTable);
+
+    // Client-side sorting
+    function sortTable(column) {
+        if (currentSortColumn === column) {
+            sortAscending = !sortAscending;
+        } else {
+            currentSortColumn = column;
+            sortAscending = true;
+        }
+
+        const rows = Array.from(document.querySelectorAll('.student-row'));
+        
+        rows.sort((a, b) => {
+            let valueA, valueB;
+
+            switch (column) {
+                case 'studentId':
+                    valueA = a.getAttribute('data-student-id');
+                    valueB = b.getAttribute('data-student-id');
+                    return sortAscending ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                
+                case 'name':
+                    valueA = a.getAttribute('data-student-name').toLowerCase();
+                    valueB = b.getAttribute('data-student-name').toLowerCase();
+                    return sortAscending ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                
+                case 'classes':
+                    valueA = parseInt(a.getAttribute('data-classes')) || 0;
+                    valueB = parseInt(b.getAttribute('data-classes')) || 0;
+                    return sortAscending ? valueA - valueB : valueB - valueA;
+                
+                case 'email':
+                    valueA = a.getAttribute('data-email').toLowerCase();
+                    valueB = b.getAttribute('data-email').toLowerCase();
+                    return sortAscending ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                
+                case 'enrolled':
+                    valueA = a.getAttribute('data-enrollment');
+                    valueB = b.getAttribute('data-enrollment');
+                    return sortAscending ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                
+                case 'attendance':
+                    valueA = parseFloat(a.getAttribute('data-attendance')) || 0;
+                    valueB = parseFloat(b.getAttribute('data-attendance')) || 0;
+                    return sortAscending ? valueA - valueB : valueB - valueA;
+                
+                case 'lastActivity':
+                    valueA = a.getAttribute('data-last-activity');
+                    valueB = b.getAttribute('data-last-activity');
+                    return sortAscending ? valueB.localeCompare(valueA) : valueA.localeCompare(valueB); // Reverse for recent first
+                
+                case 'status':
+                    valueA = a.getAttribute('data-status').toLowerCase();
+                    valueB = b.getAttribute('data-status').toLowerCase();
+                    return sortAscending ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                
+                default:
+                    return 0;
+            }
+        });
+
+        const tbody = document.querySelector('tbody');
+        rows.forEach(row => tbody.appendChild(row));
+
+        // Update header icons
+        sortableHeaders.forEach(header => {
+            const icon = header.querySelector('i');
+            if (header.getAttribute('data-sort-key') === column) {
+                icon.className = sortAscending ? 'bi bi-arrow-up ms-1' : 'bi bi-arrow-down ms-1';
+            } else {
+                icon.className = 'bi bi-arrow-down-up ms-1';
             }
         });
     }
+
+    // Add click listeners to all sortable headers
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            sortTable(this.getAttribute('data-sort-key'));
+        });
+    });
+
+    // Set initial sort by Student ID
+    sortTable('studentId');
 </script>
+
+<style>
+    /* Light Theme - Students List Table Styling */
+    .students-list-table thead {
+        background: transparent !important;
+        border-bottom: 2px solid #dee2e6 !important;
+    }
+
+    .students-list-table thead th {
+        background: transparent !important;
+        color: #212529 !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid #dee2e6 !important;
+    }
+
+    /* Dark Theme - Students List Table Styling */
+    [data-theme="dark"] .students-list-table thead {
+        background: transparent !important;
+        border-bottom: 2px solid #404040 !important;
+    }
+
+    [data-theme="dark"] .students-list-table thead th {
+        background: transparent !important;
+        color: #e0e0e0 !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid #404040 !important;
+    }
+</style>
+
+

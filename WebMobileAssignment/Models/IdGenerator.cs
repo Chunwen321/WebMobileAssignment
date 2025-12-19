@@ -9,8 +9,12 @@ public static class IdGenerator
     private static int _studentCounter = 1;
     private static int _parentCounter = 1;
     private static int _classCounter = 1;
+    private static int _enrollmentCounter = 1;
     private static int _attendanceCounter = 1;
     private static int _leaveApplicationCounter = 1;
+    private static int _notificationCounter = 1;
+    private static int _sessionCounter = 1;
+    private static readonly Random _random = new Random();
 
     public static string GenerateUserId(DB db)
  {
@@ -96,6 +100,20 @@ public static class IdGenerator
         }
   }
 
+    public static string GenerateEnrollmentId(DB db)
+    {
+        lock (_lock)
+        {
+            string id;
+            do
+            {
+                id = $"E{_enrollmentCounter:D5}";
+                _enrollmentCounter++;
+            } while (db.Enrollments.Any(e => e.EnrollmentId == id));
+            return id;
+        }
+    }
+
     public static string GenerateAttendanceId(DB db)
     {
         lock (_lock)
@@ -124,6 +142,47 @@ return id;
         }
     }
 
+    public static string GenerateNotificationId(DB db)
+    {
+        lock (_lock)
+        {
+            string id;
+            do
+            {
+                id = $"N{_notificationCounter:D5}";
+                _notificationCounter++;
+            } while (db.Notifications.Any(n => n.NotificationId == id));
+            return id;
+        }
+    }
+
+    public static string GenerateSessionId(DB db)
+    {
+        lock (_lock)
+        {
+            string id;
+            do
+            {
+                id = $"AS{_sessionCounter:D5}";
+                _sessionCounter++;
+            } while (db.AttendanceSessions.Any(s => s.SessionId == id));
+            return id;
+        }
+    }
+
+    public static string GenerateAttendancePinCode(DB db)
+    {
+        lock (_lock)
+        {
+            string pinCode;
+            do
+            {
+                pinCode = _random.Next(100000, 999999).ToString();
+            } while (db.AttendanceSessions.Any(s => s.PinCode == pinCode && s.IsActive));
+            return pinCode;
+        }
+    }
+
     // Initialize counters from existing data
   public static void InitializeCounters(DB db)
     {
@@ -135,8 +194,11 @@ return id;
      _studentCounter = GetNextCounter(db.Students.Select(s => s.StudentId).ToList(), "S");
             _parentCounter = GetNextCounter(db.Parents.Select(p => p.ParentId).ToList(), "P");
             _classCounter = GetNextCounter(db.Classes.Select(c => c.ClassId).ToList(), "C");
+            _enrollmentCounter = GetNextCounter(db.Enrollments.Select(e => e.EnrollmentId).ToList(), "E");
             _attendanceCounter = GetNextCounter(db.Attendances.Select(a => a.AttendanceId).ToList(), "ATT");
             _leaveApplicationCounter = GetNextCounter(db.LeaveApplications.Select(l => l.LeaveId).ToList(), "LEV");
+            _notificationCounter = GetNextCounter(db.Notifications.Select(n => n.NotificationId).ToList(), "N");
+            _sessionCounter = GetNextCounter(db.AttendanceSessions.Select(s => s.SessionId).ToList(), "AS");
         }
     }
 

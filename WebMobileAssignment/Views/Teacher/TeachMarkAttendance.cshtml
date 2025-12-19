@@ -1,413 +1,365 @@
 @using WebMobileAssignment.Models;
 @{
     ViewBag.Title = "Mark Attendance";
+    ViewBag.ActiveMenu = "Attendance";
+    ViewBag.ActiveSubmenu = "MarkAttendance";
     Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    
+    var classes = ViewBag.Classes as List<Class> ?? new List<Class>();
+    var sessions = ViewBag.Sessions as List<WebMobileAssignment.Models.AttendanceSession> ?? new List<WebMobileAssignment.Models.AttendanceSession>();
+    var selectedDate = ViewBag.SelectedDate as DateTime? ?? DateTime.Today;
+    var selectedDay = ViewBag.SelectedDay?.ToString() ?? DateTime.Now.DayOfWeek.ToString();
 }
 
-<div class="row g-3">
+<!-- Header Section -->
+<div class="row mb-4">
     <div class="col-12">
-        <div class="dashboard-card">
-            <div class="card-header-custom">
-                <h3 class="card-title">
-                    <i class="bi bi-pencil-square"></i>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1">
+                    <i class="bi bi-pencil-square text-primary me-2"></i>
                     Mark Attendance
-                </h3>
-            </div>
-
-            <!-- Step 1: Date Selection -->
-            <div class="mb-4">
-                <h5 class="mb-3"><span class="badge bg-primary">Step 1</span> Select a Date</h5>
-                <div class="row">
-                    <div class="col-md-4">
-                        <input type="date" class="form-control form-control-lg" id="dateSelector" value="@ViewBag.SelectedDate" />
-                        <small class="text-muted mt-2 d-block">
-                            <i class="bi bi-info-circle"></i> Classes for <strong>@ViewBag.DayOfWeek</strong> will be shown below
-                        </small>
-                    </div>
-                </div>
-            </div>
-
-            <hr class="my-4" />
-
-            <!-- Step 2: Class Selection Grid -->
-            <div class="mb-4">
-                <h5 class="mb-3"><span class="badge bg-primary">Step 2</span> Select a Class</h5>
-                <div id="noClassesMessage" class="alert alert-info" style="display: none;">
-                    <i class="bi bi-info-circle"></i> No classes scheduled for <strong id="messageDayOfWeek">today</strong>. Please select a different date.
-                </div>
-                <div class="row g-3" id="classGrid">
-                    @if (ViewBag.Classes != null && ((List<Class>)ViewBag.Classes).Count > 0)
-                    {
-                        @foreach (var cls in (List<Class>)ViewBag.Classes)
-                        {
-                            var studentCount = cls.Enrollments?.Count ?? 0;
-                            <div class="col-md-6 col-lg-4">
-                                <button type="button" class="class-btn w-100 p-4 text-start border-2 rounded-3" 
-                                        data-class-id="@cls.ClassId" 
-                                        data-class-name="@cls.ClassName"
-                                        style="border: 2px solid #e9ecef; background: #fff; transition: all 0.3s;">
-                                    <div>
-                                        <h6 class="mb-2 fw-bold">@cls.ClassName</h6>
-                                        <small class="text-muted d-block">
-                                            <i class="bi bi-clock"></i> @cls.StartTime?.ToString(@"hh\:mm") - @cls.EndTime?.ToString(@"hh\:mm")
-                                        </small>
-                                        <small class="text-muted d-block">
-                                            <i class="bi bi-geo-alt"></i> @(string.IsNullOrEmpty(cls.RoomNumber) ? "Not Set" : cls.RoomNumber)
-                                        </small>
-                                        <small class="text-muted d-block mt-2">
-                                            <i class="bi bi-people"></i> @studentCount students
-                                        </small>
-                                    </div>
-                                    <i class="bi bi-check-circle" style="display: none; float: right; color: #0d6efd; font-size: 1.5rem;"></i>
-                                </button>
-                            </div>
-                        }
-                    }
-                </div>
-            </div>
-
-            <!-- Date and Selected Class Info -->
-            <div class="row mb-4" id="selectionInfo" style="display: none;">
-                <div class="col-md-4">
-                    <label class="form-label">Selected Date</label>
-                    <input type="text" class="form-control" id="attendanceDate" readonly />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Selected Class</label>
-                    <input type="text" class="form-control" id="selectedClassName" readonly />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Day of Week</label>
-                    <input type="text" class="form-control" id="selectedDayOfWeek" readonly />
-                </div>
-            </div>
-
-            <!-- Student Attendance List -->
-            <div class="table-responsive" id="attendanceTableContainer" style="display: none; margin-top: 3rem;">
-                <h5 class="mb-3"><span class="badge bg-primary">Step 3</span> Mark Attendance</h5>
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Student ID</th>
-                            <th>Student Name</th>
-                            <th>Status</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody id="studentTableBody">
-                        <!-- Populated by JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- No Class Selected Message -->
-            <div id="noClassMessage" class="alert alert-info text-center py-5" style="margin-top: 3rem;">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>Select a date first, then choose a class to begin marking attendance</strong>
-            </div>
-
-            <!-- Summary -->
-            <div class="row mt-4" id="summaryContainer" style="display: none;">
-                <div class="col-md-3">
-                    <div class="p-3" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px; text-align: center;">
-                        <h5 class="mb-0" style="color: #198754;" id="presentCount">0</h5>
-                        <small class="text-muted">Present</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px; text-align: center;">
-                        <h5 class="mb-0" style="color: #dc3545;" id="absentCount">0</h5>
-                        <small class="text-muted">Absent</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px; text-align: center;">
-                        <h5 class="mb-0" style="color: #ffc107;" id="lateCount">0</h5>
-                        <small class="text-muted">Late</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px; text-align: center;">
-                        <h5 class="mb-0" style="color: #0d6efd;" id="attendanceRate">0%</h5>
-                        <small class="text-muted">Attendance Rate</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="mt-4" id="actionsContainer" style="display: none;">
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                    <i class="bi bi-check-circle me-2"></i>Submit Attendance
-                </button>
-                <button type="button" class="btn btn-outline-secondary" id="resetBtn">
-                    <i class="bi bi-arrow-clockwise me-2"></i>Reset
-                </button>
+                </h5>
+                <p class="text-muted small mb-0">Select a date to view classes scheduled for that day</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Styles for Class Selection Buttons -->
+<!-- Date Selector -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-calendar3 me-2"></i>Select Date
+                </h6>
+            </div>
+            <div class="p-3">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="selectedDate" class="form-label fw-semibold">
+                            <i class="bi bi-calendar-event me-1"></i>Choose Date
+                        </label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="selectedDate" 
+                               value="@selectedDate.ToString("yyyy-MM-dd")"
+                               max="@DateTime.Today.AddMonths(1).ToString("yyyy-MM-dd")"
+                               required />
+                    </div>
+                    <div class="col-md-4">
+                        <a href="@Url.Action("TeachMarkAttendance")" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Today
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Classes for Selected Date -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-calendar-check me-2"></i>Classes for @selectedDay
+                </h6>
+            </div>
+            <div class="p-3">
+                @if (classes != null && classes.Count > 0)
+                {
+                    var filteredClasses = classes.Where(c => 
+                        !string.IsNullOrEmpty(c.Day) && 
+                        c.Day.Equals(selectedDay, StringComparison.OrdinalIgnoreCase) &&
+                        c.StartTime.HasValue && 
+                        c.EndTime.HasValue
+                    ).ToList();
+
+                    if (filteredClasses.Any())
+                    {
+                        <div class="row g-3">
+                            @foreach (var cls in filteredClasses)
+                            {
+                                // Check if there's a valid session for this class on the selected date
+                                var session = sessions.FirstOrDefault(s => 
+                                    s.ClassId == cls.ClassId && 
+                                    s.CreatedDate.Date == selectedDate.Date
+                                );
+                                var hasSession = session != null;
+                                
+                                var isToday = selectedDate.Date == DateTime.Today;
+                                var currentTime = DateTime.Now.TimeOfDay;
+                                var isActive = isToday && cls.StartTime.HasValue && cls.EndTime.HasValue && currentTime >= cls.StartTime.Value && currentTime <= cls.EndTime.Value;
+                                var isPast = isToday && cls.EndTime.HasValue && currentTime > cls.EndTime.Value;
+                                var isUpcoming = isToday && cls.StartTime.HasValue && currentTime < cls.StartTime.Value;
+                                var isFutureDate = selectedDate.Date > DateTime.Today;
+
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="class-card-vertical @(hasSession ? "has-pin" : "") @(isActive ? "active-now" : "")">
+                                        <div class="class-header">
+                                            <h5 class="class-name mb-1">@cls.ClassName</h5>
+                                            <small class="class-badge-text">@cls.ClassId</small>
+                                        </div>
+
+                                        <div class="class-info mt-3">
+                                            <div class="info-row">
+                                                <i class="bi bi-clock"></i>
+                                                <span>@(cls.StartTime.HasValue && cls.EndTime.HasValue ? $"{cls.StartTime.Value:hh\\:mm} - {cls.EndTime.Value:hh\\:mm}" : "Not scheduled")</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <i class="bi bi-geo-alt"></i>
+                                                <span>@(cls.RoomNumber ?? "No venue")</span>
+                                            </div>
+                                            <div class="info-row">
+                                                <i class="bi bi-people"></i>
+                                                <span>@cls.Enrollments.Count students</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="class-status mt-3">
+                                            @if (isFutureDate)
+                                            {
+                                                <span class="badge bg-info">
+                                                    <i class="bi bi-calendar-event"></i> Future Date
+                                                </span>
+                                            }
+                                            else if (isActive)
+                                            {
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-circle-fill blink"></i> Active Now
+                                                </span>
+                                            }
+                                            else if (isPast)
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-check-circle"></i> Ended
+                                                </span>
+                                            }
+                                            else if (isUpcoming)
+                                            {
+                                                <span class="badge bg-info">
+                                                    <i class="bi bi-clock"></i> Upcoming
+                                                </span>
+                                            }
+                                            else if (selectedDate.Date < DateTime.Today)
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-calendar-x"></i> Past Date
+                                                </span>
+                                            }
+                                        </div>
+
+                                        @if (hasSession)
+                                        {
+                                            <div class="pin-indicator">
+                                                <i class="bi bi-shield-check text-success"></i>
+                                                <span>PIN Generated</span>
+                                            </div>
+                                        }
+
+                                        <a href="@Url.Action("TeachAttendanceClassDetail", "Teacher", new { id = cls.ClassId, selectedDate = selectedDate.ToString("yyyy-MM-dd") })" 
+                                           class="btn btn-primary w-100 mt-3">
+                                            @if (hasSession)
+                                            {
+                                                <i class="bi bi-eye"></i> <text>View PIN & QR</text>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-key"></i> <text>View Details</text>
+                                            }
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar-x" style="font-size: 3rem;"></i>
+                            <p class="mt-3 mb-2"><strong>No classes scheduled for @selectedDay</strong></p>
+                            <p class="small">Try selecting a different date or check the class schedule.</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                        <p class="mt-3">No classes found. Please add classes first.</p>
+                        <a href="/Teacher/TeachClasses" class="btn btn-primary btn-sm mt-2">
+                            <i class="bi bi-calendar-week"></i> View Classes
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Styles for Class Cards -->
 <style>
-    .class-btn {
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
+    .class-card-vertical {
         background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1.5rem;
         transition: all 0.3s ease;
-        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
 
-    .class-btn:hover {
-        border-color: #0d6efd;
-        background: #f8f9fa;
+    .class-card-vertical:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
     }
 
-    .class-btn.selected {
-        border-color: #0d6efd;
-        background: #0d6efd;
-        color: white;
+    .class-card-vertical.active-now {
+        border-color: #198754;
+        background: rgba(25, 135, 84, 0.02);
     }
 
-    .class-btn.selected h6,
-    .class-btn.selected small {
-        color: white;
+    .class-card-vertical.has-pin {
+        border: 2px solid #198754;
+        background: rgba(25, 135, 84, 0.02);
     }
 
-    .class-btn.selected .bi-check-circle {
-        display: inline !important;
-        color: white;
+    .pin-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(25, 135, 84, 0.1);
+        border-radius: 4px;
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #198754;
+    }
+
+    .pin-indicator i {
+        font-size: 1rem;
+    }
+
+    .class-header {
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 0.75rem;
+    }
+
+    .class-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #222;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .class-badge-text {
+        color: #999;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .class-info {
+        flex-grow: 1;
+    }
+
+    .info-row {
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 0.6rem;
+        line-height: 1.4;
+    }
+
+    .info-row i {
+        margin-right: 0.6rem;
+        color: #0d6efd;
+        width: 16px;
+        text-align: center;
+    }
+
+    .class-status {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .class-status .badge {
+        display: inline-block;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .blink {
+        animation: blink 1s infinite;
+    }
+
+    @@keyframes blink {
+        0%, 50%, 100% { opacity: 1; }
+        25%, 75% { opacity: 0.5; }
+    }
+
+    .btn-primary {
+        font-weight: 600;
+        font-size: 0.95rem;
+        padding: 0.6rem 1rem;
+    }
+
+    /* Dark mode styles for class cards */
+    [data-theme="dark"] .class-card-vertical {
+        background: linear-gradient(135deg, #2d2d2d 0%, #252525 100%) !important;
+        border: 1px solid #383838 !important;
+        color: #e0e0e0 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    [data-theme="dark"] .class-card-vertical:hover {
+        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.2) !important;
+        border-color: #0d6efd !important;
+        transform: translateY(-2px) !important;
+    }
+
+    [data-theme="dark"] .class-header {
+        border-bottom: 1px solid #383838 !important;
+    }
+
+    [data-theme="dark"] .class-name {
+        color: #f0f0f0 !important;
+    }
+
+    [data-theme="dark"] .class-badge-text {
+        color: #a8a8a8 !important;
+    }
+
+    [data-theme="dark"] .class-info {
+        color: #e0e0e0 !important;
+    }
+
+    [data-theme="dark"] .class-info .info-row {
+        color: #d0d0d0 !important;
+    }
+
+    [data-theme="dark"] .class-info .info-row i {
+        color: #64b5f6 !important;
+    }
+
+    [data-theme="dark"] .class-status .badge {
+        opacity: 0.95;
     }
 </style>
 
+<!-- Real-time Date Change Script -->
 <script>
-    // Data from server - simplified to avoid circular references
-    const classesData = @Html.Raw(Json.Serialize(
-        ((List<Class>)ViewBag.Classes ?? new List<Class>()).Select(c => new {
-            classId = c.ClassId,
-            className = c.ClassName,
-            day = c.Day,
-            startTime = c.StartTime?.ToString(@"hh\:mm"),
-            endTime = c.EndTime?.ToString(@"hh\:mm"),
-            roomNumber = c.RoomNumber,
-            enrollments = (c.Enrollments ?? new List<Enrollment>()).Select(e => new {
-                student = new {
-                    studentId = e.Student?.StudentId,
-                    user = new { fullName = e.Student?.User?.FullName }
-                }
-            }).ToList()
-        }).ToList()
-    ));
-    
-    let selectedClass = null;
-    const selectedDate = '@ViewBag.SelectedDate';
-    const dayOfWeek = '@ViewBag.DayOfWeek';
-    
-    // Handle date change - reload page with new date
-    document.getElementById('dateSelector').addEventListener('change', function() {
-        const selectedDate = this.value;
-        window.location.href = '@Url.Action("TeachMarkAttendance")' + '?selectedDate=' + selectedDate;
-    });
-
-    // Class selection
-    document.querySelectorAll('.class-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remove selected class from all buttons
-            document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('selected'));
-            
-            // Add selected to clicked button
-            this.classList.add('selected');
-            
-            const classId = this.getAttribute('data-class-id');
-            const className = this.getAttribute('data-class-name');
-            
-            // Find class data
-            selectedClass = classesData.find(c => c.classId === classId);
-            
-            if (selectedClass) {
-                // Update selected class display
-                document.getElementById('selectedClassName').value = selectedClass.className;
-                document.getElementById('attendanceDate').value = selectedDate;
-                document.getElementById('selectedDayOfWeek').value = dayOfWeek;
-                document.getElementById('selectionInfo').style.display = 'flex';
-                
-                // Show table and summary
-                document.getElementById('attendanceTableContainer').style.display = 'block';
-                document.getElementById('noClassMessage').style.display = 'none';
-                document.getElementById('summaryContainer').style.display = 'flex';
-                document.getElementById('actionsContainer').style.display = 'block';
-                
-                // Populate student table
-                const tbody = document.getElementById('studentTableBody');
-                tbody.innerHTML = '';
-                
-                if (selectedClass.enrollments && selectedClass.enrollments.length > 0) {
-                    selectedClass.enrollments.forEach((enrollment, index) => {
-                        const student = enrollment.student;
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${student.studentId}</td>
-                            <td>${student.user?.fullName || 'Unknown'}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <input type="radio" class="btn-check attendance-status" 
-                                           name="status_${index}" id="present_${index}" 
-                                           value="Present" checked data-index="${index}" />
-                                    <label class="btn btn-outline-success" for="present_${index}">Present</label>
-                                    
-                                    <input type="radio" class="btn-check attendance-status" 
-                                           name="status_${index}" id="absent_${index}" 
-                                           value="Absent" data-index="${index}" />
-                                    <label class="btn btn-outline-danger" for="absent_${index}">Absent</label>
-                                    
-                                    <input type="radio" class="btn-check attendance-status" 
-                                           name="status_${index}" id="late_${index}" 
-                                           value="Late" data-index="${index}" />
-                                    <label class="btn btn-outline-warning" for="late_${index}">Late</label>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="text" class="form-control form-control-sm remarks-input" 
-                                       placeholder="Notes..." data-index="${index}" />
-                            </td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                    
-                    // Add event listeners for status changes
-                    document.querySelectorAll('.attendance-status').forEach(radio => {
-                        radio.addEventListener('change', updateSummary);
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No students enrolled in this class</td></tr>';
-                }
-                
-                updateSummary();
-                captureInitialState();
-            }
-        });
-    });
-
-    // Update summary statistics
-    function updateSummary() {
-        const radios = document.querySelectorAll('.attendance-status');
-        let present = 0, absent = 0, late = 0;
-        
-        radios.forEach(radio => {
-            if (radio.checked) {
-                if (radio.value === 'Present') present++;
-                else if (radio.value === 'Absent') absent++;
-                else if (radio.value === 'Late') late++;
-            }
-        });
-        
-        const total = present + absent + late;
-        const rate = total > 0 ? Math.round((present / total) * 100) : 0;
-        
-        document.getElementById('presentCount').textContent = present;
-        document.getElementById('absentCount').textContent = absent;
-        document.getElementById('lateCount').textContent = late;
-        document.getElementById('attendanceRate').textContent = rate + '%';
+document.getElementById('selectedDate').addEventListener('change', function() {
+    const selectedDate = this.value;
+    if (selectedDate) {
+        window.location.href = `@Url.Action("TeachMarkAttendance")` + '?selectedDate=' + selectedDate;
     }
-
-    // Store initial state when class is selected
-    let initialState = null;
-    
-    function captureInitialState() {
-        initialState = {
-            statuses: [],
-            remarks: []
-        };
-        
-        document.querySelectorAll('.attendance-status:checked').forEach(radio => {
-            initialState.statuses.push(radio.value);
-        });
-        
-        document.querySelectorAll('.remarks-input').forEach(input => {
-            initialState.remarks.push(input.value);
-        });
-    }
-    
-    function hasChanges() {
-        if (!initialState) return false;
-        
-        const currentStatuses = [];
-        const currentRemarks = [];
-        
-        document.querySelectorAll('.attendance-status:checked').forEach(radio => {
-            currentStatuses.push(radio.value);
-        });
-        
-        document.querySelectorAll('.remarks-input').forEach(input => {
-            currentRemarks.push(input.value);
-        });
-        
-        // Compare statuses
-        if (JSON.stringify(initialState.statuses) !== JSON.stringify(currentStatuses)) {
-            return true;
-        }
-        
-        // Compare remarks
-        if (JSON.stringify(initialState.remarks) !== JSON.stringify(currentRemarks)) {
-            return true;
-        }
-        
-        return false;
-    }
-
-    // Reset button
-    document.getElementById('resetBtn').addEventListener('click', function() {
-        if (!selectedClass) {
-            alert('Please select a class first');
-            return;
-        }
-        
-        if (confirm('Are you sure you want to reset all attendance to defaults?')) {
-            document.querySelectorAll('.attendance-status').forEach((radio, index) => {
-                if (radio.value === 'Present') {
-                    radio.checked = true;
-                }
-            });
-            document.querySelectorAll('.remarks-input').forEach(input => {
-                input.value = '';
-            });
-            updateSummary();
-            captureInitialState();
-            alert('Attendance reset to defaults');
-        }
-    });
-
-    // Submit button
-    document.getElementById('submitBtn').addEventListener('click', function() {
-        if (!selectedClass) {
-            alert('Please select a class');
-            return;
-        }
-        
-        if (!hasChanges()) {
-            alert('No changes have been made to submit');
-            return;
-        }
-        
-        const attendanceData = [];
-        
-        document.querySelectorAll('tbody tr').forEach((row, index) => {
-            const statusRadio = row.querySelector('.attendance-status:checked');
-            const remarks = row.querySelector('.remarks-input').value;
-            
-            if (statusRadio && selectedClass.enrollments[index]) {
-                const enrollment = selectedClass.enrollments[index];
-                attendanceData.push({
-                    studentId: enrollment.student.studentId,
-                    status: statusRadio.value,
-                    remarks: remarks,
-                    date: selectedDate
-                });
-            }
-        });
-        
-        // TODO: Send to server endpoint
-        console.log('Attendance data:', attendanceData);
-        alert('Attendance submitted successfully!');
-        captureInitialState(); // Reset to current state after submission
-    });
+});
 </script>

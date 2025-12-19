@@ -41,9 +41,26 @@
     <div class="col-12">
         <div class="dashboard-card profile-header">
             <div class="profile-banner">
-                <div class="profile-avatar-large">
-                    <i class="bi bi-person-fill"></i>
-                </div>
+                @{
+                    var profilePictureUrl = Model.User?.ProfilePicture;
+                    var hasCustomPicture = !string.IsNullOrEmpty(profilePictureUrl) && 
+                                          !profilePictureUrl.StartsWith("/images/");
+                }
+                
+                @if (hasCustomPicture)
+                {
+                    <div class="profile-avatar-large" style="background: transparent; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                        <img src="@profilePictureUrl" 
+                             alt="@Model.User.FullName" 
+                             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;" />
+                    </div>
+                }
+                else
+                {
+                    <div class="profile-avatar-large">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                }
             </div>
             <div class="profile-info">
                 <div class="row align-items-center">
@@ -426,112 +443,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    .profile-header {
-        padding: 0;
-        overflow: hidden;
-    }
-
-    .profile-banner {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 40px 30px 30px;
-        text-align: center;
-    }
-
-    .profile-avatar-large {
-        width: 120px;
-        height: 120px;
-        background: white;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 4rem;
-        color: #667eea;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    .profile-info {
-        padding: 30px;
-        background: white;
-    }
-
-    .profile-quick-stats {
-        display: flex;
-        gap: 30px;
-        justify-content: flex-end;
-    }
-
-    .quick-stat-item {
-        text-align: center;
-    }
-
-    .quick-stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        line-height: 1;
-        margin-bottom: 5px;
-    }
-
-    .quick-stat-label {
-        font-size: 0.875rem;
-        color: #666;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .detail-list {
-        padding: 0;
-    }
-
-    .detail-item {
-        padding: 15px 20px;
-        border-bottom: 1px solid #f0f0f0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .detail-item:last-child {
-        border-bottom: none;
-    }
-
-    .detail-label {
-        font-weight: 600;
-        color: #666;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .detail-label i {
-        color: #999;
-    }
-
-    .detail-value {
-        text-align: right;
-        color: #333;
-        flex: 1;
-        max-width: 60%;
-        word-wrap: break-word;
-    }
-
-    @@media (max-width: 768px) {
-        .profile-quick-stats {
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .detail-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-        }
-
-        .detail-value {
-            text-align: left;
-            max-width: 100%;
-        }
-    }
-</style>

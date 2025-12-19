@@ -8,7 +8,7 @@
     var totalAttendance = ViewBag.TotalAttendance ?? 0;
     var presentCount = ViewBag.PresentCount ?? 0;
     var absentCount = ViewBag.AbsentCount ?? 0;
-    var lateCount = ViewBag.LateCount ?? 0;
+    var leaveCount = ViewBag.LeaveCount ?? 0;
     var attendanceRate = ViewBag.AttendanceRate ?? 0;
     var yearsSinceEnrollment = ViewBag.YearsSinceEnrollment ?? 0;
     var age = ViewBag.Age ?? 0;
@@ -159,9 +159,9 @@
         <div class="stat-card" style="border-left-color: #ffc107;">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="stat-label">Late</div>
-                    <div class="stat-value text-warning">@lateCount</div>
-                    <small class="text-muted">Days late</small>
+                    <div class="stat-label">Leave</div>
+                    <div class="stat-value text-info">@leaveCount</div>
+                    <small class="text-muted">Days on leave</small>
                 </div>
                 <div class="card-icon yellow">
                     <i class="bi bi-clock"></i>
@@ -265,31 +265,31 @@
                 <div class="detail-list">
                     <div class="detail-item">
                         <div class="detail-label">
-                            <i class="bi bi-person"></i>
-                            Parent Name
+                            <i class="bi bi-person-badge"></i>
+                            Parent Full Name
                         </div>
-                        <div class="detail-value">@Model.Parent.User.FullName</div>
+                        <div class="detail-value">@(Model.Parent.User.FullName)</div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">
                             <i class="bi bi-envelope"></i>
-                            Email
+                            Email Address
                         </div>
-                        <div class="detail-value">@Model.Parent.User.Email</div>
+                        <div class="detail-value">@(Model.Parent.User.Email)</div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">
                             <i class="bi bi-telephone"></i>
-                            Phone
+                            Phone Number
                         </div>
-                        <div class="detail-value">@(Model.Parent.PhoneNumber ?? "Not provided")</div>
+                        <div class="detail-value">@(Model.Parent.User.PhoneNumber ?? "Not provided")</div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">
-                            <i class="bi bi-tag"></i>
-                            Parent ID
+                            <i class="bi bi-geo-alt"></i>
+                            Address
                         </div>
-                        <div class="detail-value">@Model.Parent.ParentId</div>
+                        <div class="detail-value">@(Model.Parent.Address ?? "Not provided")</div>
                     </div>
                 </div>
                 <div class="mt-3 text-center">
@@ -417,9 +417,9 @@
                         </div>
                     </div>
                     <div class="col-4">
-                        <div class="attendance-pie-chart late">
-                            <div class="percentage">@Math.Round((decimal)lateCount / totalAttendance * 100, 1)%</div>
-                            <div class="label">Late</div>
+                        <div class="attendance-pie-chart leave">
+                            <div class="percentage">@Math.Round((decimal)leaveCount / totalAttendance * 100, 1)%</div>
+                            <div class="label">Leave</div>
                         </div>
                     </div>
                 </div>
@@ -473,60 +473,3 @@
         </div>
     </div>
 </div>
-
-
-<style>
-    .profile-avatar-large.male {
-        color: #0d6efd !important;
-    }
-
-    .profile-avatar-large.female {
-        color: #ec4899 !important;
-    }
-
-    .attendance-pie-chart {
-        padding: 20px;
-        border-radius: 12px;
-        margin: 10px;
-    }
-
-    .attendance-pie-chart.present {
-        background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
-        border: 2px solid #198754;
-    }
-
-    .attendance-pie-chart.absent {
-        background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
-        border: 2px solid #dc3545;
-    }
-
-    .attendance-pie-chart.late {
-        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
-        border: 2px solid #ffc107;
-    }
-
-    .attendance-pie-chart .percentage {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-
-    .attendance-pie-chart.present .percentage {
-        color: #198754;
-    }
-
-    .attendance-pie-chart.absent .percentage {
-        color: #dc3545;
-    }
-
-    .attendance-pie-chart.late .percentage {
-        color: #ffc107;
-    }
-
-    .attendance-pie-chart .label {
-        font-size: 0.875rem;
-        color: #666;
-        text-transform: uppercase;
-        font-weight: 600;
-    }
-</style>

@@ -17,7 +17,7 @@
 <div class="row">
     <div class="col-12">
         <div class="dashboard-card bg-white p-4 rounded shadow-sm">
-            <form asp-action="StudentCreate" method="post" id="addStudentForm">
+            <form asp-action="StudentCreate" method="post" id="addStudentForm" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 
                 @if (!ViewData.ModelState.IsValid)
@@ -35,9 +35,65 @@
                 }
 
                 <!-- Student Personal Information -->
-                <h6 class="text-muted mb-3 border-bottom pb-2">
-                    <i class="bi bi-person-fill text-danger me-2"></i>Student Personal Information
+                <h6 class="text-danger mb-3 border-bottom pb-2">
+                    <i class="bi bi-person-fill me-2"></i>Student Personal Information
                 </h6>
+
+                <!-- Profile Picture Section -->
+                <div class="row mb-4">
+                    <div class="col-md-4 text-center">
+                        <div class="profile-picture-container">
+                            <div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 200px; height: 200px;">
+                                <i class="bi bi-person-circle text-secondary" style="font-size: 10rem;"></i>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <label for="profilePicture" class="btn btn-danger">
+                                    <i class="bi bi-upload"></i> Choose Photo
+                                </label>
+                                <input type="file" 
+                                       id="profilePicture" 
+                                       name="profilePicture"
+                                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                                       style="display: none;">
+                                
+                                <button type="button" id="btnWebcam" class="btn btn-outline-primary">
+                                    <i class="bi bi-camera-fill"></i> Take Photo
+                                </button>
+                                
+                                <button type="button" id="btnEditPhoto" class="btn btn-outline-success" style="display: none;">
+                                    <i class="bi bi-crop"></i> Edit Photo
+                                </button>
+                                
+                                <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-danger" style="display: none;">
+                                    <i class="bi bi-x"></i> Remove
+                                </button>
+                            </div>
+                            
+                            <small class="text-muted d-block mt-3">
+                                <i class="bi bi-info-circle"></i> Max size: 5 MB<br>
+                                Formats: JPG, PNG, GIF, WEBP
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="alert alert-info border-0">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-lightbulb-fill me-2"></i>Profile Picture Guidelines
+                            </h6>
+                            <ul class="mb-0">
+                                <li>Upload a clear photo of the student</li>
+                                <li>Use your webcam to take a photo directly</li>
+                                <li>Click "Edit Photo" to crop, rotate, and adjust your image</li>
+                                <li>Supported formats: JPG, PNG, GIF, WEBP</li>
+                                <li>Maximum file size: 5 MB</li>
+                                <li>If not uploaded, a default icon will be used</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row">
                     <!-- Full Name -->
                     <div class="col-md-6 mb-3">
@@ -76,13 +132,7 @@
                             <option value="Female" selected="@(ViewBag.Gender == "Female")">Female</option>
                         </select>
                     </div>
-                </div>
 
-                <!-- User Account Settings -->
-                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
-                    <i class="bi bi-gear-fill text-danger me-2"></i>Account Settings
-                </h6>
-                <div class="row">
                     <!-- Status -->
                     <div class="col-md-6 mb-3">
                         <label for="status" class="form-label">Account Status <span class="text-danger">*</span></label>
@@ -93,34 +143,41 @@
                             <option value="withdraw" selected="@(ViewBag.Status == "withdraw")">Withdraw</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- User Account Settings -->
+                <h6 class="text-danger mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-gear-fill me-2"></i>Account Settings
+                </h6>
+                <div class="row">
                     <!-- Default Password Info -->
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <div class="alert alert-info mb-0">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <small><strong>Automatic Password:</strong> A secure temporary password will be generated and sent to the parent's email.</small>
+                            <i class="bi bi-lock-fill me-2"></i>
+                            <strong>Automatic Password:</strong> A secure temporary password will be generated and sent to the student's email address.
                         </div>
                     </div>
                 </div>
 
                 <!-- Parent Information -->
-                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
-                    <i class="bi bi-people-fill text-danger me-2"></i>Parent/Guardian Information
+                <h6 class="text-danger mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-people-fill me-2"></i>Parent/Guardian Information <span class="text-danger">*</span>
                 </h6>
 
                 <div class="row mb-3">
                     <div class="col-md-12">
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <strong>Parent Options:</strong> You can either select an existing parent from the dropdown below, search for a parent by email, or create a new parent by filling in all the fields.
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Parent Required:</strong> Every student must have a parent/guardian. You can either select an existing parent from the dropdown below, search for a parent by email, or create a new parent by filling in all the required fields.
                         </div>
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label class="form-label">Select Existing Parent</label>
+                        <label class="form-label">Select Existing Parent <span class="text-danger">*</span></label>
                         <select id="parentSelect" name="parentId" class="form-select">
-                            <option value="">-- Create New Parent or Search --</option>
+                            <option value="">-- Select or Create New Parent --</option>
                             @if (ViewBag.Parents != null)
                             {
                                 @foreach (var parent in ViewBag.Parents)
@@ -128,7 +185,7 @@
                                     <option value="@parent.ParentId" 
                                             data-fullname="@parent.User.FullName"
                                             data-email="@parent.User.Email" 
-                                            data-phone="@(parent.PhoneNumber ?? "")"
+                                            data-phone="@(parent.User.PhoneNumber ?? "")"
                                             data-address="@(parent.Address ?? "")"
                                             data-dob="@(parent.User.DateOfBirth?.ToString("yyyy-MM-dd") ?? "")"
                                             data-gender="@(parent.User.Gender ?? "")"
@@ -161,9 +218,65 @@
                         <strong>Creating New Parent:</strong> Fill in all the details below. A temporary password will be automatically generated and sent to the parent's email.
                     </div>
                     
-                    <div class="alert alert-success mb-3" id="existingParentIndicator" style="display: none;">
+                    <div class="alert alert-success mb-3" id="existingParentIndicator" style="display: none;
+                        ">
                         <i class="bi bi-check-circle me-2"></i>
                         <strong>Using Existing Parent:</strong> The selected parent's information is shown below (read-only).
+                    </div>
+
+                    <!-- Parent Profile Picture Section -->
+                    <h6 class="text-muted mb-3 mt-3 border-bottom pb-2">
+                        <i class="bi bi-person-badge-fill me-2"></i>Parent Profile Picture (Optional)
+                    </h6>
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <div class="profile-picture-container">
+                                <div id="parentProfilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light" style="width: 150px; height: 150px;">
+                                    <i class="bi bi-person-circle text-secondary" style="font-size: 7.5rem;"></i>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <label for="parentProfilePicture" class="btn btn-outline-warning btn-sm">
+                                        <i class="bi bi-upload"></i> Choose Parent Photo
+                                    </label>
+                                    <input type="file" 
+                                           id="parentProfilePicture" 
+                                           name="parentProfilePicture"
+                                           accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                                           style="display: none;">
+                                    
+                                    <button type="button" id="btnParentWebcam" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-camera-fill"></i> Take Photo
+                                    </button>
+                                    
+                                    <button type="button" id="btnEditParentPhoto" class="btn btn-outline-success btn-sm" style="display: none;">
+                                        <i class="bi bi-crop"></i> Edit Photo
+                                    </button>
+                                    
+                                    <button type="button" id="clearParentProfilePictureBtn" class="btn btn-outline-secondary btn-sm" style="display: none;">
+                                        <i class="bi bi-x"></i> Remove
+                                    </button>
+                                </div>
+                                
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-info-circle"></i> Max 5 MB
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <div class="alert alert-warning border-0">
+                                <h6 class="alert-heading">
+                                    <i class="bi bi-lightbulb-fill me-2"></i>Parent Profile Picture (Optional)
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li>Upload a photo for the parent/guardian account</li>
+                                    <li>This is <strong>optional</strong> - if not uploaded, default icon will be used</li>
+                                    <li>Max size: 5 MB | Formats: JPG, PNG, GIF, WEBP</li>
+                                    <li>Only applies when creating a <strong>new parent</strong> account</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Basic Information -->
@@ -234,8 +347,8 @@
                 </div>
 
                 <!-- Academic Details -->
-                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
-                    <i class="bi bi-book-fill text-danger me-2"></i>Academic Details
+                <h6 class="text-danger mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-book-fill me-2"></i>Academic Details
                 </h6>
                 <div class="row">
                     <!-- Classes (Multiple Selection) -->
@@ -308,7 +421,78 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
+    <!-- Cropper.js CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+    <!-- Webcam Capture Script -->
+    <script src="~/js/webcam-capture.js"></script>
+
+    <!-- Image Cropper Module -->
+    <script src="~/js/image-cropper.js"></script>
+
+    <!-- Inject Modals -->
+    <div id="imageCropperModals"></div>
     <script>
+        document.getElementById('imageCropperModals').innerHTML = ImageCropper.getModalHTML();
+    </script>
+
+    <script>
+        // ==================== INITIALIZE IMAGE CROPPERS ====================
+        // Initialize ImageCropper for student
+        ImageCropper.init({
+            targetId: 'student',
+            previewElementId: 'profilePicturePreview',
+            fileInputId: 'profilePicture',
+            clearButtonId: 'clearProfilePictureBtn',
+            editButtonId: 'btnEditPhoto',
+            previewWidth: 200,
+            previewHeight: 200
+        });
+
+        // Initialize ImageCropper for parent
+        ImageCropper.init({
+            targetId: 'parent',
+            previewElementId: 'parentProfilePicturePreview',
+            fileInputId: 'parentProfilePicture',
+            clearButtonId: 'clearParentProfilePictureBtn',
+            editButtonId: 'btnEditParentPhoto',
+            previewWidth: 150,
+            previewHeight: 150
+        });
+
+        // ==================== WEBCAM FUNCTIONALITY ====================
+        (function() {
+            // Initialize webcam capture for student
+            WebcamCapture.init('profilePicturePreview', 'profilePicture', function(file) {
+                console.log('Student photo captured from webcam:', file.name);
+                document.getElementById('clearProfilePictureBtn').style.display = 'block';
+                document.getElementById('btnEditPhoto').style.display = 'block';
+            });
+
+            const webcamBtn = document.getElementById('btnWebcam');
+            if (webcamBtn) {
+                webcamBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal();
+                });
+            }
+
+            // Initialize webcam capture for parent
+            WebcamCapture.init('parentProfilePicturePreview', 'parentProfilePicture', function(file) {
+                console.log('Parent photo captured from webcam:', file.name);
+                document.getElementById('clearParentProfilePictureBtn').style.display = 'block';
+                document.getElementById('btnEditParentPhoto').style.display = 'block';
+            }, 'parentWebcamModal');
+
+            const parentWebcamBtn = document.getElementById('btnParentWebcam');
+            if (parentWebcamBtn) {
+                parentWebcamBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal('parentWebcamModal');
+                });
+            }
+        })();
+
+        // ==================== PARENT SEARCH AND CLASS SELECTION ====================
         (function() {
             const btnSearch = document.getElementById('btnSearchParent');
             const emailInput = document.getElementById('parentSearchEmail');
@@ -321,7 +505,6 @@
             const newParentIndicator = document.getElementById('newParentIndicator');
             const existingParentIndicator = document.getElementById('existingParentIndicator');
 
-            // Parent input fields - matching database columns
             const parentFullName = document.getElementById('parentFullName');
             const parentEmail = document.getElementById('parentEmail');
             const parentPhone = document.getElementById('parentPhone');
@@ -329,23 +512,16 @@
             const parentDateOfBirth = document.getElementById('parentDateOfBirth');
             const parentGender = document.getElementById('parentGender');
 
-            // Required field indicators
             const parentNameRequired = document.getElementById('parentNameRequired');
             const parentEmailRequired = document.getElementById('parentEmailRequired');
 
-            // Show parent form by default (user can edit or fill)
             parentFields.style.display = 'block';
 
-            // Class selection handler
             if (classSelect) {
                 classSelect.addEventListener('change', function() {
                     updateSelectedClassesList();
                 });
-                
-                // Initial update
                 updateSelectedClassesList();
-                
-                // Add visual styling to options based on capacity
                 updateClassOptionsStyles();
             }
 
@@ -356,12 +532,12 @@
                     const isFull = availableSlots <= 0;
                     
                     if (isFull) {
-                        option.style.color = '#dc3545'; // Red for full
+                        option.style.color = '#dc3545';
                         option.style.fontWeight = 'bold';
                     } else if (availableSlots <= 5) {
-                        option.style.color = '#ffc107'; // Yellow for limited
+                        option.style.color = '#ffc107';
                     } else {
-                        option.style.color = '#198754'; // Green for available
+                        option.style.color = '#198754';
                     }
                 });
             }
@@ -397,7 +573,6 @@
                 }
             }
 
-            // Function to set parent fields (editable or readonly) - now includes all fields
             function setParentFields(data, isExisting) {
                 parentFullName.value = data.fullName || '';
                 parentEmail.value = data.email || '';
@@ -407,7 +582,6 @@
                 parentGender.value = data.gender || '';
 
                 if (isExisting) {
-                    // Existing parent - make fields readonly
                     parentFullName.setAttribute('readonly', 'readonly');
                     parentEmail.setAttribute('readonly', 'readonly');
                     parentPhone.setAttribute('readonly', 'readonly');
@@ -427,7 +601,6 @@
                     parentNameRequired.style.display = 'none';
                     parentEmailRequired.style.display = 'none';
                 } else {
-                    // New parent - make fields editable
                     parentFullName.removeAttribute('readonly');
                     parentEmail.removeAttribute('readonly');
                     parentPhone.removeAttribute('readonly');
@@ -445,7 +618,6 @@
                     newParentIndicator.style.display = 'block';
                     existingParentIndicator.style.display = 'none';
                     
-                    // Show required indicators if creating new parent with data
                     if (data.fullName || data.email) {
                         parentNameRequired.style.display = 'inline';
                         parentEmailRequired.style.display = 'inline';
@@ -453,7 +625,6 @@
                 }
             }
 
-            // Function to clear parent fields
             function clearParentFields() {
                 parentFullName.value = '';
                 parentEmail.value = '';
@@ -483,19 +654,16 @@
                 searchResult.innerHTML = '';
             }
 
-            // Parent dropdown change handler
             parentSelect.addEventListener('change', async function() {
                 const selectedOption = parentSelect.options[parentSelect.selectedIndex];
                 const parentId = parentSelect.value;
 
                 if (!parentId) {
-                    // No selection - clear and allow new parent creation
                     clearParentFields();
                     emailInput.value = '';
                     return;
                 }
 
-                // Get data from option data attributes (faster than AJAX)
                 const fullName = selectedOption.getAttribute('data-fullname');
                 const email = selectedOption.getAttribute('data-email');
                 const phone = selectedOption.getAttribute('data-phone');
@@ -504,11 +672,9 @@
                 const gender = selectedOption.getAttribute('data-gender');
 
                 if (fullName && email) {
-                    // Use data attributes
                     setParentFields({ fullName, email, phone, address, dob, gender }, true);
                     searchResult.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Existing parent selected';
                 } else {
-                    // Fallback to AJAX if data attributes not available
                     try {
                         const resp = await fetch('/Admin/GetParentById?id=' + encodeURIComponent(parentId));
                         if (!resp.ok) throw new Error('Network error');
@@ -524,11 +690,9 @@
                     }
                 }
 
-                // Clear search input
                 emailInput.value = '';
             });
 
-            // Parent search functionality
             btnSearch.addEventListener('click', async function() {
                 const email = emailInput.value.trim();
 
@@ -545,7 +709,6 @@
                     const data = await resp.json();
 
                     if (data && data.success && data.parentId) {
-                        // Parent found - select in dropdown if exists, or add if not
                         let optionExists = false;
                         for (let i = 0; i < parentSelect.options.length; i++) {
                             if (parentSelect.options[i].value === data.parentId) {
@@ -556,7 +719,6 @@
                         }
 
                         if (!optionExists) {
-                            // Add to dropdown with all data attributes
                             const option = document.createElement('option');
                             option.value = data.parentId;
                             option.textContent = `${data.fullName} (${data.email})`;
@@ -570,11 +732,9 @@
                             parentSelect.appendChild(option);
                         }
 
-                        // Fill and lock fields
                         setParentFields(data, true);
                         searchResult.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>Parent found and selected!';
                     } else {
-                        // Not found - prepare for new parent creation
                         parentSelect.value = '';
                         setParentFields({ fullName: '', email: email, phone: '', address: '', dob: '', gender: '' }, false);
                         searchResult.innerHTML = '<i class="bi bi-info-circle text-info me-1"></i>Parent not found. You can create a new parent account by filling in the details below.';
@@ -585,7 +745,6 @@
                 }
             });
 
-            // Allow pressing Enter in search field
             emailInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -593,7 +752,6 @@
                 }
             });
 
-            // Detect manual changes to parent fields to show new parent indicator
             [parentFullName, parentEmail, parentPhone, parentAddress].forEach(field => {
                 field.addEventListener('input', function() {
                     if (!field.hasAttribute('readonly')) {
@@ -608,7 +766,6 @@
                 });
             });
 
-            // Clear parent selection when manually editing email field
             parentEmail.addEventListener('focus', function() {
                 if (!parentEmail.hasAttribute('readonly') && parentSelect.value !== '') {
                     if (confirm('Do you want to clear the selected parent and create a new one instead?')) {
@@ -619,4 +776,4 @@
             });
         })();
     </script>
-}
+}}}

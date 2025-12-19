@@ -112,6 +112,12 @@
                         <i class="bi bi-clipboard-data" style="font-size: 2.5rem; color: white;"></i>
                         <h3 class="mt-2 mb-0 text-white">@ViewBag.AttendanceToday</h3>
                         <small class="text-white">Total Records</small>
+                        @if (ViewBag.AttendanceToday > 0)
+                        {
+                            <div class="text-white mt-1" style="opacity: 0%">
+                              <strong> 1 </strong>
+                            </div>
+                        }
                     </div>
                 </div>
 
@@ -145,16 +151,16 @@
                     </div>
                 </div>
 
-                <!-- Late -->
+                <!-- Leave -->
                 <div class="col-lg-3 col-md-6">
-                    <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #00d9ff 0%, #1ed3f3 100%);">
                         <i class="bi bi-clock-fill" style="font-size: 2.5rem; color: white;"></i>
-                        <h3 class="mt-2 mb-0 text-white">@ViewBag.LateToday</h3>
-                        <small class="text-white">Late</small>
+                        <h3 class="mt-2 mb-0 text-white">@ViewBag.LeaveToday</h3>
+                        <small class="text-white">Leave</small>
                         @if (ViewBag.AttendanceToday > 0)
                         {
                             <div class="text-white mt-1">
-                                <strong>@(((decimal)ViewBag.LateToday / ViewBag.AttendanceToday * 100).ToString("F1"))%</strong>
+                                <strong>@(((decimal)(ViewBag.LeaveToday ?? 0) / ViewBag.AttendanceToday * 100).ToString("F1"))%</strong>
                             </div>
                         }
                     </div>
@@ -228,14 +234,14 @@
                                             {
                                                 "present" => "success",
                                                 "absent" => "danger",
-                                                "late" => "warning",
+                                                "leave" => "info",
                                                 _ => "secondary"
                                             };
                                             var statusIcon = attendance.Status?.ToLower() switch
                                             {
                                                 "present" => "bi-check-circle-fill",
                                                 "absent" => "bi-x-circle-fill",
-                                                "late" => "bi-clock-fill",
+                                                "leave" => "bi-calendar-check-fill",
                                                 _ => "bi-question-circle-fill"
                                             };
                                         }
@@ -497,48 +503,3 @@
         setInterval(updateTime, 1000);
     </script>
 }
-
-<style>
-    /* Activity Timeline Styles */
-    .activity-timeline {
-        position: relative;
-        padding-left: 0;
-    }
-
-    .activity-item {
-        position: relative;
-        padding-left: 60px;
-        padding-bottom: 30px;
-        border-left: 2px solid #e9ecef;
-        margin-left: 20px;
-    }
-
-    .activity-item:last-child {
-        border-left: 0;
-        padding-bottom: 0;
-    }
-
-    .activity-icon {
-        position: absolute;
-        left: -20px;
-        top: 0;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.2rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .activity-content h6 {
-        font-weight: 600;
-        color: #2c3e50;
-    }
-
-    .activity-content p {
-        font-size: 0.9rem;
-    }
-</style>

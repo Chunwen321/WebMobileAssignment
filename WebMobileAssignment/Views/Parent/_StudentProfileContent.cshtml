@@ -1,181 +1,251 @@
 @{
     var student = ViewBag.Student as WebMobileAssignment.Models.Student;
     var totalAttendance = ViewBag.TotalAttendance ?? 0;
-    var presentCount = ViewBag.PresentCount ?? 0;
+ var presentCount = ViewBag.PresentCount ?? 0;
     var absentCount = ViewBag.AbsentCount ?? 0;
-    var lateCount = ViewBag.LateCount ?? 0;
-    var attendanceRate = ViewBag.AttendanceRate ?? 0;
+ var leaveCount = ViewBag.LeaveCount ?? 0;
+  var attendanceRate = ViewBag.AttendanceRate ?? 0;
+ 
+    // Pagination for enrolled classes
+    int classPage = ViewBag.ClassPage ?? 1;
+    int classPageSize = 2;
+    var allEnrollments = student?.Enrollments?.ToList() ?? new List<WebMobileAssignment.Models.Enrollment>();
+    var totalClasses = allEnrollments.Count;
+    var totalPages = (int)Math.Ceiling((double)totalClasses / classPageSize);
+    var pagedEnrollments = allEnrollments.Skip((classPage - 1) * classPageSize).Take(classPageSize).ToList();
 }
 
+<!-- Store student ID in a global variable for JavaScript access -->
+<script>
+    window.currentStudentId = '@student?.StudentId';
+    console.log('[_StudentProfileContent] Current student ID set to:', window.currentStudentId);
+</script>
+
 <div class="row g-3">
-    <!-- Profile Card -->
-    <div class="col-lg-4">
-     <div class="dashboard-card">
-  <div class="text-center mb-4">
-  <div class="user-avatar mx-auto mb-3" style="width: 120px; height: 120px; font-size: 3rem; background: #ffc107;">
-         <i class="bi bi-person-fill"></i>
+<!-- Profile Card -->
+    <div class="col-lg-4 d-flex">
+   <div class="dashboard-card w-100 d-flex flex-column" style="min-height: 600px;">
+   <div class="text-center mb-4">
+     @* Display actual profile picture or default avatar *@
+@if (!string.IsNullOrEmpty(student.User.ProfilePicture) && student.User.ProfilePicture != "/images/default-avatar.png")
+   {
+      <img src="@student.User.ProfilePicture" 
+         alt="@student.User.FullName" 
+ class="mx-auto mb-3" 
+ style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid #ffc107; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);">
+      }
+ else
+       {
+       <div class="user-avatar mx-auto mb-3" style="width: 120px; height: 120px; font-size: 3rem; background: #ffc107;">
+    <i class="bi bi-person-fill"></i>
+  </div>
+ }
+   <h4 class="mb-1">@student.User.FullName</h4>
+<span class="badge bg-@(student.User.IsActive ? "success" : "secondary")">
+   @(student.User.IsActive ? "Active" : "Inactive")
+ </span>
     </div>
- <h4 class="mb-1">@student.User.FullName</h4>
-                <span class="badge bg-@(student.User.IsActive ? "success" : "secondary")">
-     @(student.User.IsActive ? "Active" : "Inactive")
-        </span>
+
+    <div class="list-group list-group-flush flex-grow-1">
+    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+ <span class="text-muted"><i class="bi bi-calendar3 me-2"></i>Date of Birth</span>
+  <strong>
+  @if (student.DateOfBirth.HasValue)
+      {
+          @student.DateOfBirth.Value.ToString("MMM dd, yyyy")
+        }
+        else
+{
+   <text>Not set</text>
+   }
+  </strong>
+    </div>
+    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+     <span class="text-muted"><i class="bi bi-gender-ambiguous me-2"></i>Gender</span>
+   <strong>@(student.Gender ?? "Not specified")</strong>
+    </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+  <span class="text-muted"><i class="bi bi-phone me-2"></i>Phone</span>
+ <strong>@(student.User.PhoneNumber ?? "Not set")</strong>
+        </div>
+  <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+        <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email</span>
+        <strong>@student.User.Email</strong>
+   </div>
+          <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+        <span class="text-muted"><i class="bi bi-calendar-check me-2"></i>Enrollment Date</span>
+        <strong>
+             @if (student.EnrollmentDate.HasValue)
+          {
+          @student.EnrollmentDate.Value.ToString("MMM dd, yyyy")
+         }
+    else
+      {
+  <text>Not set</text>
+  }
+        </strong>
+   </div>
   </div>
 
-    <div class="list-group list-group-flush">
-        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-       <span class="text-muted"><i class="bi bi-calendar3 me-2"></i>Date of Birth</span>
-          <strong>
-     @if (student.DateOfBirth.HasValue)
-     {
-          @student.DateOfBirth.Value.ToString("MMM dd, yyyy")
-    }
-   else
-                {
-           <text>Not set</text>
-   }
-         </strong>
+     <button class="btn btn-outline-primary w-100 mt-3" disabled>
+           <i class="bi bi-pencil-fill me-2"></i>Edit Profile (Admin Only)
+ </button>
+    </div>
  </div>
-       <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-      <span class="text-muted"><i class="bi bi-gender-ambiguous me-2"></i>Gender</span>
-      <strong>@(student.Gender ?? "Not specified")</strong>
-                </div>
-     <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-        <span class="text-muted"><i class="bi bi-phone me-2"></i>Phone</span>
-       <strong>@(student.User.PhoneNumber ?? "Not set")</strong>
-    </div>
-             <div class="list-group-item d-flex justify-content-between align-items-center px-0">
- <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email</span>
-             <strong>@student.User.Email</strong>
-     </div>
-  <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-  <span class="text-muted"><i class="bi bi-calendar-check me-2"></i>Enrollment Date</span>
-     <strong>
-              @if (student.EnrollmentDate.HasValue)
-           {
-            @student.EnrollmentDate.Value.ToString("MMM dd, yyyy")
-             }
-     else
-         {
-       <text>Not set</text>
-         }
-          </strong>
-   </div>
-            </div>
-
-   <button class="btn btn-outline-primary w-100 mt-3" disabled>
-    <i class="bi bi-pencil-fill me-2"></i>Edit Profile (Admin Only)
-            </button>
-        </div>
-    </div>
 
     <!-- Details Section -->
-    <div class="col-lg-8">
-        <!-- Class Information -->
-        <div class="dashboard-card mb-3">
-        <div class="card-header-custom">
+    <div class="col-lg-8 d-flex flex-column">
+        <!-- Wrapper for both cards with equal height -->
+    <div class="d-flex flex-column h-100">
+       <!-- Class Information -->
+    <div class="dashboard-card mb-3 flex-fill" data-student-id="@student?.StudentId" style="min-height: 290px;">
+          <div class="card-header-custom">
         <h5 class="card-title">
-       <i class="bi bi-book-fill"></i>
-            Enrolled Classes
-        </h5>
-        </div>
-         @if (student.Enrollments != null && student.Enrollments.Any())
-   {
-             <div class="row g-3">
-     @foreach (var enrollment in student.Enrollments)
-      {
-   <div class="col-md-6">
-           <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
-           <div class="d-flex align-items-center gap-3">
-         <div class="card-icon blue">
-       <i class="bi bi-mortarboard-fill"></i>
-       </div>
-     <div>
-           <small class="text-muted d-block">Class Name</small>
-    <strong>@enrollment.Class.ClassName</strong>
-        </div>
-       </div>
-        @if (!string.IsNullOrEmpty(enrollment.Class.Day))
-    {
-                 <div class="mt-2">
- <small class="text-muted">Schedule:</small>
-            <span class="badge bg-info ms-1">@enrollment.Class.Day</span>
-                @if (enrollment.Class.StartTime.HasValue && enrollment.Class.EndTime.HasValue)
-        {
- <span class="ms-1">@enrollment.Class.StartTime.Value.ToString("hh\\:mm") - @enrollment.Class.EndTime.Value.ToString("hh\\:mm")</span>
-     }
+     <i class="bi bi-book-fill"></i>
+     Enrolled Classes
+  @if (totalClasses > 0)
+         {
+     <span class="badge bg-primary ms-2">@totalClasses</span>
+       }
+   </h5>
   </div>
-    }
-        @if (enrollment.Class.Teacher != null)
+                @if (pagedEnrollments.Any())
           {
-          <div class="mt-2">
-   <small class="text-muted">Teacher:</small>
-               <strong class="ms-1">@enrollment.Class.Teacher.User.FullName</strong>
-       </div>
-    }
-    </div>
+     <div id="enrolledClassesContainer">
+      <div class="row g-3">
+@foreach (var enrollment in pagedEnrollments)
+     {
+       <div class="col-md-6">
+     <div class="p-3 enrolled-class-box" style="border-radius: 8px;">
+   <div class="d-flex align-items-center gap-3">
+    <div class="card-icon blue">
+    <i class="bi bi-mortarboard-fill"></i>
   </div>
+        <div>
+     <small class="text-muted d-block">Class Name</small>
+      <strong>@enrollment.Class.ClassName</strong>
+    </div>
+     </div>
+    @if (!string.IsNullOrEmpty(enrollment.Class.Day))
+  {
+   <div class="mt-2">
+      <small class="text-muted">Schedule:</small>
+     <span class="badge bg-info ms-1">@enrollment.Class.Day</span>
+    @if (enrollment.Class.StartTime.HasValue && enrollment.Class.EndTime.HasValue)
+    {
+     <span class="ms-1" style="color: var(--text-primary);">@enrollment.Class.StartTime.Value.ToString("hh\\:mm") - @enrollment.Class.EndTime.Value.ToString("hh\\:mm")</span>
+     }
+ </div>
   }
-          </div>
-            }
+   @if (enrollment.Class.Teacher != null)
+       {
+      <div class="mt-2">
+     <small class="text-muted">Teacher:</small>
+         <strong class="ms-1">@enrollment.Class.Teacher.User.FullName</strong>
+      </div>
+    }
+       </div>
+    </div>
+   }
+   </div>
+      
+   @if (totalPages > 1)
+  {
+   <div class="d-flex justify-content-between align-items-center mt-3 px-3">
+         <button type="button" class="btn btn-sm btn-outline-primary class-nav-btn" 
+data-page="@(classPage - 1)" 
+       data-action="previous"
+          @(classPage <= 1 ? "disabled" : "")>
+    <i class="bi bi-chevron-left"></i> Previous
+</button>
+    
+    <span class="text-muted">
+      Page <strong class="currentClassPage">@classPage</strong> of <strong class="totalClassPages">@totalPages</strong>
+    </span>
+     
+      <button type="button" class="btn btn-sm btn-outline-primary class-nav-btn" 
+    data-page="@(classPage + 1)" 
+           data-action="next"
+          @(classPage >= totalPages ? "disabled" : "")>
+  Next <i class="bi bi-chevron-right"></i>
+</button>
+  </div>
+       }
+         </div>
+   }
             else
             {
-   <div class="text-center py-4 text-muted">
-         <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-         <p class="mt-2 mb-0">Not enrolled in any classes yet</p>
-   </div>
-  }
- </div>
+ <div class="text-center py-4 text-muted">
+      <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+      <p class="mt-2 mb-0">Not enrolled in any classes yet</p>
+        </div>
+       }
+  </div>
 
-<!-- Attendance Summary -->
-        <div class="dashboard-card mb-3">
-<div class="card-header-custom">
-         <h5 class="card-title">
-         <i class="bi bi-graph-up"></i>
-     Attendance Summary
+    <!-- Attendance Summary -->
+    <div class="dashboard-card flex-fill" style="min-height: 290px;">
+      <div class="card-header-custom">
+     <h5 class="card-title">
+            <i class="bi bi-graph-up"></i>
+    Attendance Summary
        </h5>
-       <a asp-controller="Parent" asp-action="AttendanceHistory" class="btn btn-sm btn-outline-primary">
-         View Details
-             </a>
-      </div>
-      <div class="row g-3">
-            <div class="col-md-3">
-     <div class="text-center p-3" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
-      <h3 class="mb-0" style="color: #0d6efd;">@totalAttendance</h3>
-<small class="text-muted">Total Records</small>
-           </div>
-              </div>
-         <div class="col-md-3">
-         <div class="text-center p-3" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
-       <h3 class="mb-0" style="color: #198754;">@presentCount</h3>
-      <small class="text-muted">Present</small>
-           </div>
-         </div>
-                <div class="col-md-3">
-        <div class="text-center p-3" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
-        <h3 class="mb-0" style="color: #dc3545;">@absentCount</h3>
-        <small class="text-muted">Absent</small>
-        </div>
-    </div>
-   <div class="col-md-3">
-        <div class="text-center p-3" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
-         <h3 class="mb-0" style="color: #ffc107;">@lateCount</h3>
-       <small class="text-muted">Late</small>
-             </div>
+      <a asp-controller="Parent" asp-action="AttendanceHistory" class="btn btn-sm btn-outline-primary">
+   View Details
+        </a>
+  </div>
+  <div class="row g-3">
+           <div class="col-md-3">
+      <div class="text-center p-3" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
+ <h3 class="mb-0" style="color: #0d6efd;">@totalAttendance</h3>
+      <small class="text-muted">Total Records</small>
      </div>
-       </div>
- <div class="mt-3">
-    <div class="d-flex justify-content-between mb-2">
-          <span>Attendance Rate</span>
-          <strong>@attendanceRate%</strong>
-       </div>
-      <div class="progress" style="height: 25px;">
-   <div class="progress-bar bg-@(attendanceRate >= 80 ? "success" : attendanceRate >= 60 ? "warning" : "danger")" 
-          role="progressbar" 
-        style="width: @attendanceRate%">
-       @attendanceRate%
- </div>
     </div>
-          </div>
+          <div class="col-md-3">
+       <div class="text-center p-3" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
+   <h3 class="mb-0" style="color: #198754;">@presentCount</h3>
+          <small class="text-muted">Present</small>
+     </div>
+     </div>
+      <div class="col-md-3">
+        <div class="text-center p-3" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
+     <h3 class="mb-0" style="color: #dc3545;">@absentCount</h3>
+     <small class="text-muted">Absent</small>
+      </div>
+  </div>
+  <div class="col-md-3">
+  <div class="text-center p-3" style="background: rgba(13, 202, 240, 0.1); border-radius: 8px;">
+              <h3 class="mb-0" style="color: #0dcaf0;">@leaveCount</h3>
+   <small class="text-muted">Leave</small>
+    </div>
+      </div>
         </div>
+        <div class="mt-3">
+        <div class="d-flex justify-content-between mb-2">
+     <span>Attendance Rate</span>
+    <strong>@attendanceRate%</strong>
+     </div>
+          <div class="progress" style="height: 25px;">
+    <div class="progress-bar bg-success" 
+         role="progressbar" 
+   style="width: @attendanceRate%">
+  @attendanceRate%
+  </div>
+ </div>
+       </div>
+         </div>
+    </div>
     </div>
 </div>
+
+<script>
+// Initialize pagination after content is loaded
+(function() {
+    console.log('[_StudentProfileContent] Running inline initialization script');
+  if (typeof initializeEnrolledClassesPagination === 'function') {
+        initializeEnrolledClassesPagination();
+      console.log('[_StudentProfileContent] Pagination initialized');
+    } else {
+      console.error('[_StudentProfileContent] initializeEnrolledClassesPagination function not found!');
+    }
+})();
+</script>

@@ -146,6 +146,9 @@ namespace WebMobileAssignment.Migrations
                     b.Property<TimeSpan?>("EndTime")
                         .HasColumnType("time");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<int>("MaxCapacity")
                         .HasColumnType("int");
 
@@ -173,22 +176,60 @@ namespace WebMobileAssignment.Migrations
                     b.ToTable("Classes");
                 });
 
+            modelBuilder.Entity("WebMobileAssignment.Models.ClassActiveHistory", b =>
+                {
+                    b.Property<string>("HistoryId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("ActiveFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ActiveTo")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ClassId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("HistoryId");
+
+                    b.HasIndex("ClassId");
+
+                    b.ToTable("ClassActiveHistories");
+                });
+
             modelBuilder.Entity("WebMobileAssignment.Models.Enrollment", b =>
                 {
-                    b.Property<string>("StudentId")
+                    b.Property<string>("EnrollmentId")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("ClassId")
+                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("EnrolledDate")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("StudentId", "ClassId");
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UnenrolledDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("EnrollmentId");
 
                     b.HasIndex("ClassId");
+
+                    b.HasIndex("StudentId", "ClassId");
 
                     b.ToTable("Enrollments");
                 });
@@ -282,10 +323,6 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -301,10 +338,6 @@ namespace WebMobileAssignment.Migrations
             modelBuilder.Entity("WebMobileAssignment.Models.Student", b =>
                 {
                     b.Property<string>("StudentId")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("ClassId")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
@@ -328,8 +361,6 @@ namespace WebMobileAssignment.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("StudentId");
-
-                    b.HasIndex("ClassId");
 
                     b.HasIndex("ParentId");
 
@@ -416,6 +447,9 @@ namespace WebMobileAssignment.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("int");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -427,6 +461,12 @@ namespace WebMobileAssignment.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastFailedLogin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LockoutEnd")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -527,6 +567,17 @@ namespace WebMobileAssignment.Migrations
                     b.Navigation("Teacher");
                 });
 
+            modelBuilder.Entity("WebMobileAssignment.Models.ClassActiveHistory", b =>
+                {
+                    b.HasOne("WebMobileAssignment.Models.Class", "Class")
+                        .WithMany("ActiveHistories")
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Class");
+                });
+
             modelBuilder.Entity("WebMobileAssignment.Models.Enrollment", b =>
                 {
                     b.HasOne("WebMobileAssignment.Models.Class", "Class")
@@ -581,10 +632,6 @@ namespace WebMobileAssignment.Migrations
 
             modelBuilder.Entity("WebMobileAssignment.Models.Student", b =>
                 {
-                    b.HasOne("WebMobileAssignment.Models.Class", "Class")
-                        .WithMany()
-                        .HasForeignKey("ClassId");
-
                     b.HasOne("WebMobileAssignment.Models.Parent", "Parent")
                         .WithMany("Students")
                         .HasForeignKey("ParentId")
@@ -595,8 +642,6 @@ namespace WebMobileAssignment.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Class");
 
                     b.Navigation("Parent");
 
@@ -616,6 +661,8 @@ namespace WebMobileAssignment.Migrations
 
             modelBuilder.Entity("WebMobileAssignment.Models.Class", b =>
                 {
+                    b.Navigation("ActiveHistories");
+
                     b.Navigation("Attendances");
 
                     b.Navigation("Enrollments");
