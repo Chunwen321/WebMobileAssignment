@@ -543,11 +543,6 @@ namespace WebMobileAssignment.Controllers
                     return Json(new { success = false, message = "New password is required." });
                 }
 
-                if (newPassword.Length < 8)
-                {
-                    return Json(new { success = false, message = "New password must be at least 8 characters long." });
-                }
-
                 if (newPassword != confirmPassword)
                 {
                     return Json(new { success = false, message = "New password and confirm password do not match." });
@@ -556,6 +551,14 @@ namespace WebMobileAssignment.Controllers
                 if (currentPassword == newPassword)
                 {
                     return Json(new { success = false, message = "New password must be different from current password." });
+                }
+
+                // Validate password strength using Helper method
+                var (isValid, errors) = _helper.ValidatePasswordStrength(newPassword);
+                if (!isValid)
+                {
+                    var errorMessage = "Password does not meet security requirements:\n" + string.Join("\n", errors);
+                    return Json(new { success = false, message = errorMessage });
                 }
 
                 // Get user

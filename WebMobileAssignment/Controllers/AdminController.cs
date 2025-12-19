@@ -4316,10 +4316,11 @@ namespace WebMobileAssignment.Controllers
                 return View();
             }
 
-            // Verify password length
-            if (newPassword.Length < 8)
+            // Validate password strength using Helper method
+            var (isValid, errors) = _helper.ValidatePasswordStrength(newPassword);
+            if (!isValid)
             {
-                TempData["ErrorMessage"] = "Password must be at least 8 characters long.";
+                TempData["ErrorMessage"] = "Password does not meet security requirements:<br/>" + string.Join("<br/>", errors);
                 return View();
             }
 

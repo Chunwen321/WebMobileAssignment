@@ -891,6 +891,14 @@ namespace WebMobileAssignment.Controllers
                 return View("TeachChangePassword");
             }
 
+            // Validate password strength using Helper method
+            var (isValid, errors) = _helper.ValidatePasswordStrength(newPassword);
+            if (!isValid)
+            {
+                ViewBag.Error = "Password does not meet security requirements:<br/>" + string.Join("<br/>", errors);
+                return View("TeachChangePassword");
+            }
+
             var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
             if (string.IsNullOrEmpty(userEmail))
                 return RedirectToAction("Login", "Account");
