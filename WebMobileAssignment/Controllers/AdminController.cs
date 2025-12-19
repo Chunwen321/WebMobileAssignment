@@ -18,19 +18,22 @@ namespace WebMobileAssignment.Controllers
         private readonly DB _context;
         private readonly Helper _helper;
         private readonly S3Service _s3Service;
+        private readonly LocalizationService _localization;
 
-        public AdminController(DB context, Helper helper, S3Service s3Service)
+        public AdminController(DB context, Helper helper, S3Service s3Service, LocalizationService localization)
         {
             _context = context;
           _helper = helper;
           _s3Service = s3Service;
+          _localization = localization;
         }
 
         // ==================== DASHBOARD ====================
         public async Task<IActionResult> Dashboard()
         {
             ViewBag.ActiveMenu = "Dashboard";
-            ViewBag.Title = "Dashboard";
+            ViewBag.Title = _localization["Dashboard"];
+            ViewBag.Localization = _localization;
 
             var totalStudents = await _context.Students.CountAsync();
             var totalTeachers = await _context.Teachers.CountAsync();
@@ -78,7 +81,8 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> StudentIndex()
         {
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = "Student Management";
+            ViewBag.Title = _localization["StudentManagement"];
+            ViewBag.Localization = _localization;
 
             var students = await _context.Students
                 .Include(s => s.User)
@@ -106,7 +110,8 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> AddStudent()
         {
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = "Add New Student";
+            ViewBag.Title = _localization["AddNewStudent"];
+            ViewBag.Localization = _localization;
             ViewBag.Parents = await _context.Parents.Include(p => p.User).ToListAsync();
             ViewBag.Classes = await _context.Classes.ToListAsync();
 
@@ -578,7 +583,8 @@ namespace WebMobileAssignment.Controllers
 
             // If we got here, something failed - reload the form with data
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = "Add New Student";
+            ViewBag.Title = _localization["AddNewStudent"];
+            ViewBag.Localization = _localization;
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
             ViewBag.PhoneNumber = phoneNumber;
@@ -615,7 +621,8 @@ namespace WebMobileAssignment.Controllers
             }
 
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = "Edit Student";
+            ViewBag.Title = _localization["EditStudent"];
+            ViewBag.Localization = _localization;
             ViewBag.Parents = await _context.Parents.Include(p => p.User).ToListAsync();
             ViewBag.Classes = await _context.Classes.ToListAsync();
 
@@ -1010,7 +1017,8 @@ namespace WebMobileAssignment.Controllers
                 : 0;
 
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = "Student Details";
+            ViewBag.Title = _localization["StudentDetails"];
+            ViewBag.Localization = _localization;
 
             return View(student);
         }
@@ -1028,7 +1036,8 @@ namespace WebMobileAssignment.Controllers
             if (student == null) return NotFound();
 
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = "Delete Student";
+            ViewBag.Title = _localization["DeleteStudent"];
+            ViewBag.Localization = _localization;
 
             return View(student);
         }
@@ -1087,7 +1096,8 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> TeacherIndex()
         {
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = "Teacher Management";
+            ViewBag.Title = _localization["TeacherManagement"];
+            ViewBag.Localization = _localization;
 
             var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             return View(teachers);
@@ -1252,7 +1262,8 @@ namespace WebMobileAssignment.Controllers
 
             // If validation failed, return view with data
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = "Create Teacher";
+            ViewBag.Title = _localization["CreateTeacher"];
+            ViewBag.Localization = _localization;
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
             ViewBag.PhoneNumber = phoneNumber;
@@ -1283,7 +1294,8 @@ namespace WebMobileAssignment.Controllers
             if (teacher == null) return NotFound();
 
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = "Edit Teacher";
+            ViewBag.Title = _localization["EditTeacher"];
+            ViewBag.Localization = _localization;
             
             // Fetch subjects from database for dropdown
             ViewBag.Subjects = await _context.Subjects.OrderBy(s => s.SubjectName).ToListAsync();
@@ -1412,7 +1424,8 @@ namespace WebMobileAssignment.Controllers
             }
 
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = "Edit Teacher";
+            ViewBag.Title = _localization["EditTeacher"];
+            ViewBag.Localization = _localization;
             
             // Re-fetch subjects for dropdown
             ViewBag.Subjects = await _context.Subjects.OrderBy(s => s.SubjectName).ToListAsync();
@@ -1460,7 +1473,8 @@ namespace WebMobileAssignment.Controllers
                 : 0;
 
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = "Teacher Details";
+            ViewBag.Title = _localization["TeacherDetails"];
+            ViewBag.Localization = _localization;
 
             return View(teacher);
         }
@@ -1482,7 +1496,8 @@ namespace WebMobileAssignment.Controllers
                 .CountAsync();
 
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = "Delete Teacher";
+            ViewBag.Title = _localization["DeleteTeacher"];
+            ViewBag.Localization = _localization;
             ViewBag.ClassCount = teacher.Classes?.Count ?? 0;
             ViewBag.AttendanceCount = attendanceCount;
 
@@ -1557,7 +1572,8 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> ParentIndex()
         {
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = "Parent Management";
+            ViewBag.Title = _localization["ParentManagement"];
+            ViewBag.Localization = _localization;
 
             var parents = await _context.Parents
                 .Include(p => p.User)
@@ -1697,7 +1713,8 @@ namespace WebMobileAssignment.Controllers
             }
 
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = "Create Parent";
+            ViewBag.Title = _localization["CreateParent"];
+            ViewBag.Localization = _localization;
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
             ViewBag.PhoneNumber = phoneNumber;
@@ -1721,7 +1738,8 @@ namespace WebMobileAssignment.Controllers
             if (parent == null) return NotFound();
 
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = "Edit Parent";
+            ViewBag.Title = _localization["EditParent"];
+            ViewBag.Localization = _localization;
 
             return View(parent);
         }
@@ -1828,7 +1846,8 @@ namespace WebMobileAssignment.Controllers
             }
 
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = "Edit Parent";
+            ViewBag.Title = _localization["EditParent"];
+            ViewBag.Localization = _localization;
             return View(parent);
         }
 
@@ -1845,7 +1864,8 @@ namespace WebMobileAssignment.Controllers
             if (parent == null) return NotFound();
 
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = "Parent Details";
+            ViewBag.Title = _localization["ParentDetails"];
+            ViewBag.Localization = _localization;
 
             return View(parent);
         }
@@ -1863,7 +1883,8 @@ namespace WebMobileAssignment.Controllers
             if (parent == null) return NotFound();
 
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = "Delete Parent";
+            ViewBag.Title = _localization["DeleteParent"];
+            ViewBag.Localization = _localization;
 
             return View(parent);
         }
@@ -1922,7 +1943,8 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
-            ViewBag.Title = "Class Management";
+            ViewBag.Title = _localization["ClassManagement"];
+            ViewBag.Localization = _localization;
 
             var classes = await _context.Classes
                 .Include(c => c.Teacher)
@@ -1938,7 +1960,8 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
-            ViewBag.Title = "Create Class";
+            ViewBag.Title = _localization["CreateClass"];
+            ViewBag.Localization = _localization;
             ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.Subjects = await _context.Subjects.ToListAsync();
 
@@ -2101,7 +2124,8 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
-            ViewBag.Title = "Edit Class";
+            ViewBag.Title = _localization["EditClass"];
+            ViewBag.Localization = _localization;
             ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.Subjects = await _context.Subjects.ToListAsync();
             ViewBag.Students = await _context.Students.Include(s => s.User).OrderBy(s => s.User.FullName).ToListAsync();
@@ -2499,6 +2523,8 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
+            ViewBag.Title = _localization["EditClass"];
+            ViewBag.Localization = _localization;
             ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.Subjects = await _context.Subjects.ToListAsync();
             ViewBag.Students = await _context.Students.Include(s => s.User).OrderBy(s => s.User.FullName).ToListAsync();
@@ -2533,7 +2559,8 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
-            ViewBag.Title = "Class Details";
+            ViewBag.Title = _localization["ClassDetails"];
+            ViewBag.Localization = _localization;
 
             return View(@class);
         }
@@ -2543,7 +2570,8 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Schedule";
-            ViewBag.Title = "Class Schedule";
+            ViewBag.Title = _localization["ClassSchedule"];
+            ViewBag.Localization = _localization;
 
             var classes = await _context.Classes
                 .Include(c => c.Teacher)
@@ -2563,7 +2591,8 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = "Subject Management";
+            ViewBag.Title = _localization["SubjectManagement"];
+            ViewBag.Localization = _localization;
 
             var subjects = await _context.Subjects
                 .Include(s => s.Classes)
@@ -2577,7 +2606,8 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = "Create Subject";
+            ViewBag.Title = _localization["CreateSubject"];
+            ViewBag.Localization = _localization;
 
             return View();
         }
@@ -2616,7 +2646,8 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = "Create Subject";
+            ViewBag.Title = _localization["CreateSubject"];
+            ViewBag.Localization = _localization;
             return View();
         }
 
@@ -2633,7 +2664,8 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = "Edit Subject";
+            ViewBag.Title = _localization["EditSubject"];
+            ViewBag.Localization = _localization;
 
             return View(subject);
         }
@@ -2686,7 +2718,8 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = "Edit Subject";
+            ViewBag.Title = _localization["EditSubject"];
+            ViewBag.Localization = _localization;
             return View(subject);
         }
 
@@ -2708,7 +2741,8 @@ namespace WebMobileAssignment.Controllers
             ViewBag.TotalStudents = subject.Classes?.Sum(c => c.CurrentCapacity) ?? 0;
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = "Subject Details";
+            ViewBag.Title = _localization["SubjectDetails"];
+            ViewBag.Localization = _localization;
 
             return View(subject);
         }
@@ -2727,7 +2761,8 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = "Delete Subject";
+            ViewBag.Title = _localization["DeleteSubject"];
+            ViewBag.Localization = _localization;
 
             return View(subject);
         }
@@ -2875,7 +2910,8 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "AttendanceManagement";
             ViewBag.ActiveSubmenu = "Take";
-            ViewBag.Title = "Take Attendance";
+            ViewBag.Title = _localization["TakeAttendance"];
+            ViewBag.Localization = _localization;
 
             // Use selected date or default to today
             var targetDate = selectedDate ?? DateTime.Today;
@@ -3065,6 +3101,7 @@ namespace WebMobileAssignment.Controllers
 
                 // Get the current maximum attendance count ONCE outside the loop
                 var currentAttendanceCount = await _context.Attendances.CountAsync();
+                var absentStudents = new List<(string studentId, string classId, DateTime date)>();
 
                 foreach (var att in request.Attendances)
                 {
@@ -3095,6 +3132,12 @@ namespace WebMobileAssignment.Controllers
                             existing.TakenOn = DateTime.Now;
                             _context.Update(existing);
                             markedCount++;
+                            
+                            // Track if student is marked absent
+                            if (att.Status == "Absent")
+                            {
+                                absentStudents.Add((att.StudentId, request.ClassId, selectedDate));
+                            }
                         }
                     }
                     else
@@ -3115,11 +3158,23 @@ namespace WebMobileAssignment.Controllers
                         };
                         _context.Attendances.Add(attendance);
                         markedCount++;
+                        
+                        // Track if student is marked absent
+                        if (att.Status == "Absent")
+                        {
+                            absentStudents.Add((att.StudentId, request.ClassId, selectedDate));
+                        }
                     }
                 }
 
                 // Save all changes at once
                 await _context.SaveChangesAsync();
+
+                // Send notifications for absent students
+                foreach (var (studentId, classId, date) in absentStudents)
+                {
+                    await SendAbsenceNotification(studentId, classId, date);
+                }
 
                 return Json(new
                 {
@@ -3260,6 +3315,12 @@ namespace WebMobileAssignment.Controllers
                     await SendAttendanceNotifications(request.StudentId, request.ClassId, selectedDate, "Absent");
                 }
 
+                // Send notification if student is marked absent
+                if (request.Status == "Absent")
+                {
+                    await SendAbsenceNotification(request.StudentId, request.ClassId, selectedDate);
+                }
+
                 return Json(new
                 {
                     success = true,
@@ -3381,7 +3442,8 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "AttendanceManagement";
             ViewBag.ActiveSubmenu = "Records";
-            ViewBag.Title = "Attendance Records";
+            ViewBag.Title = _localization["AttendanceRecords"];
+            ViewBag.Localization = _localization;
 
             // Build query
             var query = _context.Attendances
@@ -3445,7 +3507,8 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> Reports()
         {
             ViewBag.ActiveMenu = "Reports";
-            ViewBag.Title = "Reports & Analytics";
+            ViewBag.Title = _localization["ReportsAndAnalytics"];
+            ViewBag.Localization = _localization;
 
             // Get total counts
             var totalStudents = await _context.Students.CountAsync();
@@ -4246,7 +4309,8 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> LeaveIndex(string? status, string? search, DateTime? startDate, DateTime? endDate)
         {
             ViewBag.ActiveMenu = "LeaveManagement";
-            ViewBag.Title = "Leave Management";
+            ViewBag.Title = _localization["LeaveManagement"];
+            ViewBag.Localization = _localization;
 
             var query = _context.LeaveApplications
                 .Include(l => l.User)
@@ -4307,7 +4371,8 @@ namespace WebMobileAssignment.Controllers
             if (leave == null) return NotFound();
 
             ViewBag.ActiveMenu = "LeaveManagement";
-            ViewBag.Title = "Leave Application Details";
+            ViewBag.Title = _localization["LeaveApplicationDetails"];
+            ViewBag.Localization = _localization;
 
             // Get student info if user is a student
             var student = await _context.Students
@@ -4656,6 +4721,32 @@ namespace WebMobileAssignment.Controllers
             return RedirectToAction(nameof(LeaveIndex));
         }
 
+        // ==================== LANGUAGE SWITCHER ====================
+        
+        [HttpPost]
+        public IActionResult ChangeLanguage(string language, string returnUrl)
+        {
+            _localization.SetLanguage(language);
+            
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AutoTranslate(string targetLang)
+        {
+            var success = await _localization.AutoTranslate(targetLang);
+            if (success)
+            {
+                return Json(new { success = true, message = $"Translations for '{targetLang}' generated successfully!" });
+            }
+            return Json(new { success = false, message = "Failed to generate translations." });
+        }
+
         // ==================== SETTINGS ====================
 
         [Authorize(Roles = "Admin")]
@@ -4663,7 +4754,8 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "Settings";
-            ViewBag.Title = "Admin Settings";
+            ViewBag.Title = _localization["AdminSettings"];
+            ViewBag.Localization = _localization;
 
             // Get current admin user
             var userEmail = User.Identity.Name;
@@ -4796,7 +4888,8 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> Notifications()
         {
             ViewBag.ActiveMenu = "Notifications";
-            ViewBag.Title = "Notifications";
+            ViewBag.Title = _localization["Notifications"];
+            ViewBag.Localization = _localization;
 
             // Get current admin user
             var userEmail = User.Identity.Name;
@@ -5349,7 +5442,8 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "Settings";
-            ViewBag.Title = "Admin Settings";
+            ViewBag.Title = _localization["AdminSettings"];
+            ViewBag.Localization = _localization;
             return View(user);
         }
 
@@ -5358,7 +5452,8 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "ChangePassword";
-            ViewBag.Title = "Change Password";
+            ViewBag.Title = _localization["ChangePassword"];
+            ViewBag.Localization = _localization;
 
             return View();
         }
@@ -5370,7 +5465,8 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "ChangePassword";
-            ViewBag.Title = "Change Password";
+            ViewBag.Title = _localization["ChangePassword"];
+            ViewBag.Localization = _localization;
 
             // Validate input
             if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
@@ -5494,7 +5590,7 @@ namespace WebMobileAssignment.Controllers
         public class ManualAttendanceRequest
         {
             public required string ClassId { get; set; }
-            public required string PinCode { get; set; }
+            public string? PinCode { get; set; }  // Optional - only required for student-initiated attendance
             public required string Date { get; set; }
             public required List<ManualAttendanceItem> Attendances { get; set; }
         }
@@ -5512,6 +5608,67 @@ namespace WebMobileAssignment.Controllers
             public required string StudentId { get; set; }
             public required string Date { get; set; }
             public required string Status { get; set; }
+        }
+
+        // Helper method to send absence notifications to student and parent
+        private async Task SendAbsenceNotification(string studentId, string classId, DateTime date)
+        {
+            try
+            {
+                // Get student with parent and class information
+                var student = await _context.Students
+                    .Include(s => s.User)
+                    .Include(s => s.Parent)
+                        .ThenInclude(p => p.User)
+                    .FirstOrDefaultAsync(s => s.StudentId == studentId);
+
+                var classInfo = await _context.Classes
+                    .Include(c => c.Subject)
+                    .FirstOrDefaultAsync(c => c.ClassId == classId);
+
+                if (student == null || classInfo == null)
+                {
+                    return;
+                }
+
+                var className = classInfo.ClassName;
+                var subjectName = classInfo.Subject?.SubjectName ?? "";
+                var dateStr = date.ToString("MMM dd, yyyy");
+
+                // Create notification for the student
+                var studentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                var studentNotification = new Notification
+                {
+                    NotificationId = studentNotificationId,
+                    UserId = student.UserId,
+                    Description = $"You were marked absent for {className} ({subjectName}) on {dateStr}.",
+                    Status = "unread",
+                    CreatedDate = DateTime.Now
+                };
+                _context.Notifications.Add(studentNotification);
+
+                // Create notification for the parent if exists
+                if (student.Parent != null)
+                {
+                    var parentNotificationId = IdGenerator.GenerateNotificationId(_context);
+                    var parentNotification = new Notification
+                    {
+                        NotificationId = parentNotificationId,
+                        UserId = student.Parent.UserId,
+                        Description = $"{student.User.FullName} was marked absent for {className} ({subjectName}) on {dateStr}.",
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(parentNotification);
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the attendance marking
+                Console.WriteLine($"Error sending absence notification: {ex.Message}");
+            }
         }
     }
 }

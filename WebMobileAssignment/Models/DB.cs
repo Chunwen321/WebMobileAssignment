@@ -502,9 +502,9 @@ public class ClassActiveHistory
     /// Null means the class is still active.
     /// </summary>
     public DateTime? ActiveTo { get; set; }
+    
     /// <summary>
     /// When this history record was created
     /// </summary>
     public DateTime CreatedDate { get; set; } = DateTime.Now;
-
 }
