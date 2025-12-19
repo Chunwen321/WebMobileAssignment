@@ -176,6 +176,13 @@
                                 <div style="font-size: 0.9rem; color: white; margin-top: 8px;">@(selectedDate.Date < DateTime.Today ? "Class date has passed" : "Class ended")</div>
                             </div>
                         </div>
+                        @if (sessionOnSelectedDate != null && sessionOnSelectedDate.CreatedByTeacherId == null)
+                        {
+                            <div class="alert alert-info mt-2 mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                <small>Created by Admin</small>
+                            </div>
+                        }
                     }
                     else
                     {
@@ -201,6 +208,14 @@
                             <div class="alert alert-success mt-3 mb-0">
                                 <i class="bi bi-check-circle"></i>
                                 <small>PIN is active until @Model.EndTime.Value.ToString("hh\\:mm") (class ends)</small>
+                            </div>
+                        }
+                        
+                        @if (sessionOnSelectedDate != null && sessionOnSelectedDate.CreatedByTeacherId == null)
+                        {
+                            <div class="alert alert-info mt-2 mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                <small>Created by Admin</small>
                             </div>
                         }
                     }
@@ -283,8 +298,8 @@
                 </div>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover table-sm mb-0">
-                    <thead class="table-light">
+                <table class="table table-hover table-sm mb-0 attendance-table">
+                    <thead>
                         <tr>
                             <th style="width: 50px;">
                                 <input type="checkbox" id="selectAllCheckbox" class="form-check-input" />
@@ -426,7 +441,6 @@
             // Generate PIN button
             $('#generatePinBtn').click(function() {
                 const btn = $(this);
-                const classId = '@Model.ClassId';
 
                 if (!confirm('Generate PIN code for this class? This can only be done once per day.')) {
                     return;
@@ -437,10 +451,8 @@
                 $.ajax({
                     url: '@Url.Action("GenerateAttendancePin", "Teacher")',
                     type: 'POST',
-                    contentType: 'application/x-www-form-urlencoded',
                     data: { classId: classId },
                     success: function(response) {
-                        console.log('PIN generation response:', response);
                         if (response.success) {
                             alert('PIN generated successfully! The page will reload.');
                             location.reload();
@@ -449,12 +461,8 @@
                             btn.prop('disabled', false).html('<i class="bi bi-key-fill me-2"></i>Generate PIN Code');
                         }
                     },
-                    error: function(xhr, status, error) {
-                        console.log('Error Status:', status);
-                        console.log('Error:', error);
-                        console.log('Response Text:', xhr.responseText);
-                        console.log('Response:', xhr);
-                        alert('Failed to generate PIN. Error: ' + error + '. Check browser console for details.');
+                    error: function() {
+                        alert('Failed to generate PIN. Please try again.');
                         btn.prop('disabled', false).html('<i class="bi bi-key-fill me-2"></i>Generate PIN Code');
                     }
                 });
@@ -791,21 +799,76 @@
                     }
                 });
             });
-
-            // Update select all checkbox state when individual checkboxes change
-            function updateSelectAllCheckbox() {
-                const checkedCount = $('.student-checkbox:checked').length;
-                const totalCount = $('.student-checkbox').length;
-                
-                const selectAllCheckbox = $('#selectAllCheckbox');
-                selectAllCheckbox.prop('checked', checkedCount === totalCount && totalCount > 0);
-                selectAllCheckbox.prop('indeterminate', checkedCount > 0 && checkedCount < totalCount);
-            }
-
-            // Monitor checkbox changes to update select all
-            $('.student-checkbox').on('change', updateSelectAllCheckbox);
-
-            updateSelectAllCheckbox();
         });
     </script>
 }
+
+<style>
+    /* Light Theme - Table Styling */
+    .attendance-table {
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    .attendance-table thead {
+        background: transparent !important;
+        border-bottom: 2px solid #dee2e6 !important;
+    }
+
+    .attendance-table thead th {
+        background: transparent !important;
+        color: #212529 !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid #dee2e6 !important;
+        padding: 12px !important;
+    }
+
+    .attendance-table tbody tr {
+        background: #ffffff !important;
+        border-bottom: 1px solid #dee2e6 !important;
+    }
+
+    .attendance-table tbody tr:hover {
+        background: #f8f9fa !important;
+    }
+
+    .attendance-table tbody td {
+        color: #212529 !important;
+        border-bottom: 1px solid #dee2e6 !important;
+        padding: 10px 12px !important;
+    }
+
+    /* Dark Theme - Table Styling */
+    [data-theme="dark"] .attendance-table {
+        background: transparent !important;
+        color: #e0e0e0 !important;
+    }
+
+    [data-theme="dark"] .attendance-table thead {
+        background: transparent !important;
+        border-bottom: 2px solid #404040 !important;
+    }
+
+    [data-theme="dark"] .attendance-table thead th {
+        background: transparent !important;
+        color: #e0e0e0 !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid #404040 !important;
+        padding: 12px !important;
+    }
+
+    [data-theme="dark"] .attendance-table tbody tr {
+        background: transparent !important;
+        border-bottom: 1px solid #404040 !important;
+    }
+
+    [data-theme="dark"] .attendance-table tbody tr:hover {
+        background: rgba(13, 110, 253, 0.05) !important;
+    }
+
+    [data-theme="dark"] .attendance-table tbody td {
+        color: #e0e0e0 !important;
+        border-bottom: 1px solid #404040 !important;
+        padding: 10px 12px !important;
+    }
+</style>
