@@ -1468,6 +1468,365 @@ box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
     color: #2c3e50;
 }
 
+/* ==================== MONTHLY SUMMARY PAGE - NO SCROLL ==================== */
+
+/* Make the page content container use viewport height minus topbar */
+body.monthly-summary-page .page-content {
+    height: calc(100vh - 70px);
+    overflow: hidden;
+    padding: 1.5rem;
+}
+
+/* Make the main dashboard card take full available height */
+body.monthly-summary-page .dashboard-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 0 !important;
+}
+
+/* Fix the card header */
+body.monthly-summary-page .card-header-custom {
+    flex-shrink: 0;
+}
+
+/* Make the card content scrollable if needed, but contained */
+body.monthly-summary-page .monthly-summary-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+/* Custom scrollbar for the content area */
+body.monthly-summary-page .monthly-summary-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+body.monthly-summary-page .monthly-summary-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+body.monthly-summary-page .monthly-summary-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 193, 7, 0.4);
+    border-radius: 3px;
+}
+
+body.monthly-summary-page .monthly-summary-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 193, 7, 0.6);
+}
+
+[data-theme="dark"] body.monthly-summary-page .monthly-summary-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] body.monthly-summary-page .monthly-summary-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 193, 7, 0.3);
+}
+
+/* Reduce spacing to fit better */
+body.monthly-summary-page .row.g-3 {
+    row-gap: 0.75rem !important;
+}
+
+body.monthly-summary-page .mb-4 {
+    margin-bottom: 0.75rem !important;
+}
+
+body.monthly-summary-page .mb-3 {
+    margin-bottom: 0.75rem !important;
+}
+
+/* Compact stat cards */
+body.monthly-summary-page .stat-card {
+    padding: 1rem;
+}
+
+body.monthly-summary-page .stat-value {
+    font-size: 1.75rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+    body.monthly-summary-page .page-content {
+        height: auto;
+        overflow: visible;
+    }
+    
+    body.monthly-summary-page .dashboard-card {
+        height: auto;
+    }
+    
+    body.monthly-summary-page .monthly-summary-content {
+        overflow: visible;
+    }
+}
+
+/* ==================== PRINT STYLES FOR MONTHLY SUMMARY ==================== */
+@media print {
+    /* Hide non-essential elements */
+    body.monthly-summary-page .sidebar,
+    body.monthly-summary-page .topbar,
+    body.monthly-summary-page .d-flex.gap-2,
+    body.monthly-summary-page .btn,
+    body.monthly-summary-page .card-header-custom form {
+        display: none !important;
+    }
+
+    /* Reset page layout for print */
+    body.monthly-summary-page {
+        margin: 0;
+        padding: 0;
+    }
+
+    body.monthly-summary-page .main-content {
+        margin-left: 0;
+    }
+
+    body.monthly-summary-page .page-content {
+        height: auto;
+        overflow: visible;
+        padding: 20px;
+    }
+
+    body.monthly-summary-page .dashboard-card {
+        height: auto;
+        box-shadow: none;
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+    }
+
+    body.monthly-summary-page .monthly-summary-content {
+        overflow: visible;
+    }
+
+    /* Force first card (stats) to be on first page */
+    body.monthly-summary-page .dashboard-card:first-of-type {
+        page-break-before: avoid;
+        page-break-after: auto;
+    }
+
+    /* Simplify header for print */
+    body.monthly-summary-page .card-header-custom {
+        border-bottom: 2px solid #000;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    /* Change the main title */
+    body.monthly-summary-page .dashboard-card:first-of-type .card-header-custom h3.card-title {
+        font-size: 18pt;
+        font-weight: bold;
+    }
+
+    /* Show dynamic month name from data attribute */
+    body.monthly-summary-page .dashboard-card:first-of-type .card-header-custom h3.card-title::before {
+        content: "Attendance Distribution for " attr(data-print-month);
+    }
+
+    /* Hide the original icon and text */
+    body.monthly-summary-page .dashboard-card:first-of-type .card-header-custom h3.card-title i {
+        display: none;
+    }
+
+    /* Hide original text content */
+    body.monthly-summary-page .dashboard-card:first-of-type .card-header-custom h3.card-title {
+        font-size: 0; /* Hide text */
+    }
+
+    body.monthly-summary-page .dashboard-card:first-of-type .card-header-custom h3.card-title::before {
+        font-size: 18pt; /* Restore font size for ::before content */
+    }
+
+    /* Change the second page (subject summary) title */
+    body.monthly-summary-page .dashboard-card:nth-of-type(2) .card-header-custom h3.card-title {
+        font-size: 0; /* Hide original text */
+    }
+
+    body.monthly-summary-page .dashboard-card:nth-of-type(2) .card-header-custom h3.card-title::before {
+        content: "Subject-wise Summary for " attr(data-print-month);
+        font-size: 16pt;
+        font-weight: bold;
+    }
+
+    body.monthly-summary-page .dashboard-card:nth-of-type(2) .card-header-custom h3.card-title i {
+        display: none;
+    }
+
+    /* Style the stat cards section title */
+    body.monthly-summary-page .row.g-3.mb-4:first-of-type::before {
+        content: "Monthly Statistics";
+        display: block;
+        font-size: 14pt;
+        font-weight: bold;
+        margin-bottom: 15px;
+        page-break-after: avoid;
+    }
+
+    /* Table styling for print */
+    body.monthly-summary-page .table {
+        font-size: 10pt;
+    }
+
+    body.monthly-summary-page .table thead th {
+        background-color: #0d6efd !important;
+        color: #fff !important;
+        border: 1px solid #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .table tbody td {
+        border: 1px solid #999 !important;
+    }
+
+    /* Stat cards for print */
+    body.monthly-summary-page .stat-card {
+        border: 1px solid #999;
+        page-break-inside: avoid;
+        background-color: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Preserve stat card border colors */
+    body.monthly-summary-page .stat-card[style*="border-left-color: #0d6efd"] {
+        border-left: 4px solid #0d6efd !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .stat-card[style*="border-left-color: #198754"] {
+        border-left: 4px solid #198754 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .stat-card[style*="border-left-color: #dc3545"] {
+        border-left: 4px solid #dc3545 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .stat-card[style*="border-left-color: #ffc107"] {
+        border-left: 4px solid #ffc107 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Progress bars for print - FORCE COLORS */
+    body.monthly-summary-page .progress {
+        border: 1px solid #999;
+        background-color: #e9ecef !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        height: 25px !important;
+    }
+
+    body.monthly-summary-page .progress-bar {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color: #fff !important;
+        font-weight: bold;
+    }
+
+    body.monthly-summary-page .progress-bar.bg-success {
+        background-color: #198754 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .progress-bar.bg-danger {
+        background-color: #dc3545 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .progress-bar.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Ensure progress bar text colors */
+    body.monthly-summary-page .text-success {
+        color: #198754 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .text-danger {
+        color: #dc3545 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .text-warning {
+        color: #ffc107 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Badge colors for print */
+    body.monthly-summary-page .badge {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .badge.bg-success {
+        background-color: #198754 !important;
+        color: #fff !important;
+    }
+
+    body.monthly-summary-page .badge.bg-danger {
+        background-color: #dc3545 !important;
+        color: #fff !important;
+    }
+
+    body.monthly-summary-page .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000 !important;
+    }
+
+    /* Page breaks */
+    body.monthly-summary-page .dashboard-card:nth-of-type(2) {
+        page-break-before: always;
+    }
+
+    /* Force the Attendance Distribution section (with progress bars) to start on a new page */
+    body.monthly-summary-page .attendance-distribution-section {
+        page-break-before: always !important;
+        padding-top: 40px;
+        margin-top: 0 !important;
+    }
+
+    /* Ensure Monthly Statistics stay on first page */
+    body.monthly-summary-page .row.g-3.mb-4:first-of-type {
+        page-break-after: auto;
+    }
+
+    /* Icons in print */
+    body.monthly-summary-page .bi-check-circle-fill {
+        color: #198754 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .bi-x-circle-fill {
+        color: #dc3545 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.monthly-summary-page .bi-calendar-x {
+        color: #ffc107 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
 /* ==================== TABLE DARK MODE STYLING ==================== */
 
 /* Light Mode Table Styling */

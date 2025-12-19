@@ -120,10 +120,6 @@ else
     }
    </div>
  <div class="list-group list-group-flush">
-       <div class="list-group-item d-flex justify-content-between align-items-center px-0">
- <span class="text-muted"><i class="bi bi-book-fill me-2 text-primary"></i>Class</span>
-    <strong id="className">@(ViewBag.ClassName ?? "Not enrolled")</strong>
-    </div>
      <div class="list-group-item d-flex justify-content-between align-items-center px-0">
   <span class="text-muted"><i class="bi bi-calendar3 me-2 text-success"></i>Total Classes</span>
 <strong id="totalClasses">@(ViewBag.TotalClasses ?? 0)</strong>
@@ -155,10 +151,10 @@ else
       <i class="bi bi-bar-chart-fill"></i>
 Attendance Overview
   </h3>
-<select class="form-select form-select-sm" style="width: auto;">
-     <option selected>Last 30 Days</option>
-     <option>Last 3 Months</option>
-     <option>Last 6 Months</option>
+<select id="timePeriodSelector" class="form-select form-select-sm" style="width: auto;">
+     <option value="30" selected>Last 30 Days</option>
+     <option value="90">Last 3 Months</option>
+     <option value="180">Last 6 Months</option>
   </select>
   </div>
 
@@ -327,7 +323,21 @@ var badgeClass = attendance.Status switch
 <script>
 // AJAX navigation for child switching
 document.addEventListener('DOMContentLoaded', function() {
+    // Track the current student ID in a global variable
+    let currentStudentId = '@ViewBag.CurrentStudentId';
+    
     const childNavButtons = document.querySelectorAll('.child-nav-btn');
+    
+    // Add event listener for time period selector
+    const timePeriodSelector = document.getElementById('timePeriodSelector');
+    if (timePeriodSelector) {
+        timePeriodSelector.addEventListener('change', function() {
+            const days = this.value;
+            if (currentStudentId) {
+                loadDashboardDataWithTimePeriod(currentStudentId, days);
+            }
+        });
+    }
  
     childNavButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -335,6 +345,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const action = this.getAttribute('data-action');
    
     if (!studentId) return;
+    
+            // Update the current student ID
+            currentStudentId = studentId;
       
             // Show loading state
           button.disabled = true;
@@ -371,19 +384,38 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('leaveCountStat').textContent = data.leaveCount;
   document.getElementById('attendanceRateStat').textContent = data.attendanceRate + '%';
 
-   // Update child summary
+   // Update child summary - preserve icons by updating only the values
         document.getElementById('studentName').textContent = data.studentName;
-     document.getElementById('className').textContent = data.className;
-        document.getElementById('totalClasses').textContent = data.totalClasses;
-        document.getElementById('presentCount').textContent = data.presentCount;
-     document.getElementById('absentCount').textContent = data.absentCount;
-        document.getElementById('leaveCount').textContent = data.leaveCount;
+        
+        // Update totalClasses
+        const totalClassesElement = document.getElementById('totalClasses');
+        if (totalClassesElement) {
+            totalClassesElement.textContent = data.totalClasses;
+        }
+        
+        // Update presentCount
+        const presentCountElement = document.getElementById('presentCount');
+        if (presentCountElement) {
+            presentCountElement.textContent = data.presentCount;
+        }
+        
+        // Update absentCount
+        const absentCountElement = document.getElementById('absentCount');
+        if (absentCountElement) {
+            absentCountElement.textContent = data.absentCount;
+        }
+        
+        // Update leaveCount
+        const leaveCountElement = document.getElementById('leaveCount');
+        if (leaveCountElement) {
+            leaveCountElement.textContent = data.leaveCount;
+        }
  
    // Update profile picture
         const studentAvatar = document.getElementById('studentAvatar');
     if (studentAvatar && data.profilePicture) {
         if (data.profilePicture !== '/images/default-avatar.png') {
- studentAvatar.outerHTML = `<img id="studentAvatar" src="${data.profilePicture}" alt="${data.studentName}" class="mx-auto" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #ffc107; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);`;
+ studentAvatar.outerHTML = `<img id="studentAvatar" src="${data.profilePicture}" alt="${data.studentName}" class="mx-auto" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #ffc107; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);">`;
             } else {
      studentAvatar.outerHTML = `<div id="studentAvatar" class="user-avatar mx-auto" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;"><i class="bi bi-person-fill"></i></div>`;
   }
@@ -476,6 +508,9 @@ nextBtn.setAttribute('data-action', 'next');
     }
 
     function loadChildData(studentId, button, action) {
+        // Update the current student ID
+        currentStudentId = studentId;
+        
         button.disabled = true;
      button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
         
@@ -498,6 +533,33 @@ nextBtn.setAttribute('data-action', 'next');
    ? '<i class="bi bi-chevron-left"></i>' 
    : '<i class="bi bi-chevron-right"></i>';
    });
+    }
+
+    function loadDashboardDataWithTimePeriod(studentId, days) {
+        // Show loading overlay
+        const chartCanvas = document.getElementById('attendanceOverviewChart');
+        if (chartCanvas) {
+            chartCanvas.style.opacity = '0.5';
+        }
+        
+        fetch(`/Parent/GetDashboardData?studentId=${studentId}&days=${days}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateDashboard(data.data);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while loading data');
+            })
+            .finally(() => {
+                if (chartCanvas) {
+                    chartCanvas.style.opacity = '1';
+                }
+            });
     }
 
     function updateRecentAttendanceTable(attendances) {

@@ -12,12 +12,14 @@ namespace WebMobileAssignment.Controllers
         private readonly DB _context;
         private readonly Helper _helper;
         private readonly S3Service _s3Service;
+        private readonly ReportService _reportService;
 
-        public ParentController(DB context, Helper helper, S3Service s3Service)
+        public ParentController(DB context, Helper helper, S3Service s3Service, ReportService reportService)
       {
          _context = context;
        _helper = helper;
       _s3Service = s3Service;
+        _reportService = reportService;
         }
 
         // Helper method to get current parent and set ViewBag data
@@ -98,12 +100,13 @@ namespace WebMobileAssignment.Controllers
       ViewBag.PreviousStudentId = ViewBag.HasPrevious ? allStudents[currentIndex - 1].StudentId : null;
 ViewBag.NextStudentId = ViewBag.HasNext ? allStudents[currentIndex + 1].StudentId : null;
      
-  // Calculate attendance statistics
-      var allAttendances = student.Attendances;
-      var totalAttendance = allAttendances.Count;
-        var presentCount = allAttendances.Count(a => a.Status == "Present");
-         var absentCount = allAttendances.Count(a => a.Status == "Absent");
-  var leaveCount = allAttendances.Count(a => a.Status == "Leave");
+  // Calculate attendance statistics (Last 30 days)
+      var thirtyDaysAgo = DateTime.Now.AddDays(-30).Date;
+      var last30DaysAttendances = student.Attendances.Where(a => a.Date >= thirtyDaysAgo).ToList();
+      var totalAttendance = last30DaysAttendances.Count;
+        var presentCount = last30DaysAttendances.Count(a => a.Status == "Present");
+         var absentCount = last30DaysAttendances.Count(a => a.Status == "Absent");
+  var leaveCount = last30DaysAttendances.Count(a => a.Status == "Leave");
               var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
         
    // Get recent attendance (last 5 records)
@@ -138,7 +141,7 @@ ViewBag.NextStudentId = ViewBag.HasNext ? allStudents[currentIndex + 1].StudentI
 
         // AJAX endpoint to get dashboard data for a specific child
     [HttpGet]
- public async Task<IActionResult> GetDashboardData(string studentId)
+ public async Task<IActionResult> GetDashboardData(string studentId, int days = 30)
         {
      try
   {
@@ -163,12 +166,13 @@ ViewBag.NextStudentId = ViewBag.HasNext ? allStudents[currentIndex + 1].StudentI
     // Get current student index for navigation
        var currentIndex = allStudents.FindIndex(s => s.StudentId == studentId);
   
-    // Calculate attendance statistics
-var allAttendances = student.Attendances;
-     var totalAttendance = allAttendances.Count;
-    var presentCount = allAttendances.Count(a => a.Status == "Present");
-       var absentCount = allAttendances.Count(a => a.Status == "Absent");
-    var leaveCount = allAttendances.Count(a => a.Status == "Leave");
+    // Calculate attendance statistics with date filter
+var daysAgo = DateTime.Now.AddDays(-days).Date;
+var filteredAttendances = student.Attendances.Where(a => a.Date >= daysAgo).ToList();
+     var totalAttendance = filteredAttendances.Count;
+    var presentCount = filteredAttendances.Count(a => a.Status == "Present");
+       var absentCount = filteredAttendances.Count(a => a.Status == "Absent");
+    var leaveCount = filteredAttendances.Count(a => a.Status == "Leave");
     var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
     
    // Get recent attendance (last 5 records)
@@ -235,6 +239,138 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
    {
        return Json(new { success = false, message = ex.Message });
       }
+        }
+
+        // AJAX endpoint to get filtered attendance history data
+        [HttpGet]
+        public async Task<IActionResult> GetAttendanceHistoryData(string? studentId, string? classId, string? month, string? status)
+        {
+            try
+            {
+                var parent = await GetCurrentParentAsync();
+
+                if (parent == null)
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                // Get all students for this parent
+                var students = await _context.Students
+                    .Include(s => s.User)
+                    .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                    .ThenInclude(c => c.Subject)
+                    .Where(s => s.ParentId == parent.ParentId)
+                    .ToListAsync();
+
+                if (!students.Any())
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        data = new
+                        {
+                            attendances = new List<object>(),
+                            totalPresent = 0,
+                            totalAbsent = 0,
+                            totalLate = 0,
+                            attendanceRate = 0,
+                            hasRecords = false
+                        }
+                    });
+                }
+
+                // If studentId specified, filter to that student, otherwise show all
+                List<Student> filteredStudents;
+                if (!string.IsNullOrEmpty(studentId))
+                {
+                    filteredStudents = students.Where(s => s.StudentId == studentId).ToList();
+                }
+                else
+                {
+                    filteredStudents = students;
+                }
+
+                // Get student IDs from filtered list
+                var studentIds = filteredStudents.Select(s => s.StudentId).ToList();
+
+                // Build attendance query
+                var query = _context.Attendances
+                    .Include(a => a.Student)
+                    .ThenInclude(s => s.User)
+                    .Include(a => a.Class)
+                    .ThenInclude(c => c.Subject)
+                    .Include(a => a.MarkedByTeacher)
+                    .ThenInclude(t => t.User)
+                    .Where(a => studentIds.Contains(a.StudentId));
+
+                // Apply filters
+                if (!string.IsNullOrEmpty(classId))
+                {
+                    query = query.Where(a => a.ClassId == classId);
+                }
+
+                if (!string.IsNullOrEmpty(month))
+                {
+                    if (DateTime.TryParse(month + "-01", out DateTime monthDate))
+                    {
+                        var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
+                        var endDate = startDate.AddMonths(1).AddDays(-1);
+                        query = query.Where(a => a.Date >= startDate && a.Date <= endDate);
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(status))
+                {
+                    query = query.Where(a => a.Status == status);
+                }
+
+                // Get filtered attendances
+                var attendances = await query
+                    .OrderByDescending(a => a.Date)
+                    .Take(50)
+                    .ToListAsync();
+
+                // Calculate statistics
+                var totalPresent = attendances.Count(a => a.Status == "Present");
+                var totalAbsent = attendances.Count(a => a.Status == "Absent");
+                var totalLate = attendances.Count(a => a.Status == "Leave");
+                var totalCount = attendances.Count;
+                var attendanceRate = totalCount > 0 ? Math.Round((decimal)totalPresent / totalCount * 100, 1) : 0;
+
+                // Map attendances to anonymous objects for JSON
+                var attendanceData = attendances.Select(a => new
+                {
+                    studentName = a.Student.User.FullName,
+                    date = a.Date.ToString("yyyy-MM-dd"),
+                    day = a.Date.ToString("dddd"),
+                    className = a.Class.ClassName,
+                    subject = a.Class.Subject?.SubjectName ?? "N/A",
+                    timeTaken = a.TakenOn.ToString("hh:mm tt"),
+                    status = a.Status,
+                    markedBy = a.MarkedByTeacher?.User?.FullName ?? "System"
+                }).ToList();
+
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        attendances = attendanceData,
+                        totalPresent = totalPresent,
+                        totalAbsent = totalAbsent,
+                        totalLate = totalLate,
+                        attendanceRate = attendanceRate,
+                        hasRecords = attendances.Any(),
+                        recordCount = attendances.Count,
+                        hasFilters = !string.IsNullOrEmpty(classId) || !string.IsNullOrEmpty(month) || !string.IsNullOrEmpty(status)
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         // Attendance - View History
@@ -973,6 +1109,208 @@ var parent = await GetCurrentParentAsync();
    // For now, redirect back to Monthly Summary
    TempData["Info"] = "PDF download feature will be available soon.";
  return RedirectToAction("MonthlySummary");
+        }
+
+        // Export Monthly Summary as PDF
+        public async Task<IActionResult> ExportPdf(string? studentId, int? year, int? month)
+        {
+            try
+            {
+                var parent = await GetCurrentParentAsync();
+
+                if (parent == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Get the same data as MonthlySummary
+                var selectedYear = year ?? DateTime.Now.Year;
+                var selectedMonth = month ?? DateTime.Now.Month;
+                var startDate = new DateTime(selectedYear, selectedMonth, 1);
+                var endDate = startDate.AddMonths(1).AddDays(-1);
+
+                var students = await _context.Students
+                    .Include(s => s.User)
+                    .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                    .ThenInclude(c => c.Subject)
+                    .Include(s => s.Attendances)
+                    .Where(s => s.ParentId == parent.ParentId)
+                    .ToListAsync();
+
+                if (!students.Any())
+                {
+                    TempData["Error"] = "No student data found.";
+                    return RedirectToAction("MonthlySummary");
+                }
+
+                List<Student> filteredStudents;
+                if (!string.IsNullOrEmpty(studentId))
+                {
+                    filteredStudents = students.Where(s => s.StudentId == studentId).ToList();
+                }
+                else
+                {
+                    filteredStudents = students;
+                }
+
+                var studentIds = filteredStudents.Select(s => s.StudentId).ToList();
+
+                var monthlyAttendances = await _context.Attendances
+                    .Include(a => a.Class)
+                    .ThenInclude(c => c.Subject)
+                    .Where(a => studentIds.Contains(a.StudentId) &&
+                                a.Date >= startDate &&
+                                a.Date <= endDate)
+                    .ToListAsync();
+
+                var totalClasses = monthlyAttendances.Count;
+                var totalPresent = monthlyAttendances.Count(a => a.Status == "Present");
+                var totalAbsent = monthlyAttendances.Count(a => a.Status == "Absent");
+                var totalLate = monthlyAttendances.Count(a => a.Status == "Leave");
+                var attendanceRate = totalClasses > 0 ? Math.Round((decimal)totalPresent / totalClasses * 100, 1) : 0;
+
+                var subjectSummary = monthlyAttendances
+                    .GroupBy(a => new
+                    {
+                        SubjectId = a.Class.SubjectId,
+                        SubjectName = a.Class.Subject?.SubjectName ?? "N/A"
+                    })
+                    .Select(g => new ReportService.SubjectSummary
+                    {
+                        Subject = g.Key.SubjectName,
+                        TotalClasses = g.Count(),
+                        Present = g.Count(a => a.Status == "Present"),
+                        Absent = g.Count(a => a.Status == "Absent"),
+                        Late = g.Count(a => a.Status == "Leave"),
+                        AttendanceRate = g.Count() > 0 ? Math.Round((decimal)g.Count(a => a.Status == "Present") / g.Count() * 100, 1) : 0
+                    })
+                    .OrderBy(s => s.Subject)
+                    .ToList();
+
+                var reportData = new ReportService.AttendanceSummaryData
+                {
+                    MonthName = startDate.ToString("MMMM yyyy"),
+                    StudentName = filteredStudents.Count == 1 ? filteredStudents.First().User.FullName : "All Children",
+                    TotalClasses = totalClasses,
+                    TotalPresent = totalPresent,
+                    TotalAbsent = totalAbsent,
+                    TotalLate = totalLate,
+                    AttendanceRate = attendanceRate,
+                    SubjectSummaries = subjectSummary
+                };
+
+                var pdfBytes = _reportService.GeneratePdfReport(reportData);
+                var fileName = $"Attendance_Summary_{startDate:yyyy_MM}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error generating PDF: {ex.Message}";
+                return RedirectToAction("MonthlySummary");
+            }
+        }
+
+        // Export Monthly Summary as Excel
+        public async Task<IActionResult> ExportExcel(string? studentId, int? year, int? month)
+        {
+            try
+            {
+                var parent = await GetCurrentParentAsync();
+
+                if (parent == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Get the same data as MonthlySummary
+                var selectedYear = year ?? DateTime.Now.Year;
+                var selectedMonth = month ?? DateTime.Now.Month;
+                var startDate = new DateTime(selectedYear, selectedMonth, 1);
+                var endDate = startDate.AddMonths(1).AddDays(-1);
+
+                var students = await _context.Students
+                    .Include(s => s.User)
+                    .Include(s => s.Enrollments)
+                    .ThenInclude(e => e.Class)
+                    .ThenInclude(c => c.Subject)
+                    .Include(s => s.Attendances)
+                    .Where(s => s.ParentId == parent.ParentId)
+                    .ToListAsync();
+
+                if (!students.Any())
+                {
+                    TempData["Error"] = "No student data found.";
+                    return RedirectToAction("MonthlySummary");
+                }
+
+                List<Student> filteredStudents;
+                if (!string.IsNullOrEmpty(studentId))
+                {
+                    filteredStudents = students.Where(s => s.StudentId == studentId).ToList();
+                }
+                else
+                {
+                    filteredStudents = students;
+                }
+
+                var studentIds = filteredStudents.Select(s => s.StudentId).ToList();
+
+                var monthlyAttendances = await _context.Attendances
+                    .Include(a => a.Class)
+                    .ThenInclude(c => c.Subject)
+                    .Where(a => studentIds.Contains(a.StudentId) &&
+                                a.Date >= startDate &&
+                                a.Date <= endDate)
+                    .ToListAsync();
+
+                var totalClasses = monthlyAttendances.Count;
+                var totalPresent = monthlyAttendances.Count(a => a.Status == "Present");
+                var totalAbsent = monthlyAttendances.Count(a => a.Status == "Absent");
+                var totalLate = monthlyAttendances.Count(a => a.Status == "Leave");
+                var attendanceRate = totalClasses > 0 ? Math.Round((decimal)totalPresent / totalClasses * 100, 1) : 0;
+
+                var subjectSummary = monthlyAttendances
+                    .GroupBy(a => new
+                    {
+                        SubjectId = a.Class.SubjectId,
+                        SubjectName = a.Class.Subject?.SubjectName ?? "N/A"
+                    })
+                    .Select(g => new ReportService.SubjectSummary
+                    {
+                        Subject = g.Key.SubjectName,
+                        TotalClasses = g.Count(),
+                        Present = g.Count(a => a.Status == "Present"),
+                        Absent = g.Count(a => a.Status == "Absent"),
+                        Late = g.Count(a => a.Status == "Leave"),
+                        AttendanceRate = g.Count() > 0 ? Math.Round((decimal)g.Count(a => a.Status == "Present") / g.Count() * 100, 1) : 0
+                    })
+                    .OrderBy(s => s.Subject)
+                    .ToList();
+
+                var reportData = new ReportService.AttendanceSummaryData
+                {
+                    MonthName = startDate.ToString("MMMM yyyy"),
+                    StudentName = filteredStudents.Count == 1 ? filteredStudents.First().User.FullName : "All Children",
+                    TotalClasses = totalClasses,
+                    TotalPresent = totalPresent,
+                    TotalAbsent = totalAbsent,
+                    TotalLate = totalLate,
+                    AttendanceRate = attendanceRate,
+                    SubjectSummaries = subjectSummary
+                };
+
+                var excelBytes = _reportService.GenerateExcelReport(reportData);
+                var fileName = $"Attendance_Summary_{startDate:yyyy_MM}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+                return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Error generating Excel: {ex.Message}";
+                return RedirectToAction("MonthlySummary");
+            }
         }
 
         // ==================== PROFILE PICTURE UPLOAD ENDPOINTS ====================

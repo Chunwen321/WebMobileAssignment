@@ -3,6 +3,13 @@
     Layout = "~/Views/Shared/_ParentLayout.cshtml";
 }
 
+@section Scripts {
+<script>
+    // Add page-specific class to body for styling
+    document.body.classList.add('monthly-summary-page');
+</script>
+}
+
 @{
     var allStudents = ViewBag.AllStudents as List<WebMobileAssignment.Models.Student> ?? new List<WebMobileAssignment.Models.Student>();
     var selectedStudentId = ViewBag.SelectedStudentId as string;
@@ -23,12 +30,12 @@ var latePercent = totalClasses > 0 ? Math.Round((decimal)totalLate / totalClasse
 }
 
 <div class="dashboard-card mb-4">
-    <div class="card-header-custom">
-    <h3 class="card-title">
-  <i class="bi bi-bar-chart-fill"></i>
- Monthly Attendance Summary
-    </h3>
-  <form method="get" asp-controller="Parent" asp-action="MonthlySummary" class="d-flex gap-2">
+   <div class="card-header-custom">
+   <h3 class="card-title" data-print-month="@monthName">
+ <i class="bi bi-bar-chart-fill"></i>
+Monthly Attendance Summary
+   </h3>
+ <form method="get" asp-controller="Parent" asp-action="MonthlySummary" class="d-flex gap-2">
           <!-- Child Selector (only show if parent has multiple children) -->
        @if (allStudents.Count > 1)
   {
@@ -62,9 +69,10 @@ var latePercent = totalClasses > 0 ? Math.Round((decimal)totalLate / totalClasse
  </form>
     </div>
 
-    <!-- Monthly Stats Overview -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
+    <div class="monthly-summary-content">
+        <!-- Monthly Stats Overview -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
    <div class="stat-card" style="border-left-color: #0d6efd;">
      <div class="stat-label">Total Classes</div>
          <div class="stat-value">@totalClasses</div>
@@ -74,7 +82,7 @@ var latePercent = totalClasses > 0 ? Math.Round((decimal)totalLate / totalClasse
      </div>
       </div>
  </div>
-        <div class="col-md-3">
+            <div class="col-md-3">
          <div class="stat-card" style="border-left-color: #198754;">
           <div class="stat-label">Days Present</div>
         <div class="stat-value">@totalPresent</div>
@@ -84,7 +92,7 @@ var latePercent = totalClasses > 0 ? Math.Round((decimal)totalLate / totalClasse
     </div>
        </div>
         </div>
-        <div class="col-md-3">
+            <div class="col-md-3">
             <div class="stat-card" style="border-left-color: #dc3545;">
  <div class="stat-label">Days Absent</div>
           <div class="stat-value">@totalAbsent</div>
@@ -94,7 +102,7 @@ var latePercent = totalClasses > 0 ? Math.Round((decimal)totalLate / totalClasse
 </div>
          </div>
         </div>
-      <div class="col-md-3">
+            <div class="col-md-3">
   <div class="stat-card" style="border-left-color: #ffc107;">
       <div class="stat-label">Days on Leave</div>
                 <div class="stat-value">@totalLate</div>
@@ -104,9 +112,9 @@ var latePercent = totalClasses > 0 ? Math.Round((decimal)totalLate / totalClasse
      </div>
     </div>
      </div>
-    </div>
+        </div>
 
-    @if (totalClasses == 0)
+        @if (totalClasses == 0)
     {
         <div class="alert alert-info text-center">
     <i class="bi bi-info-circle me-2"></i>
@@ -117,9 +125,32 @@ var latePercent = totalClasses > 0 ? Math.Round((decimal)totalLate / totalClasse
 else
     {
         <!-- Attendance Percentage Graph -->
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4 attendance-distribution-section">
          <div class="col-lg-12">
-    <h5 class="mb-3">Attendance Distribution for @monthName</h5>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Attendance Distribution for @monthName</h5>
+        
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+            <a asp-controller="Parent" asp-action="ExportPdf" 
+               asp-route-studentId="@selectedStudentId" 
+               asp-route-year="@selectedYear" 
+               asp-route-month="@selectedMonth" 
+               class="btn btn-sm btn-danger">
+               <i class="bi bi-file-pdf me-1"></i>PDF
+            </a>
+            <a asp-controller="Parent" asp-action="ExportExcel" 
+               asp-route-studentId="@selectedStudentId" 
+               asp-route-year="@selectedYear" 
+               asp-route-month="@selectedMonth" 
+               class="btn btn-sm btn-success">
+               <i class="bi bi-file-excel me-1"></i>Excel
+            </a>
+        </div>
+    </div>
        
    <!-- Visual Progress Bars -->
   <div class="mb-4">
@@ -150,18 +181,18 @@ else
          <div class="progress-bar bg-warning" role="progressbar" style="width: @latePercent%"></div>
      </div>
    </div>
+  </div>
      </div>
-         </div>
         </div>
     }
+    </div>
 </div>
 
 @if (subjectSummary.Any())
 {
- <!-- Monthly Summary Table -->
     <div class="dashboard-card">
         <div class="card-header-custom">
-    <h3 class="card-title">
+    <h3 class="card-title" data-print-month="@monthName">
       <i class="bi bi-table"></i>
             Detailed Summary by Subject
     </h3>
@@ -231,16 +262,6 @@ var progressBarColor = rate >= 90 ? "success" : (rate >= 80 ? "warning" : "dange
       </tr>
          </tfoot>
             </table>
-        </div>
-
-      <!-- Action Buttons -->
-        <div class="mt-4 d-flex gap-2">
- <button class="btn btn-outline-primary" onclick="window.print()">
-    <i class="bi bi-printer me-2"></i>Print Summary
-         </button>
-    <a asp-controller="Parent" asp-action="DownloadReport" class="btn btn-danger">
-       <i class="bi bi-file-pdf me-2"></i>Download PDF Report
-    </a>
         </div>
     </div>
 

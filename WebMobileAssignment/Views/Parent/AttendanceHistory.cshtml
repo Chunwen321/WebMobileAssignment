@@ -27,7 +27,7 @@
     </div>
 
     <!-- Filters -->
-    <form method="get" asp-controller="Parent" asp-action="AttendanceHistory">
+    <form id="attendanceFilterForm" method="get" asp-controller="Parent" asp-action="AttendanceHistory">
    <div class="row g-3 mb-4">
         <!-- Child Selector (only show if parent has multiple children) -->
             @if (allStudents.Count > 1)
@@ -36,7 +36,7 @@
           <label class="form-label">
       <i class="bi bi-person-fill me-1"></i>Child
            </label>
-         <select name="studentId" class="form-select">
+         <select name="studentId" id="studentId" class="form-select">
       <option value="">All Children</option>
         @foreach (var student in allStudents)
      {
@@ -50,7 +50,7 @@
             
    <div class="@(allStudents.Count > 1 ? "col-md-3" : "col-md-4")">
    <label class="form-label" style="color: var(--text-primary);">Class</label>
- <select name="classId" class="form-select">
+ <select name="classId" id="classId" class="form-select">
       <option value="">All Classes</option>
       @foreach (var classItem in classes)
    {
@@ -62,20 +62,20 @@
        </div>
   <div class="@(allStudents.Count > 1 ? "col-md-3" : "col-md-4")">
        <label class="form-label" style="color: var(--text-primary);">Month</label>
- <input type="month" name="month" class="form-control" value="@(selectedMonth ?? DateTime.Now.ToString("yyyy-MM"))">
+ <input type="month" name="month" id="month" class="form-control" value="@selectedMonth" placeholder="All Months">
        </div>
-       <div class="@(allStudents.Count > 1 ? "col-md-2" : "col-md-3")">
+                <div class="@(allStudents.Count > 1 ? "col-md-2" : "col-md-3")">
 <label class="form-label" style="color: var(--text-primary);">Status</label>
-   <select name="status" class="form-select">
+   <select name="status" id="status" class="form-select">
 <option value="">All Status</option>
            <option value="Present" selected="@(selectedStatus == "Present")">Present</option>
      <option value="Absent" selected="@(selectedStatus == "Absent")">Absent</option>
-      <option value="Late" selected="@(selectedStatus == "Late")">Leave</option>
+      <option value="Leave" selected="@(selectedStatus == "Leave")">Leave</option>
        </select>
     </div>
          <div class="@(allStudents.Count > 1 ? "col-md-1" : "col-md-1")">
            <label class="form-label">&nbsp;</label>
- <button type="submit" class="btn btn-primary w-100">
+ <button type="submit" id="searchBtn" class="btn btn-primary w-100">
    <i class="bi bi-search"></i>
      </button>
           </div>
@@ -83,7 +83,7 @@
     </form>
 
   <!-- Summary Cards -->
-    <div class="row g-3 mb-4">
+    <div id="summaryCards" class="row g-3 mb-4">
         <div class="col-md-3">
         <div class="p-3 text-center" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
        <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i>
@@ -116,14 +116,14 @@
 
     @if (!students.Any())
     {
-   <div class="alert alert-info text-center">
+   <div id="noStudentsAlert" class="alert alert-info text-center">
           <i class="bi bi-info-circle me-2"></i>
        <strong>No students found.</strong> Please contact the administrator to link your children to your account.
         </div>
     }
     else if (!attendances.Any())
     {
-      <div class="alert alert-info text-center">
+      <div id="noRecordsAlert" class="alert alert-info text-center">
           <i class="bi bi-info-circle me-2"></i>
         <strong>No attendance records found.</strong> 
      @if (!string.IsNullOrEmpty(selectedClassId) || !string.IsNullOrEmpty(selectedMonth) || !string.IsNullOrEmpty(selectedStatus))
@@ -139,7 +139,7 @@
     else
     {
  <!-- Attendance Table -->
-     <div class="table-responsive">
+     <div id="attendanceTableContainer" class="table-responsive">
         <table class="table table-hover align-middle">
      <thead class="table-light">
          <tr>
@@ -153,11 +153,11 @@
       <th>Marked By</th>
        </tr>
           </thead>
-            <tbody>
+            <tbody id="attendanceTableBody">
             @foreach (var attendance in attendances)
              {
       var statusBadgeColor = attendance.Status == "Present" ? "success" :
-      (attendance.Status == "Late" ? "warning" :
+      (attendance.Status == "Leave" ? "warning" :
         (attendance.Status == "Absent" ? "danger" : "secondary"));
           
     <tr>
@@ -181,12 +181,180 @@
       </table>
         </div>
 
-        @if (attendances.Count >= 50)
-        {
-   <div class="alert alert-info mt-3">
-        <i class="bi bi-info-circle me-2"></i>
-     Showing latest 50 records. Use filters to narrow down results.
-        </div>
-  }
+        <div id="recordLimitAlert"></div>
     }
 </div>
+
+@section Scripts {
+<script>
+    $(document).ready(function() {
+        // Load initial data
+        loadAttendanceData();
+
+        // Handle form submission
+        $('#attendanceFilterForm').on('submit', function(e) {
+            e.preventDefault();
+            loadAttendanceData();
+        });
+
+        function loadAttendanceData() {
+            // Show loading state
+            $('#searchBtn').prop('disabled', true);
+            $('#searchBtn').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+
+            // Get filter values
+            const studentId = $('#studentId').val() || '';
+            const classId = $('#classId').val() || '';
+            const month = $('#month').val() || '';
+            const status = $('#status').val() || '';
+
+            // Make AJAX request
+            $.ajax({
+                url: '@Url.Action("GetAttendanceHistoryData", "Parent")',
+                type: 'GET',
+                data: {
+                    studentId: studentId,
+                    classId: classId,
+                    month: month,
+                    status: status
+                },
+                success: function(response) {
+                    if (response.success) {
+                        updateUI(response.data);
+                    } else {
+                        showError(response.message || 'Failed to load attendance data');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showError('An error occurred while loading attendance data');
+                    console.error('Error:', error);
+                },
+                complete: function() {
+                    // Reset button state
+                    $('#searchBtn').prop('disabled', false);
+                    $('#searchBtn').html('<i class="bi bi-search"></i>');
+                }
+            });
+        }
+
+        function updateUI(data) {
+            // Update summary cards
+            updateSummaryCards(data);
+
+            // Update attendance table
+            updateAttendanceTable(data);
+
+            // Update alerts
+            updateAlerts(data);
+        }
+
+        function updateSummaryCards(data) {
+            const summaryHtml = `
+                <div class="col-md-3">
+                    <div class="p-3 text-center" style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
+                        <i class="bi bi-check-circle-fill" style="font-size: 2rem; color: #198754;"></i>
+                        <h4 class="mt-2 mb-0" style="color: #198754;">${data.totalPresent}</h4>
+                        <small class="text-muted">Total Present</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 text-center" style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
+                        <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #dc3545;"></i>
+                        <h4 class="mt-2 mb-0" style="color: #dc3545;">${data.totalAbsent}</h4>
+                        <small class="text-muted">Total Absent</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 text-center" style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
+                        <i class="bi bi-calendar-x" style="font-size: 2rem; color: #ffc107;"></i>
+                        <h4 class="mt-2 mb-0" style="color: #ffc107;">${data.totalLate}</h4>
+                        <small class="text-muted">Total Leave</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-3 text-center" style="background: rgba(13, 110, 253, 0.1); border-radius: 8px;">
+                        <i class="bi bi-graph-up" style="font-size: 2rem; color: #0d6efd;"></i>
+                        <h4 class="mt-2 mb-0" style="color: #0d6efd;">${data.attendanceRate}%</h4>
+                        <small class="text-muted">Attendance Rate</small>
+                    </div>
+                </div>
+            `;
+            $('#summaryCards').html(summaryHtml);
+        }
+
+        function updateAttendanceTable(data) {
+            if (!data.hasRecords) {
+                return;
+            }
+
+            let tableHtml = '';
+            data.attendances.forEach(function(attendance) {
+                const statusBadgeColor = attendance.status === 'Present' ? 'success' :
+                    (attendance.status === 'Leave' ? 'warning' :
+                    (attendance.status === 'Absent' ? 'danger' : 'secondary'));
+
+                tableHtml += `
+                    <tr>
+                        <td>
+                            <i class="bi bi-person-circle me-2 text-muted"></i>
+                            <strong>${attendance.studentName}</strong>
+                        </td>
+                        <td>
+                            <i class="bi bi-calendar3 me-2 text-muted"></i>
+                            <strong>${attendance.date}</strong>
+                        </td>
+                        <td>${attendance.day}</td>
+                        <td>${attendance.className}</td>
+                        <td>${attendance.subject}</td>
+                        <td><i class="bi bi-clock me-1"></i>${attendance.timeTaken}</td>
+                        <td><span class="badge bg-${statusBadgeColor}">${attendance.status}</span></td>
+                        <td>${attendance.markedBy}</td>
+                    </tr>
+                `;
+            });
+
+            $('#attendanceTableBody').html(tableHtml);
+        }
+
+        function updateAlerts(data) {
+            // Hide/show no records alert
+            if (!data.hasRecords) {
+                const message = data.hasFilters 
+                    ? '<strong>No attendance records found.</strong> <span>Try adjusting the filters.</span>'
+                    : '<strong>No attendance records found.</strong> <span>Attendance records will appear here once classes are assigned and attendance is taken.</span>';
+                
+                $('#noRecordsAlert').html(`
+                    <i class="bi bi-info-circle me-2"></i>
+                    ${message}
+                `).show();
+                $('#attendanceTableContainer').hide();
+            } else {
+                $('#noRecordsAlert').hide();
+                $('#attendanceTableContainer').show();
+            }
+
+            // Show/hide record limit alert
+            if (data.recordCount >= 50) {
+                $('#recordLimitAlert').html(`
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Showing latest 50 records. Use filters to narrow down results.
+                    </div>
+                `);
+            } else {
+                $('#recordLimitAlert').html('');
+            }
+        }
+
+        function showError(message) {
+            $('#attendanceTableContainer').html(`
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    ${message}
+                </div>
+            `);
+        }
+    });
+</script>
+}
+
