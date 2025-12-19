@@ -20,6 +20,9 @@ builder.Services.AddSqlServer<DB>($@"
 // Add Helper service
 builder.Services.AddScoped<Helper>();
 
+// Add Report service
+builder.Services.AddScoped<ReportService>();
+
 // Add ReCaptcha service with HttpClient
 builder.Services.AddHttpClient<ReCaptchaService>();
 
