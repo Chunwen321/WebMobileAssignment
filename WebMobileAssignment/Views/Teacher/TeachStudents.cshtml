@@ -35,8 +35,8 @@
 
             <!-- Students List -->
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle mb-0 students-list-table">
+                    <thead>
                         <tr>
                             <th class="sortable-header" data-sort-key="studentId">
                                 Student ID
@@ -343,5 +343,33 @@
     // Set initial sort by Student ID
     sortTable('studentId');
 </script>
+
+<style>
+    /* Light Theme - Students List Table Styling */
+    .students-list-table thead {
+        background: transparent !important;
+        border-bottom: 2px solid #dee2e6 !important;
+    }
+
+    .students-list-table thead th {
+        background: transparent !important;
+        color: #212529 !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid #dee2e6 !important;
+    }
+
+    /* Dark Theme - Students List Table Styling */
+    [data-theme="dark"] .students-list-table thead {
+        background: transparent !important;
+        border-bottom: 2px solid #404040 !important;
+    }
+
+    [data-theme="dark"] .students-list-table thead th {
+        background: transparent !important;
+        color: #e0e0e0 !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid #404040 !important;
+    }
+</style>
 
 
