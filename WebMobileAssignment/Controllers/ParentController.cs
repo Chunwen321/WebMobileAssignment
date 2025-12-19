@@ -103,7 +103,7 @@ ViewBag.NextStudentId = ViewBag.HasNext ? allStudents[currentIndex + 1].StudentI
       var totalAttendance = allAttendances.Count;
         var presentCount = allAttendances.Count(a => a.Status == "Present");
          var absentCount = allAttendances.Count(a => a.Status == "Absent");
-  var lateCount = allAttendances.Count(a => a.Status == "Late");
+  var leaveCount = allAttendances.Count(a => a.Status == "Leave");
               var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
         
    // Get recent attendance (last 5 records)
@@ -115,12 +115,12 @@ ViewBag.NextStudentId = ViewBag.HasNext ? allStudents[currentIndex + 1].StudentI
        .Take(5)
    .ToListAsync();
           
-     ViewBag.StudentName = student.User.FullName;
+            ViewBag.StudentName = student.User.FullName;
    ViewBag.TotalClasses = student.Enrollments.Count;
         ViewBag.TotalAttendance = totalAttendance;
         ViewBag.PresentCount = presentCount;
         ViewBag.AbsentCount = absentCount;
-     ViewBag.LateCount = lateCount;
+     ViewBag.LeaveCount = leaveCount;
     ViewBag.AttendanceRate = attendanceRate;
  ViewBag.RecentAttendance = recentAttendance;
  
@@ -168,7 +168,7 @@ var allAttendances = student.Attendances;
      var totalAttendance = allAttendances.Count;
     var presentCount = allAttendances.Count(a => a.Status == "Present");
        var absentCount = allAttendances.Count(a => a.Status == "Absent");
-    var lateCount = allAttendances.Count(a => a.Status == "Late");
+    var leaveCount = allAttendances.Count(a => a.Status == "Leave");
     var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
     
    // Get recent attendance (last 5 records)
@@ -192,7 +192,7 @@ var primaryEnrollment = student.Enrollments.FirstOrDefault();
   // Calculate rates for chart
 var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
    var absentRate = totalAttendance > 0 ? Math.Round((decimal)absentCount / totalAttendance * 100, 1) : 0;
-            var lateRate = totalAttendance > 0 ? Math.Round((decimal)lateCount / totalAttendance * 100, 1) : 0;
+            var leaveRate = totalAttendance > 0 ? Math.Round((decimal)leaveCount / totalAttendance * 100, 1) : 0;
 
    return Json(new
     {
@@ -213,18 +213,18 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
       previousStudentId = currentIndex > 0 ? allStudents[currentIndex - 1].StudentId : null,
  nextStudentId = currentIndex < allStudents.Count - 1 ? allStudents[currentIndex + 1].StudentId : null,
        
-     // Stats
+            // Stats
        totalClasses = student.Enrollments.Count,
        totalAttendance = totalAttendance,
        presentCount = presentCount,
     absentCount = absentCount,
-          lateCount = lateCount,
+          leaveCount = leaveCount,
             attendanceRate = attendanceRate,
   
  // Chart data
       presentRate = presentRate,
     absentRate = absentRate,
-    lateRate = lateRate,
+    leaveRate = leaveRate,
    
   // Recent attendance
   recentAttendance = recentAttendance
@@ -266,7 +266,7 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
   ViewBag.Classes = new List<Class>();
   ViewBag.TotalPresent = 0;
      ViewBag.TotalAbsent = 0;
-       ViewBag.TotalLate = 0; // Note: Database still stores as "Late" but displayed as "Leave"
+       ViewBag.TotalLate = 0;
    ViewBag.AttendanceRate = 0;
            return View();
  }
@@ -335,10 +335,10 @@ var presentRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / total
         .Take(50)
      .ToListAsync();
         
-     // Calculate statistics (Note: "Late" in database represents "Leave")
+     // Calculate statistics
           var totalPresent = attendances.Count(a => a.Status == "Present");
 var totalAbsent = attendances.Count(a => a.Status == "Absent");
- var totalLate = attendances.Count(a => a.Status == "Late"); // Displayed as "Leave" in views
+ var totalLate = attendances.Count(a => a.Status == "Leave");
             var totalCount = attendances.Count;
     var attendanceRate = totalCount > 0 ? Math.Round((decimal)totalPresent / totalCount * 100, 1) : 0;
      
@@ -425,11 +425,11 @@ a.Date >= startDate &&
        a.Date <= endDate)
     .ToListAsync();
   
-// Calculate overall statistics (Note: "Late" in database represents "Leave")
-            var totalClasses = monthlyAttendances.Count;
-       var totalPresent = monthlyAttendances.Count(a => a.Status == "Present");
-  var totalAbsent = monthlyAttendances.Count(a => a.Status == "Absent");
-  var totalLate = monthlyAttendances.Count(a => a.Status == "Late"); // Displayed as "Leave" in views
+// Calculate overall statistics
+          var totalClasses = monthlyAttendances.Count;
+     var totalPresent = monthlyAttendances.Count(a => a.Status == "Present");
+var totalAbsent = monthlyAttendances.Count(a => a.Status == "Absent");
+var totalLate = monthlyAttendances.Count(a => a.Status == "Leave");
          var attendanceRate = totalClasses > 0 ? Math.Round((decimal)totalPresent / totalClasses * 100, 1) : 0;
             
 // Calculate subject-wise summary
@@ -444,7 +444,7 @@ a.Date >= startDate &&
      TotalClasses = g.Count(),
    Present = g.Count(a => a.Status == "Present"),
       Absent = g.Count(a => a.Status == "Absent"),
-    Late = g.Count(a => a.Status == "Late"), // Displayed as "Leave" in views
+    Late = g.Count(a => a.Status == "Leave"),
  AttendanceRate = g.Count() > 0 ? Math.Round((decimal)g.Count(a => a.Status == "Present") / g.Count() * 100, 1) : 0
      })
      .OrderBy(s => s.Subject)
@@ -502,13 +502,13 @@ return View();
         var totalAttendance = allAttendances.Count;
      var presentCount = allAttendances.Count(a => a.Status == "Present");
         var absentCount = allAttendances.Count(a => a.Status == "Absent");
-     var lateCount = allAttendances.Count(a => a.Status == "Late");
+     var leaveCount = allAttendances.Count(a => a.Status == "Leave");
         var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
        
   ViewBag.TotalAttendance = totalAttendance;
     ViewBag.PresentCount = presentCount;
  ViewBag.AbsentCount = absentCount;
-        ViewBag.LateCount = lateCount;
+        ViewBag.LeaveCount = leaveCount;
      ViewBag.AttendanceRate = attendanceRate;
     }
     
@@ -615,15 +615,15 @@ public async Task<IActionResult> GetStudentProfileContent(string studentId)
     var totalAttendance = allAttendances.Count;
     var presentCount = allAttendances.Count(a => a.Status == "Present");
   var absentCount = allAttendances.Count(a => a.Status == "Absent");
- var lateCount = allAttendances.Count(a => a.Status == "Late");
+ var leaveCount = allAttendances.Count(a => a.Status == "Leave");
     var attendanceRate = totalAttendance > 0 ? Math.Round((decimal)presentCount / totalAttendance * 100, 1) : 0;
     
-    ViewBag.Student = student;
+        ViewBag.Student = student;
     ViewBag.TotalAttendance = totalAttendance;
     ViewBag.PresentCount = presentCount;
-    ViewBag.AbsentCount = absentCount;
-    ViewBag.LateCount = lateCount;
-    ViewBag.AttendanceRate = attendanceRate;
+ ViewBag.AbsentCount = absentCount;
+        ViewBag.LeaveCount = leaveCount;
+     ViewBag.AttendanceRate = attendanceRate;
     ViewBag.ClassPage = 1; // Initialize class page for new student
 
     // Render partial view to string
@@ -921,12 +921,13 @@ var parent = await GetCurrentParentAsync();
   return RedirectToAction("ChangePassword");
     }
 
-   // Verify password length
-    if (newPassword.Length < 8)
-        {
-         TempData["Error"] = "Password must be at least 8 characters long.";
-     return RedirectToAction("ChangePassword");
-  }
+   // Validate password strength using Helper method
+    var (isValid, errors) = _helper.ValidatePasswordStrength(newPassword);
+    if (!isValid)
+    {
+        TempData["Error"] = "Password does not meet security requirements:<br/>" + string.Join("<br/>", errors);
+        return RedirectToAction("ChangePassword");
+    }
 
       // Verify current password using Helper (handles both plain text and hashed passwords)
     bool isPasswordCorrect = false;

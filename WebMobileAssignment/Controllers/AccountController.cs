@@ -230,7 +230,12 @@ namespace WebMobileAssignment.Controllers
 
      if (user == null)
      {
+            // For security: don't reveal that the email doesn't exist
+            // Use generic error message without showing attempts
+            Console.WriteLine($"Login failed: Email not found - {email}");
             ViewBag.ErrorMessage = "Invalid email or password.";
+            // Clear the form by redirecting to a fresh login page
+            ModelState.Clear();
            return View();
         }
 
@@ -242,6 +247,8 @@ namespace WebMobileAssignment.Controllers
         
        Console.WriteLine($"Account locked for {email}. Remaining time: {minutes} minutes");
         ViewBag.ErrorMessage = $"Your account has been locked due to multiple failed login attempts. Please try again in {minutes} minute(s).";
+        // Keep the email but clear password
+        ViewBag.Email = email;
   return View();
           }
 
@@ -284,6 +291,8 @@ namespace WebMobileAssignment.Controllers
            
        Console.WriteLine($"Account locked for {email} after {user.FailedLoginAttempts} failed attempts");
     ViewBag.ErrorMessage = "Your account has been locked due to multiple failed login attempts. Please try again in 15 minutes.";
+        // Keep the email but clear password
+        ViewBag.Email = email;
  return View();
       }
 
@@ -293,6 +302,8 @@ namespace WebMobileAssignment.Controllers
   Console.WriteLine($"Failed login for {email}. Attempts: {user.FailedLoginAttempts}/5. Remaining: {remainingAttempts}");
                     
       ViewBag.ErrorMessage = $"Invalid email or password. You have {remainingAttempts} attempt(s) remaining before your account is locked.";
+        // Keep the email but clear password
+        ViewBag.Email = email;
      return View();
         }
 

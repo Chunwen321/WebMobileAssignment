@@ -278,12 +278,12 @@ Attendance Overview
    <td>
    @{
 var badgeClass = attendance.Status switch
-  {
+{
     "Present" => "bg-success",
-      "Absent" => "bg-danger",
-  "Late" => "bg-warning",
-  _ => "bg-secondary"
-       };
+    "Absent" => "bg-danger",
+    "Leave" => "bg-warning",  // ? This is correct
+    _ => "bg-secondary"
+};
  }
   <span class="badge @badgeClass">@attendance.Status</span>
    </td>
@@ -292,7 +292,7 @@ var badgeClass = attendance.Status switch
    {
      <text>On time</text>
  }
-       else if (attendance.Status == "Late")
+       else if (attendance.Status == "Leave")
   {
 <text>On leave</text>
   }
@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const studentAvatar = document.getElementById('studentAvatar');
     if (studentAvatar && data.profilePicture) {
         if (data.profilePicture !== '/images/default-avatar.png') {
- studentAvatar.outerHTML = `<img id="studentAvatar" src="${data.profilePicture}" alt="${data.studentName}" class="mx-auto" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #ffc107; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);">`;
+ studentAvatar.outerHTML = `<img id="studentAvatar" src="${data.profilePicture}" alt="${data.studentName}" class="mx-auto" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #ffc107; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);`;
             } else {
      studentAvatar.outerHTML = `<div id="studentAvatar" class="user-avatar mx-auto" style="width: 80px; height: 80px; font-size: 2rem; background: #ffc107;"><i class="bi bi-person-fill"></i></div>`;
   }
@@ -519,10 +519,10 @@ nextBtn.setAttribute('data-action', 'next');
         attendances.forEach(att => {
             const badgeClass = att.status === 'Present' ? 'bg-success' :
       att.status === 'Absent' ? 'bg-danger' :
-           att.status === 'Late' ? 'bg-warning' : 'bg-secondary';
+           att.status === 'Leave' ? 'bg-warning' : 'bg-secondary';
     
             const remarks = att.status === 'Present' ? 'On time' :
-        att.status === 'Late' ? 'On leave' : '-';
+        att.status === 'Leave' ? 'On leave' : '-';
   
      const row = document.createElement('tr');
       row.innerHTML = `

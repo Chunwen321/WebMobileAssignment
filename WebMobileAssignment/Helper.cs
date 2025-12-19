@@ -121,6 +121,67 @@ public class Helper(IWebHostEnvironment en,
         return password;
     }
 
+    /// <summary>
+    /// Validates password against strong password policy requirements.
+    /// </summary>
+    /// <param name="password">The password to validate</param>
+    /// <returns>Validation result with success flag and error messages</returns>
+    public (bool IsValid, List<string> Errors) ValidatePasswordStrength(string password)
+    {
+        var errors = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            errors.Add("Password is required.");
+            return (false, errors);
+        }
+
+        // Minimum length requirement
+        if (password.Length < 8)
+        {
+            errors.Add("Password must be at least 8 characters long.");
+        }
+
+        // Maximum length for security
+        if (password.Length > 128)
+        {
+            errors.Add("Password cannot exceed 128 characters.");
+        }
+
+        // Uppercase letter requirement
+        if (!Regex.IsMatch(password, @"[A-Z]"))
+        {
+            errors.Add("Password must contain at least one uppercase letter (A-Z).");
+        }
+
+        // Lowercase letter requirement
+        if (!Regex.IsMatch(password, @"[a-z]"))
+        {
+            errors.Add("Password must contain at least one lowercase letter (a-z).");
+        }
+
+        // Digit requirement
+        if (!Regex.IsMatch(password, @"[0-9]"))
+        {
+            errors.Add("Password must contain at least one digit (0-9).");
+        }
+
+        // Special character requirement
+        if (!Regex.IsMatch(password, @"[!@#$%^&*()_+\-=\[\]{};':""\\|,.<>/?]"))
+        {
+            errors.Add("Password must contain at least one special character (!@#$%^&* etc.).");
+        }
+
+        // Check for common weak passwords
+        var commonPasswords = new[] { "password", "12345678", "password123", "qwerty", "abc123" };
+        if (commonPasswords.Any(cp => password.ToLower().Contains(cp)))
+        {
+            errors.Add("Password contains common patterns that are not secure.");
+        }
+
+        return (errors.Count == 0, errors);
+    }
+
 
 
     // ------------------------------------------------------------------------
