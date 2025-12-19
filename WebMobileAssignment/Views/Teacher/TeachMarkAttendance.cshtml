@@ -6,6 +6,7 @@
     Layout = "~/Views/Shared/_TeacherLayout.cshtml";
     
     var classes = ViewBag.Classes as List<Class> ?? new List<Class>();
+    var sessions = ViewBag.Sessions as List<WebMobileAssignment.Models.AttendanceSession> ?? new List<WebMobileAssignment.Models.AttendanceSession>();
     var selectedDate = ViewBag.SelectedDate as DateTime? ?? DateTime.Today;
     var selectedDay = ViewBag.SelectedDay?.ToString() ?? DateTime.Now.DayOfWeek.ToString();
 }
@@ -82,6 +83,13 @@
                         <div class="row g-3">
                             @foreach (var cls in filteredClasses)
                             {
+                                // Check if there's a valid session for this class on the selected date
+                                var session = sessions.FirstOrDefault(s => 
+                                    s.ClassId == cls.ClassId && 
+                                    s.CreatedDate.Date == selectedDate.Date
+                                );
+                                var hasSession = session != null;
+                                
                                 var isToday = selectedDate.Date == DateTime.Today;
                                 var currentTime = DateTime.Now.TimeOfDay;
                                 var isActive = isToday && cls.StartTime.HasValue && cls.EndTime.HasValue && currentTime >= cls.StartTime.Value && currentTime <= cls.EndTime.Value;
@@ -90,7 +98,7 @@
                                 var isFutureDate = selectedDate.Date > DateTime.Today;
 
                                 <div class="col-lg-4 col-md-6">
-                                    <div class="class-card-vertical @(isActive ? "active-now" : "")">
+                                    <div class="class-card-vertical @(hasSession ? "has-pin" : "") @(isActive ? "active-now" : "")">
                                         <div class="class-header">
                                             <h5 class="class-name mb-1">@cls.ClassName</h5>
                                             <small class="class-badge-text">@cls.ClassId</small>
@@ -144,9 +152,24 @@
                                             }
                                         </div>
 
+                                        @if (hasSession)
+                                        {
+                                            <div class="pin-indicator">
+                                                <i class="bi bi-shield-check text-success"></i>
+                                                <span>PIN Generated</span>
+                                            </div>
+                                        }
+
                                         <a href="@Url.Action("TeachAttendanceClassDetail", "Teacher", new { id = cls.ClassId, selectedDate = selectedDate.ToString("yyyy-MM-dd") })" 
                                            class="btn btn-primary w-100 mt-3">
-                                            <i class="bi bi-eye me-2"></i>View Details
+                                            @if (hasSession)
+                                            {
+                                                <i class="bi bi-eye"></i> <text>View PIN & QR</text>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-key"></i> <text>View Details</text>
+                                            }
                                         </a>
                                     </div>
                                 </div>
@@ -198,6 +221,28 @@
     .class-card-vertical.active-now {
         border-color: #198754;
         background: rgba(25, 135, 84, 0.02);
+    }
+
+    .class-card-vertical.has-pin {
+        border: 2px solid #198754;
+        background: rgba(25, 135, 84, 0.02);
+    }
+
+    .pin-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(25, 135, 84, 0.1);
+        border-radius: 4px;
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #198754;
+    }
+
+    .pin-indicator i {
+        font-size: 1rem;
     }
 
     .class-header {

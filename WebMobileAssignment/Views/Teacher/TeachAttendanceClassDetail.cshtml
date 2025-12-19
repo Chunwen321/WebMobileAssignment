@@ -34,6 +34,10 @@
     var isActive = Model.StartTime.HasValue && Model.EndTime.HasValue && 
                    currentTime >= Model.StartTime.Value && currentTime <= Model.EndTime.Value &&
                    selectedDate.Date == DateTime.Today;
+    
+    // Use filtered enrollments - only students enrolled on or before the selected date
+    var filteredEnrollments = ViewBag.FilteredEnrollments as List<WebMobileAssignment.Models.Enrollment> ?? Model.Enrollments.ToList();
+    var filteredEnrollmentCount = filteredEnrollments.Count;
 }
 
 <!-- Header Section -->
@@ -101,7 +105,7 @@
                     <div class="col-md-6">
                         <div class="info-box">
                             <div class="info-label">Enrolled Students</div>
-                            <div class="info-value">@Model.Enrollments.Count students</div>
+                            <div class="info-value">@filteredEnrollmentCount students</div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -136,12 +140,12 @@
         </div>
     </div>
 
-    <!-- Manual Attendance Taking Card -->
+    <!-- PIN Generation Card -->
     <div class="col-lg-4">
         <div class="dashboard-card">
             <div class="card-header-custom">
                 <h6 class="card-title mb-0">
-                    <i class="bi bi-pencil-square me-2"></i>Mark Attendance
+                    <i class="bi bi-key me-2"></i>Attendance PIN
                 </h6>
             </div>
             <div class="p-4 text-center">
@@ -153,40 +157,103 @@
                         <p class="mb-0 small">This class is scheduled for <strong>@Model.Day</strong>, not @selectedDay.</p>
                     </div>
                 }
+                else if (hasValidSession)
+                {
+                    <!-- Show existing PIN (valid for the selected date) -->
+                    @if (isPinExpired || selectedDate.Date < DateTime.Today)
+                    {
+                        <!-- PIN exists but expired (past date or class ended) -->
+                        <div class="pin-display-large" style="position: relative; opacity: 0.7;">
+                            <div class="pin-label">6-DIGIT PIN CODE</div>
+                            @if (sessionOnSelectedDate != null)
+                            {
+                                <div class="pin-code">@sessionOnSelectedDate.PinCode</div>
+                            }
+                            
+                            <!-- Red overlay with EXPIRED text -->
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(220, 53, 69, 0.6); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                                <div style="font-size: 2.5rem; font-weight: bold; color: white; letter-spacing: 2px;">EXPIRED</div>
+                                <div style="font-size: 0.9rem; color: white; margin-top: 8px;">@(selectedDate.Date < DateTime.Today ? "Class date has passed" : "Class ended")</div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- PIN is active -->
+                        <div class="pin-display-large">
+                            <div class="pin-label">6-DIGIT PIN CODE</div>
+                            @if (sessionOnSelectedDate != null)
+                            {
+                                <div class="pin-code">@sessionOnSelectedDate.PinCode</div>
+                            }
+                            <button id="copyPinBtn" class="btn btn-outline-light btn-sm mt-2">
+                                <i class="bi bi-clipboard"></i> Copy PIN
+                            </button>
+                        </div>
+                        
+                        <div class="qr-display mt-3">
+                            <div class="qr-label mb-2">SCAN QR CODE</div>
+                            <div id="qrCodeContainer" class="qr-container"></div>
+                        </div>
+
+                        @if (selectedDate.Date == DateTime.Today && Model.EndTime.HasValue)
+                        {
+                            <div class="alert alert-success mt-3 mb-0">
+                                <i class="bi bi-check-circle"></i>
+                                <small>PIN is active until @Model.EndTime.Value.ToString("hh\\:mm") (class ends)</small>
+                            </div>
+                        }
+                    }
+                }
                 else if (selectedDate.Date > DateTime.Today)
                 {
                     <!-- Future date -->
                     <div class="alert alert-info mb-0">
                         <i class="bi bi-calendar-event mb-2" style="font-size: 2rem;"></i>
                         <p class="mb-0 small"><strong>Future Date</strong></p>
-                        <p class="mb-0 small">Attendance can only be marked on or after the class date.</p>
+                        <p class="mb-0 small">PIN can only be generated on the actual class date.</p>
+                    </div>
+                }
+                else if (selectedDate.Date < DateTime.Today)
+                {
+                    <!-- Past date with no PIN -->
+                    <div class="alert alert-secondary mb-0">
+                        <i class="bi bi-calendar-x mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0 small"><strong>No PIN Generated</strong></p>
+                        <p class="mb-0 small">No PIN was generated for this past date (@selectedDate.ToString("MMM dd, yyyy")).</p>
+                    </div>
+                }
+                else if (!isActive)
+                {
+                    <!-- Today but class not active -->
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-clock mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0 small"><strong>Class Not Active</strong></p>
+                        <p class="mb-0 small">PIN can only be generated during class hours.</p>
+                        @if (Model.StartTime.HasValue && currentTime < Model.StartTime.Value)
+                        {
+                            <p class="mb-0 small mt-2">Starts at <strong>@Model.StartTime.Value.ToString("hh\\:mm")</strong></p>
+                        }
+                        else if (Model.EndTime.HasValue)
+                        {
+                            <p class="mb-0 small mt-2">Class ended at <strong>@Model.EndTime.Value.ToString("hh\\:mm")</strong></p>
+                        }
                     </div>
                 }
                 else
                 {
-                    <!-- Attendance Marking Available -->
-                    <div class="marking-section">
-                        <i class="bi bi-check2-circle mb-3" style="font-size: 3rem; color: #0d6efd;"></i>
-                        <p class="mb-3"><strong>Ready to Mark Attendance</strong></p>
-                        <p class="text-muted small mb-3">Mark attendance for enrolled students below.</p>
-                        
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <button id="checkAllBtn" class="btn btn-success btn-sm w-100">
-                                    <i class="bi bi-check-all me-1"></i>Check All
-                                </button>
-                            </div>
-                            <div class="col-6">
-                                <button id="uncheckAllBtn" class="btn btn-outline-secondary btn-sm w-100">
-                                    <i class="bi bi-x me-1"></i>Uncheck All
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <span id="savingIndicator" class="text-muted small mt-3" style="display: none;">
-                            <span class="spinner-border spinner-border-sm me-1"></span>
-                            Saving...
-                        </span>
+                    <!-- Generate PIN Button (only for today during class hours) -->
+                    <div class="generate-section">
+                        <i class="bi bi-key-fill mb-3" style="font-size: 3rem; color: #6366f1;"></i>
+                        <p class="mb-3"><strong>Ready to Take Attendance</strong></p>
+                        <p class="text-muted small mb-3">Generate a PIN code for students to mark their attendance.</p>
+                        <button id="generatePinBtn" class="btn btn-primary w-100" 
+                                data-class-id="@Model.ClassId">
+                            <i class="bi bi-key-fill me-2"></i>Generate PIN Code
+                        </button>
+                        <p class="text-muted small mt-2 mb-0">
+                            <i class="bi bi-info-circle"></i> PIN can only be generated once per day
+                        </p>
                     </div>
                 }
             </div>
@@ -200,8 +267,20 @@
         <div class="dashboard-card">
             <div class="card-header-custom d-flex justify-content-between align-items-center">
                 <h6 class="card-title mb-0">
-                    <i class="bi bi-people me-2"></i>Enrolled Students (@Model.Enrollments.Count)
+                    <i class="bi bi-people me-2"></i>Enrolled Students (@filteredEnrollmentCount)
                 </h6>
+                <div>
+                    <button id="checkAllBtn" class="btn btn-sm btn-outline-success me-2">
+                        <i class="bi bi-check-all"></i> Check All
+                    </button>
+                    <button id="uncheckAllBtn" class="btn btn-sm btn-outline-secondary me-2">
+                        <i class="bi bi-x"></i> Uncheck All
+                    </button>
+                    <span id="savingIndicator" class="text-muted small" style="display: none;">
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                        Saving...
+                    </span>
+                </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover table-sm mb-0">
@@ -217,30 +296,66 @@
                         </tr>
                     </thead>
                     <tbody id="studentList">
-                        @if (Model.Enrollments != null && Model.Enrollments.Any())
+                        @if (filteredEnrollments != null && filteredEnrollments.Any())
                         {
-                            @foreach (var enrollment in Model.Enrollments.OrderBy(e => e.Student.User.FullName))
+                            @foreach (var enrollment in filteredEnrollments.OrderBy(e => e.Student.User.FullName))
                             {
-                                var todayAttendance = todayAttendances.FirstOrDefault(a => 
-                                    a.StudentId == enrollment.StudentId && 
-                                    a.ClassId == Model.ClassId && 
-                                    a.Date.Date == selectedDate.Date);
-                                var isPresent = todayAttendance != null && todayAttendance.Status == "Present";
-                                var attStatus = todayAttendance?.Status ?? "";
-
-                                <tr>
+                                var attendance = todayAttendances.FirstOrDefault(a => a.StudentId == enrollment.Student.StudentId);
+                                var isPresent = attendance != null && attendance.Status == "Present";
+                                var hasMarkedAttendance = attendance != null;
+                                
+                                <tr data-student-id="@enrollment.Student.StudentId">
                                     <td>
-                                        <input type="checkbox" class="form-check-input student-attendance" 
-                                               data-student-id="@enrollment.StudentId" 
-                                               data-class-id="@Model.ClassId"
-                                               @(isPresent ? "checked" : "") />
+                                        <input type="checkbox" 
+                                               class="form-check-input student-checkbox" 
+                                               data-student-id="@enrollment.Student.StudentId"
+                                               @(isPresent ? "checked" : "")
+                                               @(hasMarkedAttendance ? "data-existing='true'" : "") />
                                     </td>
-                                    <td>@enrollment.Student.StudentId</td>
+                                    <td><strong>@enrollment.Student.StudentId</strong></td>
                                     <td>@enrollment.Student.User.FullName</td>
-                                    <td><small class="text-muted">@enrollment.Student.User.Email</small></td>
+                                    <td>@enrollment.Student.User.Email</td>
                                     <td>
-                                        <span class="badge @(isPresent ? "bg-success" : "bg-light text-dark")">
-                                            @(string.IsNullOrEmpty(attStatus) ? "Unmarked" : attStatus)
+                                        <span class="status-badge" data-student-id="@enrollment.Student.StudentId">
+                                            @if (attendance != null)
+                                            {
+                                                @if (attendance.Status == "Present")
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> Present
+                                                    </span>
+                                                }
+                                                else if (attendance.Status == "Late")
+                                                {
+                                                    <span class="badge bg-warning">
+                                                        <i class="bi bi-clock-history"></i> Late
+                                                    </span>
+                                                }
+                                                else if (attendance.Status == "Absent")
+                                                {
+                                                    <span class="badge bg-danger">
+                                                        <i class="bi bi-x-circle"></i> Absent
+                                                    </span>
+                                                }
+                                                else if (attendance.Status == "Leave")
+                                                {
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-calendar-check"></i> Leave
+                                                    </span>
+                                                }
+                                                else if (attendance.Status == "Not Marked")
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-dash-circle"></i> Not Marked
+                                                    </span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-dash-circle"></i> Not Marked
+                                                </span>
+                                            }
                                         </span>
                                     </td>
                                 </tr>
@@ -249,9 +364,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">
-                                    <i class="bi bi-inbox me-2"></i>No students enrolled in this class
-                                </td>
+                                <td colspan="5" class="text-center text-muted py-3">No students enrolled as of @selectedDate.ToString("MMM dd, yyyy")</td>
                             </tr>
                         }
                     </tbody>
@@ -261,272 +374,438 @@
     </div>
 </div>
 
-<!-- Styles -->
-<style>
-    .info-box {
-        padding: 0.75rem 0;
-    }
-
-    .info-label {
-        font-size: 0.85rem;
-        color: #6c757d;
-        text-transform: uppercase;
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-    }
-
-    .info-value {
-        font-size: 1rem;
-        font-weight: 500;
-        color: #333;
-    }
-
-    .info-value small {
-        display: block;
-        font-size: 0.85rem;
-    }
-
-    .pin-display-large {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 12px;
-        margin-bottom: 1rem;
-    }
-
-    .pin-label {
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 2px;
-        opacity: 0.9;
-        margin-bottom: 0.5rem;
-    }
-
-    .pin-code {
-        font-size: 2.5rem;
-        font-weight: 700;
-        letter-spacing: 4px;
-        font-family: 'Courier New', monospace;
-        margin: 1rem 0;
-    }
-
-    .qr-display {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 8px;
-    }
-
-    .qr-label {
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-        color: #6c757d;
-    }
-
-    .qr-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .generate-section {
-        padding: 1rem;
-    }
-
-    .marking-section {
-        padding: 1rem;
-    }
-
-    .blink {
-        animation: blink 1s infinite;
-    }
-
-    @@keyframes blink {
-        0%, 50%, 100% { opacity: 1; }
-        25%, 75% { opacity: 0.5; }
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: rgba(13, 110, 253, 0.05);
-    }
-
-    .student-attendance {
-        cursor: pointer;
-    }
-</style>
-
-<!-- Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-<script>
-    const classId = '@Model.ClassId';
-    const selectedDate = '@selectedDate.ToString("yyyy-MM-dd")';
-    const checkAllBtn = document.getElementById('checkAllBtn');
-    const uncheckAllBtn = document.getElementById('uncheckAllBtn');
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    const studentCheckboxes = document.querySelectorAll('.student-attendance');
-    const savingIndicator = document.getElementById('savingIndicator');
-
-    // Check All functionality
-    if (checkAllBtn) {
-        checkAllBtn.addEventListener('click', function() {
-            studentCheckboxes.forEach(checkbox => {
-                checkbox.checked = true;
-            });
-            selectAllCheckbox.checked = true;
-            saveAllAttendance();
-        });
-    }
-
-    // Uncheck All functionality
-    if (uncheckAllBtn) {
-        uncheckAllBtn.addEventListener('click', function() {
-            studentCheckboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            selectAllCheckbox.checked = false;
-            saveAllAttendance();
-        });
-    }
-
-    // Select All checkbox
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            studentCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-            if (this.checked || document.querySelectorAll('.student-attendance:checked').length > 0) {
-                saveAllAttendance();
-            }
-        });
-    }
-
-    // Individual checkbox changes
-    studentCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            saveSingleAttendance(this);
-        });
-    });
-
-    // Save all attendance
-    function saveAllAttendance() {
-        const attendanceData = [];
-        
-        studentCheckboxes.forEach(checkbox => {
-            const studentId = checkbox.getAttribute('data-student-id');
-            const status = checkbox.checked ? 'Present' : 'Absent';
+@section Scripts {
+    <!-- Load QRCode library from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            const classId = '@Model.ClassId';
+            const selectedDate = '@selectedDate.ToString("yyyy-MM-dd")';
+            const hasValidSession = @hasValidSession.ToString().ToLower();
+            const isPinExpired = @isPinExpired.ToString().ToLower();
             
-            attendanceData.push({
-                studentId: studentId,
-                classId: classId,
-                status: status,
-                date: selectedDate
-            });
-        });
-
-        showSavingIndicator();
-        
-        fetch('@Url.Action("SaveTeacherManualAttendance", "Teacher")', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-            },
-            body: JSON.stringify(attendanceData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            hideSavingIndicator();
-            if (data.success) {
-                updateStatusBadges();
-            } else {
-                alert('Error saving attendance: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            hideSavingIndicator();
-            console.error('Error:', error);
-            alert('Error saving attendance');
-        });
-    }
-
-    // Save single attendance
-    function saveSingleAttendance(checkbox) {
-        const studentId = checkbox.getAttribute('data-student-id');
-        const status = checkbox.checked ? 'Present' : 'Absent';
-
-        showSavingIndicator();
-
-        fetch('@Url.Action("SaveTeacherAttendance", "Teacher")', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-            },
-            body: JSON.stringify({
-                studentId: studentId,
-                classId: classId,
-                status: status,
-                date: selectedDate
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            hideSavingIndicator();
-            if (data.success) {
-                updateStatusBadges();
-            } else {
-                alert('Error saving attendance: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            hideSavingIndicator();
-            console.error('Error:', error);
-            alert('Error saving attendance');
-        });
-    }
-
-    // Update status badges
-    function updateStatusBadges() {
-        document.querySelectorAll('tbody tr').forEach(row => {
-            const checkbox = row.querySelector('.student-attendance');
-            const statusBadge = row.querySelector('td:last-child .badge');
+            // Batch save queue to prevent concurrent requests
+            let saveQueue = [];
+            let isSaving = false;
             
-            if (checkbox && statusBadge) {
-                if (checkbox.checked) {
-                    statusBadge.className = 'badge bg-success';
-                    statusBadge.textContent = 'Present';
-                } else {
-                    statusBadge.className = 'badge bg-light text-dark';
-                    statusBadge.textContent = 'Absent';
+            // Only generate QR code if PIN exists and is not expired
+            if (hasValidSession && !isPinExpired) {
+                // Generate QR Code - Redirect to STUDENT page
+                const request = window.location;
+                const baseUrl = `${request.protocol}//${request.host}`;
+                const qrUrl = `${baseUrl}/Student/StudTakeAttendance?pin=@(sessionOnSelectedDate?.PinCode ?? "")`;
+
+                // Clear any existing QR code first
+                document.getElementById("qrCodeContainer").innerHTML = "";
+
+                // Generate new QR code
+                new QRCode(document.getElementById("qrCodeContainer"), {
+                    text: qrUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                console.log("QR Code generated for URL:", qrUrl);
+            }
+
+            // Copy PIN button
+            $('#copyPinBtn').click(function() {
+                const pin = $('.pin-code').text().trim();
+                navigator.clipboard.writeText(pin).then(function() {
+                    $('#copyPinBtn').html('<i class="bi bi-check"></i> Copied!');
+                    setTimeout(() => {
+                        $('#copyPinBtn').html('<i class="bi bi-clipboard"></i> Copy PIN');
+                    }, 2000);
+                });
+            });
+
+            // Generate PIN button
+            $('#generatePinBtn').click(function() {
+                const btn = $(this);
+                const classId = '@Model.ClassId';
+
+                if (!confirm('Generate PIN code for this class? This can only be done once per day.')) {
+                    return;
                 }
+
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Generating...');
+
+                $.ajax({
+                    url: '@Url.Action("GenerateAttendancePin", "Teacher")',
+                    type: 'POST',
+                    contentType: 'application/x-www-form-urlencoded',
+                    data: { classId: classId },
+                    success: function(response) {
+                        console.log('PIN generation response:', response);
+                        if (response.success) {
+                            alert('PIN generated successfully! The page will reload.');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                            btn.prop('disabled', false).html('<i class="bi bi-key-fill me-2"></i>Generate PIN Code');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error Status:', status);
+                        console.log('Error:', error);
+                        console.log('Response Text:', xhr.responseText);
+                        console.log('Response:', xhr);
+                        alert('Failed to generate PIN. Error: ' + error + '. Check browser console for details.');
+                        btn.prop('disabled', false).html('<i class="bi bi-key-fill me-2"></i>Generate PIN Code');
+                    }
+                });
+            });
+
+            // Process save queue sequentially
+            function processSaveQueue() {
+                if (isSaving || saveQueue.length === 0) {
+                    return;
+                }
+                
+                isSaving = true;
+                $('#savingIndicator').show();
+                
+                const item = saveQueue.shift();
+                const { studentId, status, checkbox, row, statusBadge, originalChecked } = item;
+                
+                // Disable checkbox while saving
+                checkbox.prop('disabled', true);
+
+                // Save attendance via AJAX
+                $.ajax({
+                    url: '@Url.Action("SaveTeacherAttendance", "Teacher")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        classId: classId,
+                        studentId: studentId,
+                        date: selectedDate,
+                        status: status
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            // Update status badge
+                            if (status === 'Present') {
+                                statusBadge.html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Present</span>');
+                            } else {
+                                statusBadge.html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Absent</span>');
+                            }
+                            
+                            // Show success animation
+                            row.addClass('table-success');
+                            setTimeout(() => {
+                                row.removeClass('table-success');
+                            }, 500);
+                            
+                            console.log(`Attendance saved: ${studentId} - ${status}`);
+                        } else {
+                            console.error('Error:', response.message);
+                            // Revert checkbox
+                            checkbox.prop('checked', originalChecked);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        // Revert checkbox
+                        checkbox.prop('checked', originalChecked);
+                    },
+                    complete: function() {
+                        // Re-enable checkbox
+                        checkbox.prop('disabled', false);
+                        isSaving = false;
+                        
+                        // Process next item in queue
+                        if (saveQueue.length > 0) {
+                            setTimeout(processSaveQueue, 200); // Small delay between requests
+                        } else {
+                            $('#savingIndicator').hide();
+                        }
+                    }
+                });
             }
+
+            // Auto-save attendance on checkbox change
+            $('.student-checkbox').change(function() {
+                const checkbox = $(this);
+                const studentId = checkbox.data('student-id');
+                const isChecked = checkbox.is(':checked');
+                const status = isChecked ? 'Present' : 'Absent';
+                const row = checkbox.closest('tr');
+                const statusBadge = row.find('.status-badge[data-student-id="' + studentId + '"]');
+                
+                // Get original state to revert if needed
+                const originalChecked = !isChecked;
+                
+                // Add to save queue
+                saveQueue.push({
+                    studentId: studentId,
+                    status: status,
+                    checkbox: checkbox,
+                    row: row,
+                    statusBadge: statusBadge,
+                    originalChecked: originalChecked
+                });
+                
+                // Start processing queue
+                processSaveQueue();
+            });
+
+            // Select all checkbox with batch processing
+            $('#selectAllCheckbox').change(function() {
+                const isChecked = $(this).is(':checked');
+                
+                // Collect all students that need status change
+                const studentsToMark = [];
+                $('.student-checkbox').each(function() {
+                    const checkbox = $(this);
+                    const currentlyChecked = checkbox.is(':checked');
+                    
+                    // Only process if state is different
+                    if (currentlyChecked !== isChecked) {
+                        const studentId = checkbox.data('student-id');
+                        studentsToMark.push({
+                            studentId: studentId,
+                            status: isChecked ? 'Present' : 'Absent'
+                        });
+                        checkbox.prop('checked', isChecked);
+                    }
+                });
+                
+                if (studentsToMark.length === 0) {
+                    return;
+                }
+                
+                // Use batch save endpoint
+                $('#savingIndicator').show();
+                $('.student-checkbox').prop('disabled', true);
+                
+                $.ajax({
+                    url: '@Url.Action("SaveTeacherManualAttendance", "Teacher")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        classId: classId,
+                        date: selectedDate,
+                        attendances: studentsToMark
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            console.log(`Batch saved ${response.marked} student(s)`);
+                            
+                            // Update all status badges
+                            studentsToMark.forEach(item => {
+                                const row = $(`tr[data-student-id="${item.studentId}"]`);
+                                const statusBadge = row.find('.status-badge');
+                                
+                                if (item.status === 'Present') {
+                                    statusBadge.html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Present</span>');
+                                    row.addClass('table-success');
+                                } else {
+                                    statusBadge.html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Absent</span>');
+                                    row.addClass('table-danger');
+                                }
+                            });
+                            
+                            setTimeout(() => {
+                                $('.table-success, .table-danger').removeClass('table-success table-danger');
+                            }, 1000);
+                            
+                            // Show success message
+                            const badgeClass = isChecked ? 'success' : 'warning';
+                            const icon = isChecked ? 'check-circle' : 'x-circle';
+                            const statusText = isChecked ? 'present' : 'absent';
+                            
+                            const toast = $(`<div class="alert alert-${badgeClass} alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">` +
+                                `<i class="bi bi-${icon} me-2"></i>` +
+                                `Marked ${response.marked} student(s) as ${statusText}` +
+                                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                                '</div>');
+                            
+                            $('body').append(toast);
+                            setTimeout(() => toast.remove(), 3000);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Failed to save attendance. Please try again.');
+                    },
+                    complete: function() {
+                        $('.student-checkbox').prop('disabled', false);
+                        $('#savingIndicator').hide();
+                    }
+                });
+            });
+
+            // Check all button - marks ALL students as Present
+            $('#checkAllBtn').click(function() {
+                // Collect ALL students and mark them as present
+                const studentsToMark = [];
+                $('.student-checkbox').each(function() {
+                    const studentId = $(this).data('student-id');
+                    studentsToMark.push({
+                        studentId: studentId,
+                        status: 'Present'
+                    });
+                    // Check all boxes visually
+                    $(this).prop('checked', true);
+                });
+                
+                if (studentsToMark.length === 0) {
+                    alert('No students found to mark as present');
+                    return;
+                }
+                
+                $('#selectAllCheckbox').prop('checked', true);
+                
+                // Use batch save endpoint
+                $('#savingIndicator').show();
+                $('.student-checkbox').prop('disabled', true);
+                
+                $.ajax({
+                    url: '@Url.Action("SaveTeacherManualAttendance", "Teacher")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        classId: classId,
+                        date: selectedDate,
+                        attendances: studentsToMark
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            console.log(`Batch saved ${response.marked} student(s)`);
+                            
+                            // Update all status badges
+                            studentsToMark.forEach(item => {
+                                const row = $(`tr[data-student-id="${item.studentId}"]`);
+                                const statusBadge = row.find('.status-badge');
+                                statusBadge.html('<span class="badge bg-success"><i class="bi bi-check-circle"></i> Present</span>');
+                                row.addClass('table-success');
+                            });
+                            
+                            setTimeout(() => {
+                                $('.table-success').removeClass('table-success');
+                            }, 1000);
+                            
+                            // Show success message
+                            const toast = $('<div class="alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">' +
+                                '<i class="bi bi-check-circle me-2"></i>' +
+                                `Successfully marked ${response.marked} student(s) as present` +
+                                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                                '</div>');
+                            
+                            $('body').append(toast);
+                            setTimeout(() => toast.remove(), 3000);
+                        } else {
+                            alert('Error: ' + response.message);
+                            // Revert checkboxes on error
+                            location.reload();
+                        }
+                    },
+                    error: function() {
+                        alert('Failed to save attendance. Please try again.');
+                        location.reload();
+                    },
+                    complete: function() {
+                        $('.student-checkbox').prop('disabled', false);
+                        $('#savingIndicator').hide();
+                    }
+                });
+            });
+
+            // Uncheck all button - marks ALL students as Absent
+            $('#uncheckAllBtn').click(function() {
+                // Collect ALL students and mark them as absent
+                const studentsToMark = [];
+                $('.student-checkbox').each(function() {
+                    const studentId = $(this).data('student-id');
+                    studentsToMark.push({
+                        studentId: studentId,
+                        status: 'Absent'
+                    });
+                    // Uncheck all boxes visually
+                    $(this).prop('checked', false);
+                });
+                
+                if (studentsToMark.length === 0) {
+                    alert('No students found to mark as absent');
+                    return;
+                }
+                
+                $('#selectAllCheckbox').prop('checked', false);
+                
+                // Use batch save endpoint
+                $('#savingIndicator').show();
+                $('.student-checkbox').prop('disabled', true);
+                
+                $.ajax({
+                    url: '@Url.Action("SaveTeacherManualAttendance", "Teacher")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        classId: classId,
+                        date: selectedDate,
+                        attendances: studentsToMark
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            console.log(`Batch saved ${response.marked} student(s) as absent`);
+                            
+                            // Update all status badges
+                            studentsToMark.forEach(item => {
+                                const row = $(`tr[data-student-id="${item.studentId}"]`);
+                                const statusBadge = row.find('.status-badge');
+                                statusBadge.html('<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Absent</span>');
+                                row.addClass('table-danger');
+                            });
+                            
+                            setTimeout(() => {
+                                $('.table-danger').removeClass('table-danger');
+                            }, 1000);
+                            
+                            // Show success message
+                            const toast = $('<div class="alert alert-warning alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">' +
+                                '<i class="bi bi-x-circle me-2"></i>' +
+                                `Marked ${response.marked} student(s) as absent` +
+                                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                                '</div>');
+                            
+                            $('body').append(toast);
+                            setTimeout(() => toast.remove(), 3000);
+                        } else {
+                            alert('Error: ' + response.message);
+                            location.reload();
+                        }
+                    },
+                    error: function() {
+                        alert('Failed to save attendance. Please try again.');
+                        location.reload();
+                    },
+                    complete: function() {
+                        $('.student-checkbox').prop('disabled', false);
+                        $('#savingIndicator').hide();
+                    }
+                });
+            });
+
+            // Update select all checkbox state when individual checkboxes change
+            function updateSelectAllCheckbox() {
+                const checkedCount = $('.student-checkbox:checked').length;
+                const totalCount = $('.student-checkbox').length;
+                
+                const selectAllCheckbox = $('#selectAllCheckbox');
+                selectAllCheckbox.prop('checked', checkedCount === totalCount && totalCount > 0);
+                selectAllCheckbox.prop('indeterminate', checkedCount > 0 && checkedCount < totalCount);
+            }
+
+            // Monitor checkbox changes to update select all
+            $('.student-checkbox').on('change', updateSelectAllCheckbox);
+
+            updateSelectAllCheckbox();
         });
-    }
-
-    function showSavingIndicator() {
-        if (savingIndicator) savingIndicator.style.display = 'inline-block';
-    }
-
-    function hideSavingIndicator() {
-        if (savingIndicator) savingIndicator.style.display = 'none';
-    }
-
-    // Update select all checkbox state
-    function updateSelectAllCheckbox() {
-        const checkedCount = document.querySelectorAll('.student-attendance:checked').length;
-        const totalCount = studentCheckboxes.length;
-        
-        if (selectAllCheckbox) {
-            selectAllCheckbox.checked = checkedCount === totalCount && totalCount > 0;
-            selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < totalCount;
-        }
-    }
-
-    // Monitor checkbox changes to update select all
-    studentCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateSelectAllCheckbox);
-    });
-
-    updateSelectAllCheckbox();
-</script>
+    </script>
+}

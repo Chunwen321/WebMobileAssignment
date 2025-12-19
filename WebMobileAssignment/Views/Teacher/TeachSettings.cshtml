@@ -1,127 +1,326 @@
+@using WebMobileAssignment.Models;
+@model Teacher
 @{
     ViewBag.Title = "Settings";
+    ViewBag.ActiveMenu = "Settings";
     ViewBag.ActiveSubmenu = "Settings";
     Layout = "~/Views/Shared/_TeacherLayout.cshtml";
 }
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>@TempData["SuccessMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>@TempData["ErrorMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <div class="row g-3">
-    <div class="col-lg-4">
-        <div class="list-group">
-            <a href="#generalSettings" class="list-group-item list-group-item-action active" data-bs-toggle="list">
-                <i class="bi bi-gear-fill me-2"></i>General Settings
-            </a>
-            <a href="#accountSettings" class="list-group-item list-group-item-action" data-bs-toggle="list">
-                <i class="bi bi-person-circle me-2"></i>Account
-            </a>
+    <!-- Account Settings -->
+    <div class="col-lg-8">
+        <div class="dashboard-card settings-account-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-person-circle"></i>
+                    Edit Profile
+                </h5>
+            </div>
+
+            <form asp-action="UpdateTeacherProfile" method="post">
+                @Html.AntiForgeryToken()
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Full Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                            <input type="text" name="fullName" class="form-control" value="@Model?.User?.FullName" required>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                            <input type="email" name="email" class="form-control" value="@Model?.User?.Email" required readonly>
+                        </div>
+                        <small class="text-muted d-block mt-1">Email cannot be changed</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-telephone"></i></span>
+                            <input type="tel" name="phoneNumber" class="form-control" value="@(Model?.User?.PhoneNumber ?? "")" placeholder="Optional">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Date of Birth</label>
+                        <input type="date" class="form-control" name="dateOfBirth" value="@(Model?.User?.DateOfBirth?.ToString("yyyy-MM-dd"))">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Gender</label>
+                        <select class="form-select" name="gender">
+                            <option value="">Select Gender</option>
+                            @if (Model?.User?.Gender == "Male")
+                            {
+                                <option value="Male" selected>Male</option>
+                            }
+                            else
+                            {
+                                <option value="Male">Male</option>
+                            }
+                            @if (Model?.User?.Gender == "Female")
+                            {
+                                <option value="Female" selected>Female</option>
+                            }
+                            else
+                            {
+                                <option value="Female">Female</option>
+                            }
+                            @if (Model?.User?.Gender == "Other")
+                            {
+                                <option value="Other" selected>Other</option>
+                            }
+                            else
+                            {
+                                <option value="Other">Other</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Title / Position</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-briefcase"></i></span>
+                            <input type="text" name="title" class="form-control" value="@(Model?.Title ?? "")" placeholder="e.g., Senior Teacher">
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 mb-0">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-circle me-2"></i>Save Changes
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4" onclick="window.location.reload();">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="col-lg-8">
-        <!-- General Settings -->
-        <div class="dashboard-card" id="generalSettings">
-            <div class="card-header-custom">
-                <h3 class="card-title">
-                    <i class="bi bi-gear-fill"></i>
-                    General Settings
-                </h3>
-            </div>
-
-            <div class="row mb-3">
-                <div class="col-12">
-                    <label class="form-label">
-                        <i class="bi bi-palette-fill me-2"></i>Theme
-                    </label>
-                    <select class="form-select" id="themeSelector" onchange="handleThemeChange(this.value)">
-                        <option value="light">Light Theme</option>
-                        <option value="dark">Dark Theme</option>
-                    </select>
-                    <small class="form-text text-muted d-block mt-2">
-                        Light theme displays bright colors, dark theme displays dark colors for comfortable viewing
-                    </small>
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Profile Summary -->
+        <div class="dashboard-card profile-card">
+            <div class="text-center mb-4">
+                <div class="user-avatar mx-auto mb-3 shadow-sm" style="width: 100px; height: 100px; font-size: 2.5rem; background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);">
+                    <i class="bi bi-person-fill"></i>
                 </div>
+                <h5 class="mb-1 fw-bold">@Model?.User?.FullName</h5>
+                <p class="text-muted mb-2 small">@(Model?.Title ?? "Teacher")</p>
+                <span class="badge bg-primary px-3 py-2">Teacher</span>
             </div>
-
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="alert alert-info" role="alert">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <strong>Theme Settings:</strong> Your theme preference is saved locally and will be remembered on your next visit.
+            <div class="profile-info">
+                <div class="profile-info-item">
+                    <i class="bi bi-hash text-primary"></i>
+                    <div>
+                        <small class="text-muted d-block">Teacher ID</small>
+                        <strong class="text-dark">@Model?.TeacherId</strong>
+                    </div>
+                </div>
+                <div class="profile-info-item">
+                    <i class="bi bi-envelope text-primary"></i>
+                    <div>
+                        <small class="text-muted d-block">Email</small>
+                        <strong class="text-dark">@Model?.User?.Email</strong>
+                    </div>
+                </div>
+                <div class="profile-info-item">
+                    <i class="bi bi-book-fill text-primary"></i>
+                    <div>
+                        <small class="text-muted d-block">Total Classes</small>
+                        <strong class="text-dark">@(Model?.Classes?.Count ?? 0)</strong>
                     </div>
                 </div>
             </div>
 
-            <button class="btn btn-primary" disabled title="Theme changes are saved automatically">
-                <i class="bi bi-check-circle me-2"></i>Settings Auto-Saved
-            </button>
-        </div>
-
-        <!-- Account Settings -->
-        <div class="dashboard-card" id="accountSettings" style="display: none;">
-            <div class="card-header-custom">
-                <h3 class="card-title">
-                    <i class="bi bi-person-circle"></i>
-                    Account Settings
-                </h3>
-            </div>
-
-            <div class="alert alert-info mb-4">
-                <i class="bi bi-info-circle me-2"></i>
-                Manage your account security and login information
-            </div>
-
-            <h6 class="mb-3">Two-Factor Authentication</h6>
-            <div class="mb-4">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="twoFactorAuth" disabled>
-                    <label class="form-check-label" for="twoFactorAuth">
-                        Enable two-factor authentication for enhanced security (Coming Soon)
-                    </label>
+            <!-- System Information Inside Profile Card -->
+            <div class="system-info-section mt-4">
+                <div class="section-divider mb-3">
+                    <h6 class="section-title mb-0 fw-bold">
+                        <i class="bi bi-info-circle-fill text-primary me-2"></i>
+                        Account Information
+                    </h6>
                 </div>
-            </div>
-
-            <h6 class="mb-3">Active Sessions</h6>
-            <div class="table-responsive mb-4">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Device</th>
-                            <th>Location</th>
-                            <th>Last Active</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Chrome - Windows</td>
-                            <td>New York, USA</td>
-                            <td>Current Session</td>
-                            <td><span class="badge bg-success">Active</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <h6 class="mb-3">Account Security</h6>
-            <div class="mb-3">
-                <a href="@Url.Action("TeachChangePassword", "Teacher")" class="btn btn-outline-primary">
-                    <i class="bi bi-key-fill me-2"></i>Change Password
-                </a>
+                <div class="system-info">
+                    <div class="system-info-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-calendar-check text-primary"></i>
+                                <small class="text-muted">Member Since</small>
+                            </div>
+                            <strong class="text-dark">@Model?.User?.CreatedDate.ToString("MMM dd, yyyy")</strong>
+                        </div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-telephone text-primary"></i>
+                                <small class="text-muted">Phone Number</small>
+                            </div>
+                            <strong class="text-dark">@(Model?.User?.PhoneNumber ?? "Not provided")</strong>
+                        </div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-gender-ambiguous text-primary"></i>
+                                <small class="text-muted">Gender</small>
+                            </div>
+                            <strong class="text-dark">@(Model?.User?.Gender ?? "Not specified")</strong>
+                        </div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-cake2 text-primary"></i>
+                                <small class="text-muted">Date of Birth</small>
+                            </div>
+                            <strong class="text-dark">
+                                @if (Model?.User?.DateOfBirth.HasValue == true)
+                                {
+                                    @Model.User.DateOfBirth.Value.ToString("MMM dd, yyyy")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Not provided</span>
+                                }
+                            </strong>
+                        </div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-key-fill text-primary"></i>
+                                <small class="text-muted">Password</small>
+                            </div>
+                            <a href="@Url.Action("TeachChangePassword", "Teacher")" class="btn btn-sm btn-outline-primary">
+                                Change
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-    // Initialize theme on page load (prevents flash)
-    (function() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        document.getElementById('themeSelector').value = savedTheme;
-    })();
-
-    // Handle theme change
-    function handleThemeChange(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
+<style>
+    .settings-account-card {
+        background: var(--bg-primary);
     }
-</script>
+
+    [data-theme="dark"] .settings-account-card {
+        background: #2a2a2a;
+    }
+
+    .profile-card {
+        background: var(--bg-primary);
+    }
+
+    [data-theme="dark"] .profile-card {
+        background: #2a2a2a;
+    }
+
+    .profile-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 0;
+    }
+
+    [data-theme="dark"] .profile-info {
+        border-color: #353535;
+    }
+
+    .profile-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .profile-info-item i {
+        font-size: 1.25rem;
+        margin-top: 0.25rem;
+        flex-shrink: 0;
+    }
+
+    .profile-info-item div {
+        flex: 1;
+    }
+
+    .section-divider {
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    [data-theme="dark"] .section-divider {
+        border-color: #353535;
+    }
+
+    .system-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .system-info-item {
+        padding: 0.75rem 0;
+    }
+
+    .system-info-item:not(:last-child) {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    [data-theme="dark"] .system-info-item:not(:last-child) {
+        border-color: #353535;
+    }
+
+    .system-info-section {
+        margin-top: 1rem;
+        padding-top: 1rem;
+    }
+
+    .input-group-text {
+        border-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] .input-group-text {
+        background-color: #353535 !important;
+        border-color: #404040 !important;
+    }
+
+    [data-theme="dark"] .input-group-text i {
+        color: #0d6efd !important;
+    }
+
+    [data-theme="dark"] .dashboard-card {
+        background: #2a2a2a;
+    }
+</style>
