@@ -4293,4 +4293,259 @@ small {
     }
 }
 
+/* ==================== CLASS EDIT - STUDENT ENROLLMENT SECTION ==================== */
 
+/* Student List Containers */
+.student-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    border-color: #dee2e6 !important;
+}
+
+[data-theme="dark"] .student-list-container {
+    background-color: #1a1d20;
+    border-color: #495057 !important;
+}
+
+/* Custom Scrollbar - Light Mode */
+.student-list-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.student-list-container::-webkit-scrollbar-track {
+    background: #e9ecef;
+    border-radius: 4px;
+}
+
+.student-list-container::-webkit-scrollbar-thumb {
+    background: #6c757d;
+    border-radius: 4px;
+}
+
+.student-list-container::-webkit-scrollbar-thumb:hover {
+    background: #495057;
+}
+
+/* Custom Scrollbar - Dark Mode */
+[data-theme="dark"] .student-list-container::-webkit-scrollbar-track {
+    background: #2b3035;
+    border-radius: 4px;
+}
+
+[data-theme="dark"] .student-list-container::-webkit-scrollbar-thumb {
+    background: #495057;
+    border-radius: 4px;
+}
+
+[data-theme="dark"] .student-list-container::-webkit-scrollbar-thumb:hover {
+    background: #6c757d;
+}
+
+/* Enrolled Student Item */
+.enrolled-student-item {
+    border-left: 4px solid #0a58ca !important;
+    border: 1px solid #dee2e6 !important;
+    background-color: #ffffff !important;
+}
+
+[data-theme="dark"] .enrolled-student-item {
+    border: 1px solid #495057 !important;
+    background-color: #2b3035 !important;
+}
+
+[data-theme="dark"] .enrolled-student-item .student-name-text {
+    color: #ffffff !important;
+}
+
+/* Available Student Item */
+.available-student-item {
+    cursor: pointer;
+    border-left: 4px solid #6c757d !important;
+    border: 1px solid #dee2e6 !important;
+    background-color: #ffffff !important;
+}
+
+[data-theme="dark"] .available-student-item {
+    border-left: 4px solid #495057 !important;
+    border: 1px solid #495057 !important;
+    background-color: #2b3035 !important;
+}
+
+[data-theme="dark"] .available-student-item .student-name-text {
+    color: #ffffff !important;
+}
+
+/* Student Item States - Removal */
+.enrolled-student-item.marked-for-removal {
+    background-color: #f8d7da !important;
+    border-left-color: #b02a37 !important;
+    opacity: 0.7;
+}
+
+[data-theme="dark"] .enrolled-student-item.marked-for-removal {
+    background-color: #3d1f1f !important;
+    border-left-color: #b02a37 !important;
+}
+
+.enrolled-student-item.marked-for-removal .student-name-text {
+    text-decoration: line-through;
+    color: #842029 !important;
+}
+
+[data-theme="dark"] .enrolled-student-item.marked-for-removal .student-name-text {
+    color: #ea868f !important;
+}
+
+/* Student Item States - Addition */
+.available-student-item.checked {
+    background-color: #d1e7dd !important;
+    border-left-color: #146c43 !important;
+}
+
+[data-theme="dark"] .available-student-item.checked {
+    background-color: #1f3d2f !important;
+    border-left-color: #146c43 !important;
+}
+
+/* ==================== ENROLLMENT NOTIFICATION STYLES ==================== */
+.enrollment-letter-style {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.greeting-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.greeting-section h5 {
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+.greeting-section .lead {
+    font-size: 1rem;
+    color: #495057;
+    margin-bottom: 0;
+}
+
+.students-list-section {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.students-list-section .list-group-item {
+    background: transparent;
+    transition: all 0.2s ease;
+}
+
+.students-list-section .list-group-item:hover {
+    background: rgba(13, 110, 253, 0.05);
+    transform: translateX(5px);
+}
+
+.student-number .badge {
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+}
+
+.student-info h6 {
+    font-weight: 600;
+    color: #212529;
+}
+
+.student-info small {
+    display: inline-block;
+    font-size: 0.875rem;
+}
+
+.enrollment-date small {
+    white-space: nowrap;
+}
+
+.class-details-section {
+    margin-top: 2rem;
+}
+
+.class-details-section h6 {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.details-card {
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.detail-item i {
+    font-size: 1.1rem;
+}
+
+.detail-item strong {
+    color: #495057;
+    min-width: 100px;
+}
+
+.detail-item span {
+    color: #212529;
+    font-weight: 500;
+}
+
+/* Dark mode styles for enrollment notification */
+[data-theme="dark"] .enrollment-letter-style .greeting-section {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .greeting-section h5 {
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .greeting-section .lead {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .students-list-section {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .students-list-section .list-group-item:hover {
+    background: rgba(96, 165, 250, 0.1);
+}
+
+[data-theme="dark"] .student-info h6 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .student-info small {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .class-details-section h6 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .class-details-section {
+    background-color: var(--border-color);
+}
+
+[data-theme="dark"] .details-card {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .detail-item strong {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .detail-item span {
+    color: var(--text-primary);
+}

@@ -1160,6 +1160,9 @@ small {
     font-size: 1.125rem;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .topbar-btn:hover {
@@ -1177,6 +1180,11 @@ small {
     font-size: 0.65rem;
     padding: 0.15rem 0.4rem;
     border-radius: 10px;
+    display: none;
+}
+
+.topbar-btn .badge:not(:empty) {
+    display: block;
 }
 
 /* Page Content */
@@ -1576,4 +1584,293 @@ small {
 
 .generate-section {
     padding: 2rem 1rem;
+}
+
+/* ==================== NOTIFICATIONS STYLES ==================== */
+.notification-item {
+    padding: 1.25rem;
+    border-radius: 8px;
+    background: var(--bg-primary);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.notification-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .notification-item {
+    background: #4a4a4a;
+    border: 1px solid #5a5a5a;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .notification-item:hover {
+    background: #555555;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    transform: translateY(-2px);
+}
+
+.notification-item.unread {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .notification-item.unread {
+    background: #565656;
+    border-color: #6a6a6a;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.notification-item.read {
+    opacity: 0.8;
+}
+
+.notification-header {
+    margin-bottom: 0.75rem;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.notification-icon.danger {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.notification-icon.warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.notification-icon.primary {
+    background: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+}
+
+.notification-icon.success {
+    background: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.notification-icon.info {
+    background: rgba(13, 202, 240, 0.1);
+    color: #0dcaf0;
+}
+
+.notification-body {
+    padding: 0.75rem 0;
+    line-height: 1.6;
+}
+
+.notification-footer {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.notification-content {
+    min-width: 0;
+}
+
+.notification-description {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.notifications-container {
+    padding: 1rem 0;
+}
+
+.nav-tabs {
+    padding: 0 1rem;
+}
+
+.nav-tabs .nav-link {
+    color: var(--text-secondary);
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--text-primary);
+    border-bottom-color: #0d6efd;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
+    background: transparent;
+}
+
+[data-theme="dark"] .nav-tabs {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .nav-tabs .nav-link {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .nav-tabs .nav-link:hover {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .nav-tabs .nav-link.active {
+    color: #60a5fa;
+    border-bottom-color: #60a5fa;
+}
+
+[data-theme="dark"] .notification-footer {
+    border-top-color: var(--border-color);
+}
+
+/* ==================== ENROLLMENT NOTIFICATION STYLES ==================== */
+.enrollment-letter-style {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.greeting-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.greeting-section h5 {
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+.greeting-section .lead {
+    font-size: 1rem;
+    color: #495057;
+    margin-bottom: 0;
+}
+
+.students-list-section {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.students-list-section .list-group-item {
+    background: transparent;
+    transition: all 0.2s ease;
+}
+
+.students-list-section .list-group-item:hover {
+    background: rgba(13, 110, 253, 0.05);
+    transform: translateX(5px);
+}
+
+.student-number .badge {
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+}
+
+.student-info h6 {
+    font-weight: 600;
+    color: #212529;
+}
+
+.student-info small {
+    display: inline-block;
+    font-size: 0.875rem;
+}
+
+.enrollment-date small {
+    white-space: nowrap;
+}
+
+.class-details-section {
+    margin-top: 2rem;
+}
+
+.class-details-section h6 {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.details-card {
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.detail-item i {
+    font-size: 1.1rem;
+}
+
+.detail-item strong {
+    color: #495057;
+    min-width: 100px;
+}
+
+.detail-item span {
+    color: #212529;
+    font-weight: 500;
+}
+
+/* Dark mode styles for enrollment notification */
+[data-theme="dark"] .enrollment-letter-style .greeting-section {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .greeting-section h5 {
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .greeting-section .lead {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .students-list-section {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .students-list-section .list-group-item:hover {
+    background: rgba(96, 165, 250, 0.1);
+}
+
+[data-theme="dark"] .student-info h6 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .student-info small {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .class-details-section h6 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .details-card {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .detail-item strong {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .detail-item span {
+    color: var(--text-primary);
 }

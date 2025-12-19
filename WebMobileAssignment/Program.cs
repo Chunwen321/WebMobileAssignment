@@ -79,9 +79,13 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
+else
+{
+    // In development, don't force HTTPS redirection to allow testing
+    // But HTTPS is available on port 7079 for webcam functionality
+}
 
 // Configure static files with no-cache headers in development
 if (app.Environment.IsDevelopment())

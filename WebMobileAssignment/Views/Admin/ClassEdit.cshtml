@@ -179,6 +179,159 @@
                     </div>
                 </div>
 
+                <!-- Student Enrollment Management -->
+                <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
+                    <i class="bi bi-person-plus text-danger me-2"></i>Student Enrollment
+                </h6>
+                
+                <!-- Pending Changes Alert -->
+                <div id="enrollment-changes-alert" class="alert alert-info d-none mb-3" role="alert">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Pending Changes:</strong> <span id="changes-summary"></span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="reset-changes-btn">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset All Changes
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <!-- Currently Enrolled Students -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-people-fill text-primary me-1"></i>Currently Enrolled Students
+                            <span class="badge bg-primary ms-2">@(Model.Enrollments?.Count(e => e.UnenrolledDate == null) ?? 0)</span>
+                        </label>
+                        <input type="text" id="search-enrolled" class="form-control form-control-sm mb-2" placeholder="🔍 Search enrolled students...">
+                        <div class="student-list-container border rounded p-2">
+                            @if (Model.Enrollments != null && Model.Enrollments.Any())
+                            {
+                                <input type="hidden" id="removeStudentIds" name="removeStudentIds" />
+                                <div id="enrolled-list" class="list-group">
+                                    @foreach (var enrollment in Model.Enrollments.Where(e => e.UnenrolledDate == null))
+                                    {
+                                        <div class="list-group-item list-group-item-action enrolled-student-item mb-1" 
+                                             data-student-id="@enrollment.StudentId"
+                                             data-student-name="@enrollment.Student.User.FullName">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                             style="width: 32px; height: 32px; font-size: 14px;">
+                                                            @enrollment.Student.User.FullName.Substring(0, 1).ToUpper()
+                                                        </div>
+                                                        <div>
+                                                            <strong class="student-name-text text-white">@enrollment.Student.User.FullName</strong>
+                                                            <span class="badge bg-success ms-1" style="font-size: 0.65rem;">Active</span>
+                                                            <br />
+                                                            <small class="text-muted">
+                                                                <i class="bi bi-hash"></i>@enrollment.StudentId | 
+                                                                <i class="bi bi-calendar-check"></i>@enrollment.EnrolledDate.ToString("MMM dd, yyyy")
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger toggle-remove-btn" 
+                                                        data-student-id="@enrollment.StudentId"
+                                                        data-student-name="@enrollment.Student.User.FullName">
+                                                    <i class="bi bi-dash-circle"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-4">
+                                    <i class="bi bi-inbox" style="font-size: 2rem; color: #dee2e6;"></i>
+                                    <p class="text-muted mb-0 mt-2">No students currently enrolled</p>
+                                </div>
+                            }
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> Click "Remove" to mark for unenrollment (can be undone before saving)
+                        </small>
+                    </div>
+
+                    <!-- Add Students -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person-plus-fill text-success me-1"></i>Add Students to Class
+                            <span class="badge bg-secondary ms-2" id="available-count">
+                                @{
+                                    var enrolledIds = Model.Enrollments?.Where(e => e.UnenrolledDate == null).Select(e => e.StudentId).ToList() ?? new List<string>();
+                                    var availCount = ViewBag.Students != null ? ((List<WebMobileAssignment.Models.Student>)ViewBag.Students).Count(s => !enrolledIds.Contains(s.StudentId)) : 0;
+                                }
+                                @availCount Available
+                            </span>
+                        </label>
+                        <input type="text" id="search-available" class="form-control form-control-sm mb-2" placeholder="🔍 Search available students...">
+                        <div class="student-list-container border rounded p-2">
+                            @if (ViewBag.Students != null && ((List<WebMobileAssignment.Models.Student>)ViewBag.Students).Any())
+                            {
+                                var enrolledStudentIds = Model.Enrollments?.Where(e => e.UnenrolledDate == null).Select(e => e.StudentId).ToList() ?? new List<string>();
+                                var availableStudents = ((List<WebMobileAssignment.Models.Student>)ViewBag.Students)
+                                    .Where(s => !enrolledStudentIds.Contains(s.StudentId))
+                                    .OrderBy(s => s.User.FullName)
+                                    .ToList();
+
+                                @if (availableStudents.Any())
+                                {
+                                    <div id="available-list" class="list-group">
+                                        @foreach (var student in availableStudents)
+                                        {
+                                            <label class="list-group-item list-group-item-action mb-1 available-student-item" 
+                                                   for="student_@student.StudentId"
+                                                   data-student-name="@student.User.FullName">
+                                                <div class="d-flex align-items-center">
+                                                    <input class="form-check-input me-2 flex-shrink-0" type="checkbox" 
+                                                           name="studentIds" value="@student.StudentId" 
+                                                           id="student_@student.StudentId">
+                                                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2 flex-shrink-0" 
+                                                         style="width: 32px; height: 32px; font-size: 14px;">
+                                                        @student.User.FullName.Substring(0, 1).ToUpper()
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <strong class="student-name-text text-white">@student.User.FullName</strong>
+                                                        <br />
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-hash"></i>@student.StudentId
+                                                            @if (student.Parent != null)
+                                                            {
+                                                                <span> | <i class="bi bi-person"></i>@student.Parent.User.FullName</span>
+                                                            }
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-4">
+                                        <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                                        <p class="text-muted mb-0 mt-2">All students are already enrolled</p>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-center py-4">
+                                    <i class="bi bi-inbox" style="font-size: 2rem; color: #dee2e6;"></i>
+                                    <p class="text-muted mb-0 mt-2">No students available</p>
+                                </div>
+                            }
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> Check students to enroll them in this class
+                        </small>
+                    </div>
+                </div>
+
                 <h6 class="text-muted mb-3 mt-4 border-bottom pb-2">
                     <i class="bi bi-toggle-on text-danger me-2"></i>Status
                 </h6>
@@ -226,13 +379,34 @@
     <script>
         $(document).ready(function() {
             const currentCapacity = @Model.CurrentCapacity;
+            let studentsToRemove = [];
             
-            // Validate max capacity
+            // Search functionality for enrolled students
+            $('#search-enrolled').on('keyup', function() {
+                const searchText = $(this).val().toLowerCase();
+                $('.enrolled-student-item').each(function() {
+                    const studentName = $(this).data('student-name').toLowerCase();
+                    $(this).toggle(studentName.includes(searchText));
+                });
+            });
+            
+            // Search functionality for available students
+            $('#search-available').on('keyup', function() {
+                const searchText = $(this).val().toLowerCase();
+                $('.available-student-item').each(function() {
+                    const studentName = $(this).data('student-name').toLowerCase();
+                    $(this).toggle(studentName.includes(searchText));
+                });
+            });
+            
+            // Validate max capacity with pending changes
             $('#maxCapacity').on('change', function() {
                 const maxCap = parseInt($(this).val());
-                if (maxCap < currentCapacity) {
-                    alert(`Maximum capacity cannot be less than current enrollment (${currentCapacity})`);
-                    $(this).val(currentCapacity);
+                const projectedCapacity = currentCapacity - studentsToRemove.length + $('input[name="studentIds"]:checked').length;
+                
+                if (maxCap < projectedCapacity) {
+                    alert(`Maximum capacity (${maxCap}) cannot be less than projected enrollment (${projectedCapacity}).\n\nCurrent: ${currentCapacity} | Removing: ${studentsToRemove.length} | Adding: ${$('input[name="studentIds"]:checked').length}`);
+                    $(this).val(projectedCapacity);
                 }
             });
 
@@ -241,13 +415,113 @@
                 const startTime = $('#startTime').val();
                 const endTime = $('#endTime').val();
                 
-                if (startTime && endTime) {
-                    if (startTime >= endTime) {
-                        alert('End time must be after start time');
-                        $('#endTime').val('');
-                    }
+                if (startTime && endTime && startTime >= endTime) {
+                    alert('End time must be after start time');
+                    $('#endTime').val('');
                 }
             });
+
+            // Handle student removal toggle (can be undone)
+            $(document).on('click', '.toggle-remove-btn', function() {
+                const studentId = $(this).data('student-id');
+                const studentName = $(this).data('student-name');
+                const item = $(this).closest('.enrolled-student-item');
+                const isMarkedForRemoval = studentsToRemove.includes(studentId);
+                
+                if (isMarkedForRemoval) {
+                    // Undo removal
+                    studentsToRemove = studentsToRemove.filter(id => id !== studentId);
+                    item.removeClass('marked-for-removal')
+                        .find('.student-name-text').removeClass('text-decoration-line-through');
+                    item.find('.badge').removeClass('bg-danger').addClass('bg-success').text('Active');
+                    $(this).removeClass('btn-success').addClass('btn-outline-danger')
+                        .html('<i class="bi bi-dash-circle"></i> Remove');
+                } else {
+                    // Mark for removal
+                    studentsToRemove.push(studentId);
+                    item.addClass('marked-for-removal')
+                        .find('.student-name-text').addClass('text-decoration-line-through');
+                    item.find('.badge').removeClass('bg-success').addClass('bg-danger').text('To Remove');
+                    $(this).removeClass('btn-outline-danger').addClass('btn-success')
+                        .html('<i class="bi bi-arrow-counterclockwise"></i> Undo');
+                }
+                
+                $('#removeStudentIds').val(studentsToRemove.join(','));
+                updateEnrollmentSummary();
+            });
+
+            // Monitor student additions
+            $('input[name="studentIds"]').on('change', function() {
+                const checkbox = $(this);
+                const label = checkbox.closest('.available-student-item');
+                
+                if (checkbox.is(':checked')) {
+                    label.addClass('checked');
+                } else {
+                    label.removeClass('checked');
+                }
+                
+                updateEnrollmentSummary();
+            });
+
+            // Reset all changes
+            $('#reset-changes-btn').on('click', function() {
+                if (confirm('Reset all pending changes? This will undo all student additions and removals.')) {
+                    // Undo all removals
+                    studentsToRemove.forEach(studentId => {
+                        const item = $(`.enrolled-student-item[data-student-id="${studentId}"]`);
+                        item.removeClass('marked-for-removal')
+                            .find('.student-name-text').removeClass('text-decoration-line-through');
+                        item.find('.badge').removeClass('bg-danger').addClass('bg-success').text('Active');
+                        item.find('.toggle-remove-btn')
+                            .removeClass('btn-success').addClass('btn-outline-danger')
+                            .html('<i class="bi bi-dash-circle"></i> Remove');
+                    });
+                    studentsToRemove = [];
+                    $('#removeStudentIds').val('');
+                    
+                    // Uncheck all additions
+                    $('input[name="studentIds"]:checked').each(function() {
+                        $(this).prop('checked', false)
+                            .closest('.available-student-item')
+                            .removeClass('checked');
+                    });
+                    
+                    updateEnrollmentSummary();
+                }
+            });
+
+            // Update enrollment summary
+            function updateEnrollmentSummary() {
+                const addCount = $('input[name="studentIds"]:checked').length;
+                const removeCount = studentsToRemove.length;
+                const projectedCapacity = currentCapacity - removeCount + addCount;
+                const maxCap = parseInt($('#maxCapacity').val());
+                
+                // Check capacity
+                if (projectedCapacity > maxCap) {
+                    alert(`Cannot make these changes!\n\nProjected enrollment (${projectedCapacity}) would exceed maximum capacity (${maxCap}).\n\nPlease increase max capacity or reduce the number of students to add.`);
+                    return false;
+                }
+                
+                // Update summary display
+                if (addCount > 0 || removeCount > 0) {
+                    let summary = [];
+                    if (addCount > 0) summary.push(`<span class="text-success"><i class="bi bi-plus-circle-fill"></i> ${addCount} to enroll</span>`);
+                    if (removeCount > 0) summary.push(`<span class="text-danger"><i class="bi bi-dash-circle-fill"></i> ${removeCount} to remove</span>`);
+                    summary.push(`<span class="text-info"><i class="bi bi-people-fill"></i> Projected: ${projectedCapacity}/${maxCap}</span>`);
+                    
+                    $('#changes-summary').html(summary.join(' | '));
+                    $('#enrollment-changes-alert').removeClass('d-none');
+                } else {
+                    $('#enrollment-changes-alert').addClass('d-none');
+                }
+                
+                return true;
+            }
+            
+            // Initialize on page load
+            updateEnrollmentSummary();
         });
     </script>
 }

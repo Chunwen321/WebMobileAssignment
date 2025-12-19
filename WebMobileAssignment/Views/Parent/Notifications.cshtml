@@ -3,6 +3,54 @@
     Layout = "~/Views/Shared/_ParentLayout.cshtml";
 }
 
+@section Styles {
+<style>
+    /* Dark mode support for notification details */
+    body.dark-mode .bg-white {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: #e0e0e0;
+    }
+    
+    body.dark-mode .bg-light {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+        color: #e0e0e0;
+    }
+    
+    body.dark-mode .modal-content {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+    }
+    
+    body.dark-mode .modal-header {
+        background-color: #2a2a2a;
+        border-bottom-color: #404040;
+    }
+    
+    body.dark-mode .modal-footer {
+        border-top-color: #404040;
+    }
+    
+    body.dark-mode .card {
+        background-color: rgba(255, 255, 255, 0.03);
+        color: #e0e0e0;
+    }
+    
+    body.dark-mode .text-muted {
+        color: #999 !important;
+    }
+    
+    /* Detail section styling */
+    .detail-section {
+        background-color: #f8f9fa;
+    }
+    
+    body.dark-mode .detail-section {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: #e0e0e0;
+    }
+</style>
+}
+
 @{
     var notifications = ViewBag.Notifications as List<WebMobileAssignment.Models.Notification> ?? new List<WebMobileAssignment.Models.Notification>();
     var totalNotifications = ViewBag.TotalNotifications ?? 0;
@@ -61,84 +109,152 @@
 
 <div class="dashboard-card">
     <div class="card-header-custom">
-    <h3 class="card-title">
-            <i class="bi bi-bell-fill"></i>
-       All Notifications
-        </h3>
-        @if (unreadCount > 0)
-        {
-            <div class="d-flex gap-2">
- <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
-             <i class="bi bi-check-all me-2"></i>Mark All as Read
- </button>
+        <div>
+            <h3 class="card-title">
+                <i class="bi bi-bell-fill"></i>
+                All Notifications
+            </h3>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            @if (unreadCount > 0)
+            {
+                <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
+                    <i class="bi bi-check-all me-2"></i>Mark All as Read
+                </button>
+            }
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteAllRead()">
+                <i class="bi bi-trash me-2"></i>Clear Read
+            </button>
+            <div class="input-group input-group-sm" style="max-width: 250px;">
+                <input type="text" class="form-control" id="searchInput" placeholder="Search notifications..." onkeyup="filterNotifications()">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+            </div>
+        </div>
     </div>
-   }
-    </div>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs" role="tablist" style="border-bottom: 1px solid var(--border-color); padding: 0 1rem;">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true" onclick="filterByType('all')">
+                <i class="bi bi-bell me-1"></i>All
+                <span class="badge bg-secondary ms-2">@totalNotifications</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="unread-tab" data-bs-toggle="tab" data-bs-target="#unread" type="button" role="tab" aria-controls="unread" aria-selected="false" onclick="filterByType('unread')">
+                <i class="bi bi-envelope-fill me-1"></i>Unread
+                <span class="badge bg-danger ms-2">@unreadCount</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="warning-tab" data-bs-toggle="tab" data-bs-target="#warning" type="button" role="tab" aria-controls="warning" aria-selected="false" onclick="filterByType('warning')">
+                <i class="bi bi-exclamation-triangle me-1"></i>Warnings
+                <span class="badge bg-warning text-dark ms-2">@warningCount</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="false" onclick="filterByType('info')">
+                <i class="bi bi-info-circle me-1"></i>Info
+            </button>
+        </li>
+    </ul>
 
     <!-- Notifications List -->
     <div class="tab-content">
-      <div class="tab-pane fade show active" id="all">
-       @if (notifications.Any())
+        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+            @if (notifications.Any())
             {
-  @foreach (var notification in notifications)
-     {
-     var isUnread = notification.Status == "unread";
-      var isWarning = notification.Description.ToLower().Contains("leave") || 
-            notification.Description.ToLower().Contains("absent") || 
-   notification.Description.ToLower().Contains("warning");
-       var isAnnouncement = notification.Description.ToLower().Contains("announcement") || 
-      notification.Description.ToLower().Contains("holiday") ||
-           notification.Description.ToLower().Contains("celebrate");
- 
-           var borderColor = isWarning ? "danger" : (isAnnouncement ? "primary" : "success");
-         var iconClass = isWarning ? "bi-exclamation-triangle-fill" : (isAnnouncement ? "bi-megaphone-fill" : "bi-info-circle-fill");
-      var iconType = isWarning ? "danger" : (isAnnouncement ? "primary" : "success");
-   
-            var timeAgo = GetTimeAgo(notification.CreatedDate);
-            
- <div class="notification-item @(isUnread ? "unread" : "read") border-start border-@borderColor border-4">
-    <div class="notification-header">
- <div class="d-flex align-items-center gap-2">
-             <div class="notification-icon @iconType">
-      <i class="bi @iconClass"></i>
- </div>
-               <div class="flex-grow-1">
-          <h6 class="mb-0">@GetNotificationTitle(notification.Description)</h6>
-    <small class="text-muted">
-       <i class="bi bi-clock me-1"></i>@timeAgo
-      </small>
-      </div>
-           @if (isUnread)
-          {
-        <span class="badge bg-danger">Unread</span>
-         }
-else
-     {
-            <span class="badge bg-secondary">Read</span>
-         }
+                <div class="notifications-container">
+                    @foreach (var notification in notifications)
+                    {
+                        var isUnread = notification.Status == "unread";
+                        var isWarning = notification.Description.ToLower().Contains("absent") || 
+                                        notification.Description.ToLower().Contains("warning") ||
+                                        notification.Description.ToLower().Contains("low attendance");
+                        var isInfo = notification.Description.ToLower().Contains("enroll") || 
+                                     notification.Description.ToLower().Contains("schedule") ||
+                                     notification.Description.ToLower().Contains("class");
+
+                        var iconClass = isWarning ? "bi-exclamation-triangle-fill" : (isInfo ? "bi-info-circle-fill" : "bi-bell-fill");
+                        var iconType = isWarning ? "warning" : (isInfo ? "primary" : "success");
+                        var timeAgo = GetTimeAgo(notification.CreatedDate);
+
+                        <div class="notification-item notification-record @(isUnread ? "unread" : "read") @(isWarning ? "type-warning" : (isInfo ? "type-info" : "type-general"))" 
+                             data-type="@(isWarning ? "warning" : (isInfo ? "info" : "general"))" 
+                             data-status="@(isUnread ? "unread" : "read")"
+                             data-notification-id="@notification.NotificationId"
+                             style="cursor: pointer;"
+                             onclick="showNotificationDetails('@notification.NotificationId')">
+                            <div class="notification-header">
+                                <div class="d-flex align-items-center gap-2 w-100">
+                                    <div class="notification-icon @iconType flex-shrink-0">
+                                        <i class="bi @iconClass"></i>
+                                    </div>
+                                    <div class="flex-grow-1 notification-content">
+                                        <div class="d-flex justify-content-between align-items-start gap-2">
+                                            <div>
+                                                <h6 class="mb-1">@GetNotificationTitle(notification.Description)</h6>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock me-1"></i>@timeAgo
+                                                </small>
+                                            </div>
+                                            @if (isUnread)
+                                            {
+                                                <span class="badge bg-danger flex-shrink-0">Unread</span>
+                                            }
+                                        </div>
+                                        <p class="notification-description mt-2 mb-0">@notification.Description</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notification-actions mt-2">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    @if (isUnread)
+                                    {
+                                        <button class="btn btn-outline-primary" onclick="event.stopPropagation(); markAsRead('@notification.NotificationId')">
+                                            <i class="bi bi-check"></i> Mark Read
+                                        </button>
+                                    }
+                                    <button class="btn btn-outline-danger" onclick="event.stopPropagation(); deleteNotification('@notification.NotificationId')">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-bell-slash" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No notifications yet</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Notification Details Modal -->
+<div class="modal fade" id="notificationDetailsModal" tabindex="-1" aria-labelledby="notificationDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notificationDetailsModalLabel">
+                    <i class="bi bi-info-circle me-2"></i>Notification Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-         </div>
-        <div class="notification-body">
-                  <p class="mb-0">@notification.Description</p>
-     </div>
-           @if (isUnread)
-       {
-       <div class="notification-footer">
-   <button class="btn btn-sm btn-outline-secondary" onclick="markAsRead('@notification.NotificationId')">
-         <i class="bi bi-check me-1"></i>Mark as Read
-      </button>
-                 </div>
-               }
-  </div>
-       }
-     }
-   else
-            {
- <div class="text-center py-5">
-            <i class="bi bi-bell-slash" style="font-size: 3rem; color: #ccc;"></i>
-  <p class="text-muted mt-3">No notifications yet</p>
-          </div>
-   }
+            <div class="modal-body" id="notificationDetailsContent">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -146,16 +262,16 @@ else
 @functions {
     string GetTimeAgo(DateTime date)
     {
-    var timeSpan = DateTime.Now - date;
+        var timeSpan = DateTime.Now - date;
         
         if (timeSpan.TotalMinutes < 1)
-        return "Just now";
+            return "Just now";
         if (timeSpan.TotalMinutes < 60)
-  return $"{(int)timeSpan.TotalMinutes} minute{((int)timeSpan.TotalMinutes == 1 ? "" : "s")} ago";
+            return $"{(int)timeSpan.TotalMinutes} minute{((int)timeSpan.TotalMinutes == 1 ? "" : "s")} ago";
         if (timeSpan.TotalHours < 24)
- return $"{(int)timeSpan.TotalHours} hour{((int)timeSpan.TotalHours == 1 ? "" : "s")} ago";
+            return $"{(int)timeSpan.TotalHours} hour{((int)timeSpan.TotalHours == 1 ? "" : "s")} ago";
         if (timeSpan.TotalDays < 30)
- return $"{(int)timeSpan.TotalDays} day{((int)timeSpan.TotalDays == 1 ? "" : "s")} ago";
+            return $"{(int)timeSpan.TotalDays} day{((int)timeSpan.TotalDays == 1 ? "" : "s")} ago";
         if (timeSpan.TotalDays < 365)
             return $"{(int)(timeSpan.TotalDays / 30)} month{((int)(timeSpan.TotalDays / 30) == 1 ? "" : "s")} ago";
         
@@ -164,153 +280,466 @@ else
     
     string GetNotificationTitle(string description)
     {
-        // Extract a title from the description or use a generic one
-  if (description.ToLower().Contains("absent"))
-    return "Absence Alert";
-      if (description.ToLower().Contains("leave"))
-return "Leave Alert";
-        if (description.ToLower().Contains("holiday") || description.ToLower().Contains("announcement"))
-            return "Announcement";
-        if (description.ToLower().Contains("attendance"))
-            return "Attendance Report";
-     if (description.ToLower().Contains("schedule"))
-return "Schedule Update";
-     if (description.ToLower().Contains("achievement") || description.ToLower().Contains("award"))
-            return "Achievement Award";
-    
+        var lowerDesc = description.ToLower();
+        
+        // Parent-specific notification titles
+        if (lowerDesc.Contains("absent"))
+            return "Child Absence Alert";
+        if (lowerDesc.Contains("leave approved"))
+            return "Leave Request Approved";
+        if (lowerDesc.Contains("leave rejected"))
+            return "Leave Request Rejected";
+        if (lowerDesc.Contains("leave"))
+            return "Leave Notification";
+        if (lowerDesc.Contains("low attendance"))
+            return "Attendance Warning";
+        if (lowerDesc.Contains("attendance"))
+            return "Attendance Update";
+        if (lowerDesc.Contains("removed from") || lowerDesc.Contains("unenroll"))
+            return "Class Unenrollment";
+        if (lowerDesc.Contains("enrolled in") || lowerDesc.Contains("enroll"))
+            return "Class Enrollment";
+        if (lowerDesc.Contains("schedule"))
+            return "Schedule Update";
+        if (lowerDesc.Contains("achievement") || lowerDesc.Contains("award"))
+            return "Achievement Notice";
+        
         return "Notification";
- }
+    }
 }
 
 @section Scripts {
 <script>
+    let currentFilter = 'all';
+
     function markAsRead(notificationId) {
         $.ajax({
-  url: '@Url.Action("MarkAsRead", "Parent")',
-        type: 'POST',
-         data: {
-  notificationId: notificationId,
-     __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
- },
- success: function(response) {
-  if (response.success) {
-          location.reload();
-     } else {
-alert('Error: ' + response.message);
-       }
-},
-    error: function() {
-    alert('An error occurred while marking notification as read.');
-  }
+            url: '@Url.Action("MarkAsRead", "Parent")',
+            type: 'POST',
+            data: {
+                notificationId: notificationId,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('An error occurred while marking notification as read.');
+            }
         });
     }
   
     function markAllAsRead() {
         if (confirm('Mark all notifications as read?')) {
+            $.ajax({
+                url: '@Url.Action("MarkAllAsRead", "Parent")',
+                type: 'POST',
+                data: {
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while marking all notifications as read.');
+                }
+            });
+        }
+    }
+
+    function deleteNotification(notificationId) {
+        if (confirm('Are you sure you want to delete this notification?')) {
+            $.ajax({
+                url: '@Url.Action("DeleteNotification", "Parent")',
+                type: 'POST',
+                data: {
+                    notificationId: notificationId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while deleting the notification.');
+                }
+            });
+        }
+    }
+
+    function deleteAllRead() {
+        if (confirm('Are you sure you want to delete all read notifications? This action cannot be undone.')) {
+            $.ajax({
+                url: '@Url.Action("DeleteAllRead", "Parent")',
+                type: 'POST',
+                data: {
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.count + ' notification(s) deleted successfully.');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while deleting notifications.');
+                }
+            });
+        }
+    }
+
+    function filterByType(type) {
+        currentFilter = type;
+        applyFilters();
+    }
+
+    function filterNotifications() {
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const searchTerm = $('#searchInput').val().toLowerCase();
+        const notifications = $('.notification-record');
+        
+        notifications.each(function() {
+            const $notification = $(this);
+            const notifType = $notification.data('type');
+            const notifStatus = $notification.data('status');
+            const text = $notification.text().toLowerCase();
+            
+            let showType = false;
+            if (currentFilter === 'all') {
+                showType = true;
+            } else if (currentFilter === 'unread') {
+                showType = notifStatus === 'unread';
+            } else if (currentFilter === 'warning') {
+                showType = notifType === 'warning';
+            } else if (currentFilter === 'info') {
+                showType = notifType === 'info';
+            }
+            
+            const showSearch = searchTerm === '' || text.includes(searchTerm);
+            
+            if (showType && showSearch) {
+                $notification.show();
+            } else {
+                $notification.hide();
+            }
+        });
+    }
+
+    function showNotificationDetails(notificationId) {
+        // Show modal
+        $('#notificationDetailsModal').modal('show');
+        
+        // Load notification details
         $.ajax({
-    url: '@Url.Action("MarkAllAsRead", "Parent")',
-  type: 'POST',
-   data: {
-       __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-     },
-           success: function(response) {
-      if (response.success) {
-  location.reload();
- } else {
-    alert('Error: ' + response.message);
-       }
-         },
-        error: function() {
-     alert('An error occurred while marking all notifications as read.');
- }
-   });
-}
+            url: '@Url.Action("GetNotificationDetails", "Parent")',
+            type: 'GET',
+            data: { notificationId: notificationId },
+            success: function(response) {
+                if (response.success) {
+                    displayNotificationDetails(response.notification, response.details);
+                    
+                    // Mark as read if unread
+                    if (response.notification.status === 'unread') {
+                        setTimeout(() => {
+                            markAsRead(notificationId);
+                        }, 1000);
+                    }
+                } else {
+                    $('#notificationDetailsContent').html('<div class="alert alert-danger">' + response.message + '</div>');
+                }
+            },
+            error: function() {
+                $('#notificationDetailsContent').html('<div class="alert alert-danger">Failed to load notification details.</div>');
+            }
+        });
+    }
+
+    function displayNotificationDetails(notification, details) {
+        let html = '<div class="notification-details">';
+        
+        // Notification header
+        html += '<div class="alert alert-' + getAlertType(notification.type) + ' mb-4">';
+        html += '<h6 class="mb-2"><i class="bi ' + getIconClass(notification.type) + ' me-2"></i>' + notification.type + '</h6>';
+        html += '<p class="mb-1">' + notification.description + '</p>';
+        html += '<small class="text-muted"><i class="bi bi-clock me-1"></i>' + notification.createdDate + '</small>';
+        html += '</div>';
+        
+        // Details section based on type
+        if (details) {
+            switch (notification.type) {
+                case 'Student Enrollment':
+                    html += buildEnrollmentDetails(details, false);
+                    break;
+                case 'Student Unenrollment':
+                    html += buildEnrollmentDetails(details, true);
+                    break;
+                case 'Leave Approved':
+                case 'Leave Rejected':
+                case 'Leave Application':
+                    html += buildLeaveDetails(details);
+                    break;
+                case 'Low Attendance Alert':
+                case 'Low Attendance Warning':
+                case 'Absent Alert':
+                case 'Attendance Marked':
+                    html += buildAttendanceDetails(details);
+                    break;
+                case 'Class Schedule Update':
+                case 'Class Information':
+                    html += buildClassDetails(details);
+                    break;
+                default:
+                    html += '<p>No additional details available.</p>';
+            }
+        } else {
+            html += '<p class="text-muted">No additional details available for this notification.</p>';
+        }
+        
+        html += '</div>';
+        
+        $('#notificationDetailsContent').html(html);
+    }
+
+    function getAlertType(type) {
+        const lowerType = type.toLowerCase();
+        if (lowerType.includes('alert') || lowerType.includes('warning') || lowerType.includes('absent')) return 'warning';
+        if (lowerType.includes('rejected')) return 'danger';
+        if (lowerType.includes('approved')) return 'success';
+        return 'info';
+    }
+
+    function getIconClass(type) {
+        const lowerType = type.toLowerCase();
+        if (lowerType.includes('alert') || lowerType.includes('warning')) return 'bi-exclamation-triangle-fill';
+        if (lowerType.includes('leave')) return 'bi-calendar-x';
+        if (lowerType.includes('attendance')) return 'bi-clipboard-check';
+        if (lowerType.includes('enroll')) return 'bi-book';
+        if (lowerType.includes('class') || lowerType.includes('schedule')) return 'bi-calendar-event';
+        return 'bi-info-circle-fill';
+    }
+
+    function buildEnrollmentDetails(details, isUnenrollment) {
+        let html = '<h6 class="mb-3"><i class="bi bi-book me-2"></i>Class ' + (isUnenrollment ? 'Unenrollment' : 'Enrollment') + ' Details</h6>';
+        html += '<div class="card border-0 bg-light mb-3">';
+        html += '<div class="card-body">';
+        html += '<div class="row g-3">';
+        html += '<div class="col-md-6"><i class="bi bi-bookmark-fill text-primary me-2"></i><strong>Class Name:</strong><br/><span class="ms-4">' + details.className + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-person-badge text-primary me-2"></i><strong>Teacher:</strong><br/><span class="ms-4">' + (details.teacherName || 'N/A') + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-door-open text-primary me-2"></i><strong>Room:</strong><br/><span class="ms-4">' + (details.room || 'N/A') + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-calendar3 text-primary me-2"></i><strong>Day:</strong><br/><span class="ms-4">' + (details.day || 'N/A') + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-clock text-primary me-2"></i><strong>Time:</strong><br/><span class="ms-4">' + (details.startTime && details.endTime ? details.startTime + ' - ' + details.endTime : 'N/A') + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-people text-primary me-2"></i><strong>Capacity:</strong><br/><span class="ms-4">' + details.totalEnrolled + '/' + details.capacity + '</span></div>';
+        
+        if (details.students && details.students.length > 0) {
+            html += '<div class="col-12 mt-3"><strong>Your Child' + (details.students.length > 1 ? 'ren' : '') + ':</strong>';
+            html += '<ul class="mt-2">';
+            details.students.forEach(student => {
+                if (isUnenrollment) {
+                    html += '<li>' + student.studentName + ' (' + student.studentId + ')<br/>';
+                    html += '<span class="text-muted ms-3">Enrolled: ' + student.enrolledDate + '</span><br/>';
+                    html += '<span class="text-danger ms-3"><i class="bi bi-x-circle me-1"></i>Unenrolled: ' + student.unenrolledDate + '</span>';
+                    html += '</li>';
+                } else {
+                    html += '<li>' + student.studentName + ' (' + student.studentId + ') - Enrolled: ' + student.enrolledDate + '</li>';
+                }
+            });
+            html += '</ul></div>';
+        }
+        
+        html += '</div></div></div>';
+        return html;
+    }
+
+    function buildLeaveDetails(details) {
+        let html = '<h6 class="mb-3"><i class="bi bi-calendar-x me-2"></i>Leave Application Details</h6>';
+        html += '<div class="card border-0 bg-light mb-3">';
+        html += '<div class="card-body">';
+        html += '<div class="row g-3">';
+        if (details.leaveId) {
+            html += '<div class="col-md-6"><i class="bi bi-hash text-primary me-2"></i><strong>Leave ID:</strong><br/><span class="ms-4">' + details.leaveId + '</span></div>';
+        }
+        if (details.applicant) {
+            html += '<div class="col-md-6"><i class="bi bi-person text-primary me-2"></i><strong>Applicant:</strong><br/><span class="ms-4">' + details.applicant + '</span></div>';
+        }
+        html += '<div class="col-md-6"><i class="bi bi-calendar-check text-success me-2"></i><strong>Start Date:</strong><br/><span class="ms-4">' + details.startDate + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-calendar-x text-danger me-2"></i><strong>End Date:</strong><br/><span class="ms-4">' + details.endDate + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-calendar3 text-info me-2"></i><strong>Total Days:</strong><br/><span class="ms-4 fs-5 fw-bold">' + details.totalDays + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-check-circle me-2"></i><strong>Status:</strong><br/><span class="ms-4"><span class="badge bg-' + 
+                (details.status === 'Approved' ? 'success' : (details.status === 'Rejected' ? 'danger' : 'warning')) + ' fs-6">' + 
+                details.status + '</span></span></div>';
+        html += '</div>';
+        if (details.reason) {
+            html += '<div class="mt-3 p-3 detail-section rounded"><strong><i class="bi bi-chat-left-text text-primary me-2"></i>Reason:</strong><br/><p class="mb-0 mt-2 ms-4">' + details.reason + '</p></div>';
+        }
+        if (details.remarks) {
+            html += '<div class="mt-3 p-3 detail-section rounded"><strong><i class="bi bi-sticky text-warning me-2"></i>Remarks:</strong><br/><p class="mb-0 mt-2 ms-4">' + details.remarks + '</p></div>';
+        }
+        if (details.createdDate) {
+            html += '<div class="mt-3"><small class="text-muted"><i class="bi bi-clock-history me-1"></i>Applied On: ' + details.createdDate + '</small></div>';
+        }
+        html += '</div></div>';
+        return html;
+    }
+
+    function buildAttendanceDetails(details) {
+        const rate = parseFloat(details.attendanceRate);
+        let html = '<h6 class="mb-3"><i class="bi bi-clipboard-check me-2"></i>Student Attendance Report</h6>';
+        if (rate < 60) {
+            html += '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i><strong>Critical:</strong> Attendance rate is below minimum requirement (60%).</div>';
+        } else if (rate < 80) {
+            html += '<div class="alert alert-warning"><i class="bi bi-exclamation-circle me-2"></i><strong>Warning:</strong> Attendance rate needs improvement.</div>';
+        }
+        html += '<div class="card border-0 bg-light">';
+        html += '<div class="card-body">';
+        html += '<div class="row g-3 mb-4">';
+        html += '<div class="col-md-6"><i class="bi bi-person-badge text-primary me-2"></i><strong>Student ID:</strong><br/><span class="ms-4">' + details.studentId + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-person text-primary me-2"></i><strong>Student Name:</strong><br/><span class="ms-4">' + details.studentName + '</span></div>';
+        html += '<div class="col-12"><i class="bi bi-envelope text-primary me-2"></i><strong>Email:</strong><br/><span class="ms-4">' + details.email + '</span></div>';
+        html += '</div>';
+        html += '<div class="mb-3"><strong>Attendance Rate:</strong></div>';
+        html += '<div class="progress" style="height: 30px;">';
+        html += '<div class="progress-bar bg-' + (rate >= 80 ? 'success' : (rate >= 60 ? 'warning' : 'danger')) + '" role="progressbar" style="width: ' + rate + '%" aria-valuenow="' + rate + '" aria-valuemin="0" aria-valuemax="100">';
+        html += '<strong>' + details.attendanceRate + '</strong></div></div>';
+        html += '<div class="row g-3 mt-3 text-center">';
+        html += '<div class="col-4"><div class="p-3 bg-white rounded"><div class="fs-2 fw-bold text-primary">' + details.totalClasses + '</div><small class="text-muted">Total Classes</small></div></div>';
+        html += '<div class="col-4"><div class="p-3 bg-white rounded"><div class="fs-2 fw-bold text-success">' + details.presentCount + '</div><small class="text-muted">Present</small></div></div>';
+        html += '<div class="col-4"><div class="p-3 bg-white rounded"><div class="fs-2 fw-bold text-danger">' + details.absentCount + '</div><small class="text-muted">Absent</small></div></div>';
+        html += '</div>';
+        html += '</div></div>';
+        return html;
+    }
+
+    function buildClassDetails(details) {
+        let html = '<h6 class="mb-3"><i class="bi bi-calendar-event me-2"></i>Class Information</h6>';
+        html += '<div class="card border-0 bg-light">';
+        html += '<div class="card-body">';
+        html += '<div class="row g-3">';
+        html += '<div class="col-md-6"><i class="bi bi-bookmark-fill text-primary me-2"></i><strong>Class Name:</strong><br/><span class="ms-4">' + details.className + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-person-badge text-primary me-2"></i><strong>Teacher:</strong><br/><span class="ms-4">' + (details.teacher || 'N/A') + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-door-open text-primary me-2"></i><strong>Room:</strong><br/><span class="ms-4">' + (details.room || 'N/A') + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-calendar3 text-primary me-2"></i><strong>Day:</strong><br/><span class="ms-4">' + (details.day || 'N/A') + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-clock text-primary me-2"></i><strong>Time:</strong><br/><span class="ms-4">' + (details.time || 'N/A') + '</span></div>';
+        html += '<div class="col-md-6"><i class="bi bi-people text-primary me-2"></i><strong>Capacity:</strong><br/><span class="ms-4">' + (details.capacity || 'N/A') + '</span></div>';
+        if (details.subject) {
+            html += '<div class="col-12"><i class="bi bi-book text-primary me-2"></i><strong>Subject:</strong><br/><span class="ms-4">' + details.subject + '</span></div>';
+        }
+        html += '</div></div></div>';
+        return html;
     }
 </script>
 
 <style>
-  .notification-item {
-    padding: 1.25rem;
+    .notification-item {
+        padding: 1.25rem;
         border-radius: 8px;
-     background: var(--card-bg);
-      margin-bottom: 1rem;
+        background: var(--card-bg);
+        margin-bottom: 1rem;
         transition: all 0.3s ease;
+        border-left: 4px solid transparent;
     }
 
     .notification-item:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
     }
 
     [data-theme="dark"] .notification-item:hover {
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     .notification-item.unread {
-    background: #f8f9fa;
+        background: #f8f9fa;
+        border-left-color: #0d6efd;
     }
 
     [data-theme="dark"] .notification-item.unread {
         background: #353535;
     }
 
-  .notification-item.read {
-   opacity: 0.8;
+    .notification-item.read {
+        opacity: 0.8;
+    }
+
+    .notification-item.type-warning {
+        border-left-color: #ffc107;
+    }
+
+    .notification-item.type-info {
+        border-left-color: #0dcaf0;
     }
 
     .notification-header {
-   margin-bottom: 0.75rem;
+        margin-bottom: 0.75rem;
     }
 
     .notification-icon {
         width: 40px;
         height: 40px;
         border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
     }
 
     .notification-icon.danger {
-    background: rgba(220, 53, 69, 0.1);
+        background: rgba(220, 53, 69, 0.1);
         color: #dc3545;
     }
 
     .notification-icon.warning {
-   background: rgba(255, 193, 7, 0.1);
+        background: rgba(255, 193, 7, 0.1);
         color: #ffc107;
     }
 
     .notification-icon.primary {
-  background: rgba(13, 110, 253, 0.1);
- color: #0d6efd;
+        background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
     }
 
- .notification-icon.success {
-  background: rgba(25, 135, 84, 0.1);
-    color: #198754;
+    .notification-icon.success {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
     }
 
     .notification-icon.info {
-background: rgba(13, 202, 240, 0.1);
+        background: rgba(13, 202, 240, 0.1);
         color: #0dcaf0;
     }
 
-    .notification-body {
-        padding: 0.75rem 0;
-  line-height: 1.6;
-        color: var(--text-primary);
+    .notification-description {
+        color: var(--text-secondary);
+        line-height: 1.6;
     }
 
-    .notification-body p {
-      color: var(--text-secondary);
-    }
-
-    .notification-footer {
+    .notification-actions {
         padding-top: 0.75rem;
-  border-top: 1px solid var(--border-light);
-        display: flex;
-        gap: 0.5rem;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .notification-content h6 {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .notifications-container {
+        max-height: none;
     }
 </style>
 }
