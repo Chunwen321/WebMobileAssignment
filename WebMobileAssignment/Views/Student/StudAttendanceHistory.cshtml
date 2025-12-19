@@ -6,9 +6,9 @@
     ViewBag.ActiveSubmenu = "StudAttendanceHistory";
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
 
-    // Prepare distinct classes for the Class filter
-    var classNames = Model?
-        .Select(a => a.Class?.ClassName ?? string.Empty)
+    // Prepare distinct subjects for the Subject filter
+    var subjectNames = Model?
+        .Select(a => a.Class?.Subject?.SubjectName ?? string.Empty)
         .Where(n => !string.IsNullOrEmpty(n))
         .Distinct()
         .OrderBy(n => n)
@@ -41,57 +41,74 @@
         </div>
     </div>
 
+    <!-- Summary Section -->
+    <div class="mb-4">
+        <h6 class="mb-2">Summary</h6>
+        <div class="row g-2">
+            <div class="col-md-4 col-sm-6">
+                <div class="text-white text-center py-2 px-2 rounded" style="background-color: #28a745;">
+                    <div class="small fw-bold">Present</div>
+                    <div class="fs-5 fw-bold" id="summaryPresent">0</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="text-white text-center py-2 px-2 rounded" style="background-color: #dc3545;">
+                    <div class="small fw-bold">Absent</div>
+                    <div class="fs-5 fw-bold" id="summaryAbsent">0</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="text-white text-center py-2 px-2 rounded" style="background-color: #17a2b8;">
+                    <div class="small fw-bold">Leave</div>
+                    <div class="fs-5 fw-bold" id="summaryLeave">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filters -->
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <label class="form-label">Class</label>
-            <select id="filterClass" class="form-select">
-                <option value="">All Classes</option>
-                @foreach (var cn in classNames)
+        <div class="col-md-4">
+            <label class="form-label">Subject</label>
+            <select id="filterSubject" class="form-select">
+                <option value="">All Subjects</option>
+                @foreach (var sn in subjectNames)
                 {
-                    <option value="@cn">@cn</option>
+                    <option value="@sn">@sn</option>
                 }
             </select>
         </div>
 
-        <div class="col-md-3">
-            <label class="form-label">Month</label>
-            <input id="filterMonth" type="month" class="form-control" value="@DateTime.Now.ToString("yyyy-MM")" />
+        <div class="col-md-4">
+            <label class="form-label">Date</label>
+            <input id="filterDate" type="date" class="form-control" />
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-4">
             <label class="form-label">Status</label>
             <select id="filterStatus" class="form-select">
                 <option value="">All Status</option>
                 <option>Present</option>
-                <option>Late</option>
                 <option>Absent</option>
                 <option>Leave</option>
             </select>
-        </div>
-
-        <div class="col-md-3 d-flex align-items-end">
-            <button id="applyFiltersBtn" class="btn btn-primary w-100">
-                <i class="bi bi-search"></i> Search
-            </button>
         </div>
     </div>
 
     <!-- Attendance Table -->
     <div class="table-responsive">
-        <table id="attendanceTable" class="table table-hover align-middle">
-            <thead class="table-light">
+        <table id="attendanceTable" class="table table-hover align-middle" style="background-color: #f8f9fa;">
+            <thead style="background-color: #e9ecef;">
                 <tr>
                     <th>Date</th>
                     <th>Day</th>
                     <th>Class</th>
                     <th>Subject</th>
-                    <th>Time In</th>
-                    <th>Time Out</th>
+                    <th>Time Taken</th>
                     <th>Status</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody style="background-color: #f8f9fa;">
                 @if (Model != null && Model.Any())
                 {
                     foreach (var a in Model.OrderByDescending(x => x.Date))
@@ -100,32 +117,23 @@
                         var dayStr = a.Date.DayOfWeek.ToString();
                         var className = a.Class?.ClassName ?? "-";
                         var subjectName = a.Class?.Subject?.SubjectName ?? "-";
-                        var timeIn = a.TakenOn != default ? a.TakenOn.ToString("hh:mm tt") : "-";
-                        string timeOut = "-";
-                        if (a.Class?.EndTime != null)
-                        {
-                            try
-                            {
-                                timeOut = DateTime.Today.Add(a.Class.EndTime.Value).ToString("hh:mm tt");
-                            }
-                            catch { timeOut = "-"; }
-                        }
+                        // Use 24-hour format (HH:mm) for cleaner display
+                        var timeTaken = a.TakenOn != default ? a.TakenOn.ToString("HH:mm") : "-";
 
                         string badgeClass = a.Status switch
                         {
                             "Present" => "bg-success",
                             "Late" => "bg-warning text-dark",
                             "Absent" => "bg-danger",
-                            "Leave" => "bg-secondary",
+                            "Leave" => "bg-info",
                             _ => "bg-light text-dark"
                         };
-                <tr data-date="@a.Date.ToString("yyyy-MM")" data-class="@className" data-status="@a.Status">
+                <tr data-fulldate="@dateStr" data-class="@className" data-subject="@subjectName" data-status="@a.Status" data-time="@timeTaken">
                     <td><strong>@dateStr</strong></td>
                     <td>@dayStr</td>
                     <td>@className</td>
                     <td>@subjectName</td>
-                    <td>@timeIn</td>
-                    <td>@timeOut</td>
+                    <td class="time-taken" data-rawtime="@timeTaken">@timeTaken</td>
                     <td><span class="badge @badgeClass">@a.Status</span></td>
                 </tr>
                     }
@@ -133,7 +141,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="7" class="text-center">No attendance records found.</td>
+                        <td colspan="6" class="text-center">No attendance records found.</td>
                     </tr>
                 }
             </tbody>
@@ -143,19 +151,39 @@
 
 @section Scripts {
 
-    <!-- Excel -->
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<!-- Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
-    <!-- PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<!-- PDF generation now handled server-side with QuestPDF -->
 
-    <script>
+<script>
+        // -------- UPDATE SUMMARY COUNTS --------
+        function updateSummary() {
+            let presentCount = 0, absentCount = 0, leaveCount = 0;
+            
+            const rows = document.querySelectorAll("#attendanceTable tbody tr");
+            rows.forEach(row => {
+                // Skip "no records" row and hidden rows
+                if (row.querySelectorAll("td").length === 1 || row.style.display === "none") {
+                    return;
+                }
+                
+                const status = row.dataset.status || "";
+                if (status === "Present") presentCount++;
+                else if (status === "Absent") absentCount++;
+                else if (status === "Leave") leaveCount++;
+            });
+            
+            document.getElementById("summaryPresent").textContent = presentCount;
+            document.getElementById("summaryAbsent").textContent = absentCount;
+            document.getElementById("summaryLeave").textContent = leaveCount;
+        }
+
         // -------- CLIENT FILTERING --------
         function applyFilters() {
             const search = document.getElementById("tableSearch").value.trim().toLowerCase();
-            const classFilter = document.getElementById("filterClass").value;
-            const monthFilter = document.getElementById("filterMonth").value; // yyyy-MM
+            const subjectFilter = document.getElementById("filterSubject").value;
+            const dateFilter = document.getElementById("filterDate").value; // yyyy-MM-dd
             const statusFilter = document.getElementById("filterStatus").value;
 
             const rows = document.querySelectorAll("#attendanceTable tbody tr");
@@ -166,16 +194,16 @@
                     return;
                 }
 
-                const rowClass = (row.dataset.class || "").toLowerCase();
+                const rowSubject = (row.dataset.subject || "").toLowerCase();
                 const rowStatus = (row.dataset.status || "");
-                const rowDate = row.dataset.date || ""; // yyyy-MM
+                const rowFullDate = row.dataset.fulldate || ""; // yyyy-MM-dd
                 const rowText = row.innerText.toLowerCase();
 
                 let visible = true;
 
                 if (search && !rowText.includes(search)) visible = false;
-                if (classFilter && rowClass !== classFilter.toLowerCase()) visible = false;
-                if (monthFilter && rowDate !== monthFilter) visible = false;
+                if (subjectFilter && rowSubject !== subjectFilter.toLowerCase()) visible = false;
+                if (dateFilter && rowFullDate !== dateFilter) visible = false;
                 if (statusFilter && rowStatus !== statusFilter) visible = false;
 
                 row.style.display = visible ? "" : "none";
@@ -189,49 +217,278 @@
             if (!noRow) {
                 noRow = document.createElement("tr");
                 noRow.classList.add("no-records");
-                noRow.innerHTML = '<td colspan="7" class="text-center">No attendance records found.</td>';
+                noRow.innerHTML = '<td colspan="6" class="text-center">No attendance records found.</td>';
                 document.querySelector("#attendanceTable tbody").appendChild(noRow);
             }
             noRow.style.display = anyVisible ? "none" : "";
+            
+            // Update summary after filtering
+            updateSummary();
         }
 
-        document.getElementById("applyFiltersBtn").addEventListener("click", applyFilters);
         document.getElementById("tableSearch").addEventListener("input", applyFilters);
-        document.getElementById("filterClass").addEventListener("change", applyFilters);
-        document.getElementById("filterMonth").addEventListener("change", applyFilters);
+        document.getElementById("filterSubject").addEventListener("change", applyFilters);
+        document.getElementById("filterDate").addEventListener("change", applyFilters);
         document.getElementById("filterStatus").addEventListener("change", applyFilters);
 
         // initial filter pass
         applyFilters();
 
-        // -------- EXCEL EXPORT --------
+        // -------- EXCEL EXPORT (Only visible rows) --------
         document.getElementById("exportExcelBtn").addEventListener("click", function () {
+            // Get visible rows only
             const table = document.getElementById("attendanceTable");
-            const wb = XLSX.utils.table_to_book(table, { sheet: "Attendance" });
-            XLSX.writeFile(wb, "attendance-history.xlsx");
+            const visibleRows = [];
+            
+            // Add header row
+            const headerRow = [];
+            table.querySelectorAll("thead th").forEach(th => {
+                headerRow.push(th.textContent.trim());
+            });
+            visibleRows.push(headerRow);
+            
+            // Add visible data rows - use data attributes for time to avoid encoding issues
+            table.querySelectorAll("tbody tr").forEach(row => {
+                if (row.style.display !== "none" && row.querySelectorAll("td").length > 1) {
+                    const rowData = [];
+                    const cells = row.querySelectorAll("td");
+                    
+                    // Date (index 0)
+                    rowData.push(cells[0].textContent.trim());
+                    // Day (index 1)
+                    rowData.push(cells[1].textContent.trim());
+                    // Class (index 2)
+                    rowData.push(cells[2].textContent.trim());
+                    // Subject (index 3)
+                    rowData.push(cells[3].textContent.trim());
+                    // Time Taken (index 4) - get from data-rawtime attribute on the cell
+                    const timeCell = cells[4];
+                    rowData.push(timeCell.dataset.rawtime || timeCell.textContent.trim());
+                    // Status (index 5) - get from badge
+                    const badge = cells[5].querySelector('.badge');
+                    rowData.push(badge ? badge.textContent.trim() : cells[5].textContent.trim());
+                    
+                    visibleRows.push(rowData);
+                }
+            });
+            
+            // Create workbook
+            const ws = XLSX.utils.aoa_to_sheet(visibleRows);
+            
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 12 },  // Date
+                { wch: 12 },  // Day
+                { wch: 15 },  // Class
+                { wch: 20 },  // Subject
+                { wch: 12 },  // Time Taken
+                { wch: 10 }   // Status
+            ];
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Attendance History");
+            
+            // Generate filename with date
+            const today = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `attendance-history-${today}.xlsx`);
         });
 
-        // -------- PDF EXPORT (DOCUMENT STYLE) --------
+        // -------- PDF EXPORT (Server-side with QuestPDF) --------
         document.getElementById("exportPdfBtn").addEventListener("click", function () {
+            // Get current filter values
+            const subjectFilter = document.getElementById("filterSubject").value;
+            const dateFilter = document.getElementById("filterDate").value;
+            const statusFilter = document.getElementById("filterStatus").value;
 
+            // Build query string for filters
+            const params = new URLSearchParams();
+            if (subjectFilter) params.append('subject', subjectFilter);
+            if (dateFilter) params.append('date', dateFilter);
+            if (statusFilter) params.append('status', statusFilter);
+
+            // Redirect to PDF export endpoint
+            const url = '@Url.Action("ExportAttendanceHistoryPdf", "Student")' + 
+                        (params.toString() ? '?' + params.toString() : '');
+            window.open(url, '_blank');
+        });
+
+        // -------- OLD CLIENT-SIDE PDF EXPORT (REPLACED) --------
+        // The following code has been replaced with server-side QuestPDF generation
+        /*
+        document.getElementById("exportPdfBtn").addEventListener("click", function () {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF("p", "pt", "a4");
-
-            doc.setFontSize(14);
-            doc.text("Student Attendance History Report", 40, 40);
-
-            doc.setFontSize(10);
-            doc.text("Generated on: " + new Date().toLocaleString(), 40, 60);
-
-            doc.autoTable({
-                startY: 80,
-                html: "#attendanceTable",
-                styles: { fontSize: 9 },
-                headStyles: { fillColor: [245, 245, 245] },
-                margin: { left: 40, right: 40 }
+            
+            // Get visible rows data
+            const table = document.getElementById("attendanceTable");
+            const headers = [];
+            const bodyData = [];
+            
+            // Get headers
+            table.querySelectorAll("thead th").forEach(th => {
+                headers.push(th.textContent.trim());
+            });
+            
+            // Get visible rows - use data attributes for time to avoid encoding issues
+            table.querySelectorAll("tbody tr").forEach(row => {
+                if (row.style.display !== "none" && row.querySelectorAll("td").length > 1) {
+                    const rowData = [];
+                    const cells = row.querySelectorAll("td");
+                    
+                    // Date (index 0)
+                    rowData.push(cells[0].textContent.trim());
+                    // Day (index 1)
+                    rowData.push(cells[1].textContent.trim());
+                    // Class (index 2)
+                    rowData.push(cells[2].textContent.trim());
+                    // Subject (index 3)
+                    rowData.push(cells[3].textContent.trim());
+                    // Time Taken (index 4) - get from data-rawtime attribute on the cell
+                    const timeCell = cells[4];
+                    rowData.push(timeCell.dataset.rawtime || timeCell.textContent.trim());
+                    // Status (index 5) - get from badge
+                    const badge = cells[5].querySelector('.badge');
+                    rowData.push(badge ? badge.textContent.trim() : cells[5].textContent.trim());
+                    
+                    bodyData.push(rowData);
+                }
             });
 
-            doc.save("attendance-history.pdf");
+            // Page dimensions
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 40;
+            const contentWidth = pageWidth - (margin * 2); // 515pt
+
+            // Add colorful header banner
+            doc.setFillColor(2, 161, 69); // Green color
+            doc.rect(0, 0, pageWidth, 80, 'F');
+            
+            // Title
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont("helvetica", "bold");
+            doc.text("Student Attendance History Report", margin, 45);
+            
+            // Subtitle
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.text("Generated on: " + new Date().toLocaleString(), margin, 65);
+
+            // Summary Statistics
+            const totalRecords = bodyData.length;
+            const presentCount = bodyData.filter(row => row[5] === 'Present').length;
+            const absentCount = bodyData.filter(row => row[5] === 'Absent').length;
+            const leaveCount = bodyData.filter(row => row[5] === 'Leave').length;
+            
+            // Summary Section Title
+            doc.setTextColor(52, 58, 64);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("Summary", margin, 105);
+
+            // Summary boxes - equal width, aligned with table (3 boxes)
+            const boxWidth = (contentWidth - 20) / 3;  // 3 boxes with 10pt gaps between them
+            const boxHeight = 50;
+            const boxY = 115;
+            const boxGap = 10;
+
+            // Present box (Green)
+            doc.setFillColor(40, 167, 69);
+            doc.roundedRect(margin, boxY, boxWidth, boxHeight, 5, 5, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("Present", margin + boxWidth/2, boxY + 18, { align: 'center' });
+            doc.setFontSize(20);
+            doc.text(presentCount.toString(), margin + boxWidth/2, boxY + 40, { align: 'center' });
+            
+            // Absent box (Red)
+            const box2X = margin + boxWidth + boxGap;
+            doc.setFillColor(220, 53, 69);
+            doc.roundedRect(box2X, boxY, boxWidth, boxHeight, 5, 5, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.text("Absent", box2X + boxWidth/2, boxY + 18, { align: 'center' });
+            doc.setFontSize(20);
+            doc.text(absentCount.toString(), box2X + boxWidth/2, boxY + 40, { align: 'center' });
+            
+            // Leave box (Blue/Cyan)
+            const box3X = margin + (boxWidth + boxGap) * 2;
+            doc.setFillColor(23, 162, 184);
+            doc.roundedRect(box3X, boxY, boxWidth, boxHeight, 5, 5, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.text("Leave", box3X + boxWidth/2, boxY + 18, { align: 'center' });
+            doc.setFontSize(20);
+            doc.text(leaveCount.toString(), box3X + boxWidth/2, boxY + 40, { align: 'center' });
+
+            // Attendance Records Title
+            doc.setTextColor(52, 58, 64);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("Attendance Records", margin, 190);
+            
+            // Table with consistent column widths matching content width
+            doc.autoTable({
+                startY: 200,
+                head: [headers],
+                body: bodyData,
+                theme: 'grid',
+                styles: { 
+                    fontSize: 9,
+                    cellPadding: 8,
+                    lineColor: [220, 220, 220],
+                    lineWidth: 0.5,
+                    valign: 'middle'
+                },
+                headStyles: { 
+                    fillColor: [52, 58, 64],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    halign: 'center',
+                    fontSize: 10
+                },
+                bodyStyles: {
+                    textColor: [33, 37, 41]
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 249, 250]
+                },
+                columnStyles: {
+                    0: { cellWidth: contentWidth * 0.14, halign: 'center', fontStyle: 'bold' },  // Date ~14%
+                    1: { cellWidth: contentWidth * 0.14, halign: 'center' },                     // Day ~14%
+                    2: { cellWidth: contentWidth * 0.16, halign: 'center' },                     // Class ~16%
+                    3: { cellWidth: contentWidth * 0.26, halign: 'left' },                       // Subject ~26%
+                    4: { cellWidth: contentWidth * 0.14, halign: 'center' },                     // Time ~14%
+                    5: { cellWidth: contentWidth * 0.16, halign: 'center', fontStyle: 'bold' }   // Status ~16%
+                },
+                margin: { left: margin, right: margin },
+                tableWidth: contentWidth
+            });
+            
+            // Footer on all pages
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                
+                // Footer line
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.5);
+                doc.line(margin, pageHeight - 35, pageWidth - margin, pageHeight - 35);
+                
+                // Footer text
+                doc.setFontSize(8);
+                doc.setTextColor(128, 128, 128);
+                doc.setFont("helvetica", "normal");
+                doc.text('Attendance Management System', margin, pageHeight - 22);
+                doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin, pageHeight - 22, { align: 'right' });
+            }
+            
+            // Generate filename with date
+            const today = new Date().toISOString().split('T')[0];
+            doc.save(`attendance-history-${today}.pdf`);
         });
+        */
     </script>
 }

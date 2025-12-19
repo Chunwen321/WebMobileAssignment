@@ -441,4 +441,43 @@ public class LeaveApplication
     // Admin remarks when approving/rejecting
     [MaxLength(1000)]
     public string? Remarks { get; set; }
+<<<<<<< Updated upstream
+=======
+}
+
+/// <summary>
+/// Tracks the activation/deactivation history of classes.
+/// Each record represents a period when a class was active.
+/// </summary>
+public class ClassActiveHistory
+{
+    [Key]
+    [MaxLength(20)]
+    public string HistoryId { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(20)]
+    public string ClassId { get; set; } = string.Empty;
+
+    [ForeignKey(nameof(ClassId))]
+    public Class Class { get; set; } = null!;
+
+    /// <summary>
+    /// The date when the class was activated (became active)
+    /// </summary>
+    [Required]
+    public DateTime ActiveFrom { get; set; }
+
+    /// <summary>
+    /// The date when the class was deactivated (became inactive).
+    /// Null means the class is still active.
+    /// </summary>
+    public DateTime? ActiveTo { get; set; }
+
+
+    /// <summary>
+    /// When this history record was created
+    /// </summary>
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+>>>>>>> Stashed changes
 }

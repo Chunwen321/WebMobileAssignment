@@ -1,0 +1,302 @@
+@model List<WebMobileAssignment.Models.Notification>
+
+@{
+    ViewBag.Title = "Announcements";
+    ViewBag.ActiveMenu = "Announcements";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    
+    var totalAnnouncements = ViewBag.TotalAnnouncements ?? 0;
+    var unreadCount = ViewBag.UnreadCount ?? 0;
+    var readCount = ViewBag.ReadCount ?? 0;
+}
+
+@functions {
+    string GetTimeAgo(DateTime date)
+    {
+        var timeSpan = DateTime.Now - date;
+        if (timeSpan.TotalMinutes < 1) return "Just now";
+        if (timeSpan.TotalMinutes < 60) return $"{(int)timeSpan.TotalMinutes} min ago";
+        if (timeSpan.TotalHours < 24) return $"{(int)timeSpan.TotalHours} hour(s) ago";
+        if (timeSpan.TotalDays < 7) return $"{(int)timeSpan.TotalDays} day(s) ago";
+        if (timeSpan.TotalDays < 30) return $"{(int)(timeSpan.TotalDays / 7)} week(s) ago";
+        return date.ToString("MMM dd, yyyy");
+    }
+    
+    string GetNotificationTitle(string description)
+    {
+        if (description.ToLower().Contains("leave")) return "Leave Application Update";
+        if (description.ToLower().Contains("attendance")) return "Attendance Notice";
+        if (description.ToLower().Contains("class")) return "Class Update";
+        if (description.ToLower().Contains("enrollment")) return "Enrollment Notice";
+        return "Announcement";
+    }
+}
+
+<!-- Anti-forgery token for AJAX requests -->
+<form id="antiForgeryForm" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left-color: #0d6efd;">
+            <div class="stat-label">Total Announcements</div>
+            <div class="stat-value">@totalAnnouncements</div>
+            <div class="stat-change">
+                <i class="bi bi-megaphone-fill"></i>
+                <span>All messages</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="stat-label">Unread</div>
+            <div class="stat-value">@unreadCount</div>
+            <div class="stat-change">
+                <i class="bi bi-envelope-fill"></i>
+                <span>Needs attention</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left-color: #198754;">
+            <div class="stat-label">Read</div>
+            <div class="stat-value">@readCount</div>
+            <div class="stat-change">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Completed</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Announcements Card -->
+<div class="dashboard-card">
+    <div class="card-header-custom">
+        <div>
+            <h3 class="card-title">
+                <i class="bi bi-megaphone-fill"></i>
+                Announcements
+            </h3>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            @if ((int)unreadCount > 0)
+            {
+                <button class="btn btn-sm btn-outline-primary" id="markAllReadBtn" onclick="markAllAsRead()">
+                    <i class="bi bi-check-all me-2"></i>Mark All as Read
+                </button>
+            }
+            <div class="input-group input-group-sm" style="max-width: 250px;">
+                <input type="text" class="form-control" id="searchInput" placeholder="Search announcements..." onkeyup="filterAnnouncements()">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs" role="tablist" style="border-bottom: 1px solid var(--border-color); padding: 0 1rem;">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" type="button" onclick="filterByStatus('all')">
+                <i class="bi bi-megaphone me-1"></i>All
+                <span class="badge bg-secondary ms-2">@totalAnnouncements</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="unread-tab" data-bs-toggle="tab" type="button" onclick="filterByStatus('unread')">
+                <i class="bi bi-envelope-fill me-1"></i>Unread
+                <span class="badge bg-danger ms-2">@unreadCount</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="read-tab" data-bs-toggle="tab" type="button" onclick="filterByStatus('read')">
+                <i class="bi bi-check-circle me-1"></i>Read
+                <span class="badge bg-success ms-2">@readCount</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- Announcements List -->
+    <div class="p-3">
+        @if (Model != null && Model.Any())
+        {
+            <div class="announcements-container">
+                @foreach (var notification in Model)
+                {
+                    var isUnread = notification.Status == "unread";
+                    var statusClass = isUnread ? "danger" : "success";
+                    var statusIcon = isUnread ? "bi-envelope-fill" : "bi-envelope-open";
+                    var timeAgo = GetTimeAgo(notification.CreatedDate);
+                    var title = GetNotificationTitle(notification.Description);
+                    
+                    <div class="announcement-item mb-3 p-3 border rounded announcement-record" 
+                         data-status="@notification.Status"
+                         data-id="@notification.NotificationId"
+                         style="border-left: 4px solid var(--bs-@statusClass) !important; background: @(isUnread ? "rgba(220, 53, 69, 0.03)" : "#fff");">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="announcement-icon rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px; background: rgba(var(--bs-@(statusClass)-rgb), 0.15);">
+                                    <i class="bi @statusIcon text-@statusClass"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 announcement-title">@title</h6>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock me-1"></i>@timeAgo
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                @if (isUnread)
+                                {
+                                    <span class="badge bg-danger">Unread</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Read</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="announcement-content ps-5">
+                            <p class="mb-2 text-secondary announcement-text" style="white-space: pre-wrap;">@notification.Description</p>
+                            @if (isUnread)
+                            {
+                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="markAsRead('@notification.NotificationId')">
+                                    <i class="bi bi-check me-1"></i>Mark as Read
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-megaphone" style="font-size: 4rem; color: #dee2e6;"></i>
+                <h5 class="text-muted mt-3">No Announcements</h5>
+                <p class="text-muted">There are no announcements at this time. Check back later!</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentStatus = 'all';
+        
+        function filterAnnouncements() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.announcement-record');
+            
+            items.forEach(item => {
+                const title = item.querySelector('.announcement-title')?.textContent.toLowerCase() || '';
+                const content = item.querySelector('.announcement-text')?.textContent.toLowerCase() || '';
+                const status = item.dataset.status;
+                
+                const matchesSearch = title.includes(searchText) || content.includes(searchText);
+                const matchesStatus = currentStatus === 'all' || status === currentStatus;
+                
+                item.style.display = (matchesSearch && matchesStatus) ? 'block' : 'none';
+            });
+            
+            checkEmptyState();
+        }
+        
+        function filterByStatus(status) {
+            currentStatus = status;
+            
+            // Update active tab styling
+            document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+            if (status === 'all') {
+                document.getElementById('all-tab').classList.add('active');
+            } else if (status === 'unread') {
+                document.getElementById('unread-tab').classList.add('active');
+            } else if (status === 'read') {
+                document.getElementById('read-tab').classList.add('active');
+            }
+            
+            filterAnnouncements();
+        }
+        
+        function checkEmptyState() {
+            const container = document.querySelector('.announcements-container');
+            if (!container) return;
+            
+            let visibleCount = 0;
+            container.querySelectorAll('.announcement-record').forEach(item => {
+                if (item.style.display !== 'none') visibleCount++;
+            });
+            
+            // Remove existing empty message if any
+            const existingEmpty = container.querySelector('.empty-filter-message');
+            if (existingEmpty) existingEmpty.remove();
+            
+            if (visibleCount === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'text-center py-4 empty-filter-message';
+                emptyMsg.innerHTML = `
+                    <i class="bi bi-search" style="font-size: 2rem; color: #dee2e6;"></i>
+                    <p class="text-muted mt-2">No announcements match your filter.</p>
+                `;
+                container.appendChild(emptyMsg);
+            }
+        }
+        
+        function getAntiForgeryToken() {
+            const tokenInput = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]');
+            return tokenInput ? tokenInput.value : '';
+        }
+        
+        function markAsRead(notificationId) {
+            const token = getAntiForgeryToken();
+            
+            fetch('@Url.Action("MarkNotificationAsRead", "Student")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: 'notificationId=' + encodeURIComponent(notificationId)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to reflect changes
+                    location.reload();
+                } else {
+                    alert('Failed to mark as read: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while marking as read.');
+            });
+        }
+        
+        function markAllAsRead() {
+            const token = getAntiForgeryToken();
+            
+            fetch('@Url.Action("MarkAllNotificationsAsRead", "Student")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to reflect changes
+                    location.reload();
+                } else {
+                    alert('Failed to mark all as read: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while marking all as read.');
+            });
+        }
+    </script>
+}

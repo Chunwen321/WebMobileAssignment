@@ -3,8 +3,8 @@
 /* * SIDEBAR COLORS (matching login page student icon) */
 
 :root { /* Primary Sidebar */
-    --sidebar-bg-start: #2c3e50;
-    --sidebar-bg-end: #34495e;
+    --sidebar-bg-start: #02a145;
+    --sidebar-bg-end: #028a3a;
     --student-accent: #198754; /* main green */
     --student-accent-hover: rgba(25, 135, 84, 0.1);
     --student-accent-active: rgba(25, 135, 84, 0.15); /* Status Colors */
@@ -17,7 +17,389 @@
     --text-primary: #2c3e50;
     --text-secondary: #6c757d;
     --text-muted: #6c757d;
+    /* Border Colors */
+    --border-color: #dee2e6;
+    --border-light: #e9ecef;
 }
+
+/* ==================== DARK MODE VARIABLES ==================== */
+[data-theme="dark"] {
+    /* Sidebar - Keep green gradient in dark mode */
+    --sidebar-bg-start: #02a145;
+    --sidebar-bg-end: #028a3a;
+    
+    /* Backgrounds */
+    --page-bg: #1a1a1a;
+    --card-bg: #2d2d2d;
+    
+    /* Text Colors */
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-muted: #888888;
+    
+    /* Border Colors */
+    --border-color: #404040;
+    --border-light: #353535;
+}
+
+/* ==================== DARK MODE TRANSITIONS ==================== */
+body,
+.dashboard-card,
+.list-group-item,
+.form-select,
+.form-control,
+.form-check-label,
+.table,
+.text-muted,
+.text-secondary,
+h1, h2, h3, h4, h5, h6,
+p, span, label {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* ==================== DARK MODE STYLING ==================== */
+[data-theme="dark"] body,
+[data-theme="dark"] .student-layout {
+    background: var(--page-bg) !important;
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .main-content {
+    background: var(--page-bg);
+}
+
+[data-theme="dark"] .page-content {
+    background: var(--page-bg);
+}
+
+[data-theme="dark"] .dashboard-card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .card-header-custom {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] h1, 
+[data-theme="dark"] h2, 
+[data-theme="dark"] h3, 
+[data-theme="dark"] h4, 
+[data-theme="dark"] h5, 
+[data-theme="dark"] h6,
+[data-theme="dark"] .card-title {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] label {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .text-secondary {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .topbar {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .topbar-title h1,
+html[data-theme="dark"] .topbar-title h1,
+html[data-theme="dark"] .main-content .topbar .topbar-title h1 {
+    color: #ffffff !important;
+    text-shadow: 0 0 1px rgba(255,255,255,0.5); /* Add subtle glow to verify CSS is loaded */
+}
+
+[data-theme="dark"] .topbar-btn {
+    background: #ffffff;
+    color: #000000;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .topbar-btn:hover {
+    background: #f8f9fa;
+    color: #000000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* Dark mode form controls */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #353535;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #404040;
+    border-color: var(--student-accent);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .input-group-text {
+    background-color: #353535;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Dark mode tables */
+[data-theme="dark"] .table {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .table thead {
+    background-color: #353535;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .table td,
+[data-theme="dark"] .table th {
+    border-color: var(--border-color);
+}
+
+/* Dark mode stat cards */
+[data-theme="dark"] .stat-card {
+    background: var(--card-bg);
+}
+
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .stat-card .stat-label {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .stat-value,
+[data-theme="dark"] .stat-card .stat-value {
+    color: #ffffff !important;
+}
+
+/* Dark mode Chart.js legend text */
+[data-theme="dark"] .chart-container {
+    color: #ffffff;
+}
+
+/* Dark mode list groups */
+[data-theme="dark"] .list-group-item {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .list-group-item strong {
+    color: #ffffff;
+}
+
+/* Dark mode pie chart background and legend */
+[data-theme="dark"] .chart-container {
+    background: #3d3d3d !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+[data-theme="dark"] .chart-container span,
+[data-theme="dark"] .chart-container label,
+[data-theme="dark"] .chart-container p {
+    color: #ffffff !important;
+}
+
+/* Ensure all text in dark mode is visible */
+[data-theme="dark"] .dashboard-card h5,
+[data-theme="dark"] .dashboard-card p,
+[data-theme="dark"] .dashboard-card strong,
+[data-theme="dark"] .dashboard-card .stat-value {
+    color: #ffffff;
+}
+
+[data-theme="dark"] small {
+    color: var(--text-muted);
+}
+
+/* Dark mode alerts */
+[data-theme="dark"] .alert-info {
+    background-color: rgba(13, 110, 253, 0.15);
+    border-color: rgba(13, 110, 253, 0.3);
+    color: #6ea8fe;
+}
+
+/* Dark mode borders */
+[data-theme="dark"] .border,
+[data-theme="dark"] .border-bottom,
+[data-theme="dark"] .border-top {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] hr {
+    border-color: var(--border-color);
+}
+
+/* Dark mode nav tabs */
+[data-theme="dark"] .nav-tabs {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .nav-tabs .nav-link {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .nav-tabs .nav-link:hover {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .nav-tabs .nav-link.active {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Dark mode attendance stat boxes */
+[data-theme="dark"] .attendance-stat-value {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .attendance-stat-label {
+    color: #ffffff !important;
+}
+
+/* Light mode attendance stat boxes - ensure proper colors */
+.attendance-stat-value {
+    color: #000000;
+}
+
+.attendance-stat-label {
+    color: #6c757d;
+}
+
+/* ==================== DARK MODE SIDEBAR ==================== */
+[data-theme="dark"] .sidebar {
+    background: #1c1a1a;
+    color: #ffffff;
+    border-right-color: #333;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .sidebar-header {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Only make text white, not the icon */
+[data-theme="dark"] .sidebar-brand span,
+html[data-theme="dark"] .sidebar-brand span,
+html[data-theme="dark"] .sidebar .sidebar-header .sidebar-brand span {
+    color: #ffffff !important;
+    text-shadow: 0 0 1px rgba(255,255,255,0.5); /* Add subtle glow to verify CSS is loaded */
+}
+
+/* Keep all Bootstrap Icons in sidebar their original colors */
+[data-theme="dark"] .sidebar-brand i,
+[data-theme="dark"] .sidebar i,
+[data-theme="dark"] .sidebar-item i,
+[data-theme="dark"] .sidebar-item-content i,
+[data-theme="dark"] .sidebar-subitem i {
+    color: #02a145 !important; /* Keep green */
+}
+
+/* Specifically keep the calendar icon green */
+[data-theme="dark"] .sidebar-brand i.bi-calendar-check-fill {
+    color: #02a145 !important;
+}
+
+/* Sidebar menu items - only affect text, not icons */
+[data-theme="dark"] .sidebar-item span,
+html[data-theme="dark"] .sidebar-item span,
+html[data-theme="dark"] .sidebar .sidebar-item span,
+html[data-theme="dark"] .sidebar-item-content span {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+[data-theme="dark"] .sidebar-item:hover span,
+html[data-theme="dark"] .sidebar-item:hover span,
+html[data-theme="dark"] .sidebar-item:hover .sidebar-item-content span {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .sidebar-item.active span,
+html[data-theme="dark"] .sidebar-item.active span,
+html[data-theme="dark"] .sidebar-item.active .sidebar-item-content span {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .sidebar-subitem span,
+html[data-theme="dark"] .sidebar-subitem span,
+html[data-theme="dark"] .sidebar .sidebar-subitem span {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="dark"] .sidebar-subitem:hover span,
+html[data-theme="dark"] .sidebar-subitem:hover span {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .sidebar-subitem.active span,
+html[data-theme="dark"] .sidebar-subitem.active span {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .sidebar-footer {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .user-name {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .user-role {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .logout-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+[data-theme="dark"] .logout-btn:hover {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Force ONLY TEXT (not icons) to be white in dark mode */
+html[data-theme="dark"] .sidebar-brand span,
+html[data-theme="dark"] .sidebar-item span,
+html[data-theme="dark"] .sidebar-item-content span,
+html[data-theme="dark"] .sidebar-subitem span,
+html[data-theme="dark"] .sidebar span:not(i) {
+    color: #ffffff !important;
+}
+
+/* Ensure icons keep their original colors */
+html[data-theme="dark"] .sidebar-brand i {
+    color: #02a145 !important; /* Keep green calendar icon */
+}
+
+html[data-theme="dark"] .topbar-title h1 {
+    color: #ffffff !important;
+}
+
 /* * ICON COLOR REFERENCE (from login page) */
 
 .icon-red {
@@ -208,7 +590,7 @@
 
     .stat-card .stat-label {
         font-weight: 500;
-        color: #666;
+        color: var(--text-primary);
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -218,7 +600,7 @@
     .stat-card .stat-value {
         font-size: 2rem;
         font-weight: 700;
-        color: #050505;
+        color: var(--text-primary);
         margin-bottom: 8px;
     }
 /* ==================== CLASS DETAIL STYLES ==================== */
@@ -277,18 +659,19 @@
     top: 0;
     height: 100vh;
     width: 280px;
-    background: #1c1a1a;
-    color: white;
+    background: #ffffff;
+    color: #2c3e50;
     display: flex;
     flex-direction: column;
     z-index: 1000;
-    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    border-right: 1px solid #e9ecef;
 }
 
 .sidebar-header {
     padding: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #e9ecef;
 }
 
 .sidebar-brand {
@@ -297,8 +680,12 @@
     gap: 0.75rem;
     font-size: 1.25rem;
     font-weight: 700;
-    color: white;
+    color: #2c3e50; /* Explicit dark color for light mode */
 }
+
+    .sidebar-brand span {
+        color: #2c3e50; /* Explicit dark color for light mode */
+    }
 
     .sidebar-brand i {
         font-size: 1.75rem;
@@ -318,11 +705,11 @@
     }
 
     .sidebar-nav::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(0, 0, 0, 0.05);
     }
 
     .sidebar-nav::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.15);
         border-radius: 3px;
     }
 
@@ -331,7 +718,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.875rem 1.5rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: #495057;
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -363,13 +750,13 @@
 
 .sidebar-item:hover {
     background: rgba(2, 161, 69, 0.10);
-    color: white;
+    color: #2c3e50;
 }
 
 
 .sidebar-item.active {
     background: rgba(2, 161, 69, 0.15); /* soft green highlight */
-    color: white;
+    color: #2c3e50;
     border-left: 4px solid #02a145;
 }
 
@@ -417,7 +804,7 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1.5rem 0.75rem 3.5rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: #6c757d;
     text-decoration: none;
     transition: all 0.3s ease;
     font-size: 0.9rem;
@@ -431,13 +818,13 @@
 
     .sidebar-subitem:hover {
         background: rgba(2, 161, 69, 0.08);
-        color: white;
+        color: #2c3e50;
         padding-left: 3.75rem;
     }
 
     .sidebar-subitem.active {
         background: rgba(2, 161, 69, 0.12);
-        color: white;
+        color: #2c3e50;
         font-weight: 600;
     }
 
@@ -445,7 +832,7 @@
 
 .sidebar-footer {
     padding: 1rem 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid #e9ecef;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -466,7 +853,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #2c3e50;
+    color: #ffffff;
     font-size: 1.25rem;
 }
 
@@ -484,22 +871,22 @@
 .user-name {
     font-size: 0.9rem;
     font-weight: 600;
-    color: white;
+    color: var(--text-primary);
     margin-bottom: 0.15rem;
 }
 
 .user-role {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: #6c757d;
 }
 
 .logout-btn {
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.05);
     border: none;
-    color: white;
+    color: #495057;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -509,7 +896,7 @@
 }
 
     .logout-btn:hover {
-        background: rgba(220, 53, 69, 0.2);
+        background: rgba(220, 53, 69, 0.15);
         color: #dc3545;
     }
 
@@ -546,7 +933,7 @@
     border-radius: 8px;
     background: #f8f9fa;
     border: none;
-    color: #2c3e50;
+    color: var(--text-primary);
     font-size: 1.25rem;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -563,7 +950,7 @@
     .topbar-title h1 {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #2c3e50;
+        color: #2c3e50; /* Explicit dark color for light mode */
         margin: 0;
     }
 
@@ -578,17 +965,19 @@
     width: 40px;
     height: 40px;
     border-radius: 8px;
-    background: #f8f9fa;
+    background: #ffffff;
     border: none;
-    color: #6c757d;
+    color: #000000;
     font-size: 1.125rem;
     cursor: pointer;
     transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
     .topbar-btn:hover {
-        background: #ffc107;
-        color: white;
+        background: #f8f9fa;
+        color: #000000;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
 
     .topbar-btn .badge {
@@ -770,14 +1159,14 @@
   }
 
 .password-toggle-btn {
-    position: absolute;
-    right: 1rem;
-    background: transparent;
-    border: none;
-    color: #6c757d;
-    cursor: pointer;
-    padding: 0.25rem;
-    display: flex;
+position: absolute;
+right: 1rem;
+background: transparent;
+border: none;
+color: #6c757d;
+cursor: pointer;
+padding: 0.25rem;
+display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10;
@@ -985,4 +1374,273 @@
 @media (max-width: 767px) {
     .timetable-table thead th { font-size: 0.85rem; padding: 0.5rem; }
     .timetable-cell { padding: 0.4rem; }
+}
+
+
+/* ==================== RECENT ATTENDANCE TABLE GREY BACKGROUND ==================== */
+/* Force grey background for Recent Attendance table */
+#recent-attendance-table,
+#recent-attendance-table tbody,
+#recent-attendance-table tbody tr,
+#recent-attendance-table tbody tr td {
+    background-color: #f8f9fa !important;
+}
+
+#recent-attendance-table thead,
+#recent-attendance-table thead tr,
+#recent-attendance-table thead tr th {
+    background-color: #e9ecef !important;
+}
+
+/* Override hover effect to maintain grey background */
+#recent-attendance-table.table-hover tbody tr:hover,
+#recent-attendance-table.table-hover tbody tr:hover td {
+    background-color: #dee2e6 !important;
+}
+
+/* Dark mode for Recent Attendance table */
+[data-theme="dark"] #recent-attendance-table,
+[data-theme="dark"] #recent-attendance-table tbody,
+[data-theme="dark"] #recent-attendance-table tbody tr,
+[data-theme="dark"] #recent-attendance-table tbody tr td {
+    background-color: #3d3d3d !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] #recent-attendance-table thead,
+[data-theme="dark"] #recent-attendance-table thead tr,
+[data-theme="dark"] #recent-attendance-table thead tr th {
+    background-color: #353535 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] #recent-attendance-table.table-hover tbody tr:hover,
+[data-theme="dark"] #recent-attendance-table.table-hover tbody tr:hover td {
+    background-color: #4a4a4a !important;
+}
+
+
+/* ==================== ATTENDANCE HISTORY TABLE GREY BACKGROUND ==================== */
+/* Force grey background for Attendance History table */
+#attendanceTable,
+#attendanceTable tbody,
+#attendanceTable tbody tr,
+#attendanceTable tbody tr td {
+    background-color: #f8f9fa !important;
+}
+
+#attendanceTable thead,
+#attendanceTable thead tr,
+#attendanceTable thead tr th {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+}
+
+/* Override hover effect to maintain grey background */
+#attendanceTable.table-hover tbody tr:hover,
+#attendanceTable.table-hover tbody tr:hover td {
+    background-color: #dee2e6 !important;
+}
+
+/* Dark mode for Attendance History table */
+[data-theme="dark"] #attendanceTable,
+[data-theme="dark"] #attendanceTable tbody,
+[data-theme="dark"] #attendanceTable tbody tr,
+[data-theme="dark"] #attendanceTable tbody tr td {
+    background-color: #3d3d3d !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] #attendanceTable thead,
+[data-theme="dark"] #attendanceTable thead tr,
+[data-theme="dark"] #attendanceTable thead tr th {
+    background-color: #353535 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] #attendanceTable.table-hover tbody tr:hover,
+[data-theme="dark"] #attendanceTable.table-hover tbody tr:hover td {
+    background-color: #4a4a4a !important;
+}
+
+
+/* ==================== STUDCLASSES TIMETABLE GREY BACKGROUND ==================== */
+/* Ensure timetable cells have grey background in light mode */
+.timetable tbody .schedule-cell {
+    background-color: #f8f9fa !important;
+}
+
+.timetable tbody .time-cell {
+    background-color: #e9ecef !important;
+}
+
+/* Dark mode for StudClasses timetable */
+[data-theme="dark"] .timetable {
+    background-color: #2d2d2d !important;
+}
+
+[data-theme="dark"] .timetable tbody .schedule-cell {
+    background-color: #3d3d3d !important;
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] .timetable tbody .time-cell {
+    background-color: #353535 !important;
+    color: #e0e0e0 !important;
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] .timetable thead .time-column {
+    background-color: #353535 !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .timetable thead .day-column {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%) !important;
+    color: #ffffff !important;
+}
+
+
+/* ==================== LIGHT MODE TEXT COLORS (DEFAULT) ==================== */
+/* Ensure all text is dark/black in light mode */
+body:not([data-theme="dark"]),
+.student-layout:not([data-theme="dark"]) {
+    color: #2c3e50;
+}
+
+body:not([data-theme="dark"]) h1,
+body:not([data-theme="dark"]) h2,
+body:not([data-theme="dark"]) h3,
+body:not([data-theme="dark"]) h4,
+body:not([data-theme="dark"]) h5,
+body:not([data-theme="dark"]) h6,
+body:not([data-theme="dark"]) p,
+body:not([data-theme="dark"]) span:not(.badge),
+body:not([data-theme="dark"]) label {
+    color: #2c3e50 !important;
+}
+
+body:not([data-theme="dark"]) .stat-label,
+body:not([data-theme="dark"]) .stat-value {
+    color: #2c3e50 !important;
+}
+
+body:not([data-theme="dark"]) .card-title,
+body:not([data-theme="dark"]) .topbar-title h1 {
+    color: #2c3e50 !important;
+}
+
+/* Ensure dashboard cards have proper colors */
+body:not([data-theme="dark"]) .dashboard-card {
+    background: #ffffff;
+    color: #2c3e50;
+}
+
+body:not([data-theme="dark"]) .dashboard-card h5,
+body:not([data-theme="dark"]) .dashboard-card p,
+body:not([data-theme="dark"]) .dashboard-card strong {
+    color: #2c3e50 !important;
+}
+
+
+/* ==================== DARK MODE TEXT COLORS (OVERRIDE) ==================== */
+/* Ensure all text is light/white in dark mode with higher specificity */
+[data-theme="dark"] body,
+[data-theme="dark"] .student-layout {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] p,
+[data-theme="dark"] span:not(.badge),
+[data-theme="dark"] label {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .stat-value {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .stat-card .stat-label,
+[data-theme="dark"] .stat-card .stat-value {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .topbar-title h1 {
+    color: #e0e0e0 !important;
+}
+
+/* Ensure dashboard cards have proper colors in dark mode */
+[data-theme="dark"] .dashboard-card {
+    background: #2d2d2d !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .dashboard-card h5,
+[data-theme="dark"] .dashboard-card h6,
+[data-theme="dark"] .dashboard-card p,
+[data-theme="dark"] .dashboard-card strong,
+[data-theme="dark"] .dashboard-card span:not(.badge) {
+    color: #e0e0e0 !important;
+}
+
+/* List group items in dark mode */
+[data-theme="dark"] .list-group-item {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .list-group-item strong {
+    color: #ffffff !important;
+}
+
+
+/* ==================== DARK MODE CHART AND SUMMARY FIXES ==================== */
+/* Fix chart legend text colors in dark mode */
+[data-theme="dark"] .chart-container span,
+[data-theme="dark"] .chart-container label,
+[data-theme="dark"] .chart-container p,
+[data-theme="dark"] .chart-container small,
+[data-theme="dark"] .chart-container div {
+    color: #ffffff !important;
+}
+
+/* Fix percentage summary boxes text */
+[data-theme="dark"] .row .col-4 small,
+[data-theme="dark"] .row .col-4 .text-muted {
+    color: #ffffff !important;
+}
+
+/* Fix student name and info */
+[data-theme="dark"] .dashboard-card .text-center h5,
+[data-theme="dark"] .dashboard-card .text-center p {
+    color: #ffffff !important;
+}
+
+/* Fix all small text in dashboard cards */
+[data-theme="dark"] .dashboard-card small,
+[data-theme="dark"] .dashboard-card .small {
+    color: #b0b0b0 !important;
+}
+
+
+/* ==================== DARK MODE CARD HEADER TITLES ==================== */
+/* Fix card header titles specifically */
+[data-theme="dark"] .card-header-custom .card-title,
+[data-theme="dark"] .dashboard-card .card-header-custom h3,
+[data-theme="dark"] .dashboard-card .card-header-custom h5 {
+    color: #ffffff !important;
+}
+
+/* Ensure icons in card titles are also visible */
+[data-theme="dark"] .card-header-custom .card-title i,
+[data-theme="dark"] .card-header-custom h3 i,
+[data-theme="dark"] .card-header-custom h5 i {
+    color: #02a145 !important;
 }
