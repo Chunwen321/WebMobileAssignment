@@ -78,7 +78,8 @@
                             @foreach (var cls in (List<Class>)ViewBag.Classes)
                             {
                                 var studentCount = cls.Enrollments?.Count ?? 0;
-                                var sessionCount = cls.Attendances?.Count ?? 0;
+                                var sessionCounts = ViewBag.SessionCounts as Dictionary<string, int> ?? new Dictionary<string, int>();
+                                var sessionCount = sessionCounts.ContainsKey(cls.ClassId) ? sessionCounts[cls.ClassId] : 0;
                                 var avgAttendance = sessionCount > 0 
                                     ? Math.Round((decimal)(cls.Attendances.Count(a => a.Status == "Present") * 100) / sessionCount, 2)
                                     : 0;
@@ -177,38 +178,45 @@
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
-                            <th>Date</th>
+                            <th>Date & Time</th>
                             <th>Class</th>
-                            <th>Time</th>
-                            <th>Present</th>
-                            <th>Absent</th>
-                            <th>Leave</th>
+                            <th>PIN</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if (ViewBag.RecentAttendances != null && ((List<Attendance>)ViewBag.RecentAttendances).Count > 0)
+                        @{
+                            var recentSessions = ViewBag.RecentSessions as List<dynamic> ?? new List<dynamic>();
+                        }
+                        @if (recentSessions.Count > 0)
                         {
-                            @foreach (var att in (List<Attendance>)ViewBag.RecentAttendances)
+                            @foreach (var session in recentSessions)
                             {
-                                var present = att.Class.Attendances?.Count(a => a.Date.Date == att.Date.Date && a.Status == "Present") ?? 0;
-                                var absent = att.Class.Attendances?.Count(a => a.Date.Date == att.Date.Date && a.Status == "Absent") ?? 0;
-                                var leave = att.Class.Attendances?.Count(a => a.Date.Date == att.Date.Date && a.Status == "Leave") ?? 0;
+                                var sessionDate = ((DateTime)session.CreatedDate);
+                                var classData = session.Class as Class;
+                                var isExpired = sessionDate.AddHours(24) < DateTime.Now;
+                                
                                 <tr>
-                                    <td><i class="bi bi-calendar3 me-2 text-muted"></i>@att.Date.ToString("yyyy-MM-dd")</td>
-                                    <td>@att.Class.ClassName</td>
-                                    <td>@(att.Class.StartTime?.ToString(@"hh\:mm") ?? "N/A") - @(att.Class.EndTime?.ToString(@"hh\:mm") ?? "N/A")</td>
-                                    <td><strong>@present</strong></td>
-                                    <td><strong>@absent</strong></td>
-                                    <td><strong>@leave</strong></td>
-                                    <td><span class="badge bg-success">Submitted</span></td>
+                                    <td><i class="bi bi-calendar3 me-2 text-muted"></i>@sessionDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@classData?.ClassName</td>
+                                    <td><code>@session.PinCode</code></td>
+                                    <td>
+                                        @if (isExpired)
+                                        {
+                                            <span class="badge bg-secondary">Expired</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                    </td>
                                 </tr>
                             }
                         }
                         else
                         {
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No attendance records yet</td>
+                                <td colspan="4" class="text-center text-muted py-4">No session records yet</td>
                             </tr>
                         }
                     </tbody>
