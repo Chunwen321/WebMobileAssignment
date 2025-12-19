@@ -23,6 +23,12 @@ builder.Services.AddScoped<Helper>();
 // Add Report service
 builder.Services.AddScoped<ReportService>();
 
+// Add PDF service
+builder.Services.AddScoped<PdfService>();
+
+// Add Report service
+builder.Services.AddScoped<ReportService>();
+
 // Add ReCaptcha service with HttpClient
 builder.Services.AddHttpClient<ReCaptchaService>();
 

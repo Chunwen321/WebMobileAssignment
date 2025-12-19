@@ -1,26 +1,30 @@
 @{
-    ViewBag.Title = "Student Dashboard";
-    ViewBag.ActiveMenu = "StudDashboard";
-    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+ViewBag.Title = "Student Dashboard";
+ViewBag.ActiveMenu = "StudDashboard";
+Layout = "~/Views/Shared/_StudentLayout.cshtml";
     
     var student = Model;
     var totalClasses = ViewBag.TotalClasses ?? 0;
     var presentCount = ViewBag.PresentCount ?? 0;
     var absentCount = ViewBag.AbsentCount ?? 0;
     var leaveCount = ViewBag.LeaveCount ?? 0;
-    var attendanceRate = ViewBag.AttendanceRate ?? 0;
     var enrolledClasses = ViewBag.EnrolledClasses ?? 0;
     
-    var presentPercentage = totalClasses > 0 ? Math.Round((double)presentCount / totalClasses * 100, 2) : 0;
-    var absentPercentage = totalClasses > 0 ? Math.Round((double)absentCount / totalClasses * 100, 2) : 0;
-    var leavePercentage = totalClasses > 0 ? Math.Round((double)leaveCount / totalClasses * 100, 2) : 0;
+    // Calculate percentages based on total attendance records
+    var totalRecords = presentCount + absentCount + leaveCount;
+    var presentPercentage = totalRecords > 0 ? Math.Round((double)presentCount / totalRecords * 100, 1) : 0;
+    var absentPercentage = totalRecords > 0 ? Math.Round((double)absentCount / totalRecords * 100, 1) : 0;
+    var leavePercentage = totalRecords > 0 ? Math.Round((double)leaveCount / totalRecords * 100, 1) : 0;
+    
+    // Attendance rate: (Present + Leave) / Total * 100 (Leave counts as present)
+    var attendanceRate = totalRecords > 0 ? Math.Round((double)(presentCount + leaveCount) / totalRecords * 100, 1) : 0;
 }
 <div class="row g-3 mb-4">
     <!-- Attendance Stats -->
     <div class="col-md-3">
         <div class="stat-card" style="border-left-color: #198754;">
             <div class="stat-label">Total Present</div>
-            <div class="stat-value" id="presentCount">@presentPercentage%</div>
+            <div class="stat-value" id="presentCount">@presentCount</div>
             <div class="stat-change positive"></div>
         </div>
     </div>
@@ -28,7 +32,7 @@
     <div class="col-md-3">
         <div class="stat-card" style="border-left-color: #dc3545;">
             <div class="stat-label">Total Absent</div>
-            <div class="stat-value" id="absentCount">@absentPercentage%</div>
+            <div class="stat-value" id="absentCount">@absentCount</div>
             <div class="stat-change negative"></div>
         </div>
     </div>
@@ -36,7 +40,7 @@
     <div class="col-md-3">
         <div class="stat-card" style="border-left-color: #ffc107;">
             <div class="stat-label">Medical Leave</div>
-            <div class="stat-value" id="medicalLeaveCount">@leavePercentage%</div>
+            <div class="stat-value" id="medicalLeaveCount">@leaveCount</div>
             <div class="stat-change positive"></div>
         </div>
     </div>
@@ -44,7 +48,7 @@
     <div class="col-md-3">
         <div class="stat-card" style="border-left-color: #0d6efd;">
             <div class="stat-label">Attendance Rate</div>
-            <div class="stat-value" id="attendanceRate">@(Math.Round(attendanceRate, 2))%</div>
+            <div class="stat-value" id="attendanceRate">@attendanceRate%</div>
             <div class="stat-change positive"></div>
         </div>
     </div>
@@ -110,57 +114,41 @@
         <div class="dashboard-card">
             <div class="card-header-custom">
                 <h3 class="card-title">
-                    <i class="bi bi-bar-chart-fill"></i>
+                    <i class="bi bi-pie-chart-fill"></i>
                     Attendance Overview
                 </h3>
-                <select id="timePeriodSelect" class="form-select form-select-sm" style="width: auto;">
-                    <option value="7days">Last 7 Days</option>
-                    <option value="30days" selected>Last 30 Days</option>
-                    <option value="3months">Last 3 Months</option>
-                </select>
             </div>
 
-            <!-- Chart Area -->
-            <div style="background: #f8f9fa; border-radius: 8px; padding: 28px;">
-                <!-- 7 Days - Line Chart -->
-                <div id="chart7DaysContainer" style="display: none; position: relative; height: 300px;">
-                    <canvas id="attendanceChart7Days"></canvas>
-                </div>
-
-                <!-- 30 Days - Bar Chart -->
-                <div id="chart30DaysContainer" style="display: block; position: relative; height: 300px;">
-                    <canvas id="attendanceChart30Days"></canvas>
-                </div>
-
-                <!-- 3 Months - Pie Chart -->
-                <div id="chart3MonthsContainer" style="display: none; position: relative; height: 300px;">
-                    <canvas id="attendanceChart3Months"></canvas>
+            <!-- Pie Chart Area -->
+            <div class="chart-container" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 24px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);">
+                <div style="position: relative; height: 220px; max-width: 400px; margin: 0 auto;">
+                    <canvas id="attendancePieChart"></canvas>
                 </div>
             </div>
 
             <!-- Summary Boxes -->
             <div class="row mt-4 text-center">
                 <div class="col-4">
-                    <div class="p-3"
+                    <div class="p-3 attendance-stat-box present-stat"
                          style="background: rgba(25, 135, 84, 0.1); border-radius: 8px;">
-                        <h4 class="mb-0" style="color: #198754;">@presentPercentage%</h4>
-                        <small class="text-muted">Present</small>
+                        <h4 class="mb-0 attendance-stat-value">@presentPercentage%</h4>
+                        <small class="attendance-stat-label">Present</small>
                     </div>
                 </div>
 
                 <div class="col-4">
-                    <div class="p-3"
+                    <div class="p-3 attendance-stat-box absent-stat"
                          style="background: rgba(220, 53, 69, 0.1); border-radius: 8px;">
-                        <h4 class="mb-0" style="color: #dc3545;">@absentPercentage%</h4>
-                        <small class="text-muted">Absent</small>
+                        <h4 class="mb-0 attendance-stat-value">@absentPercentage%</h4>
+                        <small class="attendance-stat-label">Absent</small>
                     </div>
                 </div>
 
                 <div class="col-4">
-                    <div class="p-3"
-                         style="background: rgba(255, 193, 7, 0.1); border-radius: 8px;">
-                        <h4 class="mb-0" style="color: #ffc107;">@leavePercentage%</h4>
-                        <small class="text-muted">Medical Leave</small>
+                    <div class="p-3 attendance-stat-box leave-stat"
+                         style="background: rgba(255, 193, 7, 0.15); border-radius: 8px;">
+                        <h4 class="mb-0 attendance-stat-value">@leavePercentage%</h4>
+                        <small class="attendance-stat-label">Medical Leave</small>
                     </div>
                 </div>
             </div>
@@ -186,8 +174,8 @@
 
 
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
+                <table id="recent-attendance-table" class="table table-hover align-middle" style="background-color: #f8f9fa;">
+                    <thead style="background-color: #e9ecef;">
                         <tr>
                             <th>Date</th>
                             <th>Classroom</th>
@@ -196,7 +184,7 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody style="background-color: #f8f9fa;">
                         @{
                             var recentAttendances = ViewBag.RecentAttendances as List<WebMobileAssignment.Models.Attendance> ?? new List<WebMobileAssignment.Models.Attendance>();
                             
@@ -243,218 +231,85 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <script>
-        let chart7Days, chart30Days, chart3Months;
-
         document.addEventListener('DOMContentLoaded', function () {
-            // Parse attendance data from ViewBag
-            const data7Days = @Html.Raw(ViewBag.Attendances7Days ?? "[]");
-            const data30Days = @Html.Raw(ViewBag.Attendances30Days ?? "[]");
-            const data3Months = @Html.Raw(ViewBag.Attendances3Months ?? "[]");
-
-            // Initialize all charts
-            initChart7Days(data7Days);
-            initChart30Days(data30Days);
-            initChart3Months(data3Months);
-
-            // Handle time period selection
-            document.getElementById('timePeriodSelect').addEventListener('change', function(e) {
-                const period = e.target.value;
-                showChart(period);
-            });
+            // Get attendance counts from server
+            const presentCount = @presentCount;
+            const absentCount = @absentCount;
+            const leaveCount = @leaveCount;
+            
+            // Initialize pie chart
+            initPieChart(presentCount, absentCount, leaveCount);
         });
 
-        function showChart(period) {
-            const container7 = document.getElementById('chart7DaysContainer');
-            const container30 = document.getElementById('chart30DaysContainer');
-            const container3 = document.getElementById('chart3MonthsContainer');
-
-            container7.style.display = 'none';
-            container30.style.display = 'none';
-            container3.style.display = 'none';
-
-            if (period === '7days') {
-                container7.style.display = 'block';
-                if (chart7Days) chart7Days.resize();
-            } else if (period === '30days') {
-                container30.style.display = 'block';
-                if (chart30Days) chart30Days.resize();
-            } else if (period === '3months') {
-                container3.style.display = 'block';
-                if (chart3Months) chart3Months.resize();
+        function initPieChart(present, absent, leave) {
+            const ctx = document.getElementById('attendancePieChart').getContext('2d');
+            
+            // Check if there's any data
+            const total = present + absent + leave;
+            
+            if (total === 0) {
+                // Show "No data" message
+                ctx.font = '16px Arial';
+                ctx.fillStyle = '#6c757d';
+                ctx.textAlign = 'center';
+                ctx.fillText('No attendance records yet', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
             }
-        }
-
-        function initChart7Days(data) {
-            if (!data || data.length === 0) return;
-
-            const labels = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-            const presentData = data.map(d => d.present);
-            const absentData = data.map(d => d.absent);
-            const leaveData = data.map(d => d.leave);
-
-            const ctx = document.getElementById('attendanceChart7Days').getContext('2d');
-            chart7Days = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Present',
-                            data: presentData,
-                            borderColor: 'rgba(2, 161, 69, 1)',
-                            backgroundColor: 'rgba(2, 161, 69, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointBackgroundColor: 'rgba(2, 161, 69, 1)'
-                        },
-                        {
-                            label: 'Absent',
-                            data: absentData,
-                            borderColor: 'rgba(220, 53, 69, 1)',
-                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointBackgroundColor: 'rgba(220, 53, 69, 1)'
-                        },
-                        {
-                            label: 'Leave',
-                            data: leaveData,
-                            borderColor: 'rgba(255, 193, 7, 1)',
-                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointBackgroundColor: 'rgba(255, 193, 7, 1)'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: { padding: 15 }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Number of Days' }
-                        }
-                    }
-                }
-            });
-        }
-
-        function initChart30Days(data) {
-            if (!data || data.length === 0) return;
-
-            const labels = data.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-            const presentData = data.map(d => d.present);
-            const absentData = data.map(d => d.absent);
-            const leaveData = data.map(d => d.leave);
-
-            const ctx = document.getElementById('attendanceChart30Days').getContext('2d');
-            chart30Days = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Present',
-                            data: presentData,
-                            backgroundColor: 'rgba(2, 161, 69, 0.8)',
-                            borderColor: 'rgba(2, 161, 69, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Absent',
-                            data: absentData,
-                            backgroundColor: 'rgba(220, 53, 69, 0.8)',
-                            borderColor: 'rgba(220, 53, 69, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Leave',
-                            data: leaveData,
-                            backgroundColor: 'rgba(255, 193, 7, 0.8)',
-                            borderColor: 'rgba(255, 193, 7, 1)',
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: { padding: 15 }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            stacked: false
-                        },
-                        y: {
-                            beginAtZero: true,
-                            stacked: false
-                        }
-                    }
-                }
-            });
-        }
-
-        function initChart3Months(data) {
-            if (!data || data.length === 0) return;
-
-            const totalPresent = data.reduce((sum, d) => sum + d.present, 0);
-            const totalAbsent = data.reduce((sum, d) => sum + d.absent, 0);
-            const totalLeave = data.reduce((sum, d) => sum + d.leave, 0);
-
-            const ctx = document.getElementById('attendanceChart3Months').getContext('2d');
-            chart3Months = new Chart(ctx, {
+            
+            new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Present', 'Absent', 'Leave'],
+                    labels: ['Present', 'Absent', 'Medical Leave'],
                     datasets: [{
-                        data: [totalPresent, totalAbsent, totalLeave],
+                        data: [present, absent, leave],
                         backgroundColor: [
-                            'rgba(2, 161, 69, 0.95)',
-                            'rgba(220, 53, 69, 0.95)',
-                            'rgba(255, 193, 7, 0.95)'
+                            '#28a745',
+                            '#dc3545',
+                            '#ffc107'
                         ],
-                        borderWidth: 0,
-                        hoverOffset: 6
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        hoverOffset: 8,
+                        hoverBorderWidth: 0
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '65%',
+                    cutout: '55%',
                     plugins: {
                         legend: {
                             position: 'bottom',
                             labels: {
                                 usePointStyle: true,
-                                padding: 16
+                                pointStyle: 'circle',
+                                padding: 16,
+                                font: {
+                                    size: 13,
+                                    weight: '500'
+                                }
                             }
                         },
                         tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
                             callbacks: {
                                 label: function (context) {
                                     const label = context.label || '';
                                     const value = context.parsed || 0;
-                                    return label + ': ' + value + ' days';
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return label + ': ' + value + ' (' + percentage + '%)';
                                 }
                             }
                         }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
                     }
                 }
             });

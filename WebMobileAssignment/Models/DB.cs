@@ -463,7 +463,6 @@ public class LeaveApplication
     // Admin remarks when approving/rejecting
     [MaxLength(1000)]
     public string? Remarks { get; set; }
-}
 
 /// <summary>
 /// Tracks the activation/deactivation history of classes.
@@ -493,9 +492,9 @@ public class ClassActiveHistory
     /// Null means the class is still active.
     /// </summary>
     public DateTime? ActiveTo { get; set; }
-
     /// <summary>
     /// When this history record was created
     /// </summary>
     public DateTime CreatedDate { get; set; } = DateTime.Now;
+
 }

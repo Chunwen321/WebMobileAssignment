@@ -113,6 +113,15 @@
                 </div>
             </a>
 
+            <!-- Announcements -->
+            <a asp-controller="Student" asp-action="StudAnnouncements"
+               class="sidebar-item @(ViewBag.ActiveMenu == "Announcements" ? "active" : "")">
+                <div class="sidebar-item-content">
+                    <i class="bi bi-megaphone-fill"></i>
+                    <span>Announcements</span>
+                </div>
+            </a>
+
             <!-- Student Profile -->
             <a asp-controller="Student" asp-action="StudProfile"
                class="sidebar-item @(ViewBag.ActiveMenu == "StudProfile" ? "active" : "")">
@@ -204,6 +213,9 @@
             </div>
 
             <div class="topbar-actions">
+                <button class="topbar-btn" id="darkModeToggle" title="Toggle Theme">
+                    <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+                </button>
                 <button class="topbar-btn" title="Notifications">
                     <i class="bi bi-bell-fill"></i>
                     <span class="badge">0</span>

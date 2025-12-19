@@ -7,6 +7,52 @@
 }
 
 <div class="row g-3">
+    <!-- Theme Settings -->
+    <div class="col-lg-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-palette-fill"></i>
+                    Theme Settings
+                </h5>
+            </div>
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Appearance</label>
+                    <p class="text-muted small mb-0">Choose your preferred theme for the portal</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex gap-3 justify-content-md-end">
+                        <div class="theme-option" id="lightThemeOption" onclick="selectTheme('light')">
+                            <div class="theme-preview light-preview">
+                                <div class="preview-sidebar"></div>
+                                <div class="preview-content">
+                                    <div class="preview-header"></div>
+                                    <div class="preview-body"></div>
+                                </div>
+                            </div>
+                            <div class="theme-label">
+                                <i class="bi bi-sun-fill me-1"></i>Light
+                            </div>
+                        </div>
+                        <div class="theme-option" id="darkThemeOption" onclick="selectTheme('dark')">
+                            <div class="theme-preview dark-preview">
+                                <div class="preview-sidebar"></div>
+                                <div class="preview-content">
+                                    <div class="preview-header"></div>
+                                    <div class="preview-body"></div>
+                                </div>
+                            </div>
+                            <div class="theme-label">
+                                <i class="bi bi-moon-fill me-1"></i>Dark
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 <!-- Account Settings -->
 <div class="col-lg-12">
   <div class="dashboard-card settings-account-card">
@@ -152,8 +198,6 @@
         </form>
       </div>
     </div>
-<<<<<<< Updated upstream
-
     <!-- Sidebar -->
     <div class="col-lg-4">
         <!-- Profile Summary -->
@@ -194,9 +238,139 @@
             </div>
         </div>
     </div>
-=======
->>>>>>> Stashed changes
 </div>
+</div>
+
+<style>
+    .theme-option {
+        cursor: pointer;
+        text-align: center;
+        padding: 10px;
+        border-radius: 12px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .theme-option:hover {
+        background: rgba(13, 110, 253, 0.05);
+    }
+    
+    .theme-option.active {
+        border-color: #0d6efd;
+        background: rgba(13, 110, 253, 0.1);
+    }
+    
+    .theme-preview {
+        width: 100px;
+        height: 70px;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .light-preview {
+        background: #f8f9fa;
+    }
+    
+    .light-preview .preview-sidebar {
+        width: 25%;
+        background: linear-gradient(180deg, #02a145 0%, #028a3a 100%);
+    }
+    
+    .light-preview .preview-content {
+        flex: 1;
+        padding: 5px;
+    }
+    
+    .light-preview .preview-header {
+        height: 12px;
+        background: #ffffff;
+        border-radius: 2px;
+        margin-bottom: 5px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    .light-preview .preview-body {
+        height: calc(100% - 17px);
+        background: #ffffff;
+        border-radius: 2px;
+    }
+    
+    .dark-preview {
+        background: #1a1a1a;
+    }
+    
+    .dark-preview .preview-sidebar {
+        width: 25%;
+        background: linear-gradient(180deg, #02a145 0%, #028a3a 100%);
+    }
+    
+    .dark-preview .preview-content {
+        flex: 1;
+        padding: 5px;
+    }
+    
+    .dark-preview .preview-header {
+        height: 12px;
+        background: #2d2d2d;
+        border-radius: 2px;
+        margin-bottom: 5px;
+    }
+    
+    .dark-preview .preview-body {
+        height: calc(100% - 17px);
+        background: #2d2d2d;
+        border-radius: 2px;
+    }
+    
+    .theme-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    [data-theme="dark"] .theme-option:hover {
+        background: rgba(13, 110, 253, 0.15);
+    }
+    
+    [data-theme="dark"] .theme-option.active {
+        background: rgba(13, 110, 253, 0.2);
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // Initialize theme selection on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            updateThemeSelection(currentTheme);
+        });
+        
+        function selectTheme(theme) {
+            // Update the theme using the global function from student.js
+            setTheme(theme);
+            
+            // Update the UI selection
+            updateThemeSelection(theme);
+        }
+        
+        function updateThemeSelection(theme) {
+            const lightOption = document.getElementById('lightThemeOption');
+            const darkOption = document.getElementById('darkThemeOption');
+            
+            if (lightOption && darkOption) {
+                lightOption.classList.remove('active');
+                darkOption.classList.remove('active');
+                
+                if (theme === 'dark') {
+                    darkOption.classList.add('active');
+                } else {
+                    lightOption.classList.add('active');
+                }
+            }
+        }
 
 @section Scripts {
     <script>

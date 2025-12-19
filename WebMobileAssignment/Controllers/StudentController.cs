@@ -13,12 +13,14 @@ namespace WebMobileAssignment.Controllers
         private readonly DB _context;
         private readonly S3Service _s3Service;
         private readonly Helper _helper;
+        private readonly PdfService _pdfService;
 
-        public StudentController(DB context, S3Service s3Service, Helper helper)
+        public StudentController(DB context, S3Service s3Service, Helper helper, PdfService pdfService)
         {
             _context = context;
             _s3Service = s3Service;
             _helper = helper;
+            _pdfService = pdfService;
         }
 
         // Helper method to get current student
@@ -205,6 +207,67 @@ namespace WebMobileAssignment.Controllers
             ViewBag.ActiveMenu = "Attendance";
             ViewBag.ActiveSubmenu = "StudAttendanceHistory";
             return View("StudAttendanceHistory", attendances);
+        }
+
+        // Export Attendance History to PDF using QuestPDF
+        [HttpGet]
+        public async Task<IActionResult> ExportAttendanceHistoryPdf(string? subject = null, string? date = null, string? status = null)
+        {
+            var student = await GetCurrentStudent();
+            if (student == null)
+                return RedirectToAction("Login", "Account");
+
+            // Get all attendance records for the student
+            var query = _context.Attendances
+                .Include(a => a.Class)
+                    .ThenInclude(c => c.Subject)
+                .Where(a => a.StudentId == student.StudentId);
+
+            // Apply filters if provided
+            if (!string.IsNullOrEmpty(subject))
+            {
+                query = query.Where(a => a.Class != null && a.Class.Subject != null && 
+                    a.Class.Subject.SubjectName.ToLower() == subject.ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(date))
+            {
+                if (DateTime.TryParse(date, out DateTime filterDate))
+                {
+                    query = query.Where(a => a.Date.Date == filterDate.Date);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(a => a.Status == status);
+            }
+
+            var attendances = await query
+                .OrderByDescending(a => a.Date)
+                .ToListAsync();
+
+            // Convert to DTO
+            var reportItems = attendances.Select(a => new AttendanceReportItem
+            {
+                Date = a.Date.ToString("yyyy-MM-dd"),
+                Day = a.Date.DayOfWeek.ToString(),
+                ClassName = a.Class?.ClassName ?? "-",
+                SubjectName = a.Class?.Subject?.SubjectName ?? "-",
+                TimeTaken = a.TakenOn != default ? a.TakenOn.ToString("HH:mm") : "-",
+                Status = a.Status
+            }).ToList();
+
+            // Generate PDF
+            var pdfBytes = _pdfService.GenerateAttendanceHistoryPdf(
+                reportItems, 
+                student.User.FullName, 
+                student.StudentId
+            );
+
+            // Return PDF file
+            var fileName = $"attendance-history-{student.StudentId}-{DateTime.Now:yyyy-MM-dd}.pdf";
+            return File(pdfBytes, "application/pdf", fileName);
         }
 
         // Take Attendance - Main Page
@@ -693,6 +756,75 @@ namespace WebMobileAssignment.Controllers
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
+        }
+
+        // Announcements (using Notifications table)
+        public async Task<IActionResult> StudAnnouncements()
+        {
+            var student = await GetCurrentStudent();
+            if (student == null)
+                return RedirectToAction("Login", "Account");
+
+            // Get notifications for this student
+            var notifications = await _context.Notifications
+                .Include(n => n.User)
+                .Where(n => n.UserId == student.UserId)
+                .OrderByDescending(n => n.Status == "unread")
+                .ThenByDescending(n => n.CreatedDate)
+                .ToListAsync();
+
+            // Calculate stats
+            ViewBag.TotalAnnouncements = notifications.Count;
+            ViewBag.UnreadCount = notifications.Count(n => n.Status == "unread");
+            ViewBag.ReadCount = notifications.Count(n => n.Status == "read");
+
+            ViewBag.ActiveMenu = "Announcements";
+            return View("StudAnnouncements", notifications);
+        }
+
+
+        // Mark notification as read
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> MarkNotificationAsRead(string notificationId)
+        {
+            var student = await GetCurrentStudent();
+            if (student == null)
+                return Json(new { success = false, message = "Not authenticated" });
+
+            var notification = await _context.Notifications
+                .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == student.UserId);
+
+            if (notification == null)
+                return Json(new { success = false, message = "Notification not found" });
+
+            notification.Status = "read";
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+
+        // Mark all notifications as read
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> MarkAllNotificationsAsRead()
+        {
+            var student = await GetCurrentStudent();
+            if (student == null)
+                return Json(new { success = false, message = "Not authenticated" });
+
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == student.UserId && n.Status == "unread")
+                .ToListAsync();
+
+            foreach (var notification in notifications)
+            {
+                notification.Status = "read";
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, count = notifications.Count });
         }
     }
 }
