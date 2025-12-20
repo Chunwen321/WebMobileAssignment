@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebMobileAssignment.Models;
+using WebMobileAssignment.Services;
 
 namespace WebMobileAssignment.Controllers
 {
@@ -10,11 +11,13 @@ namespace WebMobileAssignment.Controllers
     {
         private readonly DB _db;
         private readonly Helper _helper;
+        private readonly S3Service _s3Service;
 
-        public TeacherController(DB db, Helper helper)
+        public TeacherController(DB db, Helper helper, S3Service s3Service)
         {
             _db = db;
             _helper = helper;
+            _s3Service = s3Service;
         }
 
         // Helper method to get current teacher and set ViewBag
@@ -1280,7 +1283,7 @@ namespace WebMobileAssignment.Controllers
             return View("TeachChangePassword");
         }
 
-        // Upload Profile Picture
+        // Upload Profile Picture to AWS S3
         [HttpPost]
         public async Task<IActionResult> UploadProfilePicture(IFormFile file)
         {
@@ -1292,10 +1295,11 @@ namespace WebMobileAssignment.Controllers
                 }
 
                 // Validate file type
-                var allowedMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
-                if (!allowedMimeTypes.Contains(file.ContentType.ToLower()))
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(extension))
                 {
-                    return Json(new { success = false, message = "Please upload a valid image file (JPEG, PNG, GIF, or WebP)." });
+                    return Json(new { success = false, message = "Invalid file type. Only JPG, PNG, GIF, and WEBP are allowed." });
                 }
 
                 // Validate file size (5MB max)
@@ -1317,30 +1321,32 @@ namespace WebMobileAssignment.Controllers
                     return Json(new { success = false, message = "User not found." });
                 }
 
-                // Create uploads directory if it doesn't exist
-                var uploadsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
-                Directory.CreateDirectory(uploadsDirectory);
-
-                // Generate unique filename
-                var fileName = $"{user.UserId}_{Guid.NewGuid()}_{file.FileName}";
-                var filePath = Path.Combine(uploadsDirectory, fileName);
-
-                // Save file
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                // Delete old profile picture from S3 if exists
+                if (!string.IsNullOrEmpty(user.ProfilePicture) && !user.ProfilePicture.StartsWith("/images/"))
                 {
-                    await file.CopyToAsync(stream);
+                    try
+                    {
+                        await _s3Service.DeleteFileAsync(user.ProfilePicture);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Warning: Failed to delete old profile picture: {ex.Message}");
+                    }
                 }
 
+                // Upload to AWS S3
+                var s3Url = await _s3Service.UploadFileAsync(file, user.UserId);
+
                 // Update user profile picture URL
-                user.ProfilePicture = $"/uploads/profiles/{fileName}";
+                user.ProfilePicture = s3Url;
                 _db.Users.Update(user);
                 await _db.SaveChangesAsync();
 
-                return Json(new { success = true, message = "Profile picture uploaded successfully.", pictureUrl = user.ProfilePicture });
+                return Json(new { success = true, message = "Profile picture uploaded successfully!", pictureUrl = s3Url });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+                return Json(new { success = false, message = $"Upload failed: {ex.Message}" });
             }
         }
 

@@ -27,6 +27,7 @@ const ImageCropper = (function() {
      * @param {string} config.editButtonId - ID of the edit button (optional)
      * @param {number} config.previewWidth - Width of the preview circle (default: 200)
      * @param {number} config.previewHeight - Height of the preview circle (default: 200)
+     * @param {function} config.onCropComplete - Callback function called with cropped file after saving
      */
     function init(config) {
         if (!config.targetId || !config.previewElementId || !config.fileInputId) {
@@ -41,7 +42,8 @@ const ImageCropper = (function() {
             clearButtonId: config.clearButtonId,
             editButtonId: config.editButtonId,
             previewWidth: config.previewWidth || 200,
-            previewHeight: config.previewHeight || 200
+            previewHeight: config.previewHeight || 200,
+            onCropComplete: config.onCropComplete || null
         };
 
         // Setup file input change handler
@@ -318,11 +320,14 @@ const ImageCropper = (function() {
                                  onclick="ImageCropper.enlargeImage('${dataUrl}')"
                                  title="Click to enlarge">`;
 
-        // Show buttons - re-query elements after DOM update
-        const refreshedClearBtn = config.clearButtonId ? document.getElementById(config.clearButtonId) : null;
-        const refreshedEditBtn = config.editButtonId ? document.getElementById(config.editButtonId) : null;
-        if (refreshedClearBtn) refreshedClearBtn.style.display = 'block';
-        if (refreshedEditBtn) refreshedEditBtn.style.display = 'block';
+        // Show buttons
+        if (clearBtn) clearBtn.style.display = 'block';
+        if (editBtn) editBtn.style.display = 'block';
+
+        // Call onCropComplete callback if provided
+        if (config.onCropComplete && typeof config.onCropComplete === 'function') {
+            config.onCropComplete(file);
+        }
     }
 
     /**
@@ -429,7 +434,7 @@ const ImageCropper = (function() {
 
     <!-- Image Cropper Modal -->
     <div class="modal fade" id="imageCropperModal" tabindex="-1" aria-labelledby="imageCropperModalLabel" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title" id="imageCropperModalLabel">
@@ -439,12 +444,12 @@ const ImageCropper = (function() {
                 </div>
                 <div class="modal-body p-4">
                     <div class="row">
-                        <div class="col-md-8">
-                            <div class="img-container bg-dark rounded" style="height: 600px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <div class="col-md-7">
+                            <div class="img-container bg-dark rounded" style="height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                 <img id="cropperImage" src="" alt="Image for cropping" style="max-width: 100%; max-height: 100%; display: block;">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <div class="tools-panel" style="position: sticky; top: 20px;">
                                 <h6 class="mb-3 fw-bold text-success">
                                     <i class="bi bi-sliders me-2"></i>Tools
