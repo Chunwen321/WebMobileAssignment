@@ -48,6 +48,18 @@
         background-color: rgba(255, 255, 255, 0.05) !important;
         color: #e0e0e0;
     }
+    
+    /* Mark All as Read button - ensure it's blue in dark mode */
+    body.dark-mode .mark-all-read-btn.btn-outline-primary {
+        color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    body.dark-mode .mark-all-read-btn.btn-outline-primary:hover {
+        background-color: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
 </style>
 }
 
@@ -65,46 +77,26 @@
 
 <div class="row g-3 mb-4">
     <!-- Notification Stats -->
-    <div class="col-md-3">
+    <div class="col-md-6">
         <div class="stat-card" style="border-left-color: #0d6efd;">
-      <div class="stat-label">Total Notifications</div>
-          <div class="stat-value">@totalNotifications</div>
-       <div class="stat-change">
-    <i class="bi bi-bell-fill"></i>
-          <span>All time</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
- <div class="stat-card" style="border-left-color: #dc3545;">
-      <div class="stat-label">Unread</div>
-    <div class="stat-value">@unreadCount</div>
-         <div class="stat-change">
-             <i class="bi bi-envelope-fill"></i>
-     <span>Needs attention</span>
-     </div>
-        </div>
- </div>
-    <div class="col-md-3">
-   <div class="stat-card" style="border-left-color: #ffc107;">
-       <div class="stat-label">Warnings</div>
-    <div class="stat-value">@warningCount</div>
+            <div class="stat-label">Total Notifications</div>
+            <div class="stat-value">@totalNotifications</div>
             <div class="stat-change">
- <i class="bi bi-exclamation-triangle-fill"></i>
-       <span>Leave/Absent alerts</span>
+                <i class="bi bi-bell-fill"></i>
+                <span>All time</span>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: #198754;">
-         <div class="stat-label">Completed</div>
-        <div class="stat-value">@readCount</div>
-     <div class="stat-change positive">
-    <i class="bi bi-check-circle-fill"></i>
-    <span>Read & acknowledged</span>
-         </div>
-     </div>
- </div>
+    <div class="col-md-6">
+        <div class="stat-card" style="border-left-color: #dc3545;">
+            <div class="stat-label">Unread</div>
+            <div class="stat-value">@unreadCount</div>
+            <div class="stat-change">
+                <i class="bi bi-envelope-fill"></i>
+                <span>Needs attention</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="dashboard-card">
@@ -115,52 +107,40 @@
                 All Notifications
             </h3>
         </div>
-        <div class="d-flex gap-2 align-items-center flex-wrap">
+        <div class="d-flex gap-2 align-items-center flex-wrap ms-auto">
             @if (unreadCount > 0)
             {
-                <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
+                <button class="btn btn-sm btn-outline-primary mark-all-read-btn" onclick="markAllAsRead()">
                     <i class="bi bi-check-all me-2"></i>Mark All as Read
                 </button>
             }
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteAllRead()">
-                <i class="bi bi-trash me-2"></i>Clear Read
-            </button>
-            <div class="input-group input-group-sm" style="max-width: 250px;">
-                <input type="text" class="form-control" id="searchInput" placeholder="Search notifications..." onkeyup="filterNotifications()">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-            </div>
+            @if (totalNotifications > 0)
+            {
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteAllNotifications()">
+                    <i class="bi bi-trash-fill me-2"></i>Delete All
+                </button>
+            }
         </div>
     </div>
 
     <!-- Filter Tabs -->
     <ul class="nav nav-tabs" role="tablist" style="border-bottom: 1px solid var(--border-color); padding: 0 1rem;">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true" onclick="filterByType('all')">
+            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">
                 <i class="bi bi-bell me-1"></i>All
                 <span class="badge bg-secondary ms-2">@totalNotifications</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="unread-tab" data-bs-toggle="tab" data-bs-target="#unread" type="button" role="tab" aria-controls="unread" aria-selected="false" onclick="filterByType('unread')">
+            <button class="nav-link" id="unread-tab" data-bs-toggle="tab" data-bs-target="#unread" type="button" role="tab" aria-controls="unread" aria-selected="false">
                 <i class="bi bi-envelope-fill me-1"></i>Unread
                 <span class="badge bg-danger ms-2">@unreadCount</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="warning-tab" data-bs-toggle="tab" data-bs-target="#warning" type="button" role="tab" aria-controls="warning" aria-selected="false" onclick="filterByType('warning')">
-                <i class="bi bi-exclamation-triangle me-1"></i>Warnings
-                <span class="badge bg-warning text-dark ms-2">@warningCount</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="false" onclick="filterByType('info')">
-                <i class="bi bi-info-circle me-1"></i>Info
             </button>
         </li>
     </ul>
 
     <!-- Notifications List -->
-    <div class="tab-content">
+    <div class="tab-content" style="padding-top: 1.5rem;">
         <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
             @if (notifications.Any())
             {
@@ -229,6 +209,71 @@
                 <div class="text-center py-5">
                     <i class="bi bi-bell-slash" style="font-size: 3rem; color: #ccc;"></i>
                     <p class="text-muted mt-3">No notifications yet</p>
+                </div>
+            }
+        </div>
+        
+        <div class="tab-pane fade" id="unread" role="tabpanel" aria-labelledby="unread-tab">
+            @if (notifications.Any(n => n.Status == "unread"))
+            {
+                <div class="notifications-container">
+                    @foreach (var notification in notifications.Where(n => n.Status == "unread"))
+                    {
+                        var isWarning = notification.Description.ToLower().Contains("absent") || 
+                                        notification.Description.ToLower().Contains("warning") ||
+                                        notification.Description.ToLower().Contains("low attendance");
+                        var isInfo = notification.Description.ToLower().Contains("enroll") || 
+                                     notification.Description.ToLower().Contains("schedule") ||
+                                     notification.Description.ToLower().Contains("class");
+
+                        var iconClass = isWarning ? "bi-exclamation-triangle-fill" : (isInfo ? "bi-info-circle-fill" : "bi-bell-fill");
+                        var iconType = isWarning ? "warning" : (isInfo ? "primary" : "success");
+                        var timeAgo = GetTimeAgo(notification.CreatedDate);
+
+                        <div class="notification-item notification-record unread @(isWarning ? "type-warning" : (isInfo ? "type-info" : "type-general"))" 
+                             data-type="@(isWarning ? "warning" : (isInfo ? "info" : "general"))" 
+                             data-status="unread"
+                             data-notification-id="@notification.NotificationId"
+                             style="cursor: pointer;"
+                             onclick="showNotificationDetails('@notification.NotificationId')">
+                            <div class="notification-header">
+                                <div class="d-flex align-items-center gap-2 w-100">
+                                    <div class="notification-icon @iconType flex-shrink-0">
+                                        <i class="bi @iconClass"></i>
+                                    </div>
+                                    <div class="flex-grow-1 notification-content">
+                                        <div class="d-flex justify-content-between align-items-start gap-2">
+                                            <div>
+                                                <h6 class="mb-1">@GetNotificationTitle(notification.Description)</h6>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock me-1"></i>@timeAgo
+                                                </small>
+                                            </div>
+                                            <span class="badge bg-danger flex-shrink-0">Unread</span>
+                                        </div>
+                                        <p class="notification-description mt-2 mb-0">@notification.Description</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notification-actions mt-2">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-outline-primary" onclick="event.stopPropagation(); markAsRead('@notification.NotificationId')">
+                                        <i class="bi bi-check"></i> Mark Read
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="event.stopPropagation(); deleteNotification('@notification.NotificationId')">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-check-circle" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">All caught up! No unread notifications</p>
                 </div>
             }
         </div>
@@ -310,8 +355,6 @@
 
 @section Scripts {
 <script>
-    let currentFilter = 'all';
-
     function markAsRead(notificationId) {
         $.ajax({
             url: '@Url.Action("MarkAsRead", "Parent")',
@@ -388,8 +431,12 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        alert(response.count + ' notification(s) deleted successfully.');
-                        location.reload();
+                        if (response.count > 0) {
+                            alert(response.count + ' notification(s) deleted successfully.');
+                            location.reload();
+                        } else {
+                            alert('No read notifications to delete. Please mark some notifications as read first.');
+                        }
                     } else {
                         alert('Error: ' + response.message);
                     }
@@ -401,44 +448,27 @@
         }
     }
 
-    function filterByType(type) {
-        currentFilter = type;
-        applyFilters();
-    }
-
-    function filterNotifications() {
-        applyFilters();
-    }
-
-    function applyFilters() {
-        const searchTerm = $('#searchInput').val().toLowerCase();
-        const notifications = $('.notification-record');
-        
-        notifications.each(function() {
-            const $notification = $(this);
-            const notifType = $notification.data('type');
-            const notifStatus = $notification.data('status');
-            const text = $notification.text().toLowerCase();
-            
-            let showType = false;
-            if (currentFilter === 'all') {
-                showType = true;
-            } else if (currentFilter === 'unread') {
-                showType = notifStatus === 'unread';
-            } else if (currentFilter === 'warning') {
-                showType = notifType === 'warning';
-            } else if (currentFilter === 'info') {
-                showType = notifType === 'info';
-            }
-            
-            const showSearch = searchTerm === '' || text.includes(searchTerm);
-            
-            if (showType && showSearch) {
-                $notification.show();
-            } else {
-                $notification.hide();
-            }
-        });
+    function deleteAllNotifications() {
+        if (confirm('Are you sure you want to DELETE ALL notifications? This will remove all ' + @totalNotifications + ' notifications and cannot be undone.')) {
+            $.ajax({
+                url: '@Url.Action("DeleteAllNotifications", "Parent")',
+                type: 'POST',
+                data: {
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.count + ' notification(s) deleted successfully.');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while deleting notifications.');
+                }
+            });
+        }
     }
 
     function showNotificationDetails(notificationId) {
@@ -473,16 +503,19 @@
     function displayNotificationDetails(notification, details) {
         let html = '<div class="notification-details">';
         
+        // Safely get notification type with null check
+        const notificationType = notification.type || 'Notification';
+        
         // Notification header
-        html += '<div class="alert alert-' + getAlertType(notification.type) + ' mb-4">';
-        html += '<h6 class="mb-2"><i class="bi ' + getIconClass(notification.type) + ' me-2"></i>' + notification.type + '</h6>';
+        html += '<div class="alert alert-' + getAlertType(notificationType) + ' mb-4">';
+        html += '<h6 class="mb-2"><i class="bi ' + getIconClass(notificationType) + ' me-2"></i>' + notificationType + '</h6>';
         html += '<p class="mb-1">' + notification.description + '</p>';
         html += '<small class="text-muted"><i class="bi bi-clock me-1"></i>' + notification.createdDate + '</small>';
         html += '</div>';
         
         // Details section based on type
         if (details) {
-            switch (notification.type) {
+            switch (notificationType) {
                 case 'Student Enrollment':
                     html += buildEnrollmentDetails(details, false);
                     break;
@@ -517,6 +550,7 @@
     }
 
     function getAlertType(type) {
+        if (!type) return 'info';
         const lowerType = type.toLowerCase();
         if (lowerType.includes('alert') || lowerType.includes('warning') || lowerType.includes('absent')) return 'warning';
         if (lowerType.includes('rejected')) return 'danger';
@@ -525,6 +559,7 @@
     }
 
     function getIconClass(type) {
+        if (!type) return 'bi-info-circle-fill';
         const lowerType = type.toLowerCase();
         if (lowerType.includes('alert') || lowerType.includes('warning')) return 'bi-exclamation-triangle-fill';
         if (lowerType.includes('leave')) return 'bi-calendar-x';
