@@ -1025,7 +1025,20 @@ namespace WebMobileAssignment.Controllers
                 // Build detailed data based on notification type
                 object detailData = null;
 
-                switch (notification.Type)
+                // Handle Announcement type separately as it doesn't need RelatedEntityId
+                if (notification.Type == "Announcement")
+                {
+                    detailData = new
+                    {
+                        message = notification.Description,
+                        sentBy = "Administrator",
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy hh:mm tt")
+                    };
+                }
+                else
+                {
+                    // Other notification types that require RelatedEntityId
+                    switch (notification.Type)
                 {
                     case "Class Enrollment":
                     case "Class Unenrollment":
@@ -1114,6 +1127,7 @@ namespace WebMobileAssignment.Controllers
                             }
                         }
                         break;
+                    }
                 }
 
                 return Json(new

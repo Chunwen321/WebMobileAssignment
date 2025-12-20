@@ -130,6 +130,15 @@
                 </div>
             </a>
 
+            <!-- Announcements -->
+            <a asp-controller="Admin" asp-action="CreateAnnouncement"
+               class="sidebar-item @(ViewBag.ActiveMenu == "Announcement" ? "active" : "")">
+                <div class="sidebar-item-content">
+                    <i class="bi bi-megaphone-fill"></i>
+                    <span>Announcements</span>
+                </div>
+            </a>
+
             <!-- Reports -->
             <a asp-controller="Admin" asp-action="Reports"
                class="sidebar-item @(ViewBag.ActiveMenu == "Reports" ? "active" : "")">
