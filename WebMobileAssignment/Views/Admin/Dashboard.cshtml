@@ -1,5 +1,4 @@
 @model IEnumerable<WebMobileAssignment.Models.Attendance>
-@inject WebMobileAssignment.Services.LocalizationService Localization
 @{
     ViewBag.Title = "Admin Dashboard";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -9,9 +8,9 @@
 <div class="row mb-4">
     <div class="col-12">
         <h1 class="mb-2">
-            <i class="bi bi-speedometer2 me-2"></i>@Localization["Dashboard"]
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
         </h1>
-        <p class="text-muted">@Localization["Welcome"]! @Localization["HereIsWhatHappening"]</p>
+        <p class="text-muted">Welcome! HereIsWhatHappening</p>
     </div>
 </div>
 
@@ -22,7 +21,7 @@
         <div class="stat-card" style="border-left-color: #0d6efd;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <div class="stat-label">@Localization["TotalStudents"]</div>
+                    <div class="stat-label">TotalStudents</div>
                     <div class="stat-value text-primary">@ViewBag.TotalStudents</div>
                 </div>
                 <div class="card-icon blue">
@@ -31,7 +30,7 @@
             </div>
             <div class="stat-change">
                 <i class="bi bi-graph-up me-1"></i>
-                <span>@Localization["AllEnrolledStudents"]</span>
+                <span>AllEnrolledStudents</span>
             </div>
         </div>
     </div>
@@ -41,7 +40,7 @@
         <div class="stat-card" style="border-left-color: #198754;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <div class="stat-label">@Localization["TotalTeachers"]</div>
+                    <div class="stat-label">TotalTeachers</div>
                     <div class="stat-value text-success">@ViewBag.TotalTeachers</div>
                 </div>
                 <div class="card-icon green">
@@ -50,7 +49,7 @@
             </div>
             <div class="stat-change">
                 <i class="bi bi-people me-1"></i>
-                <span>@Localization["ActiveTeachingStaff"]</span>
+                <span>ActiveTeachingStaff</span>
             </div>
         </div>
     </div>
@@ -60,7 +59,7 @@
         <div class="stat-card" style="border-left-color: #ffc107;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <div class="stat-label">@Localization["TotalClasses"]</div>
+                    <div class="stat-label">TotalClasses</div>
                     <div class="stat-value text-warning">@ViewBag.TotalClasses</div>
                 </div>
                 <div class="card-icon yellow">
@@ -69,7 +68,7 @@
             </div>
             <div class="stat-change">
                 <i class="bi bi-calendar3 me-1"></i>
-                <span>@Localization["AvailableCourses"]</span>
+                <span>AvailableCourses</span>
             </div>
         </div>
     </div>
@@ -79,7 +78,7 @@
         <div class="stat-card" style="border-left-color: #dc3545;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <div class="stat-label">@Localization["TotalParents"]</div>
+                    <div class="stat-label">TotalParents</div>
                     <div class="stat-value text-danger">@ViewBag.TotalParents</div>
                 </div>
                 <div class="card-icon red">
@@ -88,7 +87,7 @@
             </div>
             <div class="stat-change">
                 <i class="bi bi-house me-1"></i>
-                <span>@Localization["RegisteredGuardians"]</span>
+                <span>RegisteredGuardians</span>
             </div>
         </div>
     </div>
@@ -101,7 +100,7 @@
             <div class="card-header-custom">
                 <h5 class="card-title">
                     <i class="bi bi-calendar-check"></i>
-                    @Localization["AttendanceToday"]
+                    AttendanceToday
                 </h5>
                 <small class="text-muted">@DateTime.Today.ToString("MMMM dd, yyyy")</small>
             </div>
@@ -112,7 +111,7 @@
                     <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                         <i class="bi bi-clipboard-data" style="font-size: 2.5rem; color: white;"></i>
                         <h3 class="mt-2 mb-0 text-white">@ViewBag.AttendanceToday</h3>
-                        <small class="text-white">@Localization["TotalRecords"]</small>
+                        <small class="text-white">TotalRecords</small>
                         @if (ViewBag.AttendanceToday > 0)
                         {
                             <div class="text-white mt-1" style="opacity: 0%">
@@ -127,7 +126,7 @@
                     <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                         <i class="bi bi-check-circle-fill" style="font-size: 2.5rem; color: white;"></i>
                         <h3 class="mt-2 mb-0 text-white">@ViewBag.PresentToday</h3>
-                        <small class="text-white">@Localization["Present"]</small>
+                        <small class="text-white">Present</small>
                         @if (ViewBag.AttendanceToday > 0)
                         {
                             <div class="text-white mt-1">
@@ -142,7 +141,7 @@
                     <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);">
                         <i class="bi bi-x-circle-fill" style="font-size: 2.5rem; color: white;"></i>
                         <h3 class="mt-2 mb-0 text-white">@ViewBag.AbsentToday</h3>
-                        <small class="text-white">@Localization["Absent"]</small>
+                        <small class="text-white">Absent</small>
                         @if (ViewBag.AttendanceToday > 0)
                         {
                             <div class="text-white mt-1">
@@ -157,7 +156,7 @@
                     <div class="p-3 text-center rounded" style="background: linear-gradient(135deg, #00d9ff 0%, #1ed3f3 100%);">
                         <i class="bi bi-clock-fill" style="font-size: 2.5rem; color: white;"></i>
                         <h3 class="mt-2 mb-0 text-white">@ViewBag.LeaveToday</h3>
-                        <small class="text-white">@Localization["Leave"]</small>
+                        <small class="text-white">Leave</small>
                         @if (ViewBag.AttendanceToday > 0)
                         {
                             <div class="text-white mt-1">
@@ -179,10 +178,10 @@
             <div class="card-header-custom">
                 <h5 class="card-title">
                     <i class="bi bi-clock-history"></i>
-                    @Localization["RecentAttendanceRecords"]
+                    RecentAttendanceRecords
                 </h5>
                 <a asp-action="AttendanceIndex" class="btn btn-sm btn-outline-danger">
-                    @Localization["ViewAll"] <i class="bi bi-arrow-right ms-1"></i>
+                    ViewAll <i class="bi bi-arrow-right ms-1"></i>
                 </a>
             </div>
 
@@ -190,10 +189,10 @@
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>@Localization["Student"]</th>
-                            <th>@Localization["Class"]</th>
-                            <th>@Localization["Date"]</th>
-                            <th>@Localization["Status"]</th>
+                            <th>Student</th>
+                            <th>Class</th>
+                            <th>Date</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -259,7 +258,7 @@
                             <tr>
                                 <td colspan="4" class="text-center text-muted py-4">
                                     <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                                    <p class="mb-0 mt-2">@Localization["NoRecentAttendanceRecords"]</p>
+                                    <p class="mb-0 mt-2">NoRecentAttendanceRecords</p>
                                 </td>
                             </tr>
                         }
@@ -275,34 +274,34 @@
             <div class="card-header-custom">
                 <h5 class="card-title">
                     <i class="bi bi-lightning-fill"></i>
-                    @Localization["QuickActionsTitle"]
+                    QuickActionsTitle
                 </h5>
             </div>
 
             <div class="d-flex flex-column gap-2">
                 <a asp-action="AddStudent" class="btn btn-outline-primary w-100 text-start">
                     <i class="bi bi-person-plus-fill me-2"></i>
-                    @Localization["AddNewStudentAction"]
+                    AddNewStudentAction
                 </a>
                 <a asp-action="TeacherCreate" class="btn btn-outline-success w-100 text-start">
                     <i class="bi bi-person-workspace me-2"></i>
-                    @Localization["AddNewTeacherAction"]
+                    AddNewTeacherAction
                 </a>
                 <a asp-action="ParentCreate" class="btn btn-outline-info w-100 text-start">
                     <i class="bi bi-person-hearts me-2"></i>
-                    @Localization["AddNewParentAction"]
+                    AddNewParentAction
                 </a>
                 <a asp-action="ClassCreate" class="btn btn-outline-warning w-100 text-start">
                     <i class="bi bi-book-fill me-2"></i>
-                    @Localization["CreateNewClassAction"]
+                    CreateNewClassAction
                 </a>
                 <a asp-action="AttendanceCreate" class="btn btn-outline-danger w-100 text-start">
                     <i class="bi bi-clipboard-check me-2"></i>
-                    @Localization["RecordAttendance"]
+                    RecordAttendance
                 </a>
                 <a asp-action="Reports" class="btn btn-outline-secondary w-100 text-start">
                     <i class="bi bi-graph-up me-2"></i>
-                    @Localization["ViewReports"]
+                    ViewReports
                 </a>
             </div>
 
@@ -311,24 +310,24 @@
             <!-- System Info -->
             <div class="mt-3">
                 <h6 class="mb-3">
-                    <i class="bi bi-info-circle me-2"></i>@Localization["SystemInformation"]
+                    <i class="bi bi-info-circle me-2"></i>SystemInformation
                 </h6>
                 <div class="d-flex flex-column gap-2">
                     <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
                         <small class="text-muted">
-                            <i class="bi bi-calendar-event me-1"></i>@Localization["CurrentDate"]
+                            <i class="bi bi-calendar-event me-1"></i>CurrentDate
                         </small>
                         <strong id="currentDate">@DateTime.Today.ToString("MMM dd, yyyy")</strong>
                     </div>
                     <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
                         <small class="text-muted">
-                            <i class="bi bi-clock me-1"></i>@Localization["CurrentTime"]
+                            <i class="bi bi-clock me-1"></i>CurrentTime
                         </small>
                         <strong id="currentTime">@DateTime.Now.ToString("hh:mm:ss tt")</strong>
                     </div>
                     <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
                         <small class="text-muted">
-                            <i class="bi bi-calendar-week me-1"></i>@Localization["DayOfWeek"]
+                            <i class="bi bi-calendar-week me-1"></i>DayOfWeek
                         </small>
                         <strong>@DateTime.Today.ToString("dddd")</strong>
                     </div>
@@ -345,7 +344,7 @@
             <div class="card-header-custom">
                 <h5 class="card-title">
                     <i class="bi bi-pie-chart-fill"></i>
-                    @Localization["SystemStatistics"]
+                    SystemStatistics
                 </h5>
             </div>
 
@@ -355,7 +354,7 @@
                     <div class="text-center p-3 border rounded">
                         <i class="bi bi-person-check-fill text-success" style="font-size: 2rem;"></i>
                         <h4 class="mt-2 mb-0">@(ViewBag.TotalStudents + ViewBag.TotalTeachers + ViewBag.TotalParents)</h4>
-                        <small class="text-muted">@Localization["TotalActiveUsers"]</small>
+                        <small class="text-muted">TotalActiveUsers</small>
                     </div>
                 </div>
 
@@ -373,7 +372,7 @@
                                 <span>N/A</span>
                             }
                         </h4>
-                        <small class="text-muted">@Localization["StudentTeacherRatio"]</small>
+                        <small class="text-muted">StudentTeacherRatio</small>
                     </div>
                 </div>
 
@@ -391,7 +390,7 @@
                                 <span>N/A</span>
                             }
                         </h4>
-                        <small class="text-muted">@Localization["AvgStudentsPerClass"]</small>
+                        <small class="text-muted">AvgStudentsPerClass</small>
                     </div>
                 </div>
 
@@ -409,7 +408,7 @@
                                 <span>N/A</span>
                             }
                         </h4>
-                        <small class="text-muted">@Localization["TodaysAttendanceRate"]</small>
+                        <small class="text-muted">TodaysAttendanceRate</small>
                     </div>
                 </div>
             </div>
@@ -424,7 +423,7 @@
             <div class="card-header-custom">
                 <h5 class="card-title">
                     <i class="bi bi-activity"></i>
-                    @Localization["RecentSystemActivities"]
+                    RecentSystemActivities
                 </h5>
             </div>
 
@@ -434,10 +433,10 @@
                         <i class="bi bi-person-plus"></i>
                     </div>
                     <div class="activity-content">
-                        <h6 class="mb-1">@Localization["NewStudentsRegistered"]</h6>
-                        <p class="mb-1 text-muted">@ViewBag.TotalStudents @Localization["StudentsEnrolledInSystem"]</p>
+                        <h6 class="mb-1">NewStudentsRegistered</h6>
+                        <p class="mb-1 text-muted">@ViewBag.TotalStudents StudentsEnrolledInSystem</p>
                         <small class="text-muted">
-                            <i class="bi bi-clock me-1"></i>@Localization["ActiveRecords"]
+                            <i class="bi bi-clock me-1"></i>ActiveRecords
                         </small>
                     </div>
                 </div>
@@ -447,8 +446,8 @@
                         <i class="bi bi-clipboard-check"></i>
                     </div>
                     <div class="activity-content">
-                        <h6 class="mb-1">@Localization["AttendanceRecords"]</h6>
-                        <p class="mb-1 text-muted">@ViewBag.AttendanceToday @Localization["AttendanceRecordsMarked"]</p>
+                        <h6 class="mb-1">AttendanceRecords</h6>
+                        <p class="mb-1 text-muted">@ViewBag.AttendanceToday AttendanceRecordsMarked</p>
                         <small class="text-muted">
                             <i class="bi bi-clock me-1"></i>@DateTime.Today.ToString("MMMM dd, yyyy")
                         </small>
@@ -460,10 +459,10 @@
                         <i class="bi bi-book"></i>
                     </div>
                     <div class="activity-content">
-                        <h6 class="mb-1">@Localization["ClassesAvailable"]</h6>
-                        <p class="mb-1 text-muted">@ViewBag.TotalClasses @Localization["ClassesCurrentlyActive"]</p>
+                        <h6 class="mb-1">ClassesAvailable</h6>
+                        <p class="mb-1 text-muted">@ViewBag.TotalClasses ClassesCurrentlyActive</p>
                         <small class="text-muted">
-                            <i class="bi bi-clock me-1"></i>@Localization["ActiveClasses"]
+                            <i class="bi bi-clock me-1"></i>ActiveClasses
                         </small>
                     </div>
                 </div>
@@ -473,10 +472,10 @@
                         <i class="bi bi-people"></i>
                     </div>
                     <div class="activity-content">
-                        <h6 class="mb-1">@Localization["TeachingStaff"]</h6>
-                        <p class="mb-1 text-muted">@ViewBag.TotalTeachers @Localization["TeachersActivelyTeaching"]</p>
+                        <h6 class="mb-1">TeachingStaff</h6>
+                        <p class="mb-1 text-muted">@ViewBag.TotalTeachers TeachersActivelyTeaching</p>
                         <small class="text-muted">
-                            <i class="bi bi-clock me-1"></i>@Localization["ActiveTeachers"]
+                            <i class="bi bi-clock me-1"></i>ActiveTeachers
                         </small>
                     </div>
                 </div>
