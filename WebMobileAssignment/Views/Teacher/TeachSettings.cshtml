@@ -103,10 +103,19 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Title / Position</label>
+                        <label class="form-label fw-semibold">Title</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-briefcase"></i></span>
-                            <input type="text" name="title" class="form-control" value="@(Model?.Title ?? "")" placeholder="e.g., Senior Teacher">
+                            <span class="input-group-text bg-light"><i class="bi bi-person-badge"></i></span>
+                            <select name="title" class="form-select" required>
+                                <option value="">-- Select Title --</option>
+                                <option value="Mr." @(Model?.Title == "Mr." ? "selected" : "")>Mr.</option>
+                                <option value="Mrs." @(Model?.Title == "Mrs." ? "selected" : "")>Mrs.</option>
+                                <option value="Ms." @(Model?.Title == "Ms." ? "selected" : "")>Ms.</option>
+                                <option value="Miss" @(Model?.Title == "Miss" ? "selected" : "")>Miss</option>
+                                <option value="Dr." @(Model?.Title == "Dr." ? "selected" : "")>Dr.</option>
+                                <option value="Prof." @(Model?.Title == "Prof." ? "selected" : "")>Prof.</option>
+                                <option value="Assoc. Prof." @(Model?.Title == "Assoc. Prof." ? "selected" : "")>Assoc. Prof.</option>
+                            </select>
                         </div>
                     </div>
                     
