@@ -27,6 +27,7 @@ const ImageCropper = (function() {
      * @param {string} config.editButtonId - ID of the edit button (optional)
      * @param {number} config.previewWidth - Width of the preview circle (default: 200)
      * @param {number} config.previewHeight - Height of the preview circle (default: 200)
+     * @param {function} config.onCropComplete - Callback function called with cropped file after saving
      */
     function init(config) {
         if (!config.targetId || !config.previewElementId || !config.fileInputId) {
@@ -41,7 +42,8 @@ const ImageCropper = (function() {
             clearButtonId: config.clearButtonId,
             editButtonId: config.editButtonId,
             previewWidth: config.previewWidth || 200,
-            previewHeight: config.previewHeight || 200
+            previewHeight: config.previewHeight || 200,
+            onCropComplete: config.onCropComplete || null
         };
 
         // Setup file input change handler
@@ -142,7 +144,7 @@ const ImageCropper = (function() {
                         scaleY = 1;
                         currentRotation = 0;
                         document.getElementById('rotateSlider').value = 0;
-                        document.getElementById('rotateValue').textContent = '0°';
+                        document.getElementById('rotateValue').textContent = '0ï¿½';
                         updatePreview();
                     },
                     crop: function() {
@@ -201,7 +203,7 @@ const ImageCropper = (function() {
             scaleY = 1;
             currentRotation = 0;
             document.getElementById('rotateSlider').value = 0;
-            document.getElementById('rotateValue').textContent = '0°';
+            document.getElementById('rotateValue').textContent = '0ï¿½';
         });
 
         // Rotation controls
@@ -209,7 +211,7 @@ const ImageCropper = (function() {
             const angle = parseInt(e.target.value);
             currentRotation = angle;
             cropper?.rotateTo(angle);
-            document.getElementById('rotateValue').textContent = angle + '°';
+            document.getElementById('rotateValue').textContent = angle + 'ï¿½';
         });
 
         document.getElementById('rotateLeft90')?.addEventListener('click', function() {
@@ -217,7 +219,7 @@ const ImageCropper = (function() {
             if (currentRotation < -180) currentRotation += 360;
             cropper?.rotateTo(currentRotation);
             document.getElementById('rotateSlider').value = currentRotation;
-            document.getElementById('rotateValue').textContent = currentRotation + '°';
+            document.getElementById('rotateValue').textContent = currentRotation + 'ï¿½';
         });
 
         document.getElementById('rotateRight90')?.addEventListener('click', function() {
@@ -225,7 +227,7 @@ const ImageCropper = (function() {
             if (currentRotation > 180) currentRotation -= 360;
             cropper?.rotateTo(currentRotation);
             document.getElementById('rotateSlider').value = currentRotation;
-            document.getElementById('rotateValue').textContent = currentRotation + '°';
+            document.getElementById('rotateValue').textContent = currentRotation + 'ï¿½';
         });
 
         // Flip controls
@@ -246,7 +248,7 @@ const ImageCropper = (function() {
             scaleY = 1;
             currentRotation = 0;
             document.getElementById('rotateSlider').value = 0;
-            document.getElementById('rotateValue').textContent = '0°';
+            document.getElementById('rotateValue').textContent = '0ï¿½';
         });
 
         // Crop and save
@@ -319,6 +321,11 @@ const ImageCropper = (function() {
         // Show buttons
         if (clearBtn) clearBtn.style.display = 'block';
         if (editBtn) editBtn.style.display = 'block';
+
+        // Call onCropComplete callback if provided
+        if (config.onCropComplete && typeof config.onCropComplete === 'function') {
+            config.onCropComplete(file);
+        }
     }
 
     /**
@@ -415,7 +422,7 @@ const ImageCropper = (function() {
 
     <!-- Image Cropper Modal -->
     <div class="modal fade" id="imageCropperModal" tabindex="-1" aria-labelledby="imageCropperModalLabel" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title" id="imageCropperModalLabel">
@@ -425,12 +432,12 @@ const ImageCropper = (function() {
                 </div>
                 <div class="modal-body p-4">
                     <div class="row">
-                        <div class="col-md-8">
-                            <div class="img-container bg-dark rounded" style="height: 600px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <div class="col-md-7">
+                            <div class="img-container bg-dark rounded" style="height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                 <img id="cropperImage" src="" alt="Image for cropping" style="max-width: 100%; max-height: 100%; display: block;">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <div class="tools-panel" style="position: sticky; top: 20px;">
                                 <h6 class="mb-3 fw-bold text-success">
                                     <i class="bi bi-sliders me-2"></i>Tools
@@ -464,10 +471,10 @@ const ImageCropper = (function() {
                                         <span class="badge bg-success" id="rotateValue" style="min-width: 55px;">0&deg;</span>
                                     </div>
                                     <div class="d-flex gap-2">
-                                        <button type="button" class="btn btn-sm btn-outline-success flex-fill" id="rotateLeft90" title="Rotate Left 90°">
+                                        <button type="button" class="btn btn-sm btn-outline-success flex-fill" id="rotateLeft90" title="Rotate Left 90ï¿½">
                                             <i class="bi bi-arrow-counterclockwise"></i> 90&deg;
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-success flex-fill" id="rotateRight90" title="Rotate Right 90°">
+                                        <button type="button" class="btn btn-sm btn-outline-success flex-fill" id="rotateRight90" title="Rotate Right 90ï¿½">
                                             <i class="bi bi-arrow-clockwise"></i> 90&deg;
                                         </button>
                                     </div>

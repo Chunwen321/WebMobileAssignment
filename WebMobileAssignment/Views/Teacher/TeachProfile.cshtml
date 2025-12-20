@@ -92,23 +92,64 @@
 
                 @if (hasCustomPicture)
                 {
-                    <img src="@profilePictureUrl" 
+                    <img id="profilePicturePreview" 
+                         src="@profilePictureUrl" 
                          alt="@Model?.User?.FullName" 
                          class="img-thumbnail rounded-circle mb-3" 
                          style="width: 150px; height: 150px; object-fit: cover;">
                 }
                 else
                 {
-                    <div class="user-avatar mx-auto mb-3" 
+                    <div id="profilePicturePreview" class="user-avatar mx-auto mb-3" 
                          style="width: 150px; height: 150px; font-size: 4rem; background: #0d6efd; display: flex; align-items: center; justify-content: center; color: white; border-radius: 50%;">
                         <i class="bi bi-person-fill"></i>
                     </div>
                 }
 
-                <div class="alert alert-info mt-3 mb-0">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <small>Profile picture can be updated in Settings page.</small>
+                <!-- Upload Buttons -->
+                <div class="d-grid gap-2 mb-3">
+                    <label for="profilePictureFile" class="btn btn-primary">
+                        <i class="bi bi-upload me-1"></i> Choose Photo
+                    </label>
+                    <input type="file" 
+                           id="profilePictureFile"
+                           name="profilePicture"
+                           accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                           style="display: none;">
+                    
+                    <button type="button" id="btnWebcam" class="btn btn-outline-primary">
+                        <i class="bi bi-camera-fill me-1"></i> Take Photo
+                    </button>
+                    
+                    <button type="button" id="btnEditPhoto" class="btn btn-outline-success" style="display: none;">
+                        <i class="bi bi-crop me-1"></i> Edit Photo
+                    </button>
+                    
+                    <button type="button" id="btnConfirmUpload" class="btn btn-success" style="display: none;">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> Confirm Upload
+                    </button>
+                    
+                    <button type="button" id="clearProfilePictureBtn" class="btn btn-outline-secondary" style="display: none;">
+                        <i class="bi bi-x me-1"></i> Clear
+                    </button>
                 </div>
+
+                <!-- Upload Progress -->
+                <div id="uploadProgress" class="mb-3" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             style="width: 100%">Uploading...</div>
+                    </div>
+                </div>
+
+                <!-- Upload Message -->
+                <div id="uploadMessage" class="mb-3"></div>
+
+                <!-- File Info -->
+                <small class="text-muted d-block">
+                    <i class="bi bi-info-circle me-1"></i>Max: 5 MB | JPG, PNG, GIF, WEBP
+                </small>
             </div>
         </div>
     </div>
@@ -132,4 +173,173 @@
     [data-theme="dark"] .dashboard-card {
         background: #2a2a2a;
     }
+
+    [data-theme="dark"] .user-avatar {
+        background: #0d6efd !important;
+    }
 </style>
+
+@section Scripts {
+    <!-- Cropper.js CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+    <!-- Webcam Capture Script -->
+    <script src="~/js/webcam-capture.js"></script>
+
+    <!-- Image Cropper Module -->
+    <script src="~/js/image-cropper.js"></script>
+
+    <!-- Inject Modals -->
+    <div id="imageCropperModals"></div>
+    <script>
+        document.getElementById('imageCropperModals').innerHTML = ImageCropper.getModalHTML();
+    </script>
+
+    <script>
+        // Store the cropped file for upload
+        let pendingUploadFile = null;
+
+        // ==================== INITIALIZE IMAGE CROPPER ====================
+        ImageCropper.init({
+            targetId: 'teacher',
+            previewElementId: 'profilePicturePreview',
+            fileInputId: 'profilePictureFile',
+            clearButtonId: 'clearProfilePictureBtn',
+            editButtonId: 'btnEditPhoto',
+            previewWidth: 150,
+            previewHeight: 150,
+            onCropComplete: function(croppedFile) {
+                // Store the file for later upload
+                pendingUploadFile = croppedFile;
+                // Show confirm upload button
+                document.getElementById('btnConfirmUpload').style.display = 'block';
+                document.getElementById('uploadMessage').innerHTML = '<div class="alert alert-info py-2 small"><i class="bi bi-info-circle me-1"></i>Photo ready. Click "Confirm Upload" to save to cloud.</div>';
+            }
+        });
+
+        // Show Edit button if existing profile picture exists
+        @if (hasCustomPicture)
+        {
+            <text>
+            document.getElementById('btnEditPhoto').style.display = 'block';
+            document.getElementById('clearProfilePictureBtn').style.display = 'block';
+            </text>
+        }
+
+        // ==================== WEBCAM FUNCTIONALITY ====================
+        (function() {
+            WebcamCapture.init('profilePicturePreview', 'profilePictureFile', function(file) {
+                console.log('Photo captured from webcam:', file.name);
+                document.getElementById('btnEditPhoto').style.display = 'block';
+                document.getElementById('clearProfilePictureBtn').style.display = 'block';
+            });
+
+            const webcamBtn = document.getElementById('btnWebcam');
+            if (webcamBtn) {
+                webcamBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal();
+                });
+            }
+        })();
+
+        // ==================== CONFIRM UPLOAD BUTTON ====================
+        document.getElementById('btnConfirmUpload').addEventListener('click', async function() {
+            if (!pendingUploadFile) {
+                alert('Please crop a photo first before uploading.');
+                return;
+            }
+            await uploadProfilePicture(pendingUploadFile);
+        });
+
+        // ==================== UPLOAD PROFILE PICTURE TO AWS S3 ====================
+        async function uploadProfilePicture(file) {
+            const uploadProgress = document.getElementById('uploadProgress');
+            const uploadMessage = document.getElementById('uploadMessage');
+            const confirmBtn = document.getElementById('btnConfirmUpload');
+            
+            try {
+                uploadProgress.style.display = 'block';
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Uploading...';
+                uploadMessage.innerHTML = '';
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('@Url.Action("UploadProfilePicture", "Teacher")', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                uploadProgress.style.display = 'none';
+
+                if (result.success) {
+                    uploadMessage.innerHTML = '<div class="alert alert-success py-2 small"><i class="bi bi-check-circle me-1"></i>' + result.message + '</div>';
+                    
+                    const preview = document.getElementById('profilePicturePreview');
+                    if (preview.tagName === 'DIV') {
+                        const img = document.createElement('img');
+                        img.id = 'profilePicturePreview';
+                        img.src = result.pictureUrl;
+                        img.alt = 'Profile Picture';
+                        img.className = 'img-thumbnail rounded-circle mb-3';
+                        img.style.cssText = 'width: 150px; height: 150px; object-fit: cover;';
+                        preview.parentNode.replaceChild(img, preview);
+                    } else {
+                        preview.src = result.pictureUrl;
+                    }
+
+                    document.getElementById('btnEditPhoto').style.display = 'block';
+                    document.getElementById('clearProfilePictureBtn').style.display = 'block';
+                    confirmBtn.style.display = 'none';
+                    pendingUploadFile = null;
+
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    uploadMessage.innerHTML = '<div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-circle me-1"></i>' + result.message + '</div>';
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i> Confirm Upload';
+                }
+            } catch (error) {
+                uploadProgress.style.display = 'none';
+                uploadMessage.innerHTML = '<div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-circle me-1"></i>Upload failed: ' + error.message + '</div>';
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i> Confirm Upload';
+            }
+        }
+
+        // ==================== CLEAR PROFILE PICTURE ====================
+        (function() {
+            const clearBtn = document.getElementById('clearProfilePictureBtn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    const preview = document.getElementById('profilePicturePreview');
+                    
+                    const placeholder = document.createElement('div');
+                    placeholder.id = 'profilePicturePreview';
+                    placeholder.className = 'user-avatar mx-auto mb-3';
+                    placeholder.style.cssText = 'width: 150px; height: 150px; font-size: 4rem; background: #0d6efd; display: flex; align-items: center; justify-content: center; color: white; border-radius: 50%;';
+                    placeholder.innerHTML = '<i class="bi bi-person-fill"></i>';
+                    
+                    preview.parentNode.replaceChild(placeholder, preview);
+                    document.getElementById('profilePictureFile').value = '';
+                    document.getElementById('btnEditPhoto').style.display = 'none';
+                    document.getElementById('btnConfirmUpload').style.display = 'none';
+                    document.getElementById('clearProfilePictureBtn').style.display = 'none';
+                    document.getElementById('uploadMessage').innerHTML = '';
+                    pendingUploadFile = null;
+                });
+            }
+        })();
+
+        // ==================== FILE INPUT CHANGE HANDLER ====================
+        document.getElementById('profilePictureFile').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                document.getElementById('btnEditPhoto').style.display = 'block';
+                document.getElementById('clearProfilePictureBtn').style.display = 'block';
+            }
+        });
+    </script>
+}
