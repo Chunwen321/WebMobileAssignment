@@ -75,14 +75,19 @@
                     <tbody>
                         @if (ViewBag.Classes != null && ((List<Class>)ViewBag.Classes).Count > 0)
                         {
-                            @foreach (var cls in ((List<Class>)ViewBag.Classes).Take(4))
+                            @foreach (var cls in ((List<Class>)ViewBag.Classes).OrderByDescending(c => c.IsActive).Take(4))
                             {
                                 var studentCount = cls.Enrollments?.Count ?? 0;
                                 var sessionCounts = ViewBag.SessionCounts as Dictionary<string, int> ?? new Dictionary<string, int>();
                                 var sessionCount = sessionCounts.ContainsKey(cls.ClassId) ? sessionCounts[cls.ClassId] : 0;
-                                var avgAttendance = sessionCount > 0 
-                                    ? Math.Round((decimal)(cls.Attendances.Count(a => a.Status == "Present") * 100) / sessionCount, 2)
+                                
+                                // Fix: Calculate average attendance based on total attendance records
+                                var totalAttendanceRecords = cls.Attendances?.Count ?? 0;
+                                var presentCount = cls.Attendances?.Count(a => a.Status == "Present") ?? 0;
+                                var avgAttendance = totalAttendanceRecords > 0 
+                                    ? Math.Round((decimal)(presentCount * 100) / totalAttendanceRecords, 2)
                                     : 0;
+                                
                                 var badgeClass = avgAttendance >= 90 ? "bg-success" : avgAttendance >= 80 ? "bg-warning" : "bg-danger";
                                 <tr>
                                     <td><strong>@cls.ClassName</strong></td>
