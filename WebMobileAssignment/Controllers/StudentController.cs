@@ -806,7 +806,6 @@ namespace WebMobileAssignment.Controllers
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
         }
-        // Announcements (using Notifications table)
         // ==================== NOTIFICATIONS ====================
         // Comprehensive Notifications Page (similar to Admin/Parent)
         public async Task<IActionResult> Notifications()
@@ -849,12 +848,6 @@ namespace WebMobileAssignment.Controllers
         // Announcements (using Notifications table) - Legacy support
         public async Task<IActionResult> StudAnnouncements()
         {
-        // ==================== NOTIFICATIONS ====================
-        // Comprehensive Notifications Page (similar to Admin/Parent)
-        public async Task<IActionResult> Notifications()
-        {
-            ViewBag.ActiveMenu = "Notifications";
-            ViewBag.Title = "Notifications";
             var student = await GetCurrentStudent();
             if (student == null)
                 return RedirectToAction("Login", "Account");
@@ -874,30 +867,6 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "Announcements";
             return View("StudAnnouncements", notifications);
-        }
-
-                .OrderByDescending(n => n.CreatedDate)
-                .ToListAsync();
-
-            // Calculate notification stats
-            var totalNotifications = notifications.Count;
-            var unreadCount = notifications.Count(n => n.Status == "unread");
-            var readCount = notifications.Count(n => n.Status == "read");
-
-            // Count important notifications (class-related, enrollment, leave updates)
-            var importantCount = notifications.Count(n =>
-                (n.Description.ToLower().Contains("class") ||
-                 n.Description.ToLower().Contains("enrollment") ||
-                 n.Description.ToLower().Contains("leave")) &&
-                n.Status == "unread");
-
-            ViewBag.TotalNotifications = totalNotifications;
-            ViewBag.UnreadCount = unreadCount;
-            ViewBag.ReadCount = readCount;
-            ViewBag.ImportantCount = importantCount;
-            ViewBag.Notifications = notifications;
-
-            return View();
         }
 
         // Mark notification as read

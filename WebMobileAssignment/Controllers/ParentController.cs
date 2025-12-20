@@ -1021,17 +1021,82 @@ n.Description.ToLower().Contains("absent") ||
                     return Json(new { success = false, message = "Unauthorized" });
                 }
 
+                // Get read notifications for this parent
                 var notifications = await _context.Notifications
                     .Where(n => n.UserId == parent.UserId && n.Status == "read")
                     .ToListAsync();
 
-                _context.Notifications.RemoveRange(notifications);
-                await _context.SaveChangesAsync();
+                Console.WriteLine($"[DeleteAllRead] Found {notifications.Count} read notifications to delete for user {parent.UserId}");
 
-                return Json(new { success = true, count = notifications.Count });
+                if (notifications.Any())
+                {
+                    // Remove notifications from DbSet
+                    _context.Notifications.RemoveRange(notifications);
+                    
+                    // Save changes to database
+                    var deletedCount = await _context.SaveChangesAsync();
+                    
+                    Console.WriteLine($"[DeleteAllRead] Successfully deleted {deletedCount} notification(s) from database");
+                    
+                    return Json(new { success = true, count = notifications.Count });
+                }
+                else
+                {
+                    Console.WriteLine($"[DeleteAllRead] No read notifications found to delete");
+                    return Json(new { success = true, count = 0, message = "No read notifications to delete" });
+                }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[DeleteAllRead] ERROR: {ex.Message}");
+                Console.WriteLine($"[DeleteAllRead] Stack trace: {ex.StackTrace}");
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Delete all notifications (both read and unread)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAllNotifications()
+        {
+            try
+            {
+                var parent = await GetCurrentParentAsync();
+
+                if (parent == null)
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                // Get ALL notifications for this parent
+                var notifications = await _context.Notifications
+                    .Where(n => n.UserId == parent.UserId)
+                    .ToListAsync();
+
+                Console.WriteLine($"[DeleteAllNotifications] Found {notifications.Count} notifications to delete for user {parent.UserId}");
+
+                if (notifications.Any())
+                {
+                    // Remove notifications from DbSet
+                    _context.Notifications.RemoveRange(notifications);
+                    
+                    // Save changes to database
+                    var deletedCount = await _context.SaveChangesAsync();
+                    
+                    Console.WriteLine($"[DeleteAllNotifications] Successfully deleted {deletedCount} notification(s) from database");
+                    
+                    return Json(new { success = true, count = notifications.Count });
+                }
+                else
+                {
+                    Console.WriteLine($"[DeleteAllNotifications] No notifications found to delete");
+                    return Json(new { success = true, count = 0, message = "No notifications to delete" });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DeleteAllNotifications] ERROR: {ex.Message}");
+                Console.WriteLine($"[DeleteAllNotifications] Stack trace: {ex.StackTrace}");
                 return Json(new { success = false, message = ex.Message });
             }
         }
