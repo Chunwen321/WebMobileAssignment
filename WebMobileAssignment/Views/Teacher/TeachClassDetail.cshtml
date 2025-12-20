@@ -61,7 +61,14 @@
                 <div class="info-row">
                     <label class="info-label">Status:</label>
                     <span class="info-value">
-                        <span class="badge bg-primary">Active</span>
+                        @if (Model?.IsActive == true)
+                        {
+                            <span class="badge bg-primary">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
                     </span>
                 </div>
             </div>
@@ -84,7 +91,21 @@
                     {
                         avgAttendance = Math.Round((decimal)attendanceStatsOverview.Average(s => (decimal)s.Rate), 2);
                     }
+                    
+                    var presentCount = Model?.Attendances?.Count(a => a.Status == "Present") ?? 0;
+                    var absentCount = Model?.Attendances?.Count(a => a.Status == "Absent") ?? 0;
+                    var leaveCount = Model?.Attendances?.Count(a => a.Status == "Leave") ?? 0;
+                    var totalAttendanceRecords = presentCount + absentCount + leaveCount;
                 }
+                
+                <!-- Attendance Chart -->
+                @if (totalAttendanceRecords > 0)
+                {
+                    <div class="d-flex justify-content-center mb-3">
+                        <canvas id="attendanceChart" style="max-height: 150px;"></canvas>
+                    </div>
+                }
+                
                 <div class="attendance-stats">
                     <div class="stat-item">
                         <span class="stat-item-label">Average Attendance:</span>
@@ -94,20 +115,18 @@
                         <span class="stat-item-label">Total Sessions:</span>
                         <span class="stat-item-value">@totalSessions</span>
                     </div>
-                    @if (Model?.Attendances != null)
-                    {
-                        var absentCount = Model.Attendances.Count(a => a.Status == "Absent");
-                        var leaveCount = Model.Attendances.Count(a => a.Status == "Leave");
-                        
-                        <div class="stat-item">
-                            <span class="stat-item-label">Absent:</span>
-                            <span class="stat-item-value text-danger">@absentCount</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-item-label">Leave:</span>
-                            <span class="stat-item-value text-warning">@leaveCount</span>
-                        </div>
-                    }
+                    <div class="stat-item">
+                        <span class="stat-item-label">Present:</span>
+                        <span class="stat-item-value text-success">@presentCount</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-item-label">Absent:</span>
+                        <span class="stat-item-value text-danger">@absentCount</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-item-label">Leave:</span>
+                        <span class="stat-item-value text-warning">@leaveCount</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -202,7 +221,7 @@
 
     <!-- Recent Sessions -->
     @{
-        var sessionsList = ViewBag.Sessions as List<dynamic> ?? new List<dynamic>();
+        var sessionsList = ViewBag.Sessions as List<AttendanceSession> ?? new List<AttendanceSession>();
     }
     @if (sessionsList != null && sessionsList.Count > 0)
     {
@@ -227,21 +246,21 @@
                             <tbody>
                                 @foreach (var session in sessionsList)
                                 {
-                                    var sessionDate = ((DateTime)session.CreatedDate).Date;
+                                    var sessionDate = session.CreatedDate.Date;
                                     var attendanceForDate = Model?.Attendances?
                                         .Where(a => a.Date.Date == sessionDate)
                                         .ToList() ?? new List<Attendance>();
-                                    var presentCount = attendanceForDate.Count(a => a.Status == "Present");
+                                    var sessionPresentCount = attendanceForDate.Count(a => a.Status == "Present");
                                     var totalCount = attendanceForDate.Count;
                                     var detailsUrl = Url.Action("TeachAttendanceClassDetail", "Teacher", new { id = Model.ClassId, selectedDate = sessionDate.ToString("yyyy-MM-dd") });
                                     
                                     <tr>
                                         <td>
-                                            <strong>@((DateTime)session.CreatedDate).ToString("MMM dd, yyyy")</strong><br>
-                                            <small class="text-muted">@((DateTime)session.CreatedDate).ToString("HH:mm:ss")</small>
+                                            <strong>@session.CreatedDate.ToString("MMM dd, yyyy")</strong><br>
+                                            <small class="text-muted">@session.CreatedDate.ToString("HH:mm:ss")</small>
                                         </td>
                                         <td>@ViewBag.TotalStudents</td>
-                                        <td><span class="badge bg-success">@presentCount</span></td>
+                                        <td><span class="badge bg-success">@sessionPresentCount</span></td>
                                         <td>
                                             <a href="@detailsUrl" class="btn btn-sm btn-primary" target="_blank">
                                                 <i class="bi bi-eye"></i> View Details
@@ -311,5 +330,65 @@
                 }
             }
         });
+    });
+</script>
+
+<!-- Chart.js for Attendance Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const canvas = document.getElementById('attendanceChart');
+        if (canvas) {
+            const presentCount = @(Model?.Attendances?.Count(a => a.Status == "Present") ?? 0);
+            const absentCount = @(Model?.Attendances?.Count(a => a.Status == "Absent") ?? 0);
+            const leaveCount = @(Model?.Attendances?.Count(a => a.Status == "Leave") ?? 0);
+            
+            // Check if there's any data to display
+            if (presentCount > 0 || absentCount > 0 || leaveCount > 0) {
+                const ctx = canvas.getContext('2d');
+                const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+                
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Present', 'Absent', 'Leave'],
+                        datasets: [{
+                            data: [presentCount, absentCount, leaveCount],
+                            backgroundColor: [
+                                '#198754', // green for present
+                                '#dc3545', // red for absent
+                                '#ffc107'  // yellow for leave
+                            ],
+                            borderColor: isDarkMode ? '#1e1e1e' : '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: isDarkMode ? '#e0e0e0' : '#333',
+                                    padding: 15,
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                                        return `${context.label}: ${context.raw} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            }
+        }
     });
 </script>

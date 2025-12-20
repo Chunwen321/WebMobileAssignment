@@ -43,7 +43,7 @@ builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
     {
         options.LoginPath = "/Account/Login";
-        options.LogoutPath = "/Account/Logout";
+        options.LogoutPath = "/Account/Logout";                                                                                                         
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromHours(24);
         options.SlidingExpiration = true;

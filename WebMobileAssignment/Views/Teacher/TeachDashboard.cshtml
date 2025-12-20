@@ -75,7 +75,7 @@
                     <tbody>
                         @if (ViewBag.Classes != null && ((List<Class>)ViewBag.Classes).Count > 0)
                         {
-                            @foreach (var cls in (List<Class>)ViewBag.Classes)
+                            @foreach (var cls in ((List<Class>)ViewBag.Classes).Take(4))
                             {
                                 var studentCount = cls.Enrollments?.Count ?? 0;
                                 var sessionCounts = ViewBag.SessionCounts as Dictionary<string, int> ?? new Dictionary<string, int>();
@@ -186,19 +186,18 @@
                     </thead>
                     <tbody>
                         @{
-                            var recentSessions = ViewBag.RecentSessions as List<dynamic> ?? new List<dynamic>();
+                            var recentSessions = ViewBag.RecentSessions as List<AttendanceSession> ?? new List<AttendanceSession>();
                         }
                         @if (recentSessions.Count > 0)
                         {
-                            @foreach (var session in recentSessions)
+                            @foreach (var session in recentSessions.Take(5))
                             {
-                                var sessionDate = ((DateTime)session.CreatedDate);
-                                var classData = session.Class as Class;
-                                var isExpired = sessionDate.AddHours(24) < DateTime.Now;
+                                var sessionDate = session.CreatedDate;
+                                var isExpired = session.ExpiryDate < DateTime.Now || !session.IsActive;
                                 
-                                <tr>
+                                <tr style="cursor: pointer;" onclick="window.location.href='@Url.Action("TeachClassDetail", "Teacher", new { id = session.ClassId })'">
                                     <td><i class="bi bi-calendar3 me-2 text-muted"></i>@sessionDate.ToString("yyyy-MM-dd HH:mm")</td>
-                                    <td>@classData?.ClassName</td>
+                                    <td>@session.Class?.ClassName</td>
                                     <td><code>@session.PinCode</code></td>
                                     <td>
                                         @if (isExpired)
