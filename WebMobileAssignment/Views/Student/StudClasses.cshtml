@@ -375,10 +375,11 @@
         width: 100%;
         border-collapse: collapse;
         background: #f8f9fa;
+        font-size: 12px;
     }
 
     .time-column {
-        width: 100px;
+        width: 90px;
         background: #e9ecef;
         position: sticky;
         left: 0;
@@ -386,54 +387,64 @@
     }
 
     .day-column {
-        min-width: 180px;
+        min-width: 140px;
         background: linear-gradient(135deg, #198754 0%, #157347 100%);
         color: white;
         font-weight: 600;
-        padding: 15px;
+        padding: 12px 10px;
         text-align: center;
+        font-size: 0.85rem;
     }
 
     .day-header {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 6px;
     }
 
     .time-cell {
-        padding: 15px;
+        padding: 12px 10px;
         background: #e9ecef;
         border-right: 2px solid #dee2e6;
         border-bottom: 1px solid #dee2e6;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         position: sticky;
         left: 0;
         z-index: 1;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .time-cell strong {
+        display: block;
+        font-size: 0.9rem;
+        margin-bottom: 1px;
     }
 
     .schedule-cell {
-        padding: 5px;
+        padding: 6px;
         border: 1px solid #e0e0e0;
         background: #f8f9fa;
         vertical-align: top;
-        min-height: 80px;
+        min-height: 70px;
         position: relative;
     }
 
     .class-block {
-        padding: 12px;
-        border-radius: 8px;
+        padding: 10px;
+        border-radius: 6px;
         color: white;
-        margin-bottom: 5px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        margin-bottom: 4px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         transition: transform 0.2s, box-shadow 0.2s;
         cursor: pointer;
+        min-height: 90px;
     }
 
     .class-block:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.25);
     }
 
     .class-block.morning {
@@ -455,11 +466,15 @@
         margin-bottom: 8px;
         padding-bottom: 8px;
         border-bottom: 1px solid rgba(255,255,255,0.3);
-        font-size: 0.95rem;
+        font-size: 0.85rem;
+    }
+
+    .class-block-header strong {
+        font-size: 0.9rem;
     }
 
     .class-block-info {
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         margin-bottom: 8px;
     }
 
@@ -471,20 +486,27 @@
         opacity: 0.95;
     }
 
+    .info-line i {
+        font-size: 0.75rem;
+    }
+
     .class-block-footer {
         text-align: right;
+        padding-top: 6px;
     }
 
     .btn-link-white {
         color: white;
         text-decoration: none;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         opacity: 0.9;
         transition: opacity 0.2s;
+        font-weight: 500;
     }
 
     .btn-link-white:hover {
         opacity: 1;
+        text-decoration: underline;
     }
 
     /* Daily View Styles */
@@ -569,5 +591,152 @@
 
     .btn-group {
         gap: 8px;
+    }
+
+    /* Dark Mode Styles */
+    [data-theme="dark"] .stat-card {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+
+    [data-theme="dark"] .stat-label {
+        color: #b0b0b0;
+    }
+
+    [data-theme="dark"] .stat-value {
+        color: #e0e0e0;
+    }
+
+    [data-theme="dark"] .stat-card small {
+        color: #888888 !important;
+    }
+
+    [data-theme="dark"] .timetable {
+        background: #1a1a1a;
+    }
+
+    [data-theme="dark"] .time-column,
+    [data-theme="dark"] .time-cell {
+        background: #2d2d2d;
+        color: #e0e0e0;
+        border-color: #404040;
+    }
+
+    [data-theme="dark"] .schedule-cell {
+        background: #1a1a1a;
+        border-color: #404040;
+    }
+
+    [data-theme="dark"] .legend-item {
+        color: #e0e0e0;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 1200px) {
+        .day-column {
+            min-width: 120px;
+            font-size: 0.8rem;
+            padding: 10px 8px;
+        }
+
+        .time-cell {
+            padding: 10px 8px;
+            font-size: 0.75rem;
+        }
+
+        .time-cell strong {
+            font-size: 0.85rem;
+        }
+
+        .class-block {
+            padding: 8px;
+            min-height: 75px;
+        }
+
+        .class-block-header {
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+        }
+
+        .class-block-header strong {
+            font-size: 0.85rem;
+        }
+
+        .class-block-info {
+            font-size: 0.7rem;
+        }
+
+        .info-line {
+            gap: 4px;
+            margin-bottom: 3px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .time-column {
+            width: 70px;
+        }
+
+        .day-column {
+            min-width: 100px;
+            font-size: 0.75rem;
+            padding: 10px 6px;
+        }
+
+        .time-cell {
+            padding: 10px 6px;
+            font-size: 0.7rem;
+        }
+
+        .time-cell strong {
+            font-size: 0.8rem;
+        }
+
+        .schedule-cell {
+            min-height: 60px;
+            padding: 4px;
+        }
+
+        .class-block {
+            padding: 6px;
+            min-height: 65px;
+        }
+
+        .class-block-header {
+            font-size: 0.75rem;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+        }
+
+        .class-block-header strong {
+            font-size: 0.8rem;
+        }
+
+        .class-block-info {
+            font-size: 0.65rem;
+            margin-bottom: 5px;
+        }
+
+        .info-line {
+            gap: 3px;
+            margin-bottom: 3px;
+        }
+
+        .info-line i {
+            font-size: 0.7rem;
+        }
+
+        .btn-link-white {
+            font-size: 0.7rem;
+        }
+
+        .legend {
+            gap: 8px;
+        }
+
+        .legend-item {
+            font-size: 0.75rem;
+        }
     }
 </style>

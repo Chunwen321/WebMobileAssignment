@@ -198,47 +198,6 @@
         </form>
       </div>
     </div>
-    <!-- Sidebar -->
-    <div class="col-lg-4">
-        <!-- Profile Summary -->
-        <div class="dashboard-card">
-            <div class="text-center mb-3">
-                @if (!string.IsNullOrEmpty(Model?.User?.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
-                {
-                    <img src="@Model.User.ProfilePicture" 
-                         alt="@Model.User.FullName" 
-                         class="rounded-circle mb-3" 
-                         style="width: 80px; height: 80px; object-fit: cover; border: 3px solid #02a145;">
-                }
-                else
-                {
-                    <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: #02a145;">
-                        <i class="bi bi-person-fill"></i>
-                    </div>
-                }
-                <h5 class="mb-1">@((Model?.User?.FullName) ?? "N/A")</h5>
-                <p class="text-muted mb-0">Student</p>
-            </div>
-
-            <div class="list-group list-group-flush">
-                <div class="list-group-item px-0">
-                    <small class="text-muted d-block">Account ID</small>
-                    <strong>@(Model?.StudentId ?? "N/A")</strong>
-                </div>
-                <div class="list-group-item px-0">
-                    <small class="text-muted d-block">Member Since</small>
-                    <strong>@(Model?.EnrollmentDate?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "N/A")</strong>
-                </div>
-                <div class="list-group-item px-0">
-                    <small class="text-muted d-block">Status</small>
-                    <span class="badge @(Model?.User?.IsActive == true ? "bg-success" : "bg-secondary")">
-                        @(Model?.User?.IsActive == true ? "Active" : "Inactive")
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 </div>
 
 <style>
