@@ -1124,9 +1124,21 @@ n.Description.ToLower().Contains("absent") ||
                 // Build detailed data based on notification type - adapted for parent perspective
                 object detailData = null;
 
-                switch (notification.Type)
+                // Handle Announcement type separately as it doesn't need RelatedEntityId
+                if (notification.Type == "Announcement")
                 {
-                    case "Student Enrollment":
+                    detailData = new
+                    {
+                        message = notification.Description,
+                        sentBy = "Administrator",
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy hh:mm tt")
+                    };
+                }
+                else
+                {
+                    switch (notification.Type)
+                    {
+                        case "Student Enrollment":
                         if (!string.IsNullOrEmpty(notification.RelatedEntityId))
                         {
                             var classInfo = await _context.Classes
@@ -1305,6 +1317,7 @@ n.Description.ToLower().Contains("absent") ||
                             }
                         }
                         break;
+                }
                 }
 
                 return Json(new

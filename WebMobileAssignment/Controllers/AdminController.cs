@@ -5039,6 +5039,189 @@ namespace WebMobileAssignment.Controllers
             }
         }
 
+        // ==================== ANNOUNCEMENT ====================
+        public async Task<IActionResult> CreateAnnouncement()
+        {
+            ViewBag.ActiveMenu = "Announcement";
+            ViewBag.Title = _localization["CreateAnnouncement"];
+            ViewBag.Localization = _localization;
+
+            // Get all users grouped by type
+            var users = await _context.Users
+                .Where(u => u.UserType != "Admin")
+                .OrderBy(u => u.UserType)
+                .ThenBy(u => u.FullName)
+                .ToListAsync();
+
+            ViewBag.Users = users;
+            ViewBag.UserTypes = users.Select(u => u.UserType).Distinct().OrderBy(t => t).ToList();
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAnnouncement(
+            List<string>? recipientTypes,
+            List<string>? specificUserIds,
+            string description)
+        {
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                ModelState.AddModelError("description", "Description is required");
+            }
+
+            if (recipientTypes == null || !recipientTypes.Any())
+            {
+                ModelState.AddModelError("recipientTypes", "Please select at least one recipient");
+            }
+
+            if (recipientTypes != null && recipientTypes.Contains("specific") && (specificUserIds == null || !specificUserIds.Any()))
+            {
+                ModelState.AddModelError("specificUserIds", "Please select at least one specific user");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                // Reload data for view
+                var users = await _context.Users
+                    .Where(u => u.UserType != "Admin")
+                    .OrderBy(u => u.UserType)
+                    .ThenBy(u => u.FullName)
+                    .ToListAsync();
+
+                ViewBag.Users = users;
+                ViewBag.UserTypes = users.Select(u => u.UserType).Distinct().OrderBy(t => t).ToList();
+                ViewBag.ActiveMenu = "Announcement";
+                ViewBag.Title = _localization["CreateAnnouncement"];
+                ViewBag.Localization = _localization;
+
+                return View();
+            }
+
+            try
+            {
+                // Get target users based on recipient types
+                var targetUsers = new List<User>();
+                var recipientDescriptions = new List<string>();
+
+                foreach (var recipientType in recipientTypes ?? new List<string>())
+                {
+                    if (recipientType == "all")
+                    {
+                        // All users except admins
+                        var allUsers = await _context.Users
+                            .Where(u => u.UserType != "Admin")
+                            .ToListAsync();
+                        
+                        foreach (var user in allUsers)
+                        {
+                            if (!targetUsers.Any(u => u.UserId == user.UserId))
+                            {
+                                targetUsers.Add(user);
+                            }
+                        }
+                        recipientDescriptions.Add("All Users");
+                    }
+                    else if (recipientType == "specific")
+                    {
+                        // Specific users
+                        if (specificUserIds != null && specificUserIds.Any())
+                        {
+                            var specificUsers = await _context.Users
+                                .Where(u => specificUserIds.Contains(u.UserId))
+                                .ToListAsync();
+                            
+                            foreach (var user in specificUsers)
+                            {
+                                if (!targetUsers.Any(u => u.UserId == user.UserId))
+                                {
+                                    targetUsers.Add(user);
+                                }
+                            }
+                            recipientDescriptions.Add($"{specificUsers.Count} Specific User(s)");
+                        }
+                    }
+                    else
+                    {
+                        // Single user type (Student, Teacher, Parent)
+                        var typeUsers = await _context.Users
+                            .Where(u => u.UserType == recipientType)
+                            .ToListAsync();
+                        
+                        foreach (var user in typeUsers)
+                        {
+                            if (!targetUsers.Any(u => u.UserId == user.UserId))
+                            {
+                                targetUsers.Add(user);
+                            }
+                        }
+                        recipientDescriptions.Add($"{recipientType}s");
+                    }
+                }
+
+                // Create notifications for all target users
+                foreach (var user in targetUsers)
+                {
+                    var notificationId = IdGenerator.GenerateNotificationId(_context);
+                    var notification = new Notification
+                    {
+                        NotificationId = notificationId,
+                        UserId = user.UserId,
+                        Type = "Announcement",
+                        Description = description,
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(notification);
+                }
+
+                // Also send notification to the admin who created it
+                var adminEmail = User.Identity.Name;
+                var admin = await _context.Users.FirstOrDefaultAsync(u => u.Email == adminEmail && u.UserType == "Admin");
+                if (admin != null)
+                {
+                    var adminNotificationId = IdGenerator.GenerateNotificationId(_context);
+                    var adminNotification = new Notification
+                    {
+                        NotificationId = adminNotificationId,
+                        UserId = admin.UserId,
+                        Type = "Announcement",
+                        Description = description,
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(adminNotification);
+                }
+
+                await _context.SaveChangesAsync();
+
+                var recipientDescription = string.Join(" & ", recipientDescriptions);
+                TempData["SuccessMessage"] = $"Announcement sent successfully to {targetUsers.Count} user(s) ({recipientDescription})!";
+                return RedirectToAction(nameof(Notifications));
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error sending announcement: {ex.Message}";
+                
+                // Reload data for view
+                var users = await _context.Users
+                    .Where(u => u.UserType != "Admin")
+                    .OrderBy(u => u.UserType)
+                    .ThenBy(u => u.FullName)
+                    .ToListAsync();
+
+                ViewBag.Users = users;
+                ViewBag.UserTypes = users.Select(u => u.UserType).Distinct().OrderBy(t => t).ToList();
+                ViewBag.ActiveMenu = "Announcement";
+                ViewBag.Title = _localization["CreateAnnouncement"];
+                ViewBag.Localization = _localization;
+
+                return View();
+            }
+        }
+
         // Get notification details
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetNotificationDetails(string notificationId)
@@ -5065,7 +5248,20 @@ namespace WebMobileAssignment.Controllers
                 // Build detailed data based on notification type
                 object detailData = null;
 
-                switch (notification.Type)
+                // Handle Announcement type separately as it doesn't need RelatedEntityId
+                if (notification.Type == "Announcement")
+                {
+                    detailData = new
+                    {
+                        message = notification.Description,
+                        sentBy = "Administrator",
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy hh:mm tt")
+                    };
+                }
+                else
+                {
+                    // Other notification types that require RelatedEntityId
+                    switch (notification.Type)
                 {
                     case "Class Assignment":
                         if (!string.IsNullOrEmpty(notification.RelatedEntityId))
@@ -5322,6 +5518,7 @@ namespace WebMobileAssignment.Controllers
                             }
                         }
                         break;
+                    }
                 }
 
                 return Json(new

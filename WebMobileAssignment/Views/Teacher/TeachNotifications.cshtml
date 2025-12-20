@@ -114,14 +114,15 @@
     <!-- Notifications List -->
     <div class="tab-content">
         <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
-            @if (notifications.Any())
+            @if (notifications.Any(n => n.Type != "Announcement"))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications)
+                    @foreach (var notification in notifications.Where(n => n.Type != "Announcement"))
                     {
                         var isUnread = notification.Status == "unread";
                         var isLeave = notification.Description.ToLower().Contains("leave application");
-                        var isSystem = notification.Description.ToLower().Contains("system") || 
+                        var isSystem = notification.Type == "Announcement" ||
+                                       notification.Description.ToLower().Contains("system") || 
                                        notification.Description.ToLower().Contains("update");
 
                         var iconClass = isLeave ? "bi-calendar-x" : (isSystem ? "bi-info-circle-fill" : "bi-bell-fill");
@@ -191,13 +192,14 @@
         </div>
 
         <div class="tab-pane fade" id="unread" role="tabpanel" aria-labelledby="unread-tab">
-            @if (notifications.Any(n => n.Status == "unread"))
+            @if (notifications.Any(n => n.Status == "unread" && n.Type != "Announcement"))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Status == "unread"))
+                    @foreach (var notification in notifications.Where(n => n.Status == "unread" && n.Type != "Announcement"))
                     {
                         var isLeave = notification.Description.ToLower().Contains("leave application");
-                        var isSystem = notification.Description.ToLower().Contains("system") || 
+                        var isSystem = notification.Type == "Announcement" ||
+                                       notification.Description.ToLower().Contains("system") || 
                                        notification.Description.ToLower().Contains("update");
                         var iconClass = isLeave ? "bi-calendar-x" : (isSystem ? "bi-info-circle-fill" : "bi-bell-fill");
                         var iconType = isLeave ? "warning" : (isSystem ? "primary" : "success");
@@ -316,12 +318,13 @@
         </div>
 
         <div class="tab-pane fade" id="system" role="tabpanel" aria-labelledby="system-tab">
-            @if (notifications.Any(n => n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
+            @if (notifications.Any(n => n.Type == "Announcement" || n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
+                    @foreach (var notification in notifications.Where(n => n.Type == "Announcement" || n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
                     {
                         var isUnread = notification.Status == "unread";
+                        var isAnnouncement = notification.Type == "Announcement";
                         var timeAgo = GetTimeAgo(notification.CreatedDate);
 
                         <div class="notification-item type-system notification-record @(isUnread ? "unread" : "read")" 
@@ -332,8 +335,8 @@
                              onclick="showNotificationDetails('@notification.NotificationId')">
                             <div class="notification-header">
                                 <div class="d-flex align-items-center gap-2 w-100">
-                                    <div class="notification-icon primary">
-                                        <i class="bi bi-info-circle-fill"></i>
+                                    <div class="notification-icon @(isAnnouncement ? "danger" : "primary")">
+                                        <i class="bi @(isAnnouncement ? "bi-megaphone-fill" : "bi-info-circle-fill")"></i>
                                     </div>
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">@GetNotificationTitle(notification.Description)</h6>

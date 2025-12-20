@@ -116,6 +116,9 @@
             </h3>
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
+            <a asp-action="CreateAnnouncement" class="btn btn-sm btn-danger">
+                <i class="bi bi-megaphone-fill me-2"></i>Create Announcement
+            </a>
             @if (unreadCount > 0)
             {
                 <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
@@ -162,14 +165,15 @@
     <!-- Notifications List -->
     <div class="tab-content">
         <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
-            @if (notifications.Any())
+            @if (notifications.Any(n => n.Type != "Announcement"))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications)
+                    @foreach (var notification in notifications.Where(n => n.Type != "Announcement"))
                     {
                         var isUnread = notification.Status == "unread";
                         var isLeave = notification.Description.ToLower().Contains("leave application");
-                        var isSystem = notification.Description.ToLower().Contains("system") || 
+                        var isSystem = notification.Type == "Announcement" || 
+                                       notification.Description.ToLower().Contains("system") || 
                                        notification.Description.ToLower().Contains("update");
 
                         var iconClass = isLeave ? "bi-calendar-x" : (isSystem ? "bi-info-circle-fill" : "bi-bell-fill");
@@ -239,13 +243,14 @@
         </div>
 
         <div class="tab-pane fade" id="unread" role="tabpanel" aria-labelledby="unread-tab">
-            @if (notifications.Any(n => n.Status == "unread"))
+            @if (notifications.Any(n => n.Status == "unread" && n.Type != "Announcement"))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Status == "unread"))
+                    @foreach (var notification in notifications.Where(n => n.Status == "unread" && n.Type != "Announcement"))
                     {
                         var isLeave = notification.Description.ToLower().Contains("leave application");
-                        var isSystem = notification.Description.ToLower().Contains("system") || 
+                        var isSystem = notification.Type == "Announcement" || 
+                                       notification.Description.ToLower().Contains("system") || 
                                        notification.Description.ToLower().Contains("update");
                         var iconClass = isLeave ? "bi-calendar-x" : (isSystem ? "bi-info-circle-fill" : "bi-bell-fill");
                         var iconType = isLeave ? "warning" : (isSystem ? "primary" : "success");
@@ -354,19 +359,21 @@
         </div>
 
         <div class="tab-pane fade" id="system" role="tabpanel" aria-labelledby="system-tab">
-            @if (notifications.Any(n => n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
+            @if (notifications.Any(n => n.Type == "Announcement" || n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
+                    @foreach (var notification in notifications.Where(n => n.Type == "Announcement" || n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
                     {
                         var isUnread = notification.Status == "unread";
                         var timeAgo = GetTimeAgo(notification.CreatedDate);
 
+                        var isAnnouncement = notification.Type == "Announcement";
+
                         <div class="notification-item type-system @(isUnread ? "unread" : "read")">
                             <div class="notification-header">
                                 <div class="d-flex align-items-center gap-2 w-100">
-                                    <div class="notification-icon primary">
-                                        <i class="bi bi-info-circle-fill"></i>
+                                    <div class="notification-icon @(isAnnouncement ? "danger" : "primary")">
+                                        <i class="bi @(isAnnouncement ? "bi-megaphone-fill" : "bi-info-circle-fill")"></i>
                                     </div>
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">@GetNotificationTitle(notification.Description)</h6>
@@ -732,6 +739,9 @@
             case 'Class Capacity Alert':
                 html += buildClassCapacityDetails(details);
                 break;
+            case 'Announcement':
+                html += buildAnnouncementDetails(details, notification);
+                break;
             default:
                 html += '<p class="text-muted">No additional details available.</p>';
         }
@@ -1018,6 +1028,29 @@
         html += '<div class="col-md-6"><strong>Utilization Rate:</strong><br/><span class="badge bg-' + 
                 (parseFloat(details.utilizationRate) >= 100 ? 'danger' : 'warning') + ' fs-6">' + 
                 details.utilizationRate + '</span></div>';
+        html += '</div>';
+        return html;
+    }
+
+    function buildAnnouncementDetails(details, notification) {
+        let html = '<div class="announcement-details">';
+        html += '<div class="d-flex align-items-center mb-3">';
+        html += '<div class="notification-icon danger me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">';
+        html += '<i class="bi bi-megaphone-fill" style="font-size: 1.5rem;"></i>';
+        html += '</div>';
+        html += '<div>';
+        html += '<h5 class="mb-0 text-danger">System Announcement</h5>';
+        html += '<small class="text-muted"><i class="bi bi-person-circle me-1"></i>' + details.sentBy + '</small>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="card border-0 bg-light">';
+        html += '<div class="card-body">';
+        html += '<p class="mb-0" style="white-space: pre-wrap; line-height: 1.6;">' + details.message + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="mt-3">';
+        html += '<small class="text-muted"><i class="bi bi-calendar-event me-1"></i>Sent on: ' + details.createdDate + '</small>';
+        html += '</div>';
         html += '</div>';
         return html;
     }
