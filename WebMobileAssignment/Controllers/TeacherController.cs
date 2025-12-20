@@ -400,8 +400,9 @@ namespace WebMobileAssignment.Controllers
                 if (classObj == null)
                     return Unauthorized();
                 
-                // Find or create attendance record
+                // Find or create attendance record (no tracking for query)
                 var attendance = await _db.Attendances
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(a => a.StudentId == request.StudentId && 
                                               a.ClassId == request.ClassId && 
                                               a.Date.Date == date.Date);
@@ -412,23 +413,35 @@ namespace WebMobileAssignment.Controllers
                 
                 if (attendance == null)
                 {
+                    // Generate new AttendanceId
+                    var currentAttendanceCount = await _db.Attendances.CountAsync();
+                    var attId = $"ATT{(currentAttendanceCount + 1):D5}";
+                    
+                    // Create new attendance record
                     attendance = new Attendance
                     {
+                        AttendanceId = attId,
                         StudentId = request.StudentId,
                         ClassId = request.ClassId,
                         Status = request.Status,
                         Date = date,
                         MarkedByTeacherId = teacher.TeacherId,
-                        TakenOn = DateTime.Now
+                        TakenOn = DateTime.Now,
+                        Flag = false,
+                        IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
                     };
                     _db.Attendances.Add(attendance);
                 }
                 else
                 {
+                    // Update existing attendance record
                     attendance.Status = request.Status;
                     attendance.MarkedByTeacherId = teacher.TeacherId;
                     attendance.TakenOn = DateTime.Now;
-                    _db.Attendances.Update(attendance);
+                    
+                    // Attach and mark as modified
+                    _db.Attendances.Attach(attendance);
+                    _db.Entry(attendance).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
                 }
                 
                 await _db.SaveChangesAsync();
@@ -491,8 +504,9 @@ namespace WebMobileAssignment.Controllers
                         continue;
                     }
 
-                    // Find or create attendance record
+                    // Find or create attendance record (no tracking)
                     var attendance = await _db.Attendances
+                        .AsNoTracking()
                         .FirstOrDefaultAsync(a => a.StudentId == att.StudentId && 
                                                   a.ClassId == request.ClassId && 
                                                   a.Date.Date == selectedDate.Date);
@@ -516,7 +530,9 @@ namespace WebMobileAssignment.Controllers
                             Status = att.Status,
                             Date = selectedDate,
                             MarkedByTeacherId = teacher.TeacherId,
-                            TakenOn = DateTime.Now
+                            TakenOn = DateTime.Now,
+                            Flag = false,
+                            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
                         };
                         _db.Attendances.Add(attendance);
                         markedCount++;
@@ -528,7 +544,10 @@ namespace WebMobileAssignment.Controllers
                             attendance.Status = att.Status;
                             attendance.MarkedByTeacherId = teacher.TeacherId;
                             attendance.TakenOn = DateTime.Now;
-                            _db.Attendances.Update(attendance);
+                            
+                            // Attach and mark as modified
+                            _db.Attendances.Attach(attendance);
+                            _db.Entry(attendance).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
                             markedCount++;
                         }
                     }
@@ -650,10 +669,14 @@ namespace WebMobileAssignment.Controllers
                 n.Description.ToLower().Contains("leave application") &&
                 n.Status == "unread");
 
+            // Count announcement notifications
+            var announcementCount = notifications.Count(n => n.Type == "Announcement" && n.Status == "unread");
+
             ViewBag.TotalNotifications = totalNotifications;
             ViewBag.UnreadCount = unreadCount;
             ViewBag.ReadCount = readCount;
             ViewBag.LeaveCount = leaveCount;
+            ViewBag.AnnouncementCount = announcementCount;
             ViewBag.Notifications = notifications;
 
             return View();
@@ -845,8 +868,17 @@ namespace WebMobileAssignment.Controllers
 
                 object details = null;
 
-                // Build details based on notification type and RelatedEntityId
-                if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                // Handle Announcement type separately as it doesn't need RelatedEntityId
+                if (notification.Type == "Announcement")
+                {
+                    details = new
+                    {
+                        message = notification.Description,
+                        sentBy = "Administrator",
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy HH:mm")
+                    };
+                }
+                else if (!string.IsNullOrEmpty(notification.RelatedEntityId))
                 {
                     switch (notification.Type)
                     {

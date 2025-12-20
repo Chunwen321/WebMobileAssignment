@@ -898,11 +898,15 @@ public async Task<IActionResult> GetStudentProfileContent(string studentId)
      n.Description.ToLower().Contains("late") || 
 n.Description.ToLower().Contains("absent") || 
                 n.Description.ToLower().Contains("warning"));
+
+            // Count announcement notifications
+            var announcementCount = notifications.Count(n => n.Type == "Announcement" && n.Status == "unread");
           
    ViewBag.TotalNotifications = totalNotifications;
             ViewBag.UnreadCount = unreadCount;
      ViewBag.ReadCount = readCount;
  ViewBag.WarningCount = warningCount;
+            ViewBag.AnnouncementCount = announcementCount;
             ViewBag.Notifications = notifications;
    
          return View();

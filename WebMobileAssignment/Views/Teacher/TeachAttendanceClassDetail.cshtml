@@ -514,6 +514,7 @@
                         status: status
                     }),
                     success: function(response) {
+                        console.log("Save response:", response);
                         if (response.success) {
                             // Update status badge
                             if (status === 'Present') {
@@ -531,12 +532,15 @@
                             console.log(`Attendance saved: ${studentId} - ${status}`);
                         } else {
                             console.error('Error:', response.message);
+                            alert('Failed to save attendance: ' + (response.message || 'Unknown error'));
                             // Revert checkbox
                             checkbox.prop('checked', originalChecked);
                         }
                     },
                     error: function(xhr, status, error) {
                         console.error('AJAX Error:', error);
+                        console.error('Response:', xhr.responseText);
+                        alert('Failed to save attendance: ' + error + '\nPlease check the console for details.');
                         // Revert checkbox
                         checkbox.prop('checked', originalChecked);
                     },

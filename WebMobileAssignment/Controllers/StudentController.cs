@@ -860,10 +860,14 @@ namespace WebMobileAssignment.Controllers
                  n.Description.ToLower().Contains("leave")) &&
                 n.Status == "unread");
 
+            // Count announcement notifications
+            var announcementCount = notifications.Count(n => n.Type == "Announcement" && n.Status == "unread");
+
             ViewBag.TotalNotifications = totalNotifications;
             ViewBag.UnreadCount = unreadCount;
             ViewBag.ReadCount = readCount;
             ViewBag.ImportantCount = importantCount;
+            ViewBag.AnnouncementCount = announcementCount;
             ViewBag.Notifications = notifications;
 
             return View();
