@@ -2,9 +2,31 @@
 @{
     ViewBag.Title = "Classes";
     Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    
+    // Only show active classes (inactive = soft-deleted)
+    var classes = (ViewBag.Classes as List<Class> ?? new List<Class>())
+        .Where(c => c.IsActive)
+        .OrderBy(c => c.ClassName)
+        .ToList();
+    var days = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
 }
 
-<div class="row g-3">
+<!-- View Toggle -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="btn-group" role="group" aria-label="View toggle">
+            <button type="button" class="btn btn-outline-primary active" id="gridViewBtn" onclick="showView('grid')">
+                <i class="bi bi-grid-3x3-gap"></i> Grid View
+            </button>
+            <button type="button" class="btn btn-outline-primary" id="timetableViewBtn" onclick="showView('timetable')">
+                <i class="bi bi-calendar-week"></i> Timetable View
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Grid View -->
+<div id="gridView" class="row g-3">
     <div class="col-12">
         <div class="dashboard-card">
             <div class="card-header-custom">
@@ -16,24 +38,28 @@
 
             <!-- Classes Grid -->
             <div class="row">
-                @if (ViewBag.Classes != null && ((List<Class>)ViewBag.Classes).Count > 0)
+                @if (classes.Count > 0)
                 {
-                    @foreach (var cls in (List<Class>)ViewBag.Classes)
+                    @foreach (var cls in classes)
                     {
                         var studentCount = cls.Enrollments?.Count ?? 0;
                         var sessionCounts = ViewBag.SessionCounts as Dictionary<string, int> ?? new Dictionary<string, int>();
                         var sessionCount = sessionCounts.ContainsKey(cls.ClassId) ? sessionCounts[cls.ClassId] : 0;
-                        var avgAttendance = sessionCount > 0 
-                            ? Math.Round((decimal)(cls.Attendances.Count(a => a.Status == "Present") * 100) / sessionCount, 0)
+                        
+                        // Calculate average attendance based on total attendance records
+                        var totalAttendanceRecords = cls.Attendances?.Count ?? 0;
+                        var presentCount = cls.Attendances?.Count(a => a.Status == "Present") ?? 0;
+                        var avgAttendance = totalAttendanceRecords > 0 
+                            ? Math.Round((decimal)(presentCount * 100) / totalAttendanceRecords, 0)
                             : 0;
+                        
                         var badgeClass = avgAttendance >= 90 ? "bg-success" : avgAttendance >= 80 ? "bg-warning" : "bg-danger";
-                        var iconClass = avgAttendance >= 90 ? "text-primary" : avgAttendance >= 80 ? "text-warning" : "text-danger";
 
                         <div class="col-md-6 col-lg-4 mb-3">
                             <div class="card h-100 shadow-sm">
                                 <div class="card-body">
-                                    <h5 class="card-title">
-                                        <i class="bi bi-book-fill @iconClass me-2"></i>@cls.ClassName
+                                    <h5 class="card-title mb-2">
+                                        <i class="bi bi-book-fill text-primary me-2"></i>@cls.ClassName
                                     </h5>
                                     <p class="text-muted mb-3">@(cls.Subject?.SubjectName ?? "Subject Not Set")</p>
                                     <div class="row text-center mb-3">
@@ -68,3 +94,327 @@
         </div>
     </div>
 </div>
+
+<!-- Timetable View -->
+<div id="timetableView" class="row g-3" style="display: none;">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h3 class="card-title">
+                    <i class="bi bi-calendar-week"></i>
+                    Weekly Schedule
+                </h3>
+            </div>
+            <div class="table-responsive">
+                @{
+                    // Get classes with valid times
+                    var scheduledClasses = classes
+                        .Where(c => c.StartTime.HasValue && c.EndTime.HasValue && !string.IsNullOrEmpty(c.Day))
+                        .ToList();
+                    
+                    // Fixed hour range from 0 to 23 to cover all possible class times
+                    var hours = Enumerable.Range(0, 24).ToList();
+                }
+                @if (scheduledClasses.Count == 0)
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-x me-2"></i>No scheduled classes with time slots
+                    </div>
+                }
+                else
+                {
+                    <table class="table table-bordered timetable-table mb-0">
+                        <thead>
+                            <tr class="timetable-header">
+                                <th class="day-header">Day/Time</th>
+                                @foreach (var hour in hours)
+                                {
+                                    <th class="time-header text-center">@hour.ToString("00"):00</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var day in days)
+                            {
+                                var classesOnDay = scheduledClasses
+                                    .Where(c => c.Day == day)
+                                    .OrderBy(c => c.StartTime.Value)
+                                    .ToList();
+                                
+                                @if (classesOnDay.Count == 0)
+                                {
+                                    <tr>
+                                        <td class="day-cell">
+                                            <strong>@day.Substring(0, 3)</strong>
+                                        </td>
+                                        @foreach (var hour in hours)
+                                        {
+                                            <td class="empty-cell"></td>
+                                        }
+                                    </tr>
+                                }
+                                else
+                                {
+                                    // For each class on this day, create a row
+                                    var isFirstRow = true;
+                                    foreach (var classItem in classesOnDay)
+                                    {
+                                        var startHour = classItem.StartTime.Value.Hours;
+                                        var endHour = classItem.EndTime.Value.Hours;
+                                        var endMinutes = classItem.EndTime.Value.Minutes;
+                                        
+                                        // Calculate duration in hours
+                                        var duration = endHour - startHour;
+                                        if (endMinutes > 0) duration++;
+                                        if (duration < 1) duration = 1;
+                                        if (duration > 24) duration = 24;
+                                        
+                                        // Assign colors based on class index
+                                        var colorIndex = scheduledClasses.IndexOf(classItem) % 6;
+                                        var bgColor = colorIndex switch
+                                        {
+                                            0 => "#4a7c59", // Green
+                                            1 => "#5a9bd4", // Blue
+                                            2 => "#c9a227", // Gold/Mustard
+                                            3 => "#8b5a8b", // Purple
+                                            4 => "#cd853f", // Peru/Tan
+                                            5 => "#4682b4", // Steel Blue
+                                            _ => "#4a7c59"
+                                        };
+                                        
+                                        <tr>
+                                            <td class="day-cell" rowspan="1">
+                                                @if (isFirstRow)
+                                                {
+                                                    <strong>@day.Substring(0, 3)</strong>
+                                                }
+                                            </td>
+                                            @for (var h = 0; h < hours.Count; h++)
+                                            {
+                                                var hour = hours[h];
+                                                
+                                                if (hour == startHour)
+                                                {
+                                                    // This is where the class starts
+                                                    var colsToEnd = hours.Count - h;
+                                                    var actualDuration = Math.Min(duration, colsToEnd);
+                                                    
+                                                    <td colspan="@actualDuration" class="class-cell">
+                                                        <a asp-controller="Teacher" asp-action="TeachClassDetail" asp-route-id="@classItem.ClassId" 
+                                                           class="class-block d-block text-decoration-none h-100" style="background-color: @bgColor; color: #fff;">
+                                                            <div class="class-content">
+                                                                <div class="class-name">@classItem.ClassName</div>
+                                                                <div class="class-room">@(classItem.RoomNumber ?? "N/A")</div>
+                                                                <div class="class-subject">@(classItem.Subject?.SubjectName ?? "")</div>
+                                                                <div class="class-time">
+                                                                    @classItem.StartTime.Value.ToString(@"h\:mm") - @classItem.EndTime.Value.ToString(@"h\:mm")
+                                                                </div>
+                                                            </div>
+                                                        </a>
+                                                    </td>
+                                                    
+                                                    // Skip the hours covered by this class
+                                                    h += actualDuration - 1;
+                                                }
+                                                else if (hour < startHour || hour >= startHour + duration)
+                                                {
+                                                    <td class="empty-cell"></td>
+                                                }
+                                                // Hours within the class span are handled by colspan
+                                            }
+                                        </tr>
+                                        isFirstRow = false;
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timetable-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+    
+    .table-responsive {
+        max-height: 600px;
+        overflow: auto;
+    }
+    
+    .timetable-header th {
+        background-color: #fff;
+        font-weight: 500;
+        padding: 10px 5px;
+        font-size: 0.85rem;
+        border: 1px solid #dee2e6;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .day-header {
+        min-width: 80px;
+        text-align: center;
+        background-color: #fff !important;
+        position: sticky;
+        left: 0;
+        z-index: 110 !important;
+    }
+    
+    .time-header {
+        min-width: 60px;
+    }
+    
+    .day-cell {
+        background-color: #fff;
+        text-align: center;
+        vertical-align: middle;
+        padding: 15px 10px;
+        font-weight: 600;
+        border: 1px solid #dee2e6;
+        min-width: 80px;
+        position: sticky;
+        left: 0;
+        z-index: 50;
+    }
+    
+    .empty-cell {
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        min-width: 60px;
+        height: 80px;
+    }
+    
+    .class-cell {
+        padding: 0 !important;
+        border: 1px solid #dee2e6;
+        vertical-align: top;
+        height: 80px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .class-block {
+        padding: 8px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .class-block:hover {
+        opacity: 0.9;
+        transform: scale(1.02);
+        transition: all 0.2s ease;
+    }
+    
+    .class-content {
+        text-align: center;
+        width: 100%;
+    }
+    
+    .class-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+    }
+    
+    .class-room {
+        font-size: 0.8rem;
+        opacity: 0.9;
+    }
+    
+    .class-subject {
+        font-size: 0.75rem;
+        opacity: 0.85;
+    }
+    
+    .class-time {
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+    
+    /* Dark mode styles */
+    [data-theme="dark"] .timetable-table {
+        border-color: #444 !important;
+    }
+    
+    [data-theme="dark"] .timetable-table th,
+    [data-theme="dark"] .timetable-table td {
+        border-color: #444 !important;
+    }
+    
+    [data-theme="dark"] .timetable-header th {
+        background-color: #2d2d2d !important;
+        color: #e0e0e0 !important;
+    }
+    
+    [data-theme="dark"] .day-header {
+        background-color: #2d2d2d !important;
+        color: #e0e0e0 !important;
+    }
+    
+    [data-theme="dark"] .day-cell {
+        background-color: #2d2d2d !important;
+        color: #e0e0e0 !important;
+    }
+    
+    [data-theme="dark"] .empty-cell {
+        background-color: #1e1e1e !important;
+    }
+    
+    [data-theme="dark"] .class-cell {
+        background-color: #1e1e1e !important;
+    }
+    
+    [data-theme="dark"] .table-responsive {
+        background-color: #1e1e1e;
+    }
+    
+    /* Class blocks keep their inline background colors */
+    .class-block[style*="background-color"] {
+        /* Inline styles will apply */
+    }
+</style>
+
+<script>
+    function showView(view) {
+        const gridView = document.getElementById('gridView');
+        const timetableView = document.getElementById('timetableView');
+        const gridBtn = document.getElementById('gridViewBtn');
+        const timetableBtn = document.getElementById('timetableViewBtn');
+        
+        if (view === 'grid') {
+            gridView.style.display = 'flex';
+            timetableView.style.display = 'none';
+            gridBtn.classList.add('active');
+            timetableBtn.classList.remove('active');
+        } else {
+            gridView.style.display = 'none';
+            timetableView.style.display = 'flex';
+            gridBtn.classList.remove('active');
+            timetableBtn.classList.add('active');
+        }
+        
+        // Save preference
+        localStorage.setItem('teacherClassesView', view);
+    }
+    
+    // Load saved preference
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedView = localStorage.getItem('teacherClassesView');
+        if (savedView) {
+            showView(savedView);
+        }
+    });
+</script>
