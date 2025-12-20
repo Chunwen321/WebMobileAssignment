@@ -99,7 +99,11 @@ namespace WebMobileAssignment.Controllers
             var presentCount = allAttendances.Count(a => a.Status == "Present");
             var absentCount = allAttendances.Count(a => a.Status == "Absent");
             var leaveCount = allAttendances.Count(a => a.Status == "Leave");
-            var attendanceRate = totalClasses > 0 ? Math.Round((double)presentCount / totalClasses * 100, 2) : 0;
+            
+            // Calculate attendance rate: Present + Leave count as attended
+            // Only Absent counts as not attended
+            var attendedCount = presentCount + leaveCount;
+            var attendanceRate = totalClasses > 0 ? Math.Round((double)attendedCount / totalClasses * 100, 2) : 0;
 
             // Get enrollment statistics
             var enrolledClasses = student.Enrollments?.Count ?? 0;
@@ -758,9 +762,19 @@ namespace WebMobileAssignment.Controllers
             }
         }
 
+<<<<<<< Updated upstream
         // Announcements (using Notifications table)
         public async Task<IActionResult> StudAnnouncements()
         {
+=======
+        // ==================== NOTIFICATIONS ====================
+        // Comprehensive Notifications Page (similar to Admin/Parent)
+        public async Task<IActionResult> Notifications()
+        {
+            ViewBag.ActiveMenu = "Notifications";
+            ViewBag.Title = "Notifications";
+
+>>>>>>> Stashed changes
             var student = await GetCurrentStudent();
             if (student == null)
                 return RedirectToAction("Login", "Account");
@@ -769,6 +783,7 @@ namespace WebMobileAssignment.Controllers
             var notifications = await _context.Notifications
                 .Include(n => n.User)
                 .Where(n => n.UserId == student.UserId)
+<<<<<<< Updated upstream
                 .OrderByDescending(n => n.Status == "unread")
                 .ThenByDescending(n => n.CreatedDate)
                 .ToListAsync();
@@ -783,6 +798,32 @@ namespace WebMobileAssignment.Controllers
         }
 
 
+=======
+                .OrderByDescending(n => n.CreatedDate)
+                .ToListAsync();
+
+            // Calculate notification stats
+            var totalNotifications = notifications.Count;
+            var unreadCount = notifications.Count(n => n.Status == "unread");
+            var readCount = notifications.Count(n => n.Status == "read");
+
+            // Count important notifications (class-related, enrollment, leave updates)
+            var importantCount = notifications.Count(n =>
+                (n.Description.ToLower().Contains("class") ||
+                 n.Description.ToLower().Contains("enrollment") ||
+                 n.Description.ToLower().Contains("leave")) &&
+                n.Status == "unread");
+
+            ViewBag.TotalNotifications = totalNotifications;
+            ViewBag.UnreadCount = unreadCount;
+            ViewBag.ReadCount = readCount;
+            ViewBag.ImportantCount = importantCount;
+            ViewBag.Notifications = notifications;
+
+            return View();
+        }
+
+>>>>>>> Stashed changes
         // Mark notification as read
         [HttpPost]
         [IgnoreAntiforgeryToken]

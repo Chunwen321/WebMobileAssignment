@@ -231,6 +231,9 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <script>
+        // Store chart instance globally for theme updates
+        let attendanceChart = null;
+        
         document.addEventListener('DOMContentLoaded', function () {
             // Get attendance counts from server
             const presentCount = @presentCount;
@@ -239,6 +242,22 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
             
             // Initialize pie chart
             initPieChart(presentCount, absentCount, leaveCount);
+            
+            // Listen for theme changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'data-theme') {
+                        // Reinitialize chart with new theme
+                        initPieChart(presentCount, absentCount, leaveCount);
+                    }
+                });
+            });
+            
+            // Observe theme changes on document element
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['data-theme']
+            });
         });
 
         function initPieChart(present, absent, leave) {
@@ -256,7 +275,16 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
                 return;
             }
             
-            new Chart(ctx, {
+            // Destroy existing chart if it exists
+            if (attendanceChart) {
+                attendanceChart.destroy();
+            }
+            
+            // Check current theme
+            const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+            const legendColor = isDarkTheme ? '#ffffff' : '#666666';
+            
+            attendanceChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Present', 'Absent', 'Medical Leave'],
@@ -287,7 +315,8 @@ Layout = "~/Views/Shared/_StudentLayout.cshtml";
                                 font: {
                                     size: 13,
                                     weight: '500'
-                                }
+                                },
+                                color: legendColor
                             }
                         },
                         tooltip: {
