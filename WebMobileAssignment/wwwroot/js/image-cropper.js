@@ -108,6 +108,7 @@ const ImageCropper = (function() {
         }
 
         // Set image source
+        image.crossOrigin = 'anonymous';
         image.src = imageSrc;
 
         // Destroy existing cropper if any
@@ -142,7 +143,7 @@ const ImageCropper = (function() {
                         scaleY = 1;
                         currentRotation = 0;
                         document.getElementById('rotateSlider').value = 0;
-                        document.getElementById('rotateValue').textContent = '0°';
+                        document.getElementById('rotateValue').textContent = '0ï¿½';
                         updatePreview();
                     },
                     crop: function() {
@@ -201,7 +202,7 @@ const ImageCropper = (function() {
             scaleY = 1;
             currentRotation = 0;
             document.getElementById('rotateSlider').value = 0;
-            document.getElementById('rotateValue').textContent = '0°';
+            document.getElementById('rotateValue').textContent = '0ï¿½';
         });
 
         // Rotation controls
@@ -209,7 +210,7 @@ const ImageCropper = (function() {
             const angle = parseInt(e.target.value);
             currentRotation = angle;
             cropper?.rotateTo(angle);
-            document.getElementById('rotateValue').textContent = angle + '°';
+            document.getElementById('rotateValue').textContent = angle + 'ï¿½';
         });
 
         document.getElementById('rotateLeft90')?.addEventListener('click', function() {
@@ -217,7 +218,7 @@ const ImageCropper = (function() {
             if (currentRotation < -180) currentRotation += 360;
             cropper?.rotateTo(currentRotation);
             document.getElementById('rotateSlider').value = currentRotation;
-            document.getElementById('rotateValue').textContent = currentRotation + '°';
+            document.getElementById('rotateValue').textContent = currentRotation + 'ï¿½';
         });
 
         document.getElementById('rotateRight90')?.addEventListener('click', function() {
@@ -225,7 +226,7 @@ const ImageCropper = (function() {
             if (currentRotation > 180) currentRotation -= 360;
             cropper?.rotateTo(currentRotation);
             document.getElementById('rotateSlider').value = currentRotation;
-            document.getElementById('rotateValue').textContent = currentRotation + '°';
+            document.getElementById('rotateValue').textContent = currentRotation + 'ï¿½';
         });
 
         // Flip controls
@@ -246,7 +247,7 @@ const ImageCropper = (function() {
             scaleY = 1;
             currentRotation = 0;
             document.getElementById('rotateSlider').value = 0;
-            document.getElementById('rotateValue').textContent = '0°';
+            document.getElementById('rotateValue').textContent = '0ï¿½';
         });
 
         // Crop and save
@@ -313,29 +314,42 @@ const ImageCropper = (function() {
                                  alt="Profile Picture" 
                                  class="img-thumbnail rounded-circle mb-3" 
                                  style="width: ${config.previewWidth}px; height: ${config.previewHeight}px; object-fit: cover; cursor: pointer;"
+                                 crossorigin="anonymous"
                                  onclick="ImageCropper.enlargeImage('${dataUrl}')"
                                  title="Click to enlarge">`;
 
-        // Show buttons
-        if (clearBtn) clearBtn.style.display = 'block';
-        if (editBtn) editBtn.style.display = 'block';
+        // Show buttons - re-query elements after DOM update
+        const refreshedClearBtn = config.clearButtonId ? document.getElementById(config.clearButtonId) : null;
+        const refreshedEditBtn = config.editButtonId ? document.getElementById(config.editButtonId) : null;
+        if (refreshedClearBtn) refreshedClearBtn.style.display = 'block';
+        if (refreshedEditBtn) refreshedEditBtn.style.display = 'block';
     }
 
     /**
      * Setup edit button
      */
     function setupEditButton(targetId) {
-        document.addEventListener('click', function(e) {
-            const config = targets[targetId];
-            if (!config || !config.editButtonId) return;
+        const config = targets[targetId];
+        if (!config || !config.editButtonId) return;
 
-            if (e.target && e.target.id === config.editButtonId) {
-                const preview = document.getElementById(config.previewElementId);
-                if (preview && preview.tagName === 'IMG') {
-                    openCropper(preview.src, targetId);
-                }
+        const editBtn = document.getElementById(config.editButtonId);
+        if (!editBtn) return;
+
+        // Remove any existing listener to avoid duplicates
+        editBtn.removeEventListener('click', editBtn._cropperClickHandler);
+        
+        // Create and store the click handler
+        editBtn._cropperClickHandler = function(e) {
+            e.preventDefault();
+            const preview = document.getElementById(config.previewElementId);
+            if (preview && preview.tagName === 'IMG' && preview.src) {
+                openCropper(preview.src, targetId);
+            } else {
+                console.warn('ImageCropper: No image available to edit');
             }
-        });
+        };
+        
+        editBtn.addEventListener('click', editBtn._cropperClickHandler);
     }
 
     /**
@@ -464,10 +478,10 @@ const ImageCropper = (function() {
                                         <span class="badge bg-success" id="rotateValue" style="min-width: 55px;">0&deg;</span>
                                     </div>
                                     <div class="d-flex gap-2">
-                                        <button type="button" class="btn btn-sm btn-outline-success flex-fill" id="rotateLeft90" title="Rotate Left 90°">
+                                        <button type="button" class="btn btn-sm btn-outline-success flex-fill" id="rotateLeft90" title="Rotate Left 90ï¿½">
                                             <i class="bi bi-arrow-counterclockwise"></i> 90&deg;
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-success flex-fill" id="rotateRight90" title="Rotate Right 90°">
+                                        <button type="button" class="btn btn-sm btn-outline-success flex-fill" id="rotateRight90" title="Rotate Right 90ï¿½">
                                             <i class="bi bi-arrow-clockwise"></i> 90&deg;
                                         </button>
                                     </div>

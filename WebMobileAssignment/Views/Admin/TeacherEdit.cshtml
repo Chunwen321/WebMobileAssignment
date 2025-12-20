@@ -68,7 +68,8 @@
                                      src="@Model.User.ProfilePicture" 
                                      alt="Profile Picture" 
                                      class="img-thumbnail rounded-circle mb-3" 
-                                     style="width: 200px; height: 200px; object-fit: cover;">
+                                     style="width: 200px; height: 200px; object-fit: cover;"
+                                     crossorigin="anonymous">
                             }
                             else
                             {
@@ -283,90 +284,106 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
-    <!-- Cropper.js CSS and JS -->
+    <!-- Cropper.js CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-
-    <!-- Webcam Capture Script -->
-    <script src="~/js/webcam-capture.js"></script>
-
-    <!-- Image Cropper Module -->
-    <script src="~/js/image-cropper.js"></script>
 
     <!-- Inject Modals -->
     <div id="imageCropperModals"></div>
     <script>
-        document.getElementById('imageCropperModals').innerHTML = ImageCropper.getModalHTML();
-    </script>
-
-    <script>
-        // ==================== INITIALIZE IMAGE CROPPER ====================
-        ImageCropper.init({
-            targetId: 'teacher',
-            previewElementId: 'profilePicturePreview',
-            fileInputId: 'profilePictureFile',
-            clearButtonId: 'clearProfilePictureBtn',
-            editButtonId: 'btnEditPhoto',
-            previewWidth: 200,
-            previewHeight: 200
-        });
-
-        // Show Edit button if existing profile picture exists
-        @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
-        {
-            <text>
-            document.getElementById('btnEditPhoto').style.display = 'block';
-            document.getElementById('clearProfilePictureBtn').style.display = 'block';
-            </text>
-        }
-
-        // ==================== WEBCAM FUNCTIONALITY ====================
-        (function() {
-            WebcamCapture.init('profilePicturePreview', 'profilePictureFile', function(file) {
-                console.log('Photo captured from webcam:', file.name);
-                document.getElementById('btnEditPhoto').style.display = 'block';
-                document.getElementById('clearProfilePictureBtn').style.display = 'block';
-            });
-
-            const webcamBtn = document.getElementById('btnWebcam');
-            if (webcamBtn) {
-                webcamBtn.addEventListener('click', function() {
-                    WebcamCapture.openModal();
+        // Wait for ImageCropper to be loaded
+        function initializeImageCropper() {
+            if (typeof ImageCropper !== 'undefined') {
+                document.getElementById('imageCropperModals').innerHTML = ImageCropper.getModalHTML();
+                
+                // ==================== INITIALIZE IMAGE CROPPER ====================
+                ImageCropper.init({
+                    targetId: 'teacher',
+                    previewElementId: 'profilePicturePreview',
+                    fileInputId: 'profilePictureFile',
+                    clearButtonId: 'clearProfilePictureBtn',
+                    editButtonId: 'btnEditPhoto',
+                    previewWidth: 200,
+                    previewHeight: 200
                 });
-            }
-        })();
 
-        // ==================== DELETE PROFILE PICTURE FROM S3 ====================
-        (function() {
-            const deleteBtn = document.getElementById('deleteProfilePictureBtn');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', async function() {
-                    if (!confirm('Are you sure you want to permanently remove the profile picture from cloud storage?')) {
-                        return;
-                    }
+                // Show Edit button if existing profile picture exists
+                @if (!string.IsNullOrEmpty(Model.User.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
+                {
+                    <text>
+                    var btnEditPhoto = document.getElementById('btnEditPhoto');
+                    var clearBtn = document.getElementById('clearProfilePictureBtn');
+                    if (btnEditPhoto) btnEditPhoto.style.display = 'block';
+                    if (clearBtn) clearBtn.style.display = 'block';
+                    </text>
+                }
 
-                    try {
-                        const response = await fetch('@Url.Action("DeleteProfilePicture", "Admin")', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ userId: '@Model.User.UserId' })
+                // ==================== WEBCAM FUNCTIONALITY ====================
+                (function() {
+                    if (typeof WebcamCapture !== 'undefined') {
+                        WebcamCapture.init('profilePicturePreview', 'profilePictureFile', function(file) {
+                            console.log('Photo captured from webcam:', file.name);
+                            var btnEditPhoto = document.getElementById('btnEditPhoto');
+                            var clearBtn = document.getElementById('clearProfilePictureBtn');
+                            if (btnEditPhoto) btnEditPhoto.style.display = 'block';
+                            if (clearBtn) clearBtn.style.display = 'block';
                         });
 
-                        const result = await response.json();
-
-                        if (result.success) {
-                            alert('Profile picture removed successfully from cloud storage!');
-                            window.location.reload();
-                        } else {
-                            alert('Error: ' + result.message);
+                        const webcamBtn = document.getElementById('btnWebcam');
+                        if (webcamBtn) {
+                            webcamBtn.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                WebcamCapture.openModal();
+                            });
                         }
-                    } catch (error) {
-                        alert('Delete failed: ' + error.message);
                     }
-                });
+                })();
+
+                // ==================== DELETE PROFILE PICTURE FROM S3 ====================
+                (function() {
+                    const deleteBtn = document.getElementById('deleteProfilePictureBtn');
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', async function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!confirm('Are you sure you want to permanently remove the profile picture from cloud storage?')) {
+                                return;
+                            }
+
+                            try {
+                                const response = await fetch('@Url.Action("DeleteProfilePicture", "Admin")', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                body: JSON.stringify({ userId: '@Model.User.UserId' })
+                            });
+
+                            const result = await response.json();
+
+                            if (result.success) {
+                                alert('Profile picture removed successfully from cloud storage!');
+                                window.location.reload();
+                            } else {
+                                alert('Error: ' + result.message);
+                            }
+                        } catch (error) {
+                            alert('Delete failed: ' + error.message);
+                        }
+                    });
+                }
+            })();
+            } else {
+                // If ImageCropper not loaded yet, try again after a delay
+                setTimeout(initializeImageCropper, 100);
             }
-        })();
+        }
+        
+        // Call initialization when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeImageCropper);
+        } else {
+            initializeImageCropper();
+        }
     </script>
 }
