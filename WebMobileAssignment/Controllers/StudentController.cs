@@ -746,6 +746,51 @@ namespace WebMobileAssignment.Controllers
 
                 // Save to database
                 _context.LeaveApplications.Add(leaveApplication);
+
+                // Create notifications for admins
+                var admins = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
+                foreach (var admin in admins)
+                {
+                    var adminNotificationId = IdGenerator.GenerateNotificationId(_context);
+                    var adminNotification = new Notification
+                    {
+                        NotificationId = adminNotificationId,
+                        UserId = admin.UserId,
+                        Type = "Leave Application",
+                        Description = $"{student.User.FullName} has applied for leave from {startDate:dd MMM yyyy} to {endDate:dd MMM yyyy}. Reason: {reason}",
+                        RelatedEntityId = leaveId,
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(adminNotification);
+                }
+
+                // Create notifications for teachers of enrolled classes
+                var enrolledClasses = await _context.Enrollments
+                    .Include(e => e.Class)
+                        .ThenInclude(c => c.Teacher)
+                    .Where(e => e.StudentId == student.StudentId && e.UnenrolledDate == null)
+                    .ToListAsync();
+
+                foreach (var enrollment in enrolledClasses)
+                {
+                    if (enrollment.Class?.Teacher?.UserId != null)
+                    {
+                        var teacherNotificationId = IdGenerator.GenerateNotificationId(_context);
+                        var teacherNotification = new Notification
+                        {
+                            NotificationId = teacherNotificationId,
+                            UserId = enrollment.Class.Teacher.UserId,
+                            Type = "Student Leave Application",
+                            Description = $"{student.User.FullName} from class {enrollment.Class.ClassName} has applied for leave from {startDate:dd MMM yyyy} to {endDate:dd MMM yyyy}. Reason: {reason}",
+                            RelatedEntityId = leaveId,
+                            Status = "unread",
+                            CreatedDate = DateTime.Now
+                        };
+                        _context.Notifications.Add(teacherNotification);
+                    }
+                }
+
                 await _context.SaveChangesAsync();
 
                 return Json(new
@@ -761,12 +806,7 @@ namespace WebMobileAssignment.Controllers
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
         }
-
-<<<<<<< Updated upstream
         // Announcements (using Notifications table)
-        public async Task<IActionResult> StudAnnouncements()
-        {
-=======
         // ==================== NOTIFICATIONS ====================
         // Comprehensive Notifications Page (similar to Admin/Parent)
         public async Task<IActionResult> Notifications()
@@ -774,7 +814,6 @@ namespace WebMobileAssignment.Controllers
             ViewBag.ActiveMenu = "Notifications";
             ViewBag.Title = "Notifications";
 
->>>>>>> Stashed changes
             var student = await GetCurrentStudent();
             if (student == null)
                 return RedirectToAction("Login", "Account");
@@ -783,22 +822,6 @@ namespace WebMobileAssignment.Controllers
             var notifications = await _context.Notifications
                 .Include(n => n.User)
                 .Where(n => n.UserId == student.UserId)
-<<<<<<< Updated upstream
-                .OrderByDescending(n => n.Status == "unread")
-                .ThenByDescending(n => n.CreatedDate)
-                .ToListAsync();
-
-            // Calculate stats
-            ViewBag.TotalAnnouncements = notifications.Count;
-            ViewBag.UnreadCount = notifications.Count(n => n.Status == "unread");
-            ViewBag.ReadCount = notifications.Count(n => n.Status == "read");
-
-            ViewBag.ActiveMenu = "Announcements";
-            return View("StudAnnouncements", notifications);
-        }
-
-
-=======
                 .OrderByDescending(n => n.CreatedDate)
                 .ToListAsync();
 
@@ -823,49 +846,336 @@ namespace WebMobileAssignment.Controllers
             return View();
         }
 
->>>>>>> Stashed changes
-        // Mark notification as read
-        [HttpPost]
-        [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> MarkNotificationAsRead(string notificationId)
+        // Announcements (using Notifications table) - Legacy support
+        public async Task<IActionResult> StudAnnouncements()
         {
+        // ==================== NOTIFICATIONS ====================
+        // Comprehensive Notifications Page (similar to Admin/Parent)
+        public async Task<IActionResult> Notifications()
+        {
+            ViewBag.ActiveMenu = "Notifications";
+            ViewBag.Title = "Notifications";
             var student = await GetCurrentStudent();
             if (student == null)
-                return Json(new { success = false, message = "Not authenticated" });
+                return RedirectToAction("Login", "Account");
 
-            var notification = await _context.Notifications
-                .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == student.UserId);
+            // Get notifications for this student
+            var notifications = await _context.Notifications
+                .Include(n => n.User)
+                .Where(n => n.UserId == student.UserId)
+                .OrderByDescending(n => n.Status == "unread")
+                .ThenByDescending(n => n.CreatedDate)
+                .ToListAsync();
 
-            if (notification == null)
-                return Json(new { success = false, message = "Notification not found" });
+            // Calculate stats
+            ViewBag.TotalAnnouncements = notifications.Count;
+            ViewBag.UnreadCount = notifications.Count(n => n.Status == "unread");
+            ViewBag.ReadCount = notifications.Count(n => n.Status == "read");
 
-            notification.Status = "read";
-            await _context.SaveChangesAsync();
+            ViewBag.ActiveMenu = "Announcements";
+            return View("StudAnnouncements", notifications);
+        }
 
-            return Json(new { success = true });
+                .OrderByDescending(n => n.CreatedDate)
+                .ToListAsync();
+
+            // Calculate notification stats
+            var totalNotifications = notifications.Count;
+            var unreadCount = notifications.Count(n => n.Status == "unread");
+            var readCount = notifications.Count(n => n.Status == "read");
+
+            // Count important notifications (class-related, enrollment, leave updates)
+            var importantCount = notifications.Count(n =>
+                (n.Description.ToLower().Contains("class") ||
+                 n.Description.ToLower().Contains("enrollment") ||
+                 n.Description.ToLower().Contains("leave")) &&
+                n.Status == "unread");
+
+            ViewBag.TotalNotifications = totalNotifications;
+            ViewBag.UnreadCount = unreadCount;
+            ViewBag.ReadCount = readCount;
+            ViewBag.ImportantCount = importantCount;
+            ViewBag.Notifications = notifications;
+
+            return View();
+        }
+
+        // Mark notification as read
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAsRead(string notificationId)
+        {
+            try
+            {
+                var student = await GetCurrentStudent();
+                if (student == null)
+                    return Json(new { success = false, message = "Unauthorized" });
+
+                var notification = await _context.Notifications
+                    .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == student.UserId);
+
+                if (notification == null)
+                    return Json(new { success = false, message = "Notification not found" });
+
+                notification.Status = "read";
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         // Mark all notifications as read
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            try
+            {
+                var student = await GetCurrentStudent();
+                if (student == null)
+                    return Json(new { success = false, message = "Unauthorized" });
+
+                var notifications = await _context.Notifications
+                    .Where(n => n.UserId == student.UserId && n.Status == "unread")
+                    .ToListAsync();
+
+                foreach (var notification in notifications)
+                {
+                    notification.Status = "read";
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, count = notifications.Count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Delete notification
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteNotification(string notificationId)
+        {
+            try
+            {
+                var student = await GetCurrentStudent();
+                if (student == null)
+                    return Json(new { success = false, message = "Unauthorized" });
+
+                var notification = await _context.Notifications
+                    .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == student.UserId);
+
+                if (notification == null)
+                    return Json(new { success = false, message = "Notification not found" });
+
+                _context.Notifications.Remove(notification);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Delete all read notifications
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAllRead()
+        {
+            try
+            {
+                var student = await GetCurrentStudent();
+                if (student == null)
+                    return Json(new { success = false, message = "Unauthorized" });
+
+                var notifications = await _context.Notifications
+                    .Where(n => n.UserId == student.UserId && n.Status == "read")
+                    .ToListAsync();
+
+                _context.Notifications.RemoveRange(notifications);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, count = notifications.Count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Get notification details
+        public async Task<IActionResult> GetNotificationDetails(string notificationId)
+        {
+            try
+            {
+                var student = await GetCurrentStudent();
+                if (student == null)
+                    return Json(new { success = false, message = "Unauthorized" });
+
+                var notification = await _context.Notifications
+                    .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == student.UserId);
+
+                if (notification == null)
+                {
+                    return Json(new { success = false, message = "Notification not found" });
+                }
+
+                // Build detailed data based on notification type
+                object detailData = null;
+
+                switch (notification.Type)
+                {
+                    case "Class Enrollment":
+                    case "Class Unenrollment":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var classInfo = await _context.Classes
+                                .Include(c => c.Teacher)
+                                    .ThenInclude(t => t.User)
+                                .Include(c => c.Subject)
+                                .FirstOrDefaultAsync(c => c.ClassId == notification.RelatedEntityId);
+
+                            if (classInfo != null)
+                            {
+                                detailData = new
+                                {
+                                    className = classInfo.ClassName,
+                                    teacher = classInfo.Teacher?.User?.FullName,
+                                    room = classInfo.RoomNumber,
+                                    day = classInfo.Day,
+                                    time = classInfo.StartTime != null && classInfo.EndTime != null 
+                                        ? $"{classInfo.StartTime:hh\\:mm} - {classInfo.EndTime:hh\\:mm}"
+                                        : "Not set",
+                                    capacity = $"{classInfo.CurrentCapacity}/{classInfo.MaxCapacity}",
+                                    subject = classInfo.Subject?.SubjectName
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Leave Application":
+                    case "Leave Approved":
+                    case "Leave Rejected":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var leave = await _context.LeaveApplications
+                                .Include(l => l.User)
+                                .FirstOrDefaultAsync(l => l.LeaveId == notification.RelatedEntityId);
+
+                            if (leave != null)
+                            {
+                                detailData = new
+                                {
+                                    leaveId = leave.LeaveId,
+                                    applicant = leave.User.FullName,
+                                    email = leave.User.Email,
+                                    startDate = leave.StartDate.ToString("dd MMM yyyy"),
+                                    endDate = leave.EndDate.ToString("dd MMM yyyy"),
+                                    totalDays = leave.TotalDays,
+                                    reason = leave.Reason,
+                                    status = leave.Status,
+                                    createdDate = leave.CreatedDate.ToString("dd MMM yyyy hh:mm tt"),
+                                    remarks = leave.Remarks
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Attendance Marked":
+                    case "Low Attendance Alert":
+                    case "Low Attendance Warning":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var studentInfo = await _context.Students
+                                .Include(s => s.User)
+                                .Include(s => s.Attendances)
+                                    .ThenInclude(a => a.Class)
+                                .FirstOrDefaultAsync(s => s.StudentId == student.StudentId);
+
+                            if (studentInfo != null)
+                            {
+                                var totalClasses = studentInfo.Attendances.Count();
+                                var presentCount = studentInfo.Attendances.Count(a => a.Status == "Present");
+                                var absentCount = studentInfo.Attendances.Count(a => a.Status == "Absent");
+                                var attendanceRate = totalClasses > 0 ? (presentCount * 100.0 / totalClasses) : 0;
+
+                                detailData = new
+                                {
+                                    studentId = studentInfo.StudentId,
+                                    studentName = studentInfo.User.FullName,
+                                    email = studentInfo.User.Email,
+                                    totalClasses = totalClasses,
+                                    presentCount = presentCount,
+                                    absentCount = absentCount,
+                                    attendanceRate = $"{attendanceRate:F1}%"
+                                };
+                            }
+                        }
+                        break;
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    notification = new
+                    {
+                        id = notification.NotificationId,
+                        type = notification.Type,
+                        description = notification.Description,
+                        status = notification.Status,
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy hh:mm tt")
+                    },
+                    details = detailData
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Get unread notification count (for layout badge)
+        public async Task<IActionResult> GetUnreadNotificationCount()
+        {
+            try
+            {
+                var student = await GetCurrentStudent();
+                if (student == null)
+                    return Json(new { success = false, count = 0 });
+
+                var unreadCount = await _context.Notifications
+                    .CountAsync(n => n.UserId == student.UserId && n.Status == "unread");
+
+                return Json(new { success = true, count = unreadCount });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, count = 0, message = ex.Message });
+            }
+        }
+
+        // Legacy support methods with IgnoreAntiforgeryToken
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> MarkNotificationAsRead(string notificationId)
+        {
+            return await MarkAsRead(notificationId);
+        }
+
+        [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> MarkAllNotificationsAsRead()
         {
-            var student = await GetCurrentStudent();
-            if (student == null)
-                return Json(new { success = false, message = "Not authenticated" });
-
-            var notifications = await _context.Notifications
-                .Where(n => n.UserId == student.UserId && n.Status == "unread")
-                .ToListAsync();
-
-            foreach (var notification in notifications)
-            {
-                notification.Status = "read";
-            }
-
-            await _context.SaveChangesAsync();
-
-            return Json(new { success = true, count = notifications.Count });
+            return await MarkAllAsRead();
         }
     }
 }

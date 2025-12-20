@@ -69,6 +69,130 @@
     </div>
 </div>
 
+<style>
+    /* Dark mode fixes for Leave Details page */
+    [data-theme="dark"] .card {
+        background-color: #2a2a2a;
+        border-color: #404040;
+    }
+
+    [data-theme="dark"] .card-header {
+        background-color: #353535 !important;
+        border-color: #404040;
+        color: #e0e0e0 !important;
+    }
+
+    /* Keep success (approved) header green in dark mode */
+    [data-theme="dark"] .card-header.bg-success {
+        background-color: #198754 !important;
+        color: #ffffff !important;
+    }
+
+    /* Keep danger (rejected) header red in dark mode */
+    [data-theme="dark"] .card-header.bg-danger {
+        background-color: #dc3545 !important;
+        color: #ffffff !important;
+    }
+
+    /* Keep warning (pending) header yellow in dark mode */
+    [data-theme="dark"] .card-header.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000000 !important;
+    }
+
+    [data-theme="dark"] .card-header.bg-white {
+        background-color: #353535 !important;
+    }
+
+    [data-theme="dark"] .card-body {
+        background-color: #2a2a2a;
+        color: #e0e0e0;
+    }
+
+    [data-theme="dark"] .text-muted {
+        color: #9ca3af !important;
+    }
+
+    [data-theme="dark"] .fw-bold,
+    [data-theme="dark"] .card-body div {
+        color: #e0e0e0;
+    }
+
+    [data-theme="dark"] h2,
+    [data-theme="dark"] h5,
+    [data-theme="dark"] h6 {
+        color: #e0e0e0 !important;
+    }
+
+    [data-theme="dark"] .breadcrumb {
+        background-color: transparent;
+    }
+
+    [data-theme="dark"] .breadcrumb-item,
+    [data-theme="dark"] .breadcrumb-item a {
+        color: #9ca3af;
+    }
+
+    [data-theme="dark"] .breadcrumb-item.active {
+        color: #e0e0e0;
+    }
+
+    [data-theme="dark"] .bg-light {
+        background-color: #353535 !important;
+        color: #e0e0e0 !important;
+    }
+
+    [data-theme="dark"] .form-label {
+        color: #e0e0e0 !important;
+    }
+
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] textarea.form-control {
+        background-color: #353535;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+
+    [data-theme="dark"] .form-control:focus,
+    [data-theme="dark"] textarea.form-control:focus {
+        background-color: #353535;
+        border-color: #0d6efd;
+        color: #e0e0e0;
+    }
+
+    [data-theme="dark"] .form-control::placeholder {
+        color: #6b7280;
+    }
+
+    [data-theme="dark"] label.small {
+        color: #9ca3af !important;
+    }
+
+    [data-theme="dark"] .alert-info {
+        background-color: #1e3a5f;
+        border-color: #2563eb;
+        color: #e0e0e0;
+    }
+
+    [data-theme="dark"] small {
+        color: #9ca3af !important;
+    }
+
+    /* Status badge backgrounds in dark mode */
+    [data-theme="dark"] .bg-success.bg-opacity-10 {
+        background-color: rgba(34, 197, 94, 0.2) !important;
+    }
+
+    [data-theme="dark"] .bg-warning.bg-opacity-10 {
+        background-color: rgba(251, 191, 36, 0.2) !important;
+    }
+
+    [data-theme="dark"] hr {
+        border-color: #404040;
+        opacity: 1;
+    }
+</style>
+
 <div class="row">
     <!-- Left Column: Leave Details -->
     <div class="col-lg-8">

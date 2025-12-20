@@ -179,20 +179,59 @@ namespace WebMobileAssignment.Controllers
                         .Where(u => u.UserType == "Admin")
                         .ToListAsync();
 
-                    var notificationCount = await _context.Notifications.CountAsync();
                     foreach (var admin in adminUsers)
                     {
-                        notificationCount++;
+                        var notificationId = IdGenerator.GenerateNotificationId(_context);
                         var notification = new Notification
                         {
-                            NotificationId = $"N{notificationCount:D5}",
+                            NotificationId = notificationId,
                             UserId = admin.UserId,
+                            Type = "Leave Application",
                             Description = $"New leave application from {user.FullName} for {totalDays} day(s) ({startDate:dd MMM} - {endDate:dd MMM})",
+                            RelatedEntityId = leave.LeaveId,
                             Status = "unread",
                             CreatedDate = DateTime.Now
                         };
                         _context.Notifications.Add(notification);
                     }
+
+                    // Send notification to teachers of classes the student is enrolled in
+                    var student = await _context.Students
+                        .Include(s => s.Enrollments)
+                        .ThenInclude(e => e.Class)
+                        .ThenInclude(c => c.Teacher)
+                        .ThenInclude(t => t.User)
+                        .FirstOrDefaultAsync(s => s.UserId == user.UserId);
+                    
+                    if (student != null && student.Enrollments != null)
+                    {
+                        var teachersToNotify = student.Enrollments
+                            .Where(e => e.UnenrolledDate == null && e.Class.TeacherId != null)
+                            .Select(e => e.Class.Teacher)
+                            .Distinct()
+                            .ToList();
+                        
+                        foreach (var teacher in teachersToNotify)
+                        {
+                            if (teacher?.User != null)
+                            {
+                                var notificationId = IdGenerator.GenerateNotificationId(_context);
+                                var teacherNotification = new Notification
+                                {
+                                    NotificationId = notificationId,
+                                    UserId = teacher.UserId,
+                                    Type = "Student Leave Application",
+                                    Description = $"Student {user.FullName} from your class has applied for leave ({startDate:dd MMM} - {endDate:dd MMM}, {totalDays} day(s))",
+                                    RelatedEntityId = leave.LeaveId,
+                                    Status = "unread",
+                                    CreatedDate = DateTime.Now
+                                };
+                                _context.Notifications.Add(teacherNotification);
+                            }
+                        }
+                        Console.WriteLine($"[LeaveController] Notifications sent to {teachersToNotify.Count} teacher(s)");
+                    }
+
                     await _context.SaveChangesAsync();
 
                     Console.WriteLine($"[LeaveController] Notifications sent to {adminUsers.Count} admin(s)");

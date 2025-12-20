@@ -35,6 +35,9 @@ builder.Services.AddHttpClient<ReCaptchaService>();
 // Add S3 Service
 builder.Services.AddSingleton<S3Service>();
 
+// Add Localization Service
+builder.Services.AddScoped<LocalizationService>();
+
 // Add Authentication with Cookie
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
@@ -79,9 +82,13 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
+else
+{
+    // In development, don't force HTTPS redirection to allow testing
+    // But HTTPS is available on port 7079 for webcam functionality
+}
 
 // Configure static files with no-cache headers in development
 if (app.Environment.IsDevelopment())

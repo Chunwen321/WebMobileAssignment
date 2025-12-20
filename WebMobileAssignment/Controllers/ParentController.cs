@@ -946,32 +946,320 @@ n.Description.ToLower().Contains("absent") ||
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAllAsRead()
         {
-   try
-        {
-              var parent = await GetCurrentParentAsync();
+            try
+            {
+                var parent = await GetCurrentParentAsync();
    
                 if (parent == null)
-              {
-      return Json(new { success = false, message = "Unauthorized" });
-      }
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
          
-      var notifications = await _context.Notifications
-   .Where(n => n.UserId == parent.UserId && n.Status == "unread")
-   .ToListAsync();
+                var notifications = await _context.Notifications
+                    .Where(n => n.UserId == parent.UserId && n.Status == "unread")
+                    .ToListAsync();
  
-     foreach (var notification in notifications)
-         {
-   notification.Status = "read";
-       }
+                foreach (var notification in notifications)
+                {
+                    notification.Status = "read";
+                }
   
-         await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
     
-     return Json(new { success = true, count = notifications.Count });
-     }
-      catch (Exception ex)
+                return Json(new { success = true, count = notifications.Count });
+            }
+            catch (Exception ex)
             {
-      return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = ex.Message });
+            }
         }
+
+        // Delete notification
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteNotification(string notificationId)
+        {
+            try
+            {
+                var parent = await GetCurrentParentAsync();
+
+                if (parent == null)
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                var notification = await _context.Notifications
+                    .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == parent.UserId);
+
+                if (notification == null)
+                {
+                    return Json(new { success = false, message = "Notification not found" });
+                }
+
+                _context.Notifications.Remove(notification);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Delete all read notifications
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAllRead()
+        {
+            try
+            {
+                var parent = await GetCurrentParentAsync();
+
+                if (parent == null)
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                var notifications = await _context.Notifications
+                    .Where(n => n.UserId == parent.UserId && n.Status == "read")
+                    .ToListAsync();
+
+                _context.Notifications.RemoveRange(notifications);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, count = notifications.Count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Get notification details
+        public async Task<IActionResult> GetNotificationDetails(string notificationId)
+        {
+            try
+            {
+                var parent = await GetCurrentParentAsync();
+
+                if (parent == null)
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                var notification = await _context.Notifications
+                    .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == parent.UserId);
+
+                if (notification == null)
+                {
+                    return Json(new { success = false, message = "Notification not found" });
+                }
+
+                // Build detailed data based on notification type - adapted for parent perspective
+                object detailData = null;
+
+                switch (notification.Type)
+                {
+                    case "Student Enrollment":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var classInfo = await _context.Classes
+                                .Include(c => c.Enrollments)
+                                    .ThenInclude(e => e.Student)
+                                        .ThenInclude(s => s.User)
+                                .Include(c => c.Teacher)
+                                    .ThenInclude(t => t.User)
+                                .Include(c => c.Subject)
+                                .FirstOrDefaultAsync(c => c.ClassId == notification.RelatedEntityId);
+
+                            if (classInfo != null)
+                            {
+                                // Get the affected student (parent's child)
+                                var affectedStudentIds = notification.AffectedEntityId?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+                                
+                                var enrolledStudents = classInfo.Enrollments
+                                    .Where(e => affectedStudentIds.Contains(e.Student.StudentId) && e.UnenrolledDate == null)
+                                    .Select(e => new
+                                    {
+                                        studentId = e.Student.StudentId,
+                                        studentName = e.Student.User.FullName,
+                                        email = e.Student.User.Email,
+                                        enrolledDate = e.EnrolledDate.ToString("dd MMM yyyy")
+                                    }).ToList();
+
+                                detailData = new
+                                {
+                                    teacherName = classInfo.Teacher?.User?.FullName,
+                                    teacherGender = classInfo.Teacher?.User?.Gender,
+                                    className = classInfo.ClassName,
+                                    totalEnrolled = classInfo.CurrentCapacity,
+                                    capacity = classInfo.MaxCapacity,
+                                    day = classInfo.Day,
+                                    startTime = classInfo.StartTime?.ToString(@"hh\:mm"),
+                                    endTime = classInfo.EndTime?.ToString(@"hh\:mm"),
+                                    room = classInfo.RoomNumber,
+                                    subject = classInfo.Subject?.SubjectName,
+                                    students = enrolledStudents
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Student Unenrollment":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var classInfo = await _context.Classes
+                                .Include(c => c.Enrollments)
+                                    .ThenInclude(e => e.Student)
+                                        .ThenInclude(s => s.User)
+                                .Include(c => c.Teacher)
+                                    .ThenInclude(t => t.User)
+                                .Include(c => c.Subject)
+                                .FirstOrDefaultAsync(c => c.ClassId == notification.RelatedEntityId);
+
+                            if (classInfo != null)
+                            {
+                                // Get the affected student (parent's child) - including unenrolled
+                                var affectedStudentIds = notification.AffectedEntityId?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+                                
+                                var unenrolledStudents = classInfo.Enrollments
+                                    .Where(e => affectedStudentIds.Contains(e.Student.StudentId) && e.UnenrolledDate != null)
+                                    .Select(e => new
+                                    {
+                                        studentId = e.Student.StudentId,
+                                        studentName = e.Student.User.FullName,
+                                        email = e.Student.User.Email,
+                                        enrolledDate = e.EnrolledDate.ToString("dd MMM yyyy"),
+                                        unenrolledDate = e.UnenrolledDate.HasValue ? e.UnenrolledDate.Value.ToString("dd MMM yyyy") : "N/A"
+                                    }).ToList();
+
+                                detailData = new
+                                {
+                                    teacherName = classInfo.Teacher?.User?.FullName,
+                                    teacherGender = classInfo.Teacher?.User?.Gender,
+                                    className = classInfo.ClassName,
+                                    totalEnrolled = classInfo.CurrentCapacity,
+                                    capacity = classInfo.MaxCapacity,
+                                    day = classInfo.Day,
+                                    startTime = classInfo.StartTime?.ToString(@"hh\:mm"),
+                                    endTime = classInfo.EndTime?.ToString(@"hh\:mm"),
+                                    room = classInfo.RoomNumber,
+                                    subject = classInfo.Subject?.SubjectName,
+                                    students = unenrolledStudents
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Leave Approved":
+                    case "Leave Rejected":
+                    case "Leave Application":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var leave = await _context.LeaveApplications
+                                .Include(l => l.User)
+                                .FirstOrDefaultAsync(l => l.LeaveId == notification.RelatedEntityId);
+
+                            if (leave != null)
+                            {
+                                detailData = new
+                                {
+                                    leaveId = leave.LeaveId,
+                                    applicant = leave.User.FullName,
+                                    email = leave.User.Email,
+                                    startDate = leave.StartDate.ToString("dd MMM yyyy"),
+                                    endDate = leave.EndDate.ToString("dd MMM yyyy"),
+                                    totalDays = leave.TotalDays,
+                                    reason = leave.Reason,
+                                    status = leave.Status,
+                                    createdDate = leave.CreatedDate.ToString("dd MMM yyyy hh:mm tt"),
+                                    remarks = leave.Remarks
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Attendance Marked":
+                    case "Low Attendance Alert":
+                    case "Low Attendance Warning":
+                    case "Absent Alert":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var student = await _context.Students
+                                .Include(s => s.User)
+                                .Include(s => s.Attendances)
+                                    .ThenInclude(a => a.Class)
+                                .FirstOrDefaultAsync(s => s.StudentId == notification.RelatedEntityId);
+
+                            if (student != null)
+                            {
+                                var totalClasses = student.Attendances.Count();
+                                var presentCount = student.Attendances.Count(a => a.Status == "Present" || a.Status == "Leave");
+                                var absentCount = student.Attendances.Count(a => a.Status == "Absent");
+                                var attendanceRate = totalClasses > 0 ? (presentCount * 100.0 / totalClasses) : 0;
+
+                                detailData = new
+                                {
+                                    studentId = student.StudentId,
+                                    studentName = student.User.FullName,
+                                    email = student.User.Email,
+                                    totalClasses = totalClasses,
+                                    presentCount = presentCount,
+                                    absentCount = absentCount,
+                                    attendanceRate = $"{attendanceRate:F1}%"
+                                };
+                            }
+                        }
+                        break;
+
+                    case "Class Schedule Update":
+                    case "Class Information":
+                        if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                        {
+                            var classInfo = await _context.Classes
+                                .Include(c => c.Teacher)
+                                    .ThenInclude(t => t.User)
+                                .Include(c => c.Subject)
+                                .FirstOrDefaultAsync(c => c.ClassId == notification.RelatedEntityId);
+
+                            if (classInfo != null)
+                            {
+                                detailData = new
+                                {
+                                    className = classInfo.ClassName,
+                                    teacher = classInfo.Teacher?.User?.FullName,
+                                    room = classInfo.RoomNumber,
+                                    day = classInfo.Day,
+                                    time = classInfo.StartTime != null && classInfo.EndTime != null 
+                                        ? $"{classInfo.StartTime:hh\\:mm} - {classInfo.EndTime:hh\\:mm}"
+                                        : "Not set",
+                                    capacity = $"{classInfo.CurrentCapacity}/{classInfo.MaxCapacity}",
+                                    subject = classInfo.Subject?.SubjectName
+                                };
+                            }
+                        }
+                        break;
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    notification = new
+                    {
+                        id = notification.NotificationId,
+                        type = notification.Type,
+                        description = notification.Description,
+                        status = notification.Status,
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy hh:mm tt")
+                    },
+                    details = detailData
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         // Settings

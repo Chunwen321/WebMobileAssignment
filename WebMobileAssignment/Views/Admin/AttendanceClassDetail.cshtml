@@ -304,7 +304,8 @@
                                                class="form-check-input student-checkbox" 
                                                data-student-id="@enrollment.Student.StudentId"
                                                @(isPresent ? "checked" : "")
-                                               @(hasMarkedAttendance ? "data-existing='true'" : "") />
+                                               @(hasMarkedAttendance ? "data-existing='true'" : "")
+                                               @(attendance != null && attendance.Status == "Leave" ? "disabled" : "") />
                                     </td>
                                     <td><strong>@enrollment.Student.StudentId</strong></td>
                                     <td>@enrollment.Student.User.FullName</td>
@@ -545,9 +546,9 @@
             $('#selectAllCheckbox').change(function() {
                 const isChecked = $(this).is(':checked');
                 
-                // Collect all students that need status change
+                // Collect all students that need status change (skip disabled checkboxes)
                 const studentsToMark = [];
-                $('.student-checkbox').each(function() {
+                $('.student-checkbox:not(:disabled)').each(function() {
                     const checkbox = $(this);
                     const currentlyChecked = checkbox.is(':checked');
                     
@@ -630,9 +631,9 @@
 
             // Check all button - marks ALL students as Present
             $('#checkAllBtn').click(function() {
-                // Collect ALL students and mark them as present
+                // Collect ALL students and mark them as present (skip disabled checkboxes)
                 const studentsToMark = [];
-                $('.student-checkbox').each(function() {
+                $('.student-checkbox:not(:disabled)').each(function() {
                     const studentId = $(this).data('student-id');
                     studentsToMark.push({
                         studentId: studentId,
@@ -659,6 +660,7 @@
                     contentType: 'application/json',
                     data: JSON.stringify({
                         classId: classId,
+                        pinCode: '@(sessionOnSelectedDate?.PinCode ?? "")',
                         date: selectedDate,
                         attendances: studentsToMark
                     }),
@@ -706,9 +708,9 @@
 
             // Uncheck all button - marks ALL students as Absent
             $('#uncheckAllBtn').click(function() {
-                // Collect ALL students and mark them as absent
+                // Collect ALL students and mark them as absent (skip disabled checkboxes)
                 const studentsToMark = [];
-                $('.student-checkbox').each(function() {
+                $('.student-checkbox:not(:disabled)').each(function() {
                     const studentId = $(this).data('student-id');
                     studentsToMark.push({
                         studentId: studentId,
@@ -735,6 +737,7 @@
                     contentType: 'application/json',
                     data: JSON.stringify({
                         classId: classId,
+                        pinCode: '@(sessionOnSelectedDate?.PinCode ?? "")',
                         date: selectedDate,
                         attendances: studentsToMark
                     }),
