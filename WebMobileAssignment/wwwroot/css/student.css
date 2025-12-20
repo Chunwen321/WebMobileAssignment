@@ -2069,3 +2069,45 @@ body:not([data-theme="dark"]) .dashboard-card strong {
 [data-theme="dark"] .card-header-custom h5 i {
     color: #02a145 !important;
 }
+
+/* ==================== DARK MODE - CHANGE PASSWORD FORM ==================== */
+/* Make form labels white in dark mode */
+[data-theme="dark"] .form-label,
+[data-theme="dark"] .password-field-group label,
+[data-theme="dark"] .form-label.fw-semibold {
+    color: #ffffff !important;
+}
+
+/* Make form text/hints visible in dark mode */
+[data-theme="dark"] .form-text,
+[data-theme="dark"] .form-text.text-muted,
+[data-theme="dark"] small.text-muted {
+    color: #b0b0b0 !important;
+}
+
+/* Make password requirements list items white in dark mode */
+[data-theme="dark"] .list-unstyled li {
+    color: #e0e0e0 !important;
+}
+
+/* Ensure password requirement icons are visible */
+[data-theme="dark"] .list-unstyled li i {
+    opacity: 1;
+}
+
+/* ==================== DARK MODE - STUD CLASSES PAGE ==================== */
+/* Make header text white in dark mode */
+[data-theme="dark"] .container-fluid h2 {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .container-fluid .text-muted,
+[data-theme="dark"] .container-fluid p.text-muted {
+    color: #b0b0b0 !important;
+}
+
+/* Make stat card small text visible in dark mode */
+[data-theme="dark"] .stat-card small,
+[data-theme="dark"] .stat-card small.text-muted {
+    color: #b0b0b0 !important;
+}

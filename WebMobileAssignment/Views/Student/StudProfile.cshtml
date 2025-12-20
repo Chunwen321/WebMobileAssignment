@@ -70,35 +70,47 @@
                     </label>
                 </div>
 
-                <h4 class="mb-1">@((user?.FullName) ?? "N/A")</h4>
-                <p class="text-muted mb-1">Student ID: <strong>@(student?.StudentId ?? "N/A")</strong></p>
+                <!-- Hidden file input for camera capture -->
+                <input type="file" 
+                       id="profilePhotoFile" 
+                       name="profilePicture"
+                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
+                       style="display: none;">
+
+                <!-- Take Photo Button -->
+                <button type="button" id="btnTakePhoto" class="btn btn-sm btn-outline-success mb-2">
+                    <i class="bi bi-camera-fill me-1"></i>Take Photo
+                </button>
+
+                <h4 class="mb-1 student-name-text">@((user?.FullName) ?? "N/A")</h4>
+                <p class="text-muted mb-1">Student ID: <strong class="student-id-text">@(student?.StudentId ?? "N/A")</strong></p>
                 <span class="badge bg-success">@((user != null && user.IsActive == true) ? "Active" : "Inactive")</span>
             </div>
 
             <div class="list-group list-group-flush">
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-calendar3 me-2"></i>Date of Birth</span>
-                    <strong>@(user?.DateOfBirth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—")</strong>
+                    <strong class="profile-data-value">@(user?.DateOfBirth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—")</strong>
                 </div>
 
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-gender-ambiguous me-2"></i>Gender</span>
-                    <strong>@(student?.Gender ?? "—")</strong>
+                    <strong class="profile-data-value">@(student?.Gender ?? "—")</strong>
                 </div>
 
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-phone me-2"></i>Phone</span>
-                    <strong>@(user?.PhoneNumber ?? "—")</strong>
+                    <strong class="profile-data-value">@(user?.PhoneNumber ?? "—")</strong>
                 </div>
 
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email</span>
-                    <strong>@(user?.Email ?? "—")</strong>
+                    <strong class="profile-data-value">@(user?.Email ?? "—")</strong>
                 </div>
 
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                     <span class="text-muted"><i class="bi bi-calendar-check me-2"></i>Enrolled</span>
-                    <strong>@(student?.EnrollmentDate?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—")</strong>
+                    <strong class="profile-data-value">@(student?.EnrollmentDate?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—")</strong>
                 </div>
             </div>
 
@@ -159,40 +171,264 @@
 </div>
 
 <style>
-    /* Column background colors mapped to timetable legend colors */
-    .table thead th.col-subject,
+    /* Modern table styling with better color contrast */
+    .subjects-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Subject Column - Professional Dark Green */
+    .table thead th.col-subject {
+        background: #1b5e20;
+        color: #ffffff;
+        font-weight: 700;
+    }
+
     .table tbody td.subject-cell {
-        background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-        color: white;
+        background: #e8f5e9;
+        color: #1b5e20;
+        font-weight: 600;
     }
 
-    /* Class column -> Afternoon (pink gradient) */
-    .table thead th.col-class,
+    /* Class Column - Professional Dark Blue */
+    .table thead th.col-class {
+        background: #0d47a1;
+        color: #ffffff;
+        font-weight: 700;
+    }
+
     .table tbody td.class-cell {
-        background: linear-gradient(135deg,#f093fb 0%,#f5576c 100%);
-        color: white;
+        background: #e3f2fd;
+        color: #0d47a1;
+        font-weight: 600;
     }
 
-    /* Teacher column -> Evening (cyan gradient) */
-    .table thead th.col-teacher,
+    /* Teacher Column - Professional Dark Purple */
+    .table thead th.col-teacher {
+        background: #4a148c;
+        color: #ffffff;
+        font-weight: 700;
+    }
+
     .table tbody td.teacher-cell {
-        background: linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);
-        color: white;
+        background: #f3e5f5;
+        color: #4a148c;
+        font-weight: 600;
     }
 
-    /* Slight padding for cells to look nicer */
+    /* Enhanced header styling */
+    .table thead th {
+        padding: 18px 24px;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        border: none;
+        line-height: 1.5;
+    }
+
+    /* Cell styling */
     .table td.subject-cell,
     .table td.class-cell,
     .table td.teacher-cell {
-        padding: 12px 16px;
-        overflow: hidden;
+        padding: 16px 24px;
+        font-size: 0.95rem;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        line-height: 1.6;
     }
     
-    /* Make header text slightly bolder for contrast */
-    .table thead th.col-subject,
-    .table thead th.col-class,
-    .table thead th.col-teacher {
-        font-weight: 600;
+    /* Hover effect for table rows */
+    .subjects-table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .subjects-table tbody tr:hover td.subject-cell {
+        background: #c8e6c9;
+        transform: scale(1.01);
+    }
+
+    .subjects-table tbody tr:hover td.class-cell {
+        background: #bbdefb;
+        transform: scale(1.01);
+    }
+
+    .subjects-table tbody tr:hover td.teacher-cell {
+        background: #e1bee7;
+        transform: scale(1.01);
+    }
+
+    /* Dark mode support with adjusted colors */
+    [data-theme="dark"] .table thead th.col-subject {
+        background: #2e7d32;
+    }
+
+    [data-theme="dark"] .table tbody td.subject-cell {
+        background: #1b5e20;
+        color: #c8e6c9;
+    }
+
+    [data-theme="dark"] .table thead th.col-class {
+        background: #1565c0;
+    }
+
+    [data-theme="dark"] .table tbody td.class-cell {
+        background: #0d47a1;
+        color: #bbdefb;
+    }
+
+    [data-theme="dark"] .table thead th.col-teacher {
+        background: #6a1b9a;
+    }
+
+    [data-theme="dark"] .table tbody td.teacher-cell {
+        background: #4a148c;
+        color: #e1bee7;
+    }
+
+    [data-theme="dark"] .subjects-table tbody tr:hover td.subject-cell {
+        background: #388e3c;
+    }
+
+    [data-theme="dark"] .subjects-table tbody tr:hover td.class-cell {
+        background: #1976d2;
+    }
+
+    [data-theme="dark"] .subjects-table tbody tr:hover td.teacher-cell {
+        background: #7b1fa2;
+    }
+
+    /* Dark mode support for profile card */
+    /* Student name specific styling */
+    .student-name-text {
+        color: #2c3e50 !important;
+    }
+
+    [data-theme="dark"] .student-name-text,
+    html[data-theme="dark"] .student-name-text,
+    body[data-theme="dark"] .student-name-text {
+        color: #ffffff !important;
+    }
+
+    /* Student ID specific styling */
+    .student-id-text {
+        color: #2c3e50 !important;
+    }
+
+    [data-theme="dark"] .student-id-text,
+    html[data-theme="dark"] .student-id-text,
+    body[data-theme="dark"] .student-id-text {
+        color: #ffffff !important;
+    }
+
+    /* Profile data values specific styling */
+    .profile-data-value {
+        color: #2c3e50 !important;
+    }
+
+    [data-theme="dark"] .profile-data-value,
+    html[data-theme="dark"] .profile-data-value,
+    body[data-theme="dark"] .profile-data-value {
+        color: #ffffff !important;
+    }
+
+    /* General dark mode support */
+    [data-theme="dark"] .dashboard-card h4 {
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .dashboard-card .text-muted {
+        color: #b0b0b0 !important;
+    }
+
+    [data-theme="dark"] .dashboard-card p {
+        color: #e0e0e0 !important;
+    }
+
+    [data-theme="dark"] .dashboard-card p.text-muted strong {
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .dashboard-card p strong {
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .list-group-item {
+        background-color: transparent !important;
+        border-color: #404040 !important;
+        color: #e0e0e0 !important;
+    }
+
+    [data-theme="dark"] .list-group-item span {
+        color: #b0b0b0 !important;
+    }
+
+    [data-theme="dark"] .list-group-item span.text-muted {
+        color: #b0b0b0 !important;
+    }
+
+    [data-theme="dark"] .list-group-item strong {
+        color: #ffffff !important;
+    }
+
+    /* Ensure all data values in dark mode are white */
+    [data-theme="dark"] .dashboard-card strong {
+        color: #ffffff !important;
+    }
+
+    /* Override any text color in dashboard card */
+    html[data-theme="dark"] .dashboard-card h4,
+    html[data-theme="dark"] .dashboard-card p,
+    html[data-theme="dark"] .dashboard-card span:not(.badge) {
+        color: #ffffff !important;
+    }
+
+    html[data-theme="dark"] .dashboard-card .text-muted {
+        color: #b0b0b0 !important;
+    }
+
+    html[data-theme="dark"] .list-group-item strong {
+        color: #ffffff !important;
+    }
+
+    /* Additional specificity for card title heading in dark mode */
+    [data-theme="dark"] .card-header-custom h5 {
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .card-header-custom .text-muted {
+        color: #b0b0b0 !important;
+    }
+
+    /* Ensure Student ID text is white */
+    [data-theme="dark"] .dashboard-card .mb-1 strong {
+        color: #ffffff !important;
     }
 </style>
-</div>
+
+@section Scripts {
+    <!-- Include Webcam Capture Library -->
+    <script src="~/js/webcam-capture.js"></script>
+    
+    <script>
+        // ==================== WEBCAM FUNCTIONALITY ====================
+        (function() {
+            // Initialize WebcamCapture
+            WebcamCapture.init('profilePhoto', 'profilePhotoFile', function(file) {
+                console.log('Photo captured from webcam:', file.name);
+                
+                // Show success message
+                alert('Photo captured successfully! Please go to Settings to save your new profile picture.');
+            }, 'studentWebcamModal');
+
+            // Take Photo button click handler
+            const takePhotoBtn = document.getElementById('btnTakePhoto');
+            if (takePhotoBtn) {
+                takePhotoBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal('studentWebcamModal');
+                });
+            }
+        })();
+    </script>
+}
