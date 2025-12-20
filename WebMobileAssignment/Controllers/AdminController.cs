@@ -482,39 +482,21 @@ namespace WebMobileAssignment.Controllers
                             var classToUpdate = await _context.Classes.FindAsync(classId);
                             if (classToUpdate != null)
                             {
-                                // Calculate old utilization rate before incrementing
-                                var oldUtilizationRate = (double)classToUpdate.CurrentCapacity / classToUpdate.MaxCapacity;
-                                
                                 classToUpdate.CurrentCapacity++;
-                                
-                                // Calculate new utilization rate after incrementing
-                                var newUtilizationRate = (double)classToUpdate.CurrentCapacity / classToUpdate.MaxCapacity;
-                                
-                                // Send notification only when capacity reaches or crosses 90% threshold
-                                if (oldUtilizationRate < 0.90 && newUtilizationRate >= 0.90)
-                                {
-                                    var adminUsersForCapacity = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
-                                    foreach (var admin in adminUsersForCapacity)
-                                    {
-                                        var capacityNotificationId = IdGenerator.GenerateNotificationId(_context);
-                                        var capacityNotification = new Notification
-                                        {
-                                            NotificationId = capacityNotificationId,
-                                            UserId = admin.UserId,
-                                            Type = "Class Capacity Alert",
-                                            Description = $"Class '{classToUpdate.ClassName}' has reached {newUtilizationRate:P0} capacity ({classToUpdate.CurrentCapacity}/{classToUpdate.MaxCapacity})",
-                                            RelatedEntityId = classToUpdate.ClassId,
-                                            Status = "unread",
-                                            CreatedDate = DateTime.Now
-                                        };
-                                        _context.Notifications.Add(capacityNotification);
-                                    }
-                                }
                             }
 
                             enrolledCount++;
                         }
                         await _context.SaveChangesAsync();
+                        
+                        // Check capacity alert for admin for each enrolled class
+                        if (classIds != null && classIds.Any())
+                        {
+                            foreach (var classId in classIds)
+                            {
+                                await CheckAndNotifyClassCapacity(classId);
+                            }
+                        }
                         
                         // Notify parent about child enrollment in classes
                         if (classIds != null && classIds.Any() && !string.IsNullOrEmpty(parentId))
@@ -854,25 +836,7 @@ namespace WebMobileAssignment.Controllers
                             }
                             
                             // Check capacity alert for admin
-                            if (cls.CurrentCapacity >= cls.MaxCapacity * 0.9) // 90% capacity
-                            {
-                                var adminUsers = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
-                                foreach (var admin in adminUsers)
-                                {
-                                    var capacityNotificationId = IdGenerator.GenerateNotificationId(_context);
-                                    var capacityNotification = new Notification
-                                    {
-                                        NotificationId = capacityNotificationId,
-                                        UserId = admin.UserId,
-                                        Type = "Class Capacity Alert",
-                                        Description = $"Class {cls.ClassName} is at {cls.CurrentCapacity}/{cls.MaxCapacity} capacity ({(cls.CurrentCapacity * 100 / cls.MaxCapacity)}%)",
-                                        RelatedEntityId = cls.ClassId,
-                                        Status = "unread",
-                                        CreatedDate = DateTime.Now
-                                    };
-                                    _context.Notifications.Add(capacityNotification);
-                                }
-                            }
+                            await CheckAndNotifyClassCapacity(cls.ClassId);
                         }
                     }
                     
@@ -2259,6 +2223,12 @@ namespace WebMobileAssignment.Controllers
                         // Increase class current capacity
                         @class.CurrentCapacity += addedCount;
                         
+                        // Check capacity alert for admin after adding students
+                        if (addedCount > 0)
+                        {
+                            await CheckAndNotifyClassCapacity(@class.ClassId);
+                        }
+                        
                         // Notify parents about their children's enrollment in this class
                         if (addedCount > 0 && studentIds != null && studentIds.Any())
                         {
@@ -3058,7 +3028,8 @@ namespace WebMobileAssignment.Controllers
                     Date = att.Date,
                     Status = att.Status,
                     TakenOn = att.TakenOn,
-                    MarkedByTeacherId = att.MarkedByTeacherId
+                    MarkedByTeacherId = att.MarkedByTeacherId,
+                    Flag = att.Flag
                 });
             }
 
@@ -3075,7 +3046,8 @@ namespace WebMobileAssignment.Controllers
                         Date = targetDate,
                         Status = "Not Marked",
                         TakenOn = null,
-                        MarkedByTeacherId = null
+                        MarkedByTeacherId = null,
+                        Flag = false
                     });
                 }
             }
@@ -5569,6 +5541,7 @@ namespace WebMobileAssignment.Controllers
             public required string Status { get; set; } // "Present", "Absent", "Late", "Leave", "Not Marked"
             public DateTime? TakenOn { get; set; }
             public string? MarkedByTeacherId { get; set; }
+            public bool Flag { get; set; }
         }
 
         // Request models for bulk operations
@@ -5668,6 +5641,40 @@ namespace WebMobileAssignment.Controllers
             {
                 // Log error but don't fail the attendance marking
                 Console.WriteLine($"Error sending absence notification: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Check class capacity and send notification to admin if at 90% or above
+        /// </summary>
+        private async Task CheckAndNotifyClassCapacity(string classId)
+        {
+            var classInfo = await _context.Classes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.ClassId == classId);
+
+            if (classInfo != null && classInfo.CurrentCapacity >= classInfo.MaxCapacity * 0.9)
+            {
+                var adminUsers = await _context.Users
+                    .Where(u => u.UserType == "Admin")
+                    .ToListAsync();
+
+                foreach (var admin in adminUsers)
+                {
+                    var capacityNotificationId = IdGenerator.GenerateNotificationId(_context);
+                    var capacityPercentage = (int)Math.Round((double)classInfo.CurrentCapacity / classInfo.MaxCapacity * 100);
+                    var capacityNotification = new Notification
+                    {
+                        NotificationId = capacityNotificationId,
+                        UserId = admin.UserId,
+                        Type = "Class Capacity Alert",
+                        Description = $"Class {classInfo.ClassName} is at {classInfo.CurrentCapacity}/{classInfo.MaxCapacity} capacity ({capacityPercentage}%)",
+                        RelatedEntityId = classInfo.ClassId,
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(capacityNotification);
+                }
             }
         }
     }

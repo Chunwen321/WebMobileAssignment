@@ -208,10 +208,29 @@
                 <i class="bi bi-check-circle-fill"></i>
             </div>
             <h2 class="text-success mb-3">Attendance Marked Successfully!</h2>
+            
+            <!-- Main Success Info -->
             <div class="alert alert-success">
-                <strong id="successClassName"></strong><br>
-                Marked at <strong id="successTime"></strong> on <strong id="successDate"></strong>
+                <div class="mb-2"><strong><i class="bi bi-book me-2"></i>Class:</strong> <span id="successClassName"></span></div>
+                <div class="mb-2"><strong><i class="bi bi-clock me-2"></i>Time:</strong> <span id="successTime"></span></div>
+                <div class="mb-2"><strong><i class="bi bi-calendar-check me-2"></i>Date:</strong> <span id="successDate"></span></div>
+                <div><strong><i class="bi bi-wifi me-2"></i>IP Address:</strong> <span id="successIpAddress"></span></div>
             </div>
+
+            <!-- Warning for Flagged Attendance -->
+            <div class="alert alert-warning d-none" id="flaggedWarning">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle-fill me-2 mt-1" style="font-size: 1.5rem;"></i>
+                    <div>
+                        <strong>Duplicate IP Detected!</strong>
+                        <p class="mb-0 mt-2 small">
+                            Another student has marked attendance from the same IP address for this class today. 
+                            This attendance has been flagged for review by the administrator.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <button class="btn btn-primary mt-4" onclick="location.reload()">
                 <i class="bi bi-arrow-clockwise me-2"></i>Mark Another Class
             </button>
@@ -469,6 +488,14 @@
             $('#successClassName').text(data.className);
             $('#successTime').text(data.time);
             $('#successDate').text(data.date);
+            $('#successIpAddress').text(data.ipAddress);
+            
+            // Show warning if attendance is flagged
+            if (data.isFlagged) {
+                $('#flaggedWarning').removeClass('d-none');
+            } else {
+                $('#flaggedWarning').addClass('d-none');
+            }
             
             $('#pinSection').fadeOut(300, function() {
                 $('#successSection').fadeIn(300).css('display', 'block');

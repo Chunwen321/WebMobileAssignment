@@ -344,6 +344,10 @@
                                                         <i class="bi bi-dash-circle"></i> Not Marked
                                                     </span>
                                                 }
+                                                @if (attendance.Flag)
+                                                {
+                                                    <i class="bi bi-flag-fill text-danger ms-2" title="Duplicate IP detected"></i>
+                                                }
                                             }
                                             else
                                             {
