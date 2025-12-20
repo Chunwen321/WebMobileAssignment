@@ -110,6 +110,7 @@ const ImageCropper = (function() {
         }
 
         // Set image source
+        image.crossOrigin = 'anonymous';
         image.src = imageSrc;
 
         // Destroy existing cropper if any
@@ -315,6 +316,7 @@ const ImageCropper = (function() {
                                  alt="Profile Picture" 
                                  class="img-thumbnail rounded-circle mb-3" 
                                  style="width: ${config.previewWidth}px; height: ${config.previewHeight}px; object-fit: cover; cursor: pointer;"
+                                 crossorigin="anonymous"
                                  onclick="ImageCropper.enlargeImage('${dataUrl}')"
                                  title="Click to enlarge">`;
 
@@ -332,17 +334,27 @@ const ImageCropper = (function() {
      * Setup edit button
      */
     function setupEditButton(targetId) {
-        document.addEventListener('click', function(e) {
-            const config = targets[targetId];
-            if (!config || !config.editButtonId) return;
+        const config = targets[targetId];
+        if (!config || !config.editButtonId) return;
 
-            if (e.target && e.target.id === config.editButtonId) {
-                const preview = document.getElementById(config.previewElementId);
-                if (preview && preview.tagName === 'IMG') {
-                    openCropper(preview.src, targetId);
-                }
+        const editBtn = document.getElementById(config.editButtonId);
+        if (!editBtn) return;
+
+        // Remove any existing listener to avoid duplicates
+        editBtn.removeEventListener('click', editBtn._cropperClickHandler);
+        
+        // Create and store the click handler
+        editBtn._cropperClickHandler = function(e) {
+            e.preventDefault();
+            const preview = document.getElementById(config.previewElementId);
+            if (preview && preview.tagName === 'IMG' && preview.src) {
+                openCropper(preview.src, targetId);
+            } else {
+                console.warn('ImageCropper: No image available to edit');
             }
-        });
+        };
+        
+        editBtn.addEventListener('click', editBtn._cropperClickHandler);
     }
 
     /**

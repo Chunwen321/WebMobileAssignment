@@ -302,7 +302,7 @@ const WebcamCapture = (function() {
             // Show clear button if exists (try both possible IDs)
             const clearBtn = document.getElementById('clearProfilePictureBtn') || 
                            document.getElementById('clearParentProfilePictureBtn');
-            if (clearBtn) {
+            if (clearBtn && clearBtn.style) {
                 clearBtn.style.display = 'block';
             }
 

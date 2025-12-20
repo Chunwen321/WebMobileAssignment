@@ -367,6 +367,11 @@ public class Attendance
 
     [ForeignKey(nameof(MarkedByTeacherId))]
     public Teacher? MarkedByTeacher { get; set; }
+
+    [MaxLength(45)]
+    public string? IpAddress { get; set; }
+
+    public bool Flag { get; set; } = false;
 }
 
 public class Notification

@@ -1995,3 +1995,82 @@ body.monthly-summary-page .stat-value {
     background-color: rgba(255, 193, 7, 0.05);
     color: var(--text-primary);
 }
+
+/* ==================== RECENT ATTENDANCE TABLE FIX ==================== */
+/* Ensure Recent Attendance table header is visible in dark mode */
+[data-theme="dark"] .dashboard-card .table thead th {
+    background-color: #353535 !important;
+    color: #e0e0e0 !important;
+    border-color: #404040 !important;
+}
+
+[data-theme="dark"] .dashboard-card .table-responsive .table thead th {
+    background-color: #353535 !important;
+    color: #e0e0e0 !important;
+    border-color: #404040 !important;
+}
+
+/* Additional fix for table header row */
+[data-theme="dark"] .dashboard-card .table thead tr {
+    background-color: #353535 !important;
+}
+
+[data-theme="dark"] .dashboard-card .table-responsive .table thead tr {
+    background-color: #353535 !important;
+}
+
+/* ==================== PARENT CLASS DETAIL PAGE DARK MODE FIX ==================== */
+/* Fix for Class Information labels and values in dark mode */
+[data-theme="dark"] .detail-row {
+    border-bottom-color: #404040 !important;
+}
+
+[data-theme="dark"] .detail-row .label {
+    color: #b0b0b0 !important;
+}
+
+[data-theme="dark"] .detail-row .value {
+    color: #e0e0e0 !important;
+}
+
+/* Fix for Performance Overview section in dark mode */
+[data-theme="dark"] .perf-row {
+    border-bottom-color: #404040 !important;
+}
+
+[data-theme="dark"] .perf-row span:first-child {
+    color: #b0b0b0 !important;
+}
+
+[data-theme="dark"] .perf-row strong {
+    color: #e0e0e0 !important;
+}
+
+/* Fix for breadcrumb in dark mode */
+[data-theme="dark"] .breadcrumb-item a {
+    color: #ffc107;
+}
+
+[data-theme="dark"] .breadcrumb-item.active {
+    color: var(--text-primary);
+}
+
+/* Fix for page title and subtitle in dark mode */
+[data-theme="dark"] h1 {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* ==================== PARENT CLASS DETAIL PAGE - QUICK ACTIONS SPACING FIX ==================== */
+/* Add proper spacing between card header and action buttons */
+.dashboard-card .card-header + .card-body.d-flex.flex-column.gap-2 {
+    padding-top: 1.5rem;
+}
+
+/* Alternative: Add margin to the first button in Quick Actions */
+.dashboard-card .card-body.d-flex.flex-column.gap-2 .btn:first-child {
+    margin-top: 0.5rem;
+}
