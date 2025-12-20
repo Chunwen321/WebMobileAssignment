@@ -57,30 +57,18 @@
     <div class="col-lg-4">
         <div class="dashboard-card">
             <div class="text-center mb-3">
-                <div>
-                    <label for="profilePhotoInput" class="mx-auto d-block mb-3" style="width:120px; height:120px; cursor:pointer;">
+                <div class="position-relative d-inline-block mb-3">
+                    <div class="profile-photo-container" style="width:120px; height:120px; position: relative;">
                         @if (!string.IsNullOrEmpty(user?.ProfilePicture) && !user.ProfilePicture.StartsWith("/images/"))
                         {
-                            <img id="profilePhoto" src="@user.ProfilePicture" alt="avatar" class="profile-img mx-auto d-block" style="width:120px; height:120px; object-fit:cover; border-radius: 50%;" />
+                            <img id="profilePhoto" src="@user.ProfilePicture" alt="avatar" class="profile-img" style="width:120px; height:120px; object-fit:cover; border-radius: 50%; border: 3px solid #198754;" />
                         }
                         else
                         {
-                            <img id="profilePhoto" src="/images/default-avatar.png" alt="avatar" class="profile-img mx-auto d-block" style="width:120px; height:120px; object-fit:cover;" />
+                            <img id="profilePhoto" src="/images/default-avatar.png" alt="avatar" class="profile-img" style="width:120px; height:120px; object-fit:cover; border-radius: 50%; border: 3px solid #e9ecef;" />
                         }
-                    </label>
+                    </div>
                 </div>
-
-                <!-- Hidden file input for camera capture -->
-                <input type="file" 
-                       id="profilePhotoFile" 
-                       name="profilePicture"
-                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
-                       style="display: none;">
-
-                <!-- Take Photo Button -->
-                <button type="button" id="btnTakePhoto" class="btn btn-sm btn-outline-success mb-2">
-                    <i class="bi bi-camera-fill me-1"></i>Take Photo
-                </button>
 
                 <h4 class="mb-1 student-name-text">@((user?.FullName) ?? "N/A")</h4>
                 <p class="text-muted mb-1">Student ID: <strong class="student-id-text">@(student?.StudentId ?? "N/A")</strong></p>
@@ -171,7 +159,22 @@
 </div>
 
 <style>
-    /* Modern table styling with better color contrast */
+/* Profile Photo Container */
+.profile-photo-container {
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.profile-photo-container:hover {
+    transform: scale(1.05);
+}
+
+/* Dark mode support for profile photo */
+[data-theme="dark"] .profile-photo-container img {
+    border-color: #404040 !important;
+}
+
+/* Modern table styling with better color contrast */
     .subjects-table {
         border-collapse: separate;
         border-spacing: 0;
@@ -408,27 +411,5 @@
 </style>
 
 @section Scripts {
-    <!-- Include Webcam Capture Library -->
-    <script src="~/js/webcam-capture.js"></script>
-    
-    <script>
-        // ==================== WEBCAM FUNCTIONALITY ====================
-        (function() {
-            // Initialize WebcamCapture
-            WebcamCapture.init('profilePhoto', 'profilePhotoFile', function(file) {
-                console.log('Photo captured from webcam:', file.name);
-                
-                // Show success message
-                alert('Photo captured successfully! Please go to Settings to save your new profile picture.');
-            }, 'studentWebcamModal');
-
-            // Take Photo button click handler
-            const takePhotoBtn = document.getElementById('btnTakePhoto');
-            if (takePhotoBtn) {
-                takePhotoBtn.addEventListener('click', function() {
-                    WebcamCapture.openModal('studentWebcamModal');
-                });
-            }
-        })();
-    </script>
+    <!-- No scripts needed for profile view -->
 }
