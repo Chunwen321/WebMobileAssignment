@@ -1,5 +1,6 @@
 @model WebMobileAssignment.Models.Student
 
+
 @{
     ViewBag.Title = "Change Profile Settings";
     ViewBag.ActiveSubmenu = "Settings";
@@ -7,52 +8,6 @@
 }
 
 <div class="row g-3">
-    <!-- Theme Settings -->
-    <div class="col-lg-12">
-        <div class="dashboard-card">
-            <div class="card-header-custom">
-                <h5 class="card-title">
-                    <i class="bi bi-palette-fill"></i>
-                    Theme Settings
-                </h5>
-            </div>
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Appearance</label>
-                    <p class="text-muted small mb-0">Choose your preferred theme for the portal</p>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex gap-3 justify-content-md-end">
-                        <div class="theme-option" id="lightThemeOption" onclick="selectTheme('light')">
-                            <div class="theme-preview light-preview">
-                                <div class="preview-sidebar"></div>
-                                <div class="preview-content">
-                                    <div class="preview-header"></div>
-                                    <div class="preview-body"></div>
-                                </div>
-                            </div>
-                            <div class="theme-label">
-                                <i class="bi bi-sun-fill me-1"></i>Light
-                            </div>
-                        </div>
-                        <div class="theme-option" id="darkThemeOption" onclick="selectTheme('dark')">
-                            <div class="theme-preview dark-preview">
-                                <div class="preview-sidebar"></div>
-                                <div class="preview-content">
-                                    <div class="preview-header"></div>
-                                    <div class="preview-body"></div>
-                                </div>
-                            </div>
-                            <div class="theme-label">
-                                <i class="bi bi-moon-fill me-1"></i>Dark
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
 <!-- Account Settings -->
 <div class="col-lg-12">
   <div class="dashboard-card settings-account-card">
@@ -90,7 +45,7 @@
                         <i class="bi bi-image me-2"></i>Profile Picture
                     </h6>
                 </div>
-                <div class="col-md-4 text-center">
+                <div class="col-md-4 text-center profile-picture-column">
                     @if (!string.IsNullOrEmpty(Model?.User?.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
                     {
                         <img id="profilePicturePreview" 
@@ -106,15 +61,31 @@
                         </div>
                     }
                     
-                    <div class="d-grid gap-2">
-                        <label for="profilePictureFile" class="btn btn-primary">
-                            <i class="bi bi-upload"></i> Choose Photo
+                    <div class="d-grid gap-2 photo-buttons-container">
+                        <!-- Choose Photo (Upload) - Red Solid -->
+                        <label for="profilePictureFile" class="btn btn-photo-choose mb-0">
+                            <i class="bi bi-upload me-2"></i>Choose Photo
                         </label>
                         <input type="file" 
                                id="profilePictureFile" 
                                name="profilePicture"
                                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" 
                                style="display: none;">
+                        
+                        <!-- Take Photo - Blue Outline -->
+                        <button type="button" id="btnTakePhoto" class="btn btn-photo-take">
+                            <i class="bi bi-camera-fill me-2"></i>Take Photo
+                        </button>
+                        
+                        <!-- Edit Photo - Green Outline (hidden by default) -->
+                        <button type="button" id="btnEditPhoto" class="btn btn-photo-edit" style="display: none;">
+                            <i class="bi bi-crop me-2"></i>Edit Photo
+                        </button>
+                        
+                        <!-- Remove Photo - Red Outline (hidden by default) -->
+                        <button type="button" id="btnRemovePhoto" class="btn btn-photo-remove" style="display: none;">
+                            <i class="bi bi-trash me-2"></i>Remove
+                        </button>
                     </div>
                     
                     <small class="text-muted d-block mt-2">
@@ -124,12 +95,14 @@
                 </div>
                 
                 <div class="col-md-8">
-                    <div class="alert alert-info border-0">
+                    <div class="alert alert-info border-0 profile-tips-box">
                         <h6 class="alert-heading">
                             <i class="bi bi-lightbulb-fill me-2"></i>Profile Picture Tips
                         </h6>
                         <ul class="mb-0 small">
                             <li>Upload a clear photo of yourself</li>
+                            <li>Use your <strong class="tips-highlight">webcam</strong> to take a photo directly</li>
+                            <li>Click <strong class="tips-highlight">"Edit Photo"</strong> to crop, rotate, and adjust your image</li>
                             <li>Square images work best (displayed as circle)</li>
                             <li>Your image will be automatically uploaded to secure cloud storage</li>
                             <li>Supported formats: JPG, PNG, GIF, WEBP</li>
@@ -198,10 +171,286 @@
         </form>
       </div>
     </div>
+
+    <!-- Theme Settings -->
+    <div class="col-lg-12">
+        <div class="dashboard-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-palette-fill"></i>
+                    Theme Settings
+                </h5>
+            </div>
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Appearance</label>
+                    <p class="text-muted small mb-0">Choose your preferred theme for the portal</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex gap-3 justify-content-md-end">
+                        <div class="theme-option" id="lightThemeOption" onclick="selectTheme('light')">
+                            <div class="theme-preview light-preview">
+                                <div class="preview-sidebar"></div>
+                                <div class="preview-content">
+                                    <div class="preview-header"></div>
+                                    <div class="preview-body"></div>
+                                </div>
+                            </div>
+                            <div class="theme-label">
+                                <i class="bi bi-sun-fill me-1"></i>Light
+                            </div>
+                        </div>
+                        <div class="theme-option" id="darkThemeOption" onclick="selectTheme('dark')">
+                            <div class="theme-preview dark-preview">
+                                <div class="preview-sidebar"></div>
+                                <div class="preview-content">
+                                    <div class="preview-header"></div>
+                                    <div class="preview-body"></div>
+                                </div>
+                            </div>
+                            <div class="theme-label">
+                                <i class="bi bi-moon-fill me-1"></i>Dark
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
-    .theme-option {
+/* Profile Picture Column - Push to Right */
+.profile-picture-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-left: 3rem !important;
+}
+
+.photo-buttons-container {
+    max-width: 400px;
+    width: 100%;
+}
+
+/* Responsive adjustments */
+@@media (max-width: 767px) {
+    .profile-picture-column {
+        padding-left: 0.75rem !important;
+    }
+}
+
+/* Photo Action Buttons - Matching Reference Design */
+.btn-photo-choose,
+.btn-photo-take,
+.btn-photo-edit,
+.btn-photo-remove {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    border: 2px solid;
+    cursor: pointer;
+}
+
+/* Choose Photo - Red Solid Button */
+.btn-photo-choose {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #ffffff;
+}
+
+.btn-photo-choose:hover {
+    background-color: #bb2d3b;
+    border-color: #b02a37;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Take Photo - Blue Outline Button */
+.btn-photo-take {
+    background-color: transparent;
+    border-color: #0d6efd;
+    color: #0d6efd;
+}
+
+.btn-photo-take:hover {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+}
+
+/* Edit Photo - Green Outline Button */
+.btn-photo-edit {
+    background-color: transparent;
+    border-color: #198754;
+    color: #198754;
+}
+
+.btn-photo-edit:hover {
+    background-color: #198754;
+    border-color: #198754;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+}
+
+/* Remove Photo - Red Outline Button */
+.btn-photo-remove {
+    background-color: transparent;
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.btn-photo-remove:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Active state for all buttons */
+.btn-photo-choose:active,
+.btn-photo-take:active,
+.btn-photo-edit:active,
+.btn-photo-remove:active {
+    transform: translateY(0);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .btn-photo-choose {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+[data-theme="dark"] .btn-photo-choose:hover {
+    background-color: #c0392b;
+    border-color: #c0392b;
+}
+
+[data-theme="dark"] .btn-photo-take {
+    border-color: #4dabf7;
+    color: #4dabf7;
+}
+
+[data-theme="dark"] .btn-photo-take:hover {
+    background-color: #4dabf7;
+    border-color: #4dabf7;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn-photo-edit {
+    border-color: #51cf66;
+    color: #51cf66;
+}
+
+[data-theme="dark"] .btn-photo-edit:hover {
+    background-color: #51cf66;
+    border-color: #51cf66;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn-photo-remove {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+[data-theme="dark"] .btn-photo-remove:hover {
+    background-color: #ff6b6b;
+    border-color: #ff6b6b;
+    color: #ffffff;
+}
+
+/* Profile Picture Tips - Dark Mode Support */
+.tips-highlight {
+    color: inherit;
+}
+
+[data-theme="dark"] .tips-highlight {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+html[data-theme="dark"] .tips-highlight {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+body[data-theme="dark"] .tips-highlight {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: #1e3a5f !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .alert-info .alert-heading {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .alert-info ul li {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .alert-info strong {
+    color: #ffffff !important;
+}
+
+html[data-theme="dark"] .alert-info strong {
+    color: #ffffff !important;
+}
+
+body[data-theme="dark"] .alert-info strong {
+    color: #ffffff !important;
+}
+
+/* Profile Picture Tips Box Styling */
+.profile-tips-box {
+    max-height: 400px;
+    max-width: 600px;
+    overflow-y: auto;
+    padding: 1rem 1.25rem;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.profile-tips-box .alert-heading {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.profile-tips-box ul {
+    font-size: 0.875rem;
+    padding-left: 1.25rem;
+    margin-bottom: 0;
+}
+
+.profile-tips-box ul li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.profile-tips-box ul li:last-child {
+    margin-bottom: 0;
+}
+
+/* Ensure proper layout on smaller screens */
+@@media (max-width: 767px) {
+    .profile-tips-box {
+        margin-top: 1.5rem;
+        margin-left: 0;
+    }
+}
+
+.theme-option {
         cursor: pointer;
         text-align: center;
         padding: 10px;
@@ -300,6 +549,16 @@
 </style>
 
 @section Scripts {
+    <!-- Include Cropper.js Library (Required for Image Cropper) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+    
+    <!-- Include Image Cropper Library -->
+    <script src="~/js/image-cropper.js"></script>
+    
+    <!-- Include Webcam Capture Library -->
+    <script src="~/js/webcam-capture.js"></script>
+
     <script>
         // Initialize theme selection on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -333,44 +592,127 @@
     </script>
     
     <script>
-        // Profile Picture Preview
+        // ==================== IMAGE CROPPER FUNCTIONALITY ====================
         (function() {
-            const fileInput = document.getElementById('profilePictureFile');
-            const preview = document.getElementById('profilePicturePreview');
+            // Initialize ImageCropper
+            ImageCropper.init({
+                targetId: 'studentSettings',
+                previewElementId: 'profilePicturePreview',
+                fileInputId: 'profilePictureFile',
+                clearButtonId: null,
+                editButtonId: 'btnEditPhoto',
+                previewWidth: 150,
+                previewHeight: 150,
+                onCropComplete: function(file) {
+                    console.log('Photo cropped successfully:', file.name);
+                    showRemoveButton();
+                }
+            });
 
+            // Show Edit and Remove buttons if existing profile picture exists
+            @if (!string.IsNullOrEmpty(Model?.User?.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
+            {
+                <text>
+                const editBtn = document.getElementById('btnEditPhoto');
+                const removeBtn = document.getElementById('btnRemovePhoto');
+                if (editBtn) {
+                    editBtn.style.display = 'block';
+                }
+                if (removeBtn) {
+                    removeBtn.style.display = 'block';
+                }
+                </text>
+            }
+
+            // Handle file input change to show edit and remove buttons
+            const fileInput = document.getElementById('profilePictureFile');
             if (fileInput) {
                 fileInput.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (!file) return;
-
-                    // Validate file type
-                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                    if (!validTypes.includes(file.type)) {
-                        alert('Invalid file type. Please upload JPG, PNG, GIF, or WEBP image.');
-                        fileInput.value = '';
-                        return;
+                    if (e.target.files && e.target.files[0]) {
+                        showEditButton();
+                        showRemoveButton();
                     }
-
-                    // Validate file size (5 MB)
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('File size must not exceed 5 MB.');
-                        fileInput.value = '';
-                        return;
-                    }
-
-                    // Show preview
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        // Replace icon/image with new preview
-                        preview.outerHTML = `<img id="profilePicturePreview" 
-                                                  src="${e.target.result}" 
-                                                  alt="Profile Picture" 
-                                                  class="img-thumbnail rounded-circle mb-3" 
-                                                  style="width: 150px; height: 150px; object-fit: cover;">`;
-                    };
-                    reader.readAsDataURL(file);
                 });
             }
         })();
+
+        // ==================== WEBCAM FUNCTIONALITY ====================
+        (function() {
+            // Initialize WebcamCapture
+            WebcamCapture.init('profilePicturePreview', 'profilePictureFile', function(file) {
+                console.log('Photo captured from webcam:', file.name);
+                
+                // Show Edit and Remove buttons after capture
+                showEditButton();
+                showRemoveButton();
+            }, 'studentSettingsWebcamModal');
+
+            // Take Photo button click handler
+            const takePhotoBtn = document.getElementById('btnTakePhoto');
+            if (takePhotoBtn) {
+                takePhotoBtn.addEventListener('click', function() {
+                    WebcamCapture.openModal('studentSettingsWebcamModal');
+                });
+            }
+        })();
+
+        // ==================== REMOVE PHOTO FUNCTIONALITY ====================
+        (function() {
+            const removeBtn = document.getElementById('btnRemovePhoto');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to remove your profile picture?')) {
+                        // Clear the file input
+                        const fileInput = document.getElementById('profilePictureFile');
+                        if (fileInput) {
+                            fileInput.value = '';
+                        }
+
+                        // Reset preview to default
+                        const preview = document.getElementById('profilePicturePreview');
+                        if (preview) {
+                            preview.outerHTML = `<div id="profilePicturePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 bg-light border" style="width: 150px; height: 150px;">
+                                <i class="bi bi-person-circle text-secondary" style="font-size: 7rem;"></i>
+                            </div>`;
+                        }
+
+                        // Hide Edit and Remove buttons
+                        hideEditButton();
+                        hideRemoveButton();
+
+                        console.log('Profile picture removed');
+                    }
+                });
+            }
+        })();
+
+        // ==================== HELPER FUNCTIONS ====================
+        function showEditButton() {
+            const editBtn = document.getElementById('btnEditPhoto');
+            if (editBtn) {
+                editBtn.style.display = 'block';
+            }
+        }
+
+        function hideEditButton() {
+            const editBtn = document.getElementById('btnEditPhoto');
+            if (editBtn) {
+                editBtn.style.display = 'none';
+            }
+        }
+
+        function showRemoveButton() {
+            const removeBtn = document.getElementById('btnRemovePhoto');
+            if (removeBtn) {
+                removeBtn.style.display = 'block';
+            }
+        }
+
+        function hideRemoveButton() {
+            const removeBtn = document.getElementById('btnRemovePhoto');
+            if (removeBtn) {
+                removeBtn.style.display = 'none';
+            }
+        }
     </script>
 }
