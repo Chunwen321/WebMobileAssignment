@@ -18,22 +18,18 @@ namespace WebMobileAssignment.Controllers
         private readonly DB _context;
         private readonly Helper _helper;
         private readonly S3Service _s3Service;
-        private readonly LocalizationService _localization;
 
-        public AdminController(DB context, Helper helper, S3Service s3Service, LocalizationService localization)
+        public AdminController(DB context, Helper helper, S3Service s3Service)
         {
             _context = context;
           _helper = helper;
           _s3Service = s3Service;
-          _localization = localization;
         }
 
         // ==================== DASHBOARD ====================
         public async Task<IActionResult> Dashboard()
         {
             ViewBag.ActiveMenu = "Dashboard";
-            ViewBag.Title = _localization["Dashboard"];
-            ViewBag.Localization = _localization;
 
             var totalStudents = await _context.Students.CountAsync();
             var totalTeachers = await _context.Teachers.CountAsync();
@@ -81,8 +77,6 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> StudentIndex()
         {
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = _localization["StudentManagement"];
-            ViewBag.Localization = _localization;
 
             var students = await _context.Students
                 .Include(s => s.User)
@@ -110,8 +104,6 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> AddStudent()
         {
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = _localization["AddNewStudent"];
-            ViewBag.Localization = _localization;
             ViewBag.Parents = await _context.Parents.Include(p => p.User).ToListAsync();
             ViewBag.Classes = await _context.Classes.ToListAsync();
 
@@ -482,39 +474,21 @@ namespace WebMobileAssignment.Controllers
                             var classToUpdate = await _context.Classes.FindAsync(classId);
                             if (classToUpdate != null)
                             {
-                                // Calculate old utilization rate before incrementing
-                                var oldUtilizationRate = (double)classToUpdate.CurrentCapacity / classToUpdate.MaxCapacity;
-                                
                                 classToUpdate.CurrentCapacity++;
-                                
-                                // Calculate new utilization rate after incrementing
-                                var newUtilizationRate = (double)classToUpdate.CurrentCapacity / classToUpdate.MaxCapacity;
-                                
-                                // Send notification only when capacity reaches or crosses 90% threshold
-                                if (oldUtilizationRate < 0.90 && newUtilizationRate >= 0.90)
-                                {
-                                    var adminUsersForCapacity = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
-                                    foreach (var admin in adminUsersForCapacity)
-                                    {
-                                        var capacityNotificationId = IdGenerator.GenerateNotificationId(_context);
-                                        var capacityNotification = new Notification
-                                        {
-                                            NotificationId = capacityNotificationId,
-                                            UserId = admin.UserId,
-                                            Type = "Class Capacity Alert",
-                                            Description = $"Class '{classToUpdate.ClassName}' has reached {newUtilizationRate:P0} capacity ({classToUpdate.CurrentCapacity}/{classToUpdate.MaxCapacity})",
-                                            RelatedEntityId = classToUpdate.ClassId,
-                                            Status = "unread",
-                                            CreatedDate = DateTime.Now
-                                        };
-                                        _context.Notifications.Add(capacityNotification);
-                                    }
-                                }
                             }
 
                             enrolledCount++;
                         }
                         await _context.SaveChangesAsync();
+                        
+                        // Check capacity alert for admin for each enrolled class
+                        if (classIds != null && classIds.Any())
+                        {
+                            foreach (var classId in classIds)
+                            {
+                                await CheckAndNotifyClassCapacity(classId);
+                            }
+                        }
                         
                         // Notify parent about child enrollment in classes
                         if (classIds != null && classIds.Any() && !string.IsNullOrEmpty(parentId))
@@ -583,8 +557,6 @@ namespace WebMobileAssignment.Controllers
 
             // If we got here, something failed - reload the form with data
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = _localization["AddNewStudent"];
-            ViewBag.Localization = _localization;
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
             ViewBag.PhoneNumber = phoneNumber;
@@ -621,8 +593,6 @@ namespace WebMobileAssignment.Controllers
             }
 
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = _localization["EditStudent"];
-            ViewBag.Localization = _localization;
             ViewBag.Parents = await _context.Parents.Include(p => p.User).ToListAsync();
             ViewBag.Classes = await _context.Classes.ToListAsync();
 
@@ -854,25 +824,7 @@ namespace WebMobileAssignment.Controllers
                             }
                             
                             // Check capacity alert for admin
-                            if (cls.CurrentCapacity >= cls.MaxCapacity * 0.9) // 90% capacity
-                            {
-                                var adminUsers = await _context.Users.Where(u => u.UserType == "Admin").ToListAsync();
-                                foreach (var admin in adminUsers)
-                                {
-                                    var capacityNotificationId = IdGenerator.GenerateNotificationId(_context);
-                                    var capacityNotification = new Notification
-                                    {
-                                        NotificationId = capacityNotificationId,
-                                        UserId = admin.UserId,
-                                        Type = "Class Capacity Alert",
-                                        Description = $"Class {cls.ClassName} is at {cls.CurrentCapacity}/{cls.MaxCapacity} capacity ({(cls.CurrentCapacity * 100 / cls.MaxCapacity)}%)",
-                                        RelatedEntityId = cls.ClassId,
-                                        Status = "unread",
-                                        CreatedDate = DateTime.Now
-                                    };
-                                    _context.Notifications.Add(capacityNotification);
-                                }
-                            }
+                            await CheckAndNotifyClassCapacity(cls.ClassId);
                         }
                     }
                     
@@ -1017,8 +969,6 @@ namespace WebMobileAssignment.Controllers
                 : 0;
 
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = _localization["StudentDetails"];
-            ViewBag.Localization = _localization;
 
             return View(student);
         }
@@ -1036,8 +986,6 @@ namespace WebMobileAssignment.Controllers
             if (student == null) return NotFound();
 
             ViewBag.ActiveMenu = "StudentManagement";
-            ViewBag.Title = _localization["DeleteStudent"];
-            ViewBag.Localization = _localization;
 
             return View(student);
         }
@@ -1096,8 +1044,6 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> TeacherIndex()
         {
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = _localization["TeacherManagement"];
-            ViewBag.Localization = _localization;
 
             var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             return View(teachers);
@@ -1262,8 +1208,6 @@ namespace WebMobileAssignment.Controllers
 
             // If validation failed, return view with data
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = _localization["CreateTeacher"];
-            ViewBag.Localization = _localization;
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
             ViewBag.PhoneNumber = phoneNumber;
@@ -1294,8 +1238,6 @@ namespace WebMobileAssignment.Controllers
             if (teacher == null) return NotFound();
 
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = _localization["EditTeacher"];
-            ViewBag.Localization = _localization;
             
             // Fetch subjects from database for dropdown
             ViewBag.Subjects = await _context.Subjects.OrderBy(s => s.SubjectName).ToListAsync();
@@ -1424,8 +1366,6 @@ namespace WebMobileAssignment.Controllers
             }
 
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = _localization["EditTeacher"];
-            ViewBag.Localization = _localization;
             
             // Re-fetch subjects for dropdown
             ViewBag.Subjects = await _context.Subjects.OrderBy(s => s.SubjectName).ToListAsync();
@@ -1473,8 +1413,6 @@ namespace WebMobileAssignment.Controllers
                 : 0;
 
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = _localization["TeacherDetails"];
-            ViewBag.Localization = _localization;
 
             return View(teacher);
         }
@@ -1496,8 +1434,6 @@ namespace WebMobileAssignment.Controllers
                 .CountAsync();
 
             ViewBag.ActiveMenu = "TeacherManagement";
-            ViewBag.Title = _localization["DeleteTeacher"];
-            ViewBag.Localization = _localization;
             ViewBag.ClassCount = teacher.Classes?.Count ?? 0;
             ViewBag.AttendanceCount = attendanceCount;
 
@@ -1572,8 +1508,6 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> ParentIndex()
         {
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = _localization["ParentManagement"];
-            ViewBag.Localization = _localization;
 
             var parents = await _context.Parents
                 .Include(p => p.User)
@@ -1713,8 +1647,6 @@ namespace WebMobileAssignment.Controllers
             }
 
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = _localization["CreateParent"];
-            ViewBag.Localization = _localization;
             ViewBag.FullName = fullName;
             ViewBag.Email = email;
             ViewBag.PhoneNumber = phoneNumber;
@@ -1738,8 +1670,6 @@ namespace WebMobileAssignment.Controllers
             if (parent == null) return NotFound();
 
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = _localization["EditParent"];
-            ViewBag.Localization = _localization;
 
             return View(parent);
         }
@@ -1846,8 +1776,6 @@ namespace WebMobileAssignment.Controllers
             }
 
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = _localization["EditParent"];
-            ViewBag.Localization = _localization;
             return View(parent);
         }
 
@@ -1864,8 +1792,6 @@ namespace WebMobileAssignment.Controllers
             if (parent == null) return NotFound();
 
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = _localization["ParentDetails"];
-            ViewBag.Localization = _localization;
 
             return View(parent);
         }
@@ -1883,8 +1809,6 @@ namespace WebMobileAssignment.Controllers
             if (parent == null) return NotFound();
 
             ViewBag.ActiveMenu = "ParentManagement";
-            ViewBag.Title = _localization["DeleteParent"];
-            ViewBag.Localization = _localization;
 
             return View(parent);
         }
@@ -1943,8 +1867,6 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
-            ViewBag.Title = _localization["ClassManagement"];
-            ViewBag.Localization = _localization;
 
             var classes = await _context.Classes
                 .Include(c => c.Teacher)
@@ -1960,8 +1882,6 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
-            ViewBag.Title = _localization["CreateClass"];
-            ViewBag.Localization = _localization;
             ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.Subjects = await _context.Subjects.ToListAsync();
 
@@ -2124,8 +2044,6 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
-            ViewBag.Title = _localization["EditClass"];
-            ViewBag.Localization = _localization;
             ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.Subjects = await _context.Subjects.ToListAsync();
             ViewBag.Students = await _context.Students.Include(s => s.User).OrderBy(s => s.User.FullName).ToListAsync();
@@ -2258,6 +2176,12 @@ namespace WebMobileAssignment.Controllers
                         
                         // Increase class current capacity
                         @class.CurrentCapacity += addedCount;
+                        
+                        // Check capacity alert for admin after adding students
+                        if (addedCount > 0)
+                        {
+                            await CheckAndNotifyClassCapacity(@class.ClassId);
+                        }
                         
                         // Notify parents about their children's enrollment in this class
                         if (addedCount > 0 && studentIds != null && studentIds.Any())
@@ -2523,8 +2447,6 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
-            ViewBag.Title = _localization["EditClass"];
-            ViewBag.Localization = _localization;
             ViewBag.Teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.Subjects = await _context.Subjects.ToListAsync();
             ViewBag.Students = await _context.Students.Include(s => s.User).OrderBy(s => s.User.FullName).ToListAsync();
@@ -2559,8 +2481,6 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Classes";
-            ViewBag.Title = _localization["ClassDetails"];
-            ViewBag.Localization = _localization;
 
             return View(@class);
         }
@@ -2570,8 +2490,6 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Schedule";
-            ViewBag.Title = _localization["ClassSchedule"];
-            ViewBag.Localization = _localization;
 
             var classes = await _context.Classes
                 .Include(c => c.Teacher)
@@ -2591,8 +2509,6 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = _localization["SubjectManagement"];
-            ViewBag.Localization = _localization;
 
             var subjects = await _context.Subjects
                 .Include(s => s.Classes)
@@ -2606,8 +2522,6 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = _localization["CreateSubject"];
-            ViewBag.Localization = _localization;
 
             return View();
         }
@@ -2646,8 +2560,6 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = _localization["CreateSubject"];
-            ViewBag.Localization = _localization;
             return View();
         }
 
@@ -2664,8 +2576,6 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = _localization["EditSubject"];
-            ViewBag.Localization = _localization;
 
             return View(subject);
         }
@@ -2718,8 +2628,6 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = _localization["EditSubject"];
-            ViewBag.Localization = _localization;
             return View(subject);
         }
 
@@ -2741,8 +2649,6 @@ namespace WebMobileAssignment.Controllers
             ViewBag.TotalStudents = subject.Classes?.Sum(c => c.CurrentCapacity) ?? 0;
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = _localization["SubjectDetails"];
-            ViewBag.Localization = _localization;
 
             return View(subject);
         }
@@ -2761,8 +2667,6 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "ClassManagement";
             ViewBag.ActiveSubmenu = "Subjects";
-            ViewBag.Title = _localization["DeleteSubject"];
-            ViewBag.Localization = _localization;
 
             return View(subject);
         }
@@ -2910,8 +2814,6 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "AttendanceManagement";
             ViewBag.ActiveSubmenu = "Take";
-            ViewBag.Title = _localization["TakeAttendance"];
-            ViewBag.Localization = _localization;
 
             // Use selected date or default to today
             var targetDate = selectedDate ?? DateTime.Today;
@@ -3058,7 +2960,8 @@ namespace WebMobileAssignment.Controllers
                     Date = att.Date,
                     Status = att.Status,
                     TakenOn = att.TakenOn,
-                    MarkedByTeacherId = att.MarkedByTeacherId
+                    MarkedByTeacherId = att.MarkedByTeacherId,
+                    Flag = att.Flag
                 });
             }
 
@@ -3075,7 +2978,8 @@ namespace WebMobileAssignment.Controllers
                         Date = targetDate,
                         Status = "Not Marked",
                         TakenOn = null,
-                        MarkedByTeacherId = null
+                        MarkedByTeacherId = null,
+                        Flag = false
                     });
                 }
             }
@@ -3442,8 +3346,6 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "AttendanceManagement";
             ViewBag.ActiveSubmenu = "Records";
-            ViewBag.Title = _localization["AttendanceRecords"];
-            ViewBag.Localization = _localization;
 
             // Build query
             var query = _context.Attendances
@@ -3507,8 +3409,6 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> Reports()
         {
             ViewBag.ActiveMenu = "Reports";
-            ViewBag.Title = _localization["ReportsAndAnalytics"];
-            ViewBag.Localization = _localization;
 
             // Get total counts
             var totalStudents = await _context.Students.CountAsync();
@@ -4309,8 +4209,6 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> LeaveIndex(string? status, string? search, DateTime? startDate, DateTime? endDate)
         {
             ViewBag.ActiveMenu = "LeaveManagement";
-            ViewBag.Title = _localization["LeaveManagement"];
-            ViewBag.Localization = _localization;
 
             var query = _context.LeaveApplications
                 .Include(l => l.User)
@@ -4371,8 +4269,6 @@ namespace WebMobileAssignment.Controllers
             if (leave == null) return NotFound();
 
             ViewBag.ActiveMenu = "LeaveManagement";
-            ViewBag.Title = _localization["LeaveApplicationDetails"];
-            ViewBag.Localization = _localization;
 
             // Get student info if user is a student
             var student = await _context.Students
@@ -4721,32 +4617,6 @@ namespace WebMobileAssignment.Controllers
             return RedirectToAction(nameof(LeaveIndex));
         }
 
-        // ==================== LANGUAGE SWITCHER ====================
-        
-        [HttpPost]
-        public IActionResult ChangeLanguage(string language, string returnUrl)
-        {
-            _localization.SetLanguage(language);
-            
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-            
-            return RedirectToAction("Dashboard");
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> AutoTranslate(string targetLang)
-        {
-            var success = await _localization.AutoTranslate(targetLang);
-            if (success)
-            {
-                return Json(new { success = true, message = $"Translations for '{targetLang}' generated successfully!" });
-            }
-            return Json(new { success = false, message = "Failed to generate translations." });
-        }
-
         // ==================== SETTINGS ====================
 
         [Authorize(Roles = "Admin")]
@@ -4754,8 +4624,6 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "Settings";
-            ViewBag.Title = _localization["AdminSettings"];
-            ViewBag.Localization = _localization;
 
             // Get current admin user
             var userEmail = User.Identity.Name;
@@ -4888,8 +4756,7 @@ namespace WebMobileAssignment.Controllers
         public async Task<IActionResult> Notifications()
         {
             ViewBag.ActiveMenu = "Notifications";
-            ViewBag.Title = _localization["Notifications"];
-            ViewBag.Localization = _localization;
+            ViewBag.ActiveSubmenu = "Notifications";
 
             // Get current admin user
             var userEmail = User.Identity.Name;
@@ -4918,10 +4785,14 @@ namespace WebMobileAssignment.Controllers
                 (n.Type == "Leave Application" || n.Type == "Student Leave Application") &&
                 n.Status == "unread");
 
+            // Count announcement notifications
+            var announcementCount = notifications.Count(n => n.Type == "Announcement" && n.Status == "unread");
+
             ViewBag.TotalNotifications = totalNotifications;
             ViewBag.UnreadCount = unreadCount;
             ViewBag.ReadCount = readCount;
             ViewBag.LeaveCount = leaveCount;
+            ViewBag.AnnouncementCount = announcementCount;
             ViewBag.Notifications = notifications;
 
             return View();
@@ -5067,6 +4938,184 @@ namespace WebMobileAssignment.Controllers
             }
         }
 
+        // ==================== ANNOUNCEMENT ====================
+        public async Task<IActionResult> CreateAnnouncement()
+        {
+            ViewBag.ActiveMenu = "Notifications";
+            ViewBag.ActiveSubmenu = "CreateAnnouncement";
+
+            // Get all users grouped by type
+            var users = await _context.Users
+                .Where(u => u.UserType != "Admin")
+                .OrderBy(u => u.UserType)
+                .ThenBy(u => u.FullName)
+                .ToListAsync();
+
+            ViewBag.Users = users;
+            ViewBag.UserTypes = users.Select(u => u.UserType).Distinct().OrderBy(t => t).ToList();
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAnnouncement(
+            List<string>? recipientTypes,
+            List<string>? specificUserIds,
+            string description)
+        {
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                ModelState.AddModelError("description", "Description is required");
+            }
+
+            if (recipientTypes == null || !recipientTypes.Any())
+            {
+                ModelState.AddModelError("recipientTypes", "Please select at least one recipient");
+            }
+
+            if (recipientTypes != null && recipientTypes.Contains("specific") && (specificUserIds == null || !specificUserIds.Any()))
+            {
+                ModelState.AddModelError("specificUserIds", "Please select at least one specific user");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                // Reload data for view
+                var users = await _context.Users
+                    .Where(u => u.UserType != "Admin")
+                    .OrderBy(u => u.UserType)
+                    .ThenBy(u => u.FullName)
+                    .ToListAsync();
+
+                ViewBag.Users = users;
+                ViewBag.UserTypes = users.Select(u => u.UserType).Distinct().OrderBy(t => t).ToList();
+                ViewBag.ActiveMenu = "Announcement";
+
+                return View();
+            }
+
+            try
+            {
+                // Get target users based on recipient types
+                var targetUsers = new List<User>();
+                var recipientDescriptions = new List<string>();
+
+                foreach (var recipientType in recipientTypes ?? new List<string>())
+                {
+                    if (recipientType == "all")
+                    {
+                        // All users except admins
+                        var allUsers = await _context.Users
+                            .Where(u => u.UserType != "Admin")
+                            .ToListAsync();
+                        
+                        foreach (var user in allUsers)
+                        {
+                            if (!targetUsers.Any(u => u.UserId == user.UserId))
+                            {
+                                targetUsers.Add(user);
+                            }
+                        }
+                        recipientDescriptions.Add("All Users");
+                    }
+                    else if (recipientType == "specific")
+                    {
+                        // Specific users
+                        if (specificUserIds != null && specificUserIds.Any())
+                        {
+                            var specificUsers = await _context.Users
+                                .Where(u => specificUserIds.Contains(u.UserId))
+                                .ToListAsync();
+                            
+                            foreach (var user in specificUsers)
+                            {
+                                if (!targetUsers.Any(u => u.UserId == user.UserId))
+                                {
+                                    targetUsers.Add(user);
+                                }
+                            }
+                            recipientDescriptions.Add($"{specificUsers.Count} Specific User(s)");
+                        }
+                    }
+                    else
+                    {
+                        // Single user type (Student, Teacher, Parent)
+                        var typeUsers = await _context.Users
+                            .Where(u => u.UserType == recipientType)
+                            .ToListAsync();
+                        
+                        foreach (var user in typeUsers)
+                        {
+                            if (!targetUsers.Any(u => u.UserId == user.UserId))
+                            {
+                                targetUsers.Add(user);
+                            }
+                        }
+                        recipientDescriptions.Add($"{recipientType}s");
+                    }
+                }
+
+                // Create notifications for all target users
+                foreach (var user in targetUsers)
+                {
+                    var notificationId = IdGenerator.GenerateNotificationId(_context);
+                    var notification = new Notification
+                    {
+                        NotificationId = notificationId,
+                        UserId = user.UserId,
+                        Type = "Announcement",
+                        Description = description,
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(notification);
+                }
+
+                // Also send notification to the admin who created it
+                var adminEmail = User.Identity.Name;
+                var admin = await _context.Users.FirstOrDefaultAsync(u => u.Email == adminEmail && u.UserType == "Admin");
+                if (admin != null)
+                {
+                    var adminNotificationId = IdGenerator.GenerateNotificationId(_context);
+                    var adminNotification = new Notification
+                    {
+                        NotificationId = adminNotificationId,
+                        UserId = admin.UserId,
+                        Type = "Announcement",
+                        Description = description,
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(adminNotification);
+                }
+
+                await _context.SaveChangesAsync();
+
+                var recipientDescription = string.Join(" & ", recipientDescriptions);
+                TempData["SuccessMessage"] = $"Announcement sent successfully to {targetUsers.Count} user(s) ({recipientDescription})!";
+                return RedirectToAction(nameof(Notifications));
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error sending announcement: {ex.Message}";
+                
+                // Reload data for view
+                var users = await _context.Users
+                    .Where(u => u.UserType != "Admin")
+                    .OrderBy(u => u.UserType)
+                    .ThenBy(u => u.FullName)
+                    .ToListAsync();
+
+                ViewBag.Users = users;
+                ViewBag.UserTypes = users.Select(u => u.UserType).Distinct().OrderBy(t => t).ToList();
+                ViewBag.ActiveMenu = "Announcement";
+
+                return View();
+            }
+        }
+
         // Get notification details
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetNotificationDetails(string notificationId)
@@ -5093,7 +5142,20 @@ namespace WebMobileAssignment.Controllers
                 // Build detailed data based on notification type
                 object detailData = null;
 
-                switch (notification.Type)
+                // Handle Announcement type separately as it doesn't need RelatedEntityId
+                if (notification.Type == "Announcement")
+                {
+                    detailData = new
+                    {
+                        message = notification.Description,
+                        sentBy = "Administrator",
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy hh:mm tt")
+                    };
+                }
+                else
+                {
+                    // Other notification types that require RelatedEntityId
+                    switch (notification.Type)
                 {
                     case "Class Assignment":
                         if (!string.IsNullOrEmpty(notification.RelatedEntityId))
@@ -5350,6 +5412,7 @@ namespace WebMobileAssignment.Controllers
                             }
                         }
                         break;
+                    }
                 }
 
                 return Json(new
@@ -5442,8 +5505,6 @@ namespace WebMobileAssignment.Controllers
 
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "Settings";
-            ViewBag.Title = _localization["AdminSettings"];
-            ViewBag.Localization = _localization;
             return View(user);
         }
 
@@ -5452,8 +5513,6 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "ChangePassword";
-            ViewBag.Title = _localization["ChangePassword"];
-            ViewBag.Localization = _localization;
 
             return View();
         }
@@ -5465,8 +5524,6 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "Settings";
             ViewBag.ActiveSubmenu = "ChangePassword";
-            ViewBag.Title = _localization["ChangePassword"];
-            ViewBag.Localization = _localization;
 
             // Validate input
             if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
@@ -5569,6 +5626,7 @@ namespace WebMobileAssignment.Controllers
             public required string Status { get; set; } // "Present", "Absent", "Late", "Leave", "Not Marked"
             public DateTime? TakenOn { get; set; }
             public string? MarkedByTeacherId { get; set; }
+            public bool Flag { get; set; }
         }
 
         // Request models for bulk operations
@@ -5668,6 +5726,40 @@ namespace WebMobileAssignment.Controllers
             {
                 // Log error but don't fail the attendance marking
                 Console.WriteLine($"Error sending absence notification: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Check class capacity and send notification to admin if at 90% or above
+        /// </summary>
+        private async Task CheckAndNotifyClassCapacity(string classId)
+        {
+            var classInfo = await _context.Classes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.ClassId == classId);
+
+            if (classInfo != null && classInfo.CurrentCapacity >= classInfo.MaxCapacity * 0.9)
+            {
+                var adminUsers = await _context.Users
+                    .Where(u => u.UserType == "Admin")
+                    .ToListAsync();
+
+                foreach (var admin in adminUsers)
+                {
+                    var capacityNotificationId = IdGenerator.GenerateNotificationId(_context);
+                    var capacityPercentage = (int)Math.Round((double)classInfo.CurrentCapacity / classInfo.MaxCapacity * 100);
+                    var capacityNotification = new Notification
+                    {
+                        NotificationId = capacityNotificationId,
+                        UserId = admin.UserId,
+                        Type = "Class Capacity Alert",
+                        Description = $"Class {classInfo.ClassName} is at {classInfo.CurrentCapacity}/{classInfo.MaxCapacity} capacity ({capacityPercentage}%)",
+                        RelatedEntityId = classInfo.ClassId,
+                        Status = "unread",
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Notifications.Add(capacityNotification);
+                }
             }
         }
     }

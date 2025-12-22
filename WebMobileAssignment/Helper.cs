@@ -409,12 +409,6 @@ public class Helper(IWebHostEnvironment en,
           <li>Or use the Forgot Password link below to set a new password immediately</li>
         </ol>
 
-        <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;'>
-          <a href='{resetPasswordUrl}' style='display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;'>
-            Reset Password Now
-          </a>
-        </div>
-
         <div style='background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px, margin: 30px 0 20px 0'>
           <p style='margin: 0; color: #721c24; font-size: 13px;'><strong>🔒 Security Reminder:</strong></p>
           <p style='margin: 5px 0 0 0; color: #721c24; font-size: 12px;'>Never share your password with anyone. If you did not expect this email, please contact the administrator immediately at {cf["Smtp:User"]}.</p>

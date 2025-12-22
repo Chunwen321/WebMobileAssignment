@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebMobileAssignment.Models;
+using WebMobileAssignment.Services;
 
 namespace WebMobileAssignment.Controllers
 {
@@ -10,11 +11,13 @@ namespace WebMobileAssignment.Controllers
     {
         private readonly DB _db;
         private readonly Helper _helper;
+        private readonly S3Service _s3Service;
 
-        public TeacherController(DB db, Helper helper)
+        public TeacherController(DB db, Helper helper, S3Service s3Service)
         {
             _db = db;
             _helper = helper;
+            _s3Service = s3Service;
         }
 
         // Helper method to get current teacher and set ViewBag
@@ -397,8 +400,9 @@ namespace WebMobileAssignment.Controllers
                 if (classObj == null)
                     return Unauthorized();
                 
-                // Find or create attendance record
+                // Find or create attendance record (no tracking for query)
                 var attendance = await _db.Attendances
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(a => a.StudentId == request.StudentId && 
                                               a.ClassId == request.ClassId && 
                                               a.Date.Date == date.Date);
@@ -409,23 +413,35 @@ namespace WebMobileAssignment.Controllers
                 
                 if (attendance == null)
                 {
+                    // Generate new AttendanceId
+                    var currentAttendanceCount = await _db.Attendances.CountAsync();
+                    var attId = $"ATT{(currentAttendanceCount + 1):D5}";
+                    
+                    // Create new attendance record
                     attendance = new Attendance
                     {
+                        AttendanceId = attId,
                         StudentId = request.StudentId,
                         ClassId = request.ClassId,
                         Status = request.Status,
                         Date = date,
                         MarkedByTeacherId = teacher.TeacherId,
-                        TakenOn = DateTime.Now
+                        TakenOn = DateTime.Now,
+                        Flag = false,
+                        IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
                     };
                     _db.Attendances.Add(attendance);
                 }
                 else
                 {
+                    // Update existing attendance record
                     attendance.Status = request.Status;
                     attendance.MarkedByTeacherId = teacher.TeacherId;
                     attendance.TakenOn = DateTime.Now;
-                    _db.Attendances.Update(attendance);
+                    
+                    // Attach and mark as modified
+                    _db.Attendances.Attach(attendance);
+                    _db.Entry(attendance).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
                 }
                 
                 await _db.SaveChangesAsync();
@@ -488,8 +504,9 @@ namespace WebMobileAssignment.Controllers
                         continue;
                     }
 
-                    // Find or create attendance record
+                    // Find or create attendance record (no tracking)
                     var attendance = await _db.Attendances
+                        .AsNoTracking()
                         .FirstOrDefaultAsync(a => a.StudentId == att.StudentId && 
                                                   a.ClassId == request.ClassId && 
                                                   a.Date.Date == selectedDate.Date);
@@ -513,7 +530,9 @@ namespace WebMobileAssignment.Controllers
                             Status = att.Status,
                             Date = selectedDate,
                             MarkedByTeacherId = teacher.TeacherId,
-                            TakenOn = DateTime.Now
+                            TakenOn = DateTime.Now,
+                            Flag = false,
+                            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
                         };
                         _db.Attendances.Add(attendance);
                         markedCount++;
@@ -525,7 +544,10 @@ namespace WebMobileAssignment.Controllers
                             attendance.Status = att.Status;
                             attendance.MarkedByTeacherId = teacher.TeacherId;
                             attendance.TakenOn = DateTime.Now;
-                            _db.Attendances.Update(attendance);
+                            
+                            // Attach and mark as modified
+                            _db.Attendances.Attach(attendance);
+                            _db.Entry(attendance).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
                             markedCount++;
                         }
                     }
@@ -647,10 +669,14 @@ namespace WebMobileAssignment.Controllers
                 n.Description.ToLower().Contains("leave application") &&
                 n.Status == "unread");
 
+            // Count announcement notifications
+            var announcementCount = notifications.Count(n => n.Type == "Announcement" && n.Status == "unread");
+
             ViewBag.TotalNotifications = totalNotifications;
             ViewBag.UnreadCount = unreadCount;
             ViewBag.ReadCount = readCount;
             ViewBag.LeaveCount = leaveCount;
+            ViewBag.AnnouncementCount = announcementCount;
             ViewBag.Notifications = notifications;
 
             return View();
@@ -842,8 +868,17 @@ namespace WebMobileAssignment.Controllers
 
                 object details = null;
 
-                // Build details based on notification type and RelatedEntityId
-                if (!string.IsNullOrEmpty(notification.RelatedEntityId))
+                // Handle Announcement type separately as it doesn't need RelatedEntityId
+                if (notification.Type == "Announcement")
+                {
+                    details = new
+                    {
+                        message = notification.Description,
+                        sentBy = "Administrator",
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy HH:mm")
+                    };
+                }
+                else if (!string.IsNullOrEmpty(notification.RelatedEntityId))
                 {
                     switch (notification.Type)
                     {
@@ -1280,7 +1315,7 @@ namespace WebMobileAssignment.Controllers
             return View("TeachChangePassword");
         }
 
-        // Upload Profile Picture
+        // Upload Profile Picture to AWS S3
         [HttpPost]
         public async Task<IActionResult> UploadProfilePicture(IFormFile file)
         {
@@ -1292,10 +1327,11 @@ namespace WebMobileAssignment.Controllers
                 }
 
                 // Validate file type
-                var allowedMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
-                if (!allowedMimeTypes.Contains(file.ContentType.ToLower()))
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(extension))
                 {
-                    return Json(new { success = false, message = "Please upload a valid image file (JPEG, PNG, GIF, or WebP)." });
+                    return Json(new { success = false, message = "Invalid file type. Only JPG, PNG, GIF, and WEBP are allowed." });
                 }
 
                 // Validate file size (5MB max)
@@ -1317,30 +1353,32 @@ namespace WebMobileAssignment.Controllers
                     return Json(new { success = false, message = "User not found." });
                 }
 
-                // Create uploads directory if it doesn't exist
-                var uploadsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
-                Directory.CreateDirectory(uploadsDirectory);
-
-                // Generate unique filename
-                var fileName = $"{user.UserId}_{Guid.NewGuid()}_{file.FileName}";
-                var filePath = Path.Combine(uploadsDirectory, fileName);
-
-                // Save file
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                // Delete old profile picture from S3 if exists
+                if (!string.IsNullOrEmpty(user.ProfilePicture) && !user.ProfilePicture.StartsWith("/images/"))
                 {
-                    await file.CopyToAsync(stream);
+                    try
+                    {
+                        await _s3Service.DeleteFileAsync(user.ProfilePicture);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Warning: Failed to delete old profile picture: {ex.Message}");
+                    }
                 }
 
+                // Upload to AWS S3
+                var s3Url = await _s3Service.UploadFileAsync(file, user.UserId);
+
                 // Update user profile picture URL
-                user.ProfilePicture = $"/uploads/profiles/{fileName}";
+                user.ProfilePicture = s3Url;
                 _db.Users.Update(user);
                 await _db.SaveChangesAsync();
 
-                return Json(new { success = true, message = "Profile picture uploaded successfully.", pictureUrl = user.ProfilePicture });
+                return Json(new { success = true, message = "Profile picture uploaded successfully!", pictureUrl = s3Url });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+                return Json(new { success = false, message = $"Upload failed: {ex.Message}" });
             }
         }
 

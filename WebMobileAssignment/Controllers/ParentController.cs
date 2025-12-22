@@ -898,11 +898,15 @@ public async Task<IActionResult> GetStudentProfileContent(string studentId)
      n.Description.ToLower().Contains("late") || 
 n.Description.ToLower().Contains("absent") || 
                 n.Description.ToLower().Contains("warning"));
+
+            // Count announcement notifications
+            var announcementCount = notifications.Count(n => n.Type == "Announcement" && n.Status == "unread");
           
    ViewBag.TotalNotifications = totalNotifications;
             ViewBag.UnreadCount = unreadCount;
      ViewBag.ReadCount = readCount;
  ViewBag.WarningCount = warningCount;
+            ViewBag.AnnouncementCount = announcementCount;
             ViewBag.Notifications = notifications;
    
          return View();
@@ -1124,9 +1128,21 @@ n.Description.ToLower().Contains("absent") ||
                 // Build detailed data based on notification type - adapted for parent perspective
                 object detailData = null;
 
-                switch (notification.Type)
+                // Handle Announcement type separately as it doesn't need RelatedEntityId
+                if (notification.Type == "Announcement")
                 {
-                    case "Student Enrollment":
+                    detailData = new
+                    {
+                        message = notification.Description,
+                        sentBy = "Administrator",
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy hh:mm tt")
+                    };
+                }
+                else
+                {
+                    switch (notification.Type)
+                    {
+                        case "Student Enrollment":
                         if (!string.IsNullOrEmpty(notification.RelatedEntityId))
                         {
                             var classInfo = await _context.Classes
@@ -1305,6 +1321,7 @@ n.Description.ToLower().Contains("absent") ||
                             }
                         }
                         break;
+                }
                 }
 
                 return Json(new

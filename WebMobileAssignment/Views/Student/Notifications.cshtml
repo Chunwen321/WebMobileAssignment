@@ -10,6 +10,7 @@
     var unreadCount = ViewBag.UnreadCount ?? 0;
     var readCount = ViewBag.ReadCount ?? 0;
     var importantCount = ViewBag.ImportantCount ?? 0;
+    var announcementCount = ViewBag.AnnouncementCount ?? 0;
 }
 
 <form method="post" id="notificationForm">
@@ -49,12 +50,12 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: #198754;">
-            <div class="stat-label">Completed</div>
-            <div class="stat-value">@readCount</div>
-            <div class="stat-change positive">
-                <i class="bi bi-check-circle-fill"></i>
-                <span>Read & acknowledged</span>
+        <div class="stat-card" style="border-left-color: #d63384;">
+            <div class="stat-label">Announcements</div>
+            <div class="stat-value">@announcementCount</div>
+            <div class="stat-change">
+                <i class="bi bi-megaphone-fill"></i>
+                <span>Unread announcements</span>
             </div>
         </div>
     </div>
@@ -84,6 +85,29 @@
         </div>
     </div>
 </div>
+    <div class="card-header-custom">
+        <div>
+            <h3 class="card-title">
+                <i class="bi bi-bell-fill"></i>
+                All Notifications
+            </h3>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            @if (unreadCount > 0)
+            {
+                <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
+                    <i class="bi bi-check-all me-2"></i>Mark All as Read
+                </button>
+            }
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteAllRead()">
+                <i class="bi bi-trash me-2"></i>Clear Read
+            </button>
+            <div class="input-group input-group-sm" style="max-width: 250px;">
+                <input type="text" class="form-control" id="searchInput" placeholder="Search notifications..." onkeyup="filterNotifications()">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+            </div>
+        </div>
+    </div>
 
     <!-- Filter Tabs -->
     <ul class="nav nav-tabs" role="tablist" style="border-bottom: 1px solid var(--border-color); padding: 0 1rem;">
@@ -97,6 +121,12 @@
             <button class="nav-link" id="unread-tab" data-bs-toggle="tab" data-bs-target="#unread" type="button" role="tab" aria-controls="unread" aria-selected="false" onclick="filterByType('unread')">
                 <i class="bi bi-envelope-fill me-1"></i>Unread
                 <span class="badge bg-danger ms-2">@unreadCount</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="announcements-tab" data-bs-toggle="tab" data-bs-target="#announcements" type="button" role="tab" aria-controls="announcements" aria-selected="false" onclick="filterByType('announcements')">
+                <i class="bi bi-megaphone-fill me-1"></i>Announcements
+                <span class="badge bg-danger ms-2">@announcementCount</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -115,16 +145,17 @@
     <!-- Notifications List -->
     <div class="tab-content">
         <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
-            @if (notifications.Any())
+            @if (notifications.Any(n => n.Type != "Announcement"))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications)
+                    @foreach (var notification in notifications.Where(n => n.Type != "Announcement"))
                     {
                         var isUnread = notification.Status == "unread";
                         var isImportant = notification.Description.ToLower().Contains("class") ||
                                         notification.Description.ToLower().Contains("enrollment") ||
                                         notification.Description.ToLower().Contains("leave");
-                        var isSystem = notification.Description.ToLower().Contains("system") ||
+                        var isSystem = notification.Type == "Announcement" ||
+                                     notification.Description.ToLower().Contains("system") ||
                                      notification.Description.ToLower().Contains("update") ||
                                      notification.Description.ToLower().Contains("maintenance");
 
@@ -172,15 +203,16 @@
         </div>
 
         <div class="tab-pane fade" id="unread" role="tabpanel" aria-labelledby="unread-tab">
-            @if (notifications.Any(n => n.Status == "unread"))
+            @if (notifications.Any(n => n.Status == "unread" && n.Type != "Announcement"))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Status == "unread"))
+                    @foreach (var notification in notifications.Where(n => n.Status == "unread" && n.Type != "Announcement"))
                     {
                         var isImportant = notification.Description.ToLower().Contains("class") ||
                                         notification.Description.ToLower().Contains("enrollment") ||
                                         notification.Description.ToLower().Contains("leave");
-                        var isSystem = notification.Description.ToLower().Contains("system") ||
+                        var isSystem = notification.Type == "Announcement" ||
+                                     notification.Description.ToLower().Contains("system") ||
                                      notification.Description.ToLower().Contains("update");
                         var iconClass = isImportant ? "bi-star-fill" : (isSystem ? "bi-info-circle-fill" : "bi-bell-fill");
                         var iconType = isImportant ? "warning" : (isSystem ? "primary" : "success");
@@ -216,6 +248,71 @@
                 <div class="text-center py-5">
                     <i class="bi bi-check-circle" style="font-size: 3rem; color: #ccc;"></i>
                     <p class="text-muted mt-3">All caught up! No unread notifications</p>
+                </div>
+            }
+        </div>
+
+        <div class="tab-pane fade" id="announcements" role="tabpanel" aria-labelledby="announcements-tab">
+            @if (notifications.Any(n => n.Type == "Announcement"))
+            {
+                <div class="notifications-container">
+                    @foreach (var notification in notifications.Where(n => n.Type == "Announcement"))
+                    {
+                        var isUnread = notification.Status == "unread";
+                        var timeAgo = GetTimeAgo(notification.CreatedDate);
+
+                        <div class="notification-item notification-record type-system @(isUnread ? "unread" : "read")" 
+                             data-type="announcement" 
+                             data-status="@(isUnread ? "unread" : "read")"
+                             data-notification-id="@notification.NotificationId"
+                             style="cursor: pointer;"
+                             onclick="showNotificationDetails('@notification.NotificationId')">
+                            <div class="notification-header">
+                                <div class="d-flex align-items-center gap-2 w-100">
+                                    <div class="notification-icon danger flex-shrink-0">
+                                        <i class="bi bi-megaphone-fill"></i>
+                                    </div>
+                                    <div class="flex-grow-1 notification-content">
+                                        <div class="d-flex justify-content-between align-items-start gap-2">
+                                            <div>
+                                                <h6 class="mb-1">System Announcement</h6>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock me-1"></i>@timeAgo
+                                                </small>
+                                            </div>
+                                            @if (isUnread)
+                                            {
+                                                <span class="badge bg-danger flex-shrink-0">Unread</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notification-body">
+                                <p class="mb-2 notification-description">@notification.Description</p>
+                            </div>
+                            <div class="notification-footer">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @if (isUnread)
+                                    {
+                                        <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); markAsRead('@notification.NotificationId')">
+                                            <i class="bi bi-check me-1"></i>Mark as Read
+                                        </button>
+                                    }
+                                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteNotification('@notification.NotificationId')">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-megaphone-slash" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No system announcements</p>
                 </div>
             }
         </div>
@@ -271,16 +368,19 @@
         </div>
 
         <div class="tab-pane fade" id="system" role="tabpanel" aria-labelledby="system-tab">
-            @if (notifications.Any(n => n.Description.ToLower().Contains("system") || 
+            @if (notifications.Any(n => n.Type == "Announcement" ||
+                                        n.Description.ToLower().Contains("system") || 
                                         n.Description.ToLower().Contains("update") || 
                                         n.Description.ToLower().Contains("maintenance")))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Description.ToLower().Contains("system") || 
+                    @foreach (var notification in notifications.Where(n => n.Type == "Announcement" ||
+                                                                           n.Description.ToLower().Contains("system") || 
                                                                            n.Description.ToLower().Contains("update") || 
                                                                            n.Description.ToLower().Contains("maintenance")))
                     {
                         var isUnread = notification.Status == "unread";
+                        var isAnnouncement = notification.Type == "Announcement";
                         var timeAgo = GetTimeAgo(notification.CreatedDate);
 
                         <div class="notification-item type-system notification-record @(isUnread ? "unread" : "read")" 
@@ -291,8 +391,8 @@
                              style="cursor: pointer;">
                             <div class="notification-header">
                                 <div class="d-flex align-items-center gap-2 w-100">
-                                    <div class="notification-icon primary flex-shrink-0">
-                                        <i class="bi bi-info-circle-fill"></i>
+                                    <div class="notification-icon @(isAnnouncement ? "danger" : "primary") flex-shrink-0">
+                                        <i class="bi @(isAnnouncement ? "bi-megaphone-fill" : "bi-info-circle-fill")"></i>
                                     </div>
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">@GetNotificationTitle(notification.Description)</h6>
@@ -576,6 +676,9 @@
             case 'Low Attendance Warning':
                 html += buildAttendanceDetails(details);
                 break;
+            case 'Announcement':
+                html += buildAnnouncementDetails(details, notification);
+                break;
             default:
                 html += '<p class="text-muted">No additional details available.</p>';
         }
@@ -656,6 +759,29 @@
         html += '<div class="col-4"><div class="p-3 bg-white rounded"><div class="fs-2 fw-bold text-danger">' + details.absentCount + '</div><small class="text-muted">Absent</small></div></div>';
         html += '</div>';
         html += '</div></div>';
+        return html;
+    }
+
+    function buildAnnouncementDetails(details, notification) {
+        let html = '<div class="announcement-details">';
+        html += '<div class="d-flex align-items-center mb-3">';
+        html += '<div class="notification-icon danger me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">';
+        html += '<i class="bi bi-megaphone-fill" style="font-size: 1.5rem;"></i>';
+        html += '</div>';
+        html += '<div>';
+        html += '<h5 class="mb-0 text-danger">System Announcement</h5>';
+        html += '<small class="text-muted"><i class="bi bi-person-circle me-1"></i>' + details.sentBy + '</small>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="card border-0 bg-light">';
+        html += '<div class="card-body">';
+        html += '<p class="mb-0" style="white-space: pre-wrap; line-height: 1.6;">' + details.message + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="mt-3">';
+        html += '<small class="text-muted"><i class="bi bi-calendar-event me-1"></i>Sent on: ' + details.createdDate + '</small>';
+        html += '</div>';
+        html += '</div>';
         return html;
     }
 </script>

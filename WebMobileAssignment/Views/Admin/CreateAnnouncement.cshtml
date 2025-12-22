@@ -1,0 +1,332 @@
+@{
+    ViewData["Title"] = ViewBag.Title ?? "Create Announcement";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-megaphone-fill"></i> Create Announcement</h5>
+            <a asp-action="Notifications" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Notifications
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>@TempData["ErrorMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="p-4 rounded shadow-sm">
+            <form asp-action="CreateAnnouncement" method="post" id="announcementForm">
+                @Html.AntiForgeryToken()
+                
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Error!</strong> Please correct the following errors:
+                        <ul class="mb-0 mt-2">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <!-- Recipients Section -->
+                <h6 class="text-danger mb-3 border-bottom pb-2">
+                    <i class="bi bi-people-fill me-2"></i>Recipients
+                </h6>
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <label class="form-label">
+                            Send To <span class="text-danger">*</span>
+                        </label>
+                        <div class="border rounded p-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="recipientAll" name="recipientTypes" value="all">
+                                <label class="form-check-label fw-bold" for="recipientAll">
+                                    All Users (Students, Teachers, Parents)
+                                </label>
+                            </div>
+                            <hr class="my-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="recipientStudent" name="recipientTypes" value="Student">
+                                <label class="form-check-label" for="recipientStudent">
+                                    All Students
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="recipientTeacher" name="recipientTypes" value="Teacher">
+                                <label class="form-check-label" for="recipientTeacher">
+                                    All Teachers
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="recipientParent" name="recipientTypes" value="Parent">
+                                <label class="form-check-label" for="recipientParent">
+                                    All Parents
+                                </label>
+                            </div>
+                            <hr class="my-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="recipientSpecific" name="recipientTypes" value="specific">
+                                <label class="form-check-label fw-bold" for="recipientSpecific">
+                                    Specific Users (Select individual users)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specific Users Selection (Hidden by default) -->
+                <div id="specificUsersSection" style="display: none;">
+                    <h6 class="text-danger mb-3 border-bottom pb-2">
+                        <i class="bi bi-person-check-fill me-2"></i>Select Specific Users
+                    </h6>
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                                <div class="mb-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllUsers">
+                                        <i class="bi bi-check-all"></i> Select All
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="clearAllUsers">
+                                        <i class="bi bi-x"></i> Clear All
+                                    </button>
+                                </div>
+                                <hr class="my-2">
+                                @{
+                                    var usersList = ViewBag.Users as List<WebMobileAssignment.Models.User>;
+                                    if (usersList != null)
+                                    {
+                                        var groupedUsers = usersList.GroupBy(u => u.UserType);
+                                        foreach (var group in groupedUsers)
+                                        {
+                                            <div class="mb-3">
+                                                <h6 class="text-primary mb-2">@group.Key</h6>
+                                                @foreach (var user in group)
+                                                {
+                                                    <div class="form-check">
+                                                        <input class="form-check-input specific-user-checkbox" 
+                                                               type="checkbox" 
+                                                               id="user_@user.UserId" 
+                                                               name="specificUserIds" 
+                                                               value="@user.UserId">
+                                                        <label class="form-check-label" for="user_@user.UserId">
+                                                            @user.FullName <span class="text-muted">(@user.Email)</span>
+                                                        </label>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                            <div class="form-text mt-2">
+                                <i class="bi bi-info-circle"></i> <span id="selectedUserCount">0</span> user(s) selected
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message Section -->
+                <h6 class="text-danger mb-3 border-bottom pb-2">
+                    <i class="bi bi-chat-text me-2"></i>Announcement Message
+                </h6>
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <label for="description" class="form-label">
+                            Message <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" 
+                                  id="description" 
+                                  name="description" 
+                                  rows="6" 
+                                  required 
+                                  maxlength="500"
+                                  placeholder="Enter your announcement message here... (Max 500 characters)"></textarea>
+                        <div class="form-text">
+                            <span id="charCount">0</span> / 500 characters
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Section -->
+                <div class="border rounded p-3 mb-3" id="previewSection" style="background-color: rgba(220, 53, 69, 0.1); border-color: #dc3545 !important;">
+                    <h6 class="mb-2 text-danger">
+                        <i class="bi bi-eye-fill me-2"></i>Preview
+                    </h6>
+                    <p class="mb-1"><strong>To:</strong> <span id="previewRecipient">No recipients selected</span></p>
+                    <p class="mb-0"><strong>Message:</strong> <span id="previewMessage">Start typing your message...</span></p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-send-fill me-2"></i>Send Announcement
+                    </button>
+                    <a asp-action="Notifications" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Handle recipient type checkbox changes
+            $('input[name="recipientTypes"]').change(function () {
+                const isSpecificChecked = $('#recipientSpecific').is(':checked');
+                const isAllChecked = $('#recipientAll').is(':checked');
+                
+                // If "All Users" is checked, uncheck individual types
+                if ($(this).attr('id') === 'recipientAll' && isAllChecked) {
+                    $('#recipientStudent, #recipientTeacher, #recipientParent').prop('checked', false);
+                }
+                
+                // If any individual type is checked, uncheck "All Users"
+                if ($(this).attr('id') !== 'recipientAll' && $(this).attr('id') !== 'recipientSpecific' && $(this).is(':checked')) {
+                    $('#recipientAll').prop('checked', false);
+                }
+                
+                // Show/hide specific users section
+                if (isSpecificChecked) {
+                    $('#specificUsersSection').slideDown();
+                } else {
+                    $('#specificUsersSection').slideUp();
+                    $('.specific-user-checkbox').prop('checked', false);
+                    updateSelectedUserCount();
+                }
+            });
+
+            // Select all users button
+            $('#selectAllUsers').click(function () {
+                $('.specific-user-checkbox').prop('checked', true);
+                updateSelectedUserCount();
+            });
+
+            // Clear all users button
+            $('#clearAllUsers').click(function () {
+                $('.specific-user-checkbox').prop('checked', false);
+                updateSelectedUserCount();
+            });
+
+            // Update selected user count
+            $('.specific-user-checkbox').change(function () {
+                updateSelectedUserCount();
+            });
+
+            function updateSelectedUserCount() {
+                const count = $('.specific-user-checkbox:checked').length;
+                $('#selectedUserCount').text(count);
+            }
+
+            // Character counter and real-time preview
+            $('#description').on('input', function () {
+                const charCount = $(this).val().length;
+                $('#charCount').text(charCount);
+                
+                if (charCount > 500) {
+                    $('#charCount').addClass('text-danger fw-bold');
+                } else if (charCount > 450) {
+                    $('#charCount').addClass('text-warning').removeClass('text-danger fw-bold');
+                } else {
+                    $('#charCount').removeClass('text-danger text-warning fw-bold');
+                }
+                
+                // Update preview in real-time
+                updatePreview();
+            });
+
+            // Real-time preview when recipient checkboxes change
+            $('input[name="recipientTypes"], .specific-user-checkbox').change(function () {
+                updatePreview();
+            });
+
+            // Update preview function
+            function updatePreview() {
+                const description = $('#description').val();
+                const recipientText = getRecipientDescription();
+
+                $('#previewRecipient').text(recipientText);
+                $('#previewMessage').text(description || 'Start typing your message...');
+            }
+
+            function getRecipientDescription() {
+                const selectedTypes = [];
+                
+                if ($('#recipientAll').is(':checked')) {
+                    return 'All Users (Students, Teachers, Parents)';
+                }
+                
+                if ($('#recipientStudent').is(':checked')) selectedTypes.push('Students');
+                if ($('#recipientTeacher').is(':checked')) selectedTypes.push('Teachers');
+                if ($('#recipientParent').is(':checked')) selectedTypes.push('Parents');
+                
+                let description = '';
+                if (selectedTypes.length > 0) {
+                    description = selectedTypes.join(' & ');
+                }
+                
+                if ($('#recipientSpecific').is(':checked')) {
+                    const specificCount = $('.specific-user-checkbox:checked').length;
+                    if (specificCount > 0) {
+                        if (description) {
+                            description += ' + ';
+                        }
+                        description += `${specificCount} Specific User(s)`;
+                    }
+                }
+                
+                return description || 'No recipients selected';
+            }
+
+            // Form validation
+            $('#announcementForm').submit(function (e) {
+                const description = $('#description').val().trim();
+                const anyRecipientSelected = $('input[name="recipientTypes"]:checked').length > 0;
+
+                if (!anyRecipientSelected) {
+                    e.preventDefault();
+                    alert('Please select at least one recipient option.');
+                    return false;
+                }
+
+                if (!description) {
+                    e.preventDefault();
+                    alert('Please enter an announcement message.');
+                    return false;
+                }
+
+                // If specific users is checked, validate at least one user is selected
+                if ($('#recipientSpecific').is(':checked')) {
+                    const specificUsersCount = $('.specific-user-checkbox:checked').length;
+                    if (specificUsersCount === 0) {
+                        e.preventDefault();
+                        alert('Please select at least one specific user.');
+                        return false;
+                    }
+                }
+
+                // Confirm before sending
+                const recipientDesc = getRecipientDescription();
+                const confirmMsg = `Are you sure you want to send this announcement to:\n${recipientDesc}?`;
+                return confirm(confirmMsg);
+            });
+        });
+    </script>
+}

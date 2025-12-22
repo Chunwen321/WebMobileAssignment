@@ -604,6 +604,29 @@ small {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+/* Profile Info Items */
+.profile-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.profile-info-item:last-child {
+    border-bottom: none;
+}
+
+.profile-info-item i {
+    font-size: 1.1rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.profile-info-item > div {
+    flex: 1;
+}
+
 .card-header-custom {
     display: flex;
     align-items: center;

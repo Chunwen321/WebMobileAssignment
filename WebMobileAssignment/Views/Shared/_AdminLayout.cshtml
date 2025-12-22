@@ -1,6 +1,5 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
-@inject WebMobileAssignment.Services.LocalizationService Localization
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
     <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -17,7 +17,7 @@
         <div class="sidebar-header">
             <div class="sidebar-brand">
                 <i class="bi bi-calendar-check-fill"></i>
-                <span>@Localization["AdminPortal"]</span>
+                <span>Admin Portal</span>
             </div>
         </div>
 
@@ -27,7 +27,7 @@
                class="sidebar-item @(ViewBag.ActiveMenu == "Dashboard" ? "active" : "")">
                 <div class="sidebar-item-content">
                     <i class="bi bi-house-door-fill"></i>
-                    <span>@Localization["Dashboard"]</span>
+                    <span>Dashboard</span>
                 </div>
             </a>
 
@@ -36,7 +36,7 @@
                class="sidebar-item @(ViewBag.ActiveMenu == "StudentManagement" ? "active" : "")">
                 <div class="sidebar-item-content">
                     <i class="bi bi-person-badge-fill"></i>
-                    <span>@Localization["StudentManagement"]</span>
+                    <span>Student Management</span>
                 </div>
             </a>
 
@@ -45,7 +45,7 @@
                class="sidebar-item @(ViewBag.ActiveMenu == "TeacherManagement" ? "active" : "")">
                 <div class="sidebar-item-content">
                     <i class="bi bi-person-workspace"></i>
-                    <span>@Localization["TeacherManagement"]</span>
+                    <span>Teacher Management</span>
                 </div>
             </a>
 
@@ -54,7 +54,7 @@
                class="sidebar-item @(ViewBag.ActiveMenu == "ParentManagement" ? "active" : "")">
                 <div class="sidebar-item-content">
                     <i class="bi bi-people-fill"></i>
-                    <span>@Localization["ParentManagement"]</span>
+                    <span>Parent Management</span>
                 </div>
             </a>
 
@@ -64,7 +64,7 @@
                         type="button" data-bs-toggle="collapse" data-bs-target="#classMenu">
                     <div class="sidebar-item-content">
                         <i class="bi bi-book-fill"></i>
-                        <span>@Localization["ClassManagement"]</span>
+                        <span>Class Management</span>
                     </div>
                     <i class="bi bi-chevron-down"></i>
                 </button>
@@ -72,17 +72,17 @@
                     <a asp-controller="Admin" asp-action="ClassIndex"
                        class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Classes" ? "active" : "")">
                         <i class="bi bi-list-check"></i>
-                        <span>@Localization["ManageClasses"]</span>
+                        <span>Manage Classes</span>
                     </a>
                     <a asp-controller="Admin" asp-action="SubjectIndex"
                        class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Subjects" ? "active" : "")">
                         <i class="bi bi-journals"></i>
-                        <span>@Localization["ManageSubjects"]</span>
+                        <span>Manage Subjects</span>
                     </a>
                     <a asp-controller="Admin" asp-action="ScheduleIndex"
                        class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Schedule" ? "active" : "")">
                         <i class="bi bi-calendar-week-fill"></i>
-                        <span>@Localization["ClassSchedule"]</span>
+                        <span>Class Schedule</span>
                     </a>
                 </div>
             </div>
@@ -93,7 +93,7 @@
                         type="button" data-bs-toggle="collapse" data-bs-target="#attendanceMenu">
                     <div class="sidebar-item-content">
                         <i class="bi bi-clipboard-check-fill"></i>
-                        <span>@Localization["Attendance"]</span>
+                        <span>Attendance</span>
                     </div>
                     <i class="bi bi-chevron-down"></i>
                 </button>
@@ -101,12 +101,12 @@
                     <a asp-controller="Admin" asp-action="AttendanceTake"
                        class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Take" ? "active" : "")">
                         <i class="bi bi-qr-code-scan"></i>
-                        <span>@Localization["TakeAttendance"]</span>
+                        <span>Take Attendance</span>
                     </a>
                     <a asp-controller="Admin" asp-action="AttendanceRecords"
                        class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Records" ? "active" : "")">
                         <i class="bi bi-journal-text"></i>
-                        <span>@Localization["ViewRecords"]</span>
+                        <span>View Records</span>
                     </a>
                 </div>
             </div>
@@ -116,25 +116,41 @@
                class="sidebar-item @(ViewBag.ActiveMenu == "LeaveManagement" ? "active" : "")">
                 <div class="sidebar-item-content">
                     <i class="bi bi-calendar-x"></i>
-                    <span>@Localization["LeaveManagement"]</span>
+                    <span>Leave Management</span>
                 </div>
             </a>
 
-            <!-- Notifications -->
-            <a asp-controller="Admin" asp-action="Notifications"
-               class="sidebar-item @(ViewBag.ActiveMenu == "Notifications" ? "active" : "")">
-                <div class="sidebar-item-content">
-                    <i class="bi bi-bell-fill"></i>
-                    <span>@Localization["Notifications"]</span>
+            <!-- Notifications Dropdown -->
+            <div class="sidebar-dropdown">
+                <button class="sidebar-item dropdown-toggle @(ViewBag.ActiveMenu == "Notifications" ? "active" : "")"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#notificationsMenu">
+                    <div class="sidebar-item-content">
+                        <i class="bi bi-bell-fill"></i>
+                        <span>Notifications</span>
+                    </div>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse @(ViewBag.ActiveMenu == "Notifications" ? "show" : "")" id="notificationsMenu">
+                    <a asp-controller="Admin" asp-action="Notifications"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Notifications" ? "active" : "")">
+                        <i class="bi bi-bell"></i>
+                        <span>Notifications</span>
+                        <span class="badge bg-danger ms-auto" id="sidebarNotificationBadge">0</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="CreateAnnouncement"
+                       class="sidebar-subitem @(ViewBag.ActiveSubmenu == "CreateAnnouncement" ? "active" : "")">
+                        <i class="bi bi-megaphone-fill"></i>
+                        <span>Create Announcement</span>
+                    </a>
                 </div>
-            </a>
+            </div>
 
             <!-- Reports -->
             <a asp-controller="Admin" asp-action="Reports"
                class="sidebar-item @(ViewBag.ActiveMenu == "Reports" ? "active" : "")">
                 <div class="sidebar-item-content">
                     <i class="bi bi-file-earmark-pdf-fill"></i>
-                    <span>@Localization["ReportsAndAnalytics"]</span>
+                    <span>Reports And Analytics</span>
                 </div>
             </a>
 
@@ -144,7 +160,7 @@
                         type="button" data-bs-toggle="collapse" data-bs-target="#settingsMenu">
                     <div class="sidebar-item-content">
                         <i class="bi bi-gear-fill"></i>
-                        <span>@Localization["Settings"]</span>
+                        <span>Settings</span>
                     </div>
                     <i class="bi bi-chevron-down"></i>
                 </button>
@@ -152,12 +168,12 @@
                     <a asp-controller="Admin" asp-action="Settings"
                        class="sidebar-subitem @(ViewBag.ActiveSubmenu == "Settings" ? "active" : "")">
                         <i class="bi bi-sliders"></i>
-                        <span>@Localization["Settings"]</span>
+                        <span>Settings</span>
                     </a>
                     <a asp-controller="Admin" asp-action="ChangePassword"
                        class="sidebar-subitem @(ViewBag.ActiveSubmenu == "ChangePassword" ? "active" : "")">
                         <i class="bi bi-key-fill"></i>
-                        <span>@Localization["ChangePassword"]</span>
+                        <span>Change Password</span>
                     </a>
                 </div>
             </div>
@@ -171,10 +187,10 @@
                 </div>
                 <div class="user-details">
                     <div class="user-name">Admin</div>
-                    <div class="user-role">@Localization["Administrator"]</div>
+                    <div class="user-role">Administrator</div>
                 </div>
             </div>
-            <a href="javascript:void(0);" class="logout-btn" title="@Localization["Logout"]" onclick="if(confirm('@Localization["AreYouSure"]')) window.location='/Account/Login';">
+            <a href="javascript:void(0);" class="logout-btn" title="Logout" onclick="if(confirm('Are you sure?')) window.location='/Account/Login';">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </div>
@@ -191,11 +207,10 @@
                 <h1>@ViewBag.Title</h1>
             </div>
             <div class="topbar-actions">
-                @await Html.PartialAsync("_LanguageSwitcher")
-                <button class="topbar-btn" id="darkModeToggle" title="@Localization["ToggleDarkMode"]">
+                <button class="topbar-btn" id="darkModeToggle" title="Toggle Dark Mode">
                     <i class="bi bi-moon-fill" id="darkModeIcon"></i>
                 </button>
-                <a href="@Url.Action("Notifications", "Admin")" class="topbar-btn" title="@Localization["Notifications"]">
+                <a href="@Url.Action("Notifications", "Admin")" class="topbar-btn" title="Notifications">
                     <i class="bi bi-bell-fill"></i>
                     <span class="badge" id="notificationBadge">0</span>
                 </a>
@@ -213,6 +228,9 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script src="~/js/image-cropper.js" asp-append-version="true"></script>
+    <script src="~/js/webcam-capture.js" asp-append-version="true"></script>
     <script src="~/js/admin.js" asp-append-version="true"></script>
     <script>
         // Load notification count on page load
@@ -228,59 +246,17 @@
                 type: 'GET',
                 success: function(response) {
                     if (response.success && response.count > 0) {
+                        // Update top bar badge
                         $('#notificationBadge').text(response.count).show();
+                        // Update sidebar badge
+                        $('#sidebarNotificationBadge').text(response.count).show();
                     } else {
                         $('#notificationBadge').text('0').hide();
+                        $('#sidebarNotificationBadge').text('0').hide();
                     }
                 },
                 error: function() {
                     console.log('Failed to load notification count');
-                }
-            });
-        }
-
-        // Auto-translate function
-        function autoTranslate(targetLang) {
-            if (!confirm('This will auto-generate translations for ' + targetLang + '. Continue?\n\nNote: This may take 1-2 minutes as it translates all keys one by one.')) {
-                return;
-            }
-            
-            var abortController = new AbortController();
-            var timeoutId = setTimeout(() => abortController.abort(), 300000); // 5 minute timeout
-            
-            fetch('/Admin/AutoTranslate?targetLang=' + targetLang, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                signal: abortController.signal
-            })
-            .then(response => {
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error('HTTP error ' + response.status + ': ' + response.statusText);
-                }
-                return response.json();
-            })
-            .then(data => {
-                clearTimeout(timeoutId);
-                console.log('Translation response:', data);
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert('Error: ' + (data.message || 'Failed to generate translations'));
-                }
-            })
-            .catch(error => {
-                clearTimeout(timeoutId);
-                console.error('Auto-translate error details:', error);
-                console.error('Error name:', error.name);
-                console.error('Error message:', error.message);
-                if (error.name === 'AbortError') {
-                    alert('Translation request timed out. Please try again.');
-                } else {
-                    alert('Error: ' + error.message + '\n\nPlease check the browser console (F12) for more details.');
                 }
             });
         }

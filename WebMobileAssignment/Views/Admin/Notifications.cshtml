@@ -57,6 +57,7 @@
     var unreadCount = ViewBag.UnreadCount ?? 0;
     var readCount = ViewBag.ReadCount ?? 0;
     var leaveCount = ViewBag.LeaveCount ?? 0;
+    var announcementCount = ViewBag.AnnouncementCount ?? 0;
 }
 
 <form method="post" id="notificationForm">
@@ -96,12 +97,12 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: #198754;">
-            <div class="stat-label">Completed</div>
-            <div class="stat-value">@readCount</div>
-            <div class="stat-change positive">
-                <i class="bi bi-check-circle-fill"></i>
-                <span>Read & acknowledged</span>
+        <div class="stat-card" style="border-left-color: #d63384;">
+            <div class="stat-label">System Announcements</div>
+            <div class="stat-value">@announcementCount</div>
+            <div class="stat-change">
+                <i class="bi bi-megaphone-fill"></i>
+                <span>Unread announcements</span>
             </div>
         </div>
     </div>
@@ -116,6 +117,9 @@
             </h3>
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
+            <a asp-action="CreateAnnouncement" class="btn btn-sm btn-danger">
+                <i class="bi bi-megaphone-fill me-2"></i>Create Announcement
+            </a>
             @if (unreadCount > 0)
             {
                 <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
@@ -147,14 +151,15 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="leave-tab" data-bs-toggle="tab" data-bs-target="#leave" type="button" role="tab" aria-controls="leave" aria-selected="false" onclick="filterByType('leave')">
-                <i class="bi bi-calendar-x me-1"></i>Leave Applications
-                <span class="badge bg-warning text-dark ms-2">@leaveCount</span>
+            <button class="nav-link" id="announcements-tab" data-bs-toggle="tab" data-bs-target="#announcements" type="button" role="tab" aria-controls="announcements" aria-selected="false" onclick="filterByType('announcements')">
+                <i class="bi bi-megaphone-fill me-1"></i>Announcements
+                <span class="badge bg-danger ms-2">@announcementCount</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab" aria-controls="system" aria-selected="false" onclick="filterByType('system')">
-                <i class="bi bi-info-circle me-1"></i>System
+            <button class="nav-link" id="leave-tab" data-bs-toggle="tab" data-bs-target="#leave" type="button" role="tab" aria-controls="leave" aria-selected="false" onclick="filterByType('leave')">
+                <i class="bi bi-calendar-x me-1"></i>Leave Applications
+                <span class="badge bg-warning text-dark ms-2">@leaveCount</span>
             </button>
         </li>
     </ul>
@@ -162,14 +167,15 @@
     <!-- Notifications List -->
     <div class="tab-content">
         <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
-            @if (notifications.Any())
+            @if (notifications.Any(n => n.Type != "Announcement"))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications)
+                    @foreach (var notification in notifications.Where(n => n.Type != "Announcement"))
                     {
                         var isUnread = notification.Status == "unread";
                         var isLeave = notification.Description.ToLower().Contains("leave application");
-                        var isSystem = notification.Description.ToLower().Contains("system") || 
+                        var isSystem = notification.Type == "Announcement" || 
+                                       notification.Description.ToLower().Contains("system") || 
                                        notification.Description.ToLower().Contains("update");
 
                         var iconClass = isLeave ? "bi-calendar-x" : (isSystem ? "bi-info-circle-fill" : "bi-bell-fill");
@@ -239,13 +245,14 @@
         </div>
 
         <div class="tab-pane fade" id="unread" role="tabpanel" aria-labelledby="unread-tab">
-            @if (notifications.Any(n => n.Status == "unread"))
+            @if (notifications.Any(n => n.Status == "unread" && n.Type != "Announcement"))
             {
                 <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Status == "unread"))
+                    @foreach (var notification in notifications.Where(n => n.Status == "unread" && n.Type != "Announcement"))
                     {
                         var isLeave = notification.Description.ToLower().Contains("leave application");
-                        var isSystem = notification.Description.ToLower().Contains("system") || 
+                        var isSystem = notification.Type == "Announcement" || 
+                                       notification.Description.ToLower().Contains("system") || 
                                        notification.Description.ToLower().Contains("update");
                         var iconClass = isLeave ? "bi-calendar-x" : (isSystem ? "bi-info-circle-fill" : "bi-bell-fill");
                         var iconType = isLeave ? "warning" : (isSystem ? "primary" : "success");
@@ -292,6 +299,71 @@
                 <div class="text-center py-5">
                     <i class="bi bi-check-circle" style="font-size: 3rem; color: #ccc;"></i>
                     <p class="text-muted mt-3">All caught up! No unread notifications</p>
+                </div>
+            }
+        </div>
+
+        <div class="tab-pane fade" id="announcements" role="tabpanel" aria-labelledby="announcements-tab">
+            @if (notifications.Any(n => n.Type == "Announcement"))
+            {
+                <div class="notifications-container">
+                    @foreach (var notification in notifications.Where(n => n.Type == "Announcement"))
+                    {
+                        var isUnread = notification.Status == "unread";
+                        var timeAgo = GetTimeAgo(notification.CreatedDate);
+
+                        <div class="notification-item notification-record type-system @(isUnread ? "unread" : "read")" 
+                             data-type="announcement" 
+                             data-status="@(isUnread ? "unread" : "read")"
+                             data-notification-id="@notification.NotificationId"
+                             style="cursor: pointer;"
+                             onclick="showNotificationDetails('@notification.NotificationId')">
+                            <div class="notification-header">
+                                <div class="d-flex align-items-center gap-2 w-100">
+                                    <div class="notification-icon danger flex-shrink-0">
+                                        <i class="bi bi-megaphone-fill"></i>
+                                    </div>
+                                    <div class="flex-grow-1 notification-content">
+                                        <div class="d-flex justify-content-between align-items-start gap-2">
+                                            <div>
+                                                <h6 class="mb-1">System Announcement</h6>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock me-1"></i>@timeAgo
+                                                </small>
+                                            </div>
+                                            @if (isUnread)
+                                            {
+                                                <span class="badge bg-danger flex-shrink-0">Unread</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notification-body">
+                                <p class="mb-2 notification-description">@notification.Description</p>
+                            </div>
+                            <div class="notification-footer">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @if (isUnread)
+                                    {
+                                        <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); markAsRead('@notification.NotificationId')">
+                                            <i class="bi bi-check me-1"></i>Mark as Read
+                                        </button>
+                                    }
+                                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteNotification('@notification.NotificationId')">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-megaphone-slash" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No system announcements</p>
                 </div>
             }
         </div>
@@ -349,60 +421,6 @@
                 <div class="text-center py-5">
                     <i class="bi bi-calendar-check" style="font-size: 3rem; color: #ccc;"></i>
                     <p class="text-muted mt-3">No leave application notifications</p>
-                </div>
-            }
-        </div>
-
-        <div class="tab-pane fade" id="system" role="tabpanel" aria-labelledby="system-tab">
-            @if (notifications.Any(n => n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
-            {
-                <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
-                    {
-                        var isUnread = notification.Status == "unread";
-                        var timeAgo = GetTimeAgo(notification.CreatedDate);
-
-                        <div class="notification-item type-system @(isUnread ? "unread" : "read")">
-                            <div class="notification-header">
-                                <div class="d-flex align-items-center gap-2 w-100">
-                                    <div class="notification-icon primary">
-                                        <i class="bi bi-info-circle-fill"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-1">@GetNotificationTitle(notification.Description)</h6>
-                                        <small class="text-muted"><i class="bi bi-clock me-1"></i>@timeAgo</small>
-                                    </div>
-                                    @if (isUnread)
-                                    {
-                                        <span class="badge bg-danger">Unread</span>
-                                    }
-                                </div>
-                            </div>
-                            <div class="notification-body">
-                                <p class="mb-2">@notification.Description</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="d-flex gap-2 flex-wrap">
-                                    @if (isUnread)
-                                    {
-                                        <button class="btn btn-sm btn-outline-primary" onclick="markAsRead('@notification.NotificationId')">
-                                            <i class="bi bi-check me-1"></i>Mark as Read
-                                        </button>
-                                    }
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteNotification('@notification.NotificationId')">
-                                        <i class="bi bi-trash me-1"></i>Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="text-center py-5">
-                    <i class="bi bi-gear" style="font-size: 3rem; color: #ccc;"></i>
-                    <p class="text-muted mt-3">No system notifications</p>
                 </div>
             }
         </div>
@@ -480,7 +498,18 @@
             },
             success: function(response) {
                 if (response.success) {
-                    location.reload();
+                    // Update the notification card UI
+                    const notificationCard = $('[data-notification-id="' + notificationId + '"]');
+                    notificationCard.removeClass('unread').addClass('read');
+                    notificationCard.attr('data-status', 'read');
+                    notificationCard.find('.badge.bg-danger').remove();
+                    notificationCard.find('.btn-outline-primary:contains("Mark as Read")').remove();
+                    
+                    // Update the unread count badge in layout
+                    updateNotificationBadge();
+                    
+                    // Update tab counts
+                    updateTabCounts();
                 } else {
                     alert('Error: ' + response.message);
                 }
@@ -501,7 +530,19 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        location.reload();
+                        // Update all unread notification cards
+                        $('.notification-record.unread').each(function() {
+                            $(this).removeClass('unread').addClass('read');
+                            $(this).attr('data-status', 'read');
+                            $(this).find('.badge.bg-danger').remove();
+                            $(this).find('.btn-outline-primary:contains("Mark as Read")').remove();
+                        });
+                        
+                        // Update the unread count badge in layout
+                        updateNotificationBadge();
+                        
+                        // Update tab counts
+                        updateTabCounts();
                     } else {
                         alert('Error: ' + response.message);
                     }
@@ -534,6 +575,42 @@
                 }
             });
         }
+    }
+
+    // Helper function to update notification badge in layout
+    function updateNotificationBadge() {
+        $.ajax({
+            url: '@Url.Action("GetUnreadNotificationCount", "Admin")',
+            type: 'GET',
+            success: function(response) {
+                if (response.success && response.count !== undefined) {
+                    // Update top bar badge
+                    if (response.count > 0) {
+                        $('#notificationBadge').text(response.count).show();
+                    } else {
+                        $('#notificationBadge').text('0').hide();
+                    }
+                    
+                    // Update sidebar badge
+                    if (response.count > 0) {
+                        $('#sidebarNotificationBadge').text(response.count).show();
+                    } else {
+                        $('#sidebarNotificationBadge').text('0').hide();
+                    }
+                }
+            }
+        });
+    }
+
+    // Helper function to update tab counts
+    function updateTabCounts() {
+        const unreadCount = $('.notification-record[data-status="unread"]').length;
+        const readCount = $('.notification-record[data-status="read"]').length;
+        const totalCount = unreadCount + readCount;
+        
+        $('#all-tab').html('<i class="bi bi-list-ul me-2"></i>All <span class="badge bg-primary ms-2">' + totalCount + '</span>');
+        $('#unread-tab').html('<i class="bi bi-envelope me-2"></i>Unread <span class="badge bg-danger ms-2">' + unreadCount + '</span>');
+        $('#read-tab').html('<i class="bi bi-envelope-open me-2"></i>Read <span class="badge bg-success ms-2">' + readCount + '</span>');
     }
 
     function deleteAllRead() {
@@ -600,6 +677,12 @@
                     notificationCard.find('.badge.bg-danger').remove();
                     // Remove the "Mark as Read" button
                     notificationCard.find('.btn-outline-primary:contains("Mark as Read")').remove();
+                    
+                    // Update the unread count badge in layout
+                    updateNotificationBadge();
+                    
+                    // Update tab counts
+                    updateTabCounts();
                 }
             }
         });
@@ -674,6 +757,9 @@
                 break;
             case 'Class Capacity Alert':
                 html += buildClassCapacityDetails(details);
+                break;
+            case 'Announcement':
+                html += buildAnnouncementDetails(details, notification);
                 break;
             default:
                 html += '<p class="text-muted">No additional details available.</p>';
@@ -961,6 +1047,29 @@
         html += '<div class="col-md-6"><strong>Utilization Rate:</strong><br/><span class="badge bg-' + 
                 (parseFloat(details.utilizationRate) >= 100 ? 'danger' : 'warning') + ' fs-6">' + 
                 details.utilizationRate + '</span></div>';
+        html += '</div>';
+        return html;
+    }
+
+    function buildAnnouncementDetails(details, notification) {
+        let html = '<div class="announcement-details">';
+        html += '<div class="d-flex align-items-center mb-3">';
+        html += '<div class="notification-icon danger me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">';
+        html += '<i class="bi bi-megaphone-fill" style="font-size: 1.5rem;"></i>';
+        html += '</div>';
+        html += '<div>';
+        html += '<h5 class="mb-0 text-danger">System Announcement</h5>';
+        html += '<small class="text-muted"><i class="bi bi-person-circle me-1"></i>' + details.sentBy + '</small>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="card border-0 bg-light">';
+        html += '<div class="card-body">';
+        html += '<p class="mb-0" style="white-space: pre-wrap; line-height: 1.6;">' + details.message + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="mt-3">';
+        html += '<small class="text-muted"><i class="bi bi-calendar-event me-1"></i>Sent on: ' + details.createdDate + '</small>';
+        html += '</div>';
         html += '</div>';
         return html;
     }

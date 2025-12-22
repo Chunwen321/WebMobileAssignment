@@ -386,6 +386,26 @@ namespace WebMobileAssignment.Controllers
                 var attId = IdGenerator.GenerateAttendanceId(_context);
                 Console.WriteLine($"Generated attendance ID: {attId}");
 
+                // Get IP address from the request
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                Console.WriteLine($"IP Address: {ipAddress}");
+
+                // Check if any attendance with the same IP address exists for this class session today
+                bool duplicateIpDetected = false;
+                if (!string.IsNullOrEmpty(ipAddress))
+                {
+                    duplicateIpDetected = await _context.Attendances
+                        .AnyAsync(a => a.ClassId == session.ClassId &&
+                                      a.Date.Date == DateTime.Today &&
+                                      a.IpAddress == ipAddress &&
+                                      a.StudentId != student.StudentId); // Exclude the current student
+                    
+                    if (duplicateIpDetected)
+                    {
+                        Console.WriteLine($"Duplicate IP detected for class {session.ClassId} on {DateTime.Today}: {ipAddress}");
+                    }
+                }
+
                 var attendance = new Attendance
                 {
                     AttendanceId = attId,
@@ -394,13 +414,15 @@ namespace WebMobileAssignment.Controllers
                     Date = DateTime.Now,
                     TakenOn = DateTime.Now,
                     Status = "Present",
-                    MarkedByTeacherId = session.CreatedByTeacherId
+                    MarkedByTeacherId = session.CreatedByTeacherId,
+                    IpAddress = ipAddress,
+                    Flag = duplicateIpDetected
                 };
 
                 _context.Attendances.Add(attendance);
                 await _context.SaveChangesAsync();
 
-                Console.WriteLine($"Attendance marked successfully: {attId}");
+                Console.WriteLine($"Attendance marked successfully: {attId}, Flag: {duplicateIpDetected}");
 
                 return Json(new
                 {
@@ -409,7 +431,9 @@ namespace WebMobileAssignment.Controllers
                     studentName = student.User.FullName,
                     className = session.Class.ClassName,
                     time = DateTime.Now.ToString("hh:mm tt"),
-                    date = DateTime.Now.ToString("MMM dd, yyyy")
+                    date = DateTime.Now.ToString("MMM dd, yyyy"),
+                    ipAddress = ipAddress ?? "Unknown",
+                    isFlagged = duplicateIpDetected
                 });
             }
             catch (Exception ex)
@@ -836,10 +860,14 @@ namespace WebMobileAssignment.Controllers
                  n.Description.ToLower().Contains("leave")) &&
                 n.Status == "unread");
 
+            // Count announcement notifications
+            var announcementCount = notifications.Count(n => n.Type == "Announcement" && n.Status == "unread");
+
             ViewBag.TotalNotifications = totalNotifications;
             ViewBag.UnreadCount = unreadCount;
             ViewBag.ReadCount = readCount;
             ViewBag.ImportantCount = importantCount;
+            ViewBag.AnnouncementCount = announcementCount;
             ViewBag.Notifications = notifications;
 
             return View();
@@ -1001,7 +1029,20 @@ namespace WebMobileAssignment.Controllers
                 // Build detailed data based on notification type
                 object detailData = null;
 
-                switch (notification.Type)
+                // Handle Announcement type separately as it doesn't need RelatedEntityId
+                if (notification.Type == "Announcement")
+                {
+                    detailData = new
+                    {
+                        message = notification.Description,
+                        sentBy = "Administrator",
+                        createdDate = notification.CreatedDate.ToString("dd MMM yyyy hh:mm tt")
+                    };
+                }
+                else
+                {
+                    // Other notification types that require RelatedEntityId
+                    switch (notification.Type)
                 {
                     case "Class Enrollment":
                     case "Class Unenrollment":
@@ -1090,6 +1131,7 @@ namespace WebMobileAssignment.Controllers
                             }
                         }
                         break;
+                    }
                 }
 
                 return Json(new

@@ -28,6 +28,7 @@
 <div class="row g-3">
     <!-- Account Settings -->
     <div class="col-lg-8">
+        <!-- Edit Profile Section -->
         <div class="dashboard-card settings-account-card">
             <div class="card-header-custom">
                 <h5 class="card-title">
@@ -127,9 +128,19 @@
         <!-- Profile Summary -->
         <div class="dashboard-card profile-card">
             <div class="text-center mb-4">
-                <div class="user-avatar mx-auto mb-3 shadow-sm" style="width: 100px; height: 100px; font-size: 2.5rem; background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);">
-                    <i class="bi bi-person-fill"></i>
-                </div>
+                @if (!string.IsNullOrEmpty(Model?.User?.ProfilePicture) && !Model.User.ProfilePicture.StartsWith("/images/"))
+                {
+                    <img src="@Model.User.ProfilePicture" 
+                         alt="Profile Picture" 
+                         class="rounded-circle mx-auto mb-3 shadow-sm" 
+                         style="width: 100px; height: 100px; object-fit: cover;">
+                }
+                else
+                {
+                    <div class="user-avatar mx-auto mb-3 shadow-sm" style="width: 100px; height: 100px; font-size: 2.5rem; background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                }
                 <h5 class="mb-1 fw-bold">@Model?.User?.FullName</h5>
                 <p class="text-muted mb-2 small">@(Model?.Title ?? "Teacher")</p>
                 <span class="badge bg-primary px-3 py-2">Teacher</span>
@@ -389,4 +400,6 @@
     [data-theme="dark"] strong {
         color: #e0e0e0 !important;
     }
+
 </style>
+
