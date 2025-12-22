@@ -103,10 +103,68 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Title / Position</label>
+                        <label class="form-label fw-semibold">Title</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-briefcase"></i></span>
-                            <input type="text" name="title" class="form-control" value="@(Model?.Title ?? "")" placeholder="e.g., Senior Teacher">
+                            <span class="input-group-text bg-light"><i class="bi bi-person-badge"></i></span>
+                            <select name="title" class="form-select" required>
+                                <option value="">-- Select Title --</option>
+                                @if (Model?.Title == "Mr.")
+                                {
+                                    <option value="Mr." selected>Mr.</option>
+                                }
+                                else
+                                {
+                                    <option value="Mr.">Mr.</option>
+                                }
+                                @if (Model?.Title == "Mrs.")
+                                {
+                                    <option value="Mrs." selected>Mrs.</option>
+                                }
+                                else
+                                {
+                                    <option value="Mrs.">Mrs.</option>
+                                }
+                                @if (Model?.Title == "Ms.")
+                                {
+                                    <option value="Ms." selected>Ms.</option>
+                                }
+                                else
+                                {
+                                    <option value="Ms.">Ms.</option>
+                                }
+                                @if (Model?.Title == "Miss")
+                                {
+                                    <option value="Miss" selected>Miss</option>
+                                }
+                                else
+                                {
+                                    <option value="Miss">Miss</option>
+                                }
+                                @if (Model?.Title == "Dr.")
+                                {
+                                    <option value="Dr." selected>Dr.</option>
+                                }
+                                else
+                                {
+                                    <option value="Dr.">Dr.</option>
+                                }
+                                @if (Model?.Title == "Prof.")
+                                {
+                                    <option value="Prof." selected>Prof.</option>
+                                }
+                                else
+                                {
+                                    <option value="Prof.">Prof.</option>
+                                }
+                                @if (Model?.Title == "Assoc. Prof.")
+                                {
+                                    <option value="Assoc. Prof." selected>Assoc. Prof.</option>
+                                }
+                                else
+                                {
+                                    <option value="Assoc. Prof.">Assoc. Prof.</option>
+                                }
+                            </select>
                         </div>
                     </div>
                     
