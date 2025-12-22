@@ -8,7 +8,6 @@
     // Calculate actual current capacity from active enrollments
     var actualCurrentCapacity = Model.Enrollments?.Count(e => e.UnenrolledDate == null) ?? 0;
     var fillPercentage = Model.MaxCapacity > 0 ? (decimal)actualCurrentCapacity / Model.MaxCapacity * 100 : 0;
-    var availableSlots = Model.MaxCapacity - actualCurrentCapacity;
 }
 
 <!-- Header Section -->
@@ -84,14 +83,6 @@
                             }
                         </div>
                     </div>
-                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                        <div class="profile-quick-stats">
-                            <div class="quick-stat-item">
-                                <div class="quick-stat-number text-success">@availableSlots</div>
-                                <div class="quick-stat-label">Available Slots</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -100,7 +91,7 @@
 
 <!-- Statistics Cards -->
 <div class="row g-3 mb-4">
-    <div class="col-md-6">
+    <div class="col-12">
         <div class="stat-card" style="border-left-color: #198754;">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -110,21 +101,6 @@
                 </div>
                 <div class="card-icon green">
                     <i class="bi bi-people"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="stat-card" style="border-left-color: #0dcaf0;">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="stat-label">Available Slots</div>
-                    <div class="stat-value text-info">@availableSlots</div>
-                    <small class="text-muted">Remaining capacity</small>
-                </div>
-                <div class="card-icon cyan">
-                    <i class="bi bi-person-plus"></i>
                 </div>
             </div>
         </div>
