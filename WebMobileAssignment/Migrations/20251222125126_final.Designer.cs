@@ -12,8 +12,8 @@ using WebMobileAssignment.Models;
 namespace WebMobileAssignment.Migrations
 {
     [DbContext(typeof(DB))]
-    [Migration("20251220060656_addIp")]
-    partial class addIp
+    [Migration("20251222125126_final")]
+    partial class final
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
