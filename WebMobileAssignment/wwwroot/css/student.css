@@ -1834,10 +1834,6 @@ display: flex;
     border-bottom: 1px solid var(--border-color);
 }
 
-[data-theme="dark"] .daily-class-name {
-    color: #ffffff !important;
-}
-
 .daily-class-subject {
     padding: 12px 16px;
     font-size: 0.9rem;
@@ -1846,14 +1842,6 @@ display: flex;
     align-items: center;
     gap: 6px;
     border-bottom: 1px solid var(--border-color);
-}
-
-[data-theme="dark"] .daily-class-subject {
-    color: #ffffff !important;
-}
-
-[data-theme="dark"] .daily-class-subject i {
-    color: #ffffff !important;
 }
 
 .daily-class-details {
@@ -1870,21 +1858,9 @@ display: flex;
     color: var(--text-secondary);
 }
 
-[data-theme="dark"] .detail-item {
-    color: #ffffff !important;
-}
-
-[data-theme="dark"] .detail-item span {
-    color: #ffffff !important;
-}
-
 .detail-item i {
     color: var(--text-muted);
     width: 16px;
-}
-
-[data-theme="dark"] .detail-item i {
-    color: #b0b0b0 !important;
 }
 
 .daily-class-progress {
