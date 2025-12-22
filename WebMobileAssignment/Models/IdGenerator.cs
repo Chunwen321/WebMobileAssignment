@@ -30,20 +30,6 @@ public static class IdGenerator
       }
     }
 
-    public static string GenerateAdminId(DB db)
-    {
-        lock (_lock)
-        {
-      string id;
-            do
-        {
-                id = $"A{_adminCounter:D4}";
- _adminCounter++;
-        } while (db.Admins.Any(a => a.AdminId == id));
- return id;
-   }
-    }
-
     public static string GenerateTeacherId(DB db)
     {
     lock (_lock)
@@ -189,7 +175,6 @@ return id;
         lock (_lock)
         {
        _userCounter = GetNextCounter(db.Users.Select(u => u.UserId).ToList(), "U");
-          _adminCounter = GetNextCounter(db.Admins.Select(a => a.AdminId).ToList(), "A");
  _teacherCounter = GetNextCounter(db.Teachers.Select(t => t.TeacherId).ToList(), "T");
      _studentCounter = GetNextCounter(db.Students.Select(s => s.StudentId).ToList(), "S");
             _parentCounter = GetNextCounter(db.Parents.Select(p => p.ParentId).ToList(), "P");

@@ -8,7 +8,6 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
 {
     // DB Sets
     public DbSet<User> Users { get; set; }
-    public DbSet<Admin> Admins { get; set; }
     public DbSet<Teacher> Teachers { get; set; }
     public DbSet<Student> Students { get; set; }
     public DbSet<Parent> Parents { get; set; }
@@ -36,13 +35,6 @@ public class DB(DbContextOptions<DB> options) : DbContext(options)
             .WithMany(p => p.Students)
             .HasForeignKey(s => s.ParentId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        // Configure cascade delete behavior for User relationships
-        modelBuilder.Entity<Admin>()
-            .HasOne(a => a.User)
-            .WithMany()
-            .HasForeignKey(a => a.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Teacher>()
             .HasOne(t => t.User)
@@ -150,19 +142,6 @@ public class User
     // Navigation property
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     public ICollection<LeaveApplication> LeaveApplications { get; set; } = new List<LeaveApplication>();
-}
-
-public class Admin
-{
-    [Key]
-    [MaxLength(20)]
-    public string AdminId { get; set; } = string.Empty;
-
-    [MaxLength(20)]
-    public string UserId { get; set; } = string.Empty;
-
-    [ForeignKey(nameof(UserId))]
-    public User User { get; set; } = null!;
 }
 
 public class Teacher
