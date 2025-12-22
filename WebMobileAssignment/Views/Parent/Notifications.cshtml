@@ -435,6 +435,16 @@
 
 @section Scripts {
 <script>
+    // Track if any notifications were marked as read
+    var notificationsMarkedAsRead = false;
+
+    // When modal is hidden, reload only if notifications were marked as read
+    $('#notificationDetailsModal').on('hidden.bs.modal', function () {
+        if (notificationsMarkedAsRead) {
+            location.reload();
+        }
+    });
+
     function markAsRead(notificationId) {
         $.ajax({
             url: '@Url.Action("MarkAsRead", "Parent")',
@@ -564,10 +574,10 @@
                 if (response.success) {
                     displayNotificationDetails(response.notification, response.details);
                     
-                    // Mark as read if unread
+                    // Mark as read if unread - but don't reload the page
                     if (response.notification.status === 'unread') {
                         setTimeout(() => {
-                            markAsRead(notificationId);
+                            markAsReadSilently(notificationId);
                         }, 1000);
                     }
                 } else {
@@ -576,6 +586,48 @@
             },
             error: function() {
                 $('#notificationDetailsContent').html('<div class="alert alert-danger">Failed to load notification details.</div>');
+            }
+        });
+    }
+
+    // Silent mark as read - doesn't reload the page
+    function markAsReadSilently(notificationId) {
+        $.ajax({
+            url: '@Url.Action("MarkAsRead", "Parent")',
+            type: 'POST',
+            data: {
+                notificationId: notificationId,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Set flag to reload when modal closes
+                    notificationsMarkedAsRead = true;
+                    
+                    // Update the notification item UI without reloading
+                    var $notificationItem = $('[data-notification-id="' + notificationId + '"]');
+                    $notificationItem.removeClass('unread').addClass('read');
+                    $notificationItem.find('.badge.bg-danger').remove();
+                    $notificationItem.find('.btn-outline-primary').remove();
+                    
+                    // Update unread count
+                    var currentUnread = parseInt($('#unread-tab .badge').text()) || 0;
+                    if (currentUnread > 0) {
+                        var newUnread = currentUnread - 1;
+                        $('#unread-tab .badge').text(newUnread);
+                        
+                        // Update notification bell count in navbar if it exists
+                        $('.notification-count').text(newUnread);
+                        if (newUnread === 0) {
+                            $('.notification-count').hide();
+                        }
+                    }
+                } else {
+                    console.error('Error marking notification as read:', response.message);
+                }
+            },
+            error: function() {
+                console.error('An error occurred while marking notification as read.');
             }
         });
     }
