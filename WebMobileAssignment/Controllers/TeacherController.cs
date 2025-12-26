@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.InkML;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -415,7 +416,7 @@ namespace WebMobileAssignment.Controllers
                 {
                     // Generate new AttendanceId
                     var currentAttendanceCount = await _db.Attendances.CountAsync();
-                    var attId = $"ATT{(currentAttendanceCount + 1):D5}";
+                    var attId = IdGenerator.GenerateAttendanceId(_db);
                     
                     // Create new attendance record
                     attendance = new Attendance
@@ -519,7 +520,7 @@ namespace WebMobileAssignment.Controllers
                     if (attendance == null)
                     {
                         currentAttendanceCount++;
-                        var attId = $"ATT{(currentAttendanceCount + 1):D5}";
+                        var attId = IdGenerator.GenerateAttendanceId(_db);
 
                         attendance = new Attendance
                         {

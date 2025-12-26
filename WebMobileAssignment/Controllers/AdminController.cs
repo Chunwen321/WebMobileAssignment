@@ -3118,7 +3118,7 @@ namespace WebMobileAssignment.Controllers
                     {
                         // Create new attendance record
                         currentAttendanceCount++;
-                        var attId = $"ATT{(currentAttendanceCount + 1):D5}";
+                        var attId = IdGenerator.GenerateAttendanceId(_context);
 
                         var attendance = new Attendance
                         {
@@ -3264,7 +3264,7 @@ namespace WebMobileAssignment.Controllers
                 {
                     // Create new attendance record
                     var currentAttendanceCount = await _context.Attendances.CountAsync();
-                    var attId = $"ATT{(currentAttendanceCount + 1):D5}";
+                    var attId = IdGenerator.GenerateAttendanceId(_context);
 
                     var attendance = new Attendance
                     {
