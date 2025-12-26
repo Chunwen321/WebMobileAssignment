@@ -1045,7 +1045,10 @@ namespace WebMobileAssignment.Controllers
         {
             ViewBag.ActiveMenu = "TeacherManagement";
 
-            var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
+            var teachers = await _context.Teachers
+                .Include(t => t.User)
+                .Include(t => t.Classes)
+                .ToListAsync();
             return View(teachers);
         }
 
