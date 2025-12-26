@@ -427,19 +427,3 @@
     </div>
 </div>
 
-<!-- Action Buttons -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="d-flex gap-2 justify-content-end">
-            <a asp-action="TeacherIndex" class="btn btn-light">
-                <i class="bi bi-list"></i> All Teachers
-            </a>
-            <a asp-action="TeacherEdit" asp-route-id="@Model.TeacherId" class="btn btn-warning">
-                <i class="bi bi-pencil"></i> Edit Teacher
-            </a>
-            <a asp-action="TeacherDelete" asp-route-id="@Model.TeacherId" class="btn btn-danger">
-                <i class="bi bi-trash"></i> Delete Teacher
-            </a>
-        </div>
-    </div>
-</div>
