@@ -2074,6 +2074,47 @@ namespace WebMobileAssignment.Controllers
             if (string.IsNullOrWhiteSpace(className))
                 ModelState.AddModelError("className", "Class name is required");
 
+            if (string.IsNullOrWhiteSpace(roomNumber))
+                ModelState.AddModelError("roomNumber", "Venue/Room is required");
+
+            // Parse time strings to TimeSpan for validation
+            TimeSpan? parsedStartTime = null;
+            TimeSpan? parsedEndTime = null;
+
+            if (!string.IsNullOrEmpty(startTime) && TimeSpan.TryParse(startTime, out var st))
+            {
+                parsedStartTime = st;
+            }
+
+            if (!string.IsNullOrEmpty(endTime) && TimeSpan.TryParse(endTime, out var et))
+            {
+                parsedEndTime = et;
+            }
+
+            // Validate that end time is after start time
+            if (parsedStartTime.HasValue && parsedEndTime.HasValue && parsedEndTime.Value <= parsedStartTime.Value)
+            {
+                ModelState.AddModelError("endTime", "End time must be after start time");
+            }
+
+            // Check for schedule conflicts: same day, same time, same venue (exclude current class)
+            if (!string.IsNullOrWhiteSpace(day) && !string.IsNullOrWhiteSpace(roomNumber) && parsedStartTime.HasValue && parsedEndTime.HasValue)
+            {
+                var conflictingClasses = await _context.Classes
+                    .Where(c => c.ClassId != classId && c.Day == day && c.RoomNumber == roomNumber && c.StartTime.HasValue && c.EndTime.HasValue)
+                    .ToListAsync();
+                    
+                foreach (var existingClass in conflictingClasses)
+                {
+                    // Check if time ranges overlap
+                    if ((parsedStartTime.Value < existingClass.EndTime.Value && parsedEndTime.Value > existingClass.StartTime.Value))
+                    {
+                        ModelState.AddModelError("", $"Schedule conflict: {existingClass.ClassName} is already scheduled in {roomNumber} on {day} from {existingClass.StartTime.Value:hh\\:mm} to {existingClass.EndTime.Value:hh\\:mm}");
+                        break;
+                    }
+                }
+            }
+
             // Calculate the new capacity considering student additions/removals
             int capacityAdjustment = 0;
             if (!string.IsNullOrEmpty(removeStudentIds))
@@ -2100,20 +2141,6 @@ namespace WebMobileAssignment.Controllers
             {
                 try
                 {
-                    // Parse time strings to TimeSpan
-                    TimeSpan? parsedStartTime = null;
-                    TimeSpan? parsedEndTime = null;
-
-                    if (!string.IsNullOrEmpty(startTime) && TimeSpan.TryParse(startTime, out var st))
-                    {
-                        parsedStartTime = st;
-                    }
-
-                    if (!string.IsNullOrEmpty(endTime) && TimeSpan.TryParse(endTime, out var et))
-                    {
-                        parsedEndTime = et;
-                    }
-
                     int addedCount = 0;
                     int removedCount = 0;
 
@@ -2465,6 +2492,46 @@ namespace WebMobileAssignment.Controllers
                 .FirstOrDefaultAsync(c => c.ClassId == classId);
             
             return View(@class);
+        }
+
+        // API endpoint to get available venues for a given day and time
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableVenues(string day, string startTime, string endTime, string? excludeClassId = null)
+        {
+            var allVenues = new[] { "K101", "K102", "K103", "K104", "K201", "K202", "K203", "K204", "D101", "D102" };
+            
+            if (string.IsNullOrEmpty(day) || string.IsNullOrEmpty(startTime) || string.IsNullOrEmpty(endTime))
+            {
+                return Json(new { availableVenues = allVenues });
+            }
+
+            // Parse times
+            if (!TimeSpan.TryParse(startTime, out var parsedStartTime) || !TimeSpan.TryParse(endTime, out var parsedEndTime))
+            {
+                return Json(new { availableVenues = allVenues });
+            }
+
+            // Find occupied venues at this day/time
+            var occupiedVenuesQuery = _context.Classes
+                .Where(c => c.Day == day && c.RoomNumber != null && c.StartTime.HasValue && c.EndTime.HasValue);
+            
+            // Exclude current class if editing
+            if (!string.IsNullOrEmpty(excludeClassId))
+            {
+                occupiedVenuesQuery = occupiedVenuesQuery.Where(c => c.ClassId != excludeClassId);
+            }
+
+            var potentialConflicts = await occupiedVenuesQuery.ToListAsync();
+
+            var occupiedVenues = potentialConflicts
+                .Where(c => parsedStartTime < c.EndTime!.Value && parsedEndTime > c.StartTime!.Value)
+                .Select(c => c.RoomNumber)
+                .Distinct()
+                .ToList();
+
+            var availableVenues = allVenues.Where(v => !occupiedVenues.Contains(v)).ToList();
+
+            return Json(new { availableVenues = availableVenues, occupiedVenues = occupiedVenues });
         }
 
         public async Task<IActionResult> ClassDetails(string id)
