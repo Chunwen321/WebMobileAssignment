@@ -427,8 +427,7 @@ namespace WebMobileAssignment.Controllers
                         Date = date,
                         MarkedByTeacherId = teacher.TeacherId,
                         TakenOn = DateTime.Now,
-                        Flag = false,
-                        IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
+                        Flag = false
                     };
                     _db.Attendances.Add(attendance);
                 }
@@ -531,8 +530,7 @@ namespace WebMobileAssignment.Controllers
                             Date = selectedDate,
                             MarkedByTeacherId = teacher.TeacherId,
                             TakenOn = DateTime.Now,
-                            Flag = false,
-                            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
+                            Flag = false
                         };
                         _db.Attendances.Add(attendance);
                         markedCount++;
