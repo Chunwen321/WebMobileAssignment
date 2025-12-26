@@ -233,18 +233,25 @@
                                         @record.TakenOn.ToString("hh:mm tt")
                                     </td>
                                     <td>
-                                        @if (record.MarkedByTeacher != null)
+                                        @if (!string.IsNullOrEmpty(record.IpAddress))
+                                        {
+                                            <span class="text-muted">
+                                                <i class="bi bi-qr-code-scan me-1"></i>
+                                                Self-marked
+                                            </span>
+                                        }
+                                        else if (!string.IsNullOrEmpty(record.MarkedByTeacherId))
                                         {
                                             <span class="text-muted">
                                                 <i class="bi bi-person-badge me-1"></i>
-                                                @record.MarkedByTeacher.User.FullName
+                                                @(record.MarkedByTeacher?.User?.FullName ?? $"Teacher ({record.MarkedByTeacherId})")
                                             </span>
                                         }
                                         else
                                         {
                                             <span class="text-muted">
-                                                <i class="bi bi-qr-code-scan me-1"></i>
-                                                Self-marked
+                                                <i class="bi bi-shield-check me-1"></i>
+                                                Admin
                                             </span>
                                         }
                                     </td>
