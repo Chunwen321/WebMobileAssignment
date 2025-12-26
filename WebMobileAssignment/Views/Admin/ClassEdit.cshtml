@@ -117,16 +117,16 @@
                         <label for="roomNumber" class="form-label">Venue/Room <span class="text-danger">*</span></label>
                         <select id="roomNumber" name="roomNumber" class="form-select" required>
                             <option value="">-- Select Venue --</option>
-                            <option value="K101" selected="@(ViewBag.RoomNumber == "K101")">K101</option>
-                            <option value="K102" selected="@(ViewBag.RoomNumber == "K102")">K102</option>
-                            <option value="K103" selected="@(ViewBag.RoomNumber == "K103")">K103</option>
-                            <option value="K104" selected="@(ViewBag.RoomNumber == "K104")">K104</option>
-                            <option value="K201" selected="@(ViewBag.RoomNumber == "K201")">K201</option>
-                            <option value="K202" selected="@(ViewBag.RoomNumber == "K202")">K202</option>
-                            <option value="K203" selected="@(ViewBag.RoomNumber == "K203")">K203</option>
-                            <option value="K204" selected="@(ViewBag.RoomNumber == "K204")">K204</option>
-                            <option value="D101" selected="@(ViewBag.RoomNumber == "D101")">D101</option>
-                            <option value="D102" selected="@(ViewBag.RoomNumber == "D102")">D102</option>
+                            <option value="K101" selected="@(Model.RoomNumber == "K101")">K101</option>
+                            <option value="K102" selected="@(Model.RoomNumber == "K102")">K102</option>
+                            <option value="K103" selected="@(Model.RoomNumber == "K103")">K103</option>
+                            <option value="K104" selected="@(Model.RoomNumber == "K104")">K104</option>
+                            <option value="K201" selected="@(Model.RoomNumber == "K201")">K201</option>
+                            <option value="K202" selected="@(Model.RoomNumber == "K202")">K202</option>
+                            <option value="K203" selected="@(Model.RoomNumber == "K203")">K203</option>
+                            <option value="K204" selected="@(Model.RoomNumber == "K204")">K204</option>
+                            <option value="D101" selected="@(Model.RoomNumber == "D101")">D101</option>
+                            <option value="D102" selected="@(Model.RoomNumber == "D102")">D102</option>
                         </select>
                         <small class="text-muted">Physical location where class is held</small>
                     </div>
