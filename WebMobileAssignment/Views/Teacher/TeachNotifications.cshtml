@@ -18,7 +18,7 @@
 
 <div class="row g-3 mb-4">
     <!-- Notification Stats -->
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="stat-card" style="border-left-color: #0d6efd;">
             <div class="stat-label">Total Notifications</div>
             <div class="stat-value">@totalNotifications</div>
@@ -28,7 +28,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="stat-card" style="border-left-color: #dc3545;">
             <div class="stat-label">Unread</div>
             <div class="stat-value">@unreadCount</div>
@@ -38,17 +38,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card" style="border-left-color: #ffc107;">
-            <div class="stat-label">Leave Applications</div>
-            <div class="stat-value">@leaveCount</div>
-            <div class="stat-change">
-                <i class="bi bi-calendar-x"></i>
-                <span>Pending reviews</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="stat-card" style="border-left-color: #d63384;">
             <div class="stat-label">Announcements</div>
             <div class="stat-value">@announcementCount</div>
@@ -103,17 +93,6 @@
             <button class="nav-link" id="announcements-tab" data-bs-toggle="tab" data-bs-target="#announcements" type="button" role="tab" aria-controls="announcements" aria-selected="false" onclick="filterByType('announcements')">
                 <i class="bi bi-megaphone-fill me-1"></i>Announcements
                 <span class="badge bg-danger ms-2">@announcementCount</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="leave-tab" data-bs-toggle="tab" data-bs-target="#leave" type="button" role="tab" aria-controls="leave" aria-selected="false" onclick="filterByType('leave')">
-                <i class="bi bi-calendar-x me-1"></i>Leave Applications
-                <span class="badge bg-warning text-dark ms-2">@leaveCount</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab" aria-controls="system" aria-selected="false" onclick="filterByType('system')">
-                <i class="bi bi-info-circle me-1"></i>System
             </button>
         </li>
     </ul>
@@ -323,128 +302,6 @@
                 <div class="text-center py-5">
                     <i class="bi bi-megaphone-slash" style="font-size: 3rem; color: #ccc;"></i>
                     <p class="text-muted mt-3">No system announcements</p>
-                </div>
-            }
-        </div>
-
-        <div class="tab-pane fade" id="leave" role="tabpanel" aria-labelledby="leave-tab">
-            @if (notifications.Any(n => n.Description.ToLower().Contains("leave application")))
-            {
-                <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Description.ToLower().Contains("leave application")))
-                    {
-                        var isUnread = notification.Status == "unread";
-                        var timeAgo = GetTimeAgo(notification.CreatedDate);
-
-                        <div class="notification-item type-leave notification-record @(isUnread ? "unread" : "read")" 
-                             data-type="leave" 
-                             data-status="@(isUnread ? "unread" : "read")"
-                             data-notification-id="@notification.NotificationId"
-                             style="cursor: pointer;"
-                             onclick="showNotificationDetails('@notification.NotificationId')">
-                            <div class="notification-header">
-                                <div class="d-flex align-items-center gap-2 w-100">
-                                    <div class="notification-icon warning">
-                                        <i class="bi bi-calendar-x"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-1">@GetNotificationTitle(notification.Description)</h6>
-                                        <small class="text-muted"><i class="bi bi-clock me-1"></i>@timeAgo</small>
-                                    </div>
-                                    @if (isUnread)
-                                    {
-                                        <span class="badge bg-danger">Unread</span>
-                                    }
-                                </div>
-                            </div>
-                            <div class="notification-body">
-                                <p class="mb-2">@notification.Description</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="d-flex gap-2 flex-wrap">
-                                    @if (isUnread)
-                                    {
-                                        <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); markAsRead('@notification.NotificationId')">
-                                            <i class="bi bi-check me-1"></i>Mark as Read
-                                        </button>
-                                    }
-                                    <a href="@Url.Action("LeaveIndex", "Teacher")" class="btn btn-sm btn-outline-warning" onclick="event.stopPropagation();">
-                                        <i class="bi bi-arrow-right me-1"></i>View All Leave Applications
-                                    </a>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteNotification('@notification.NotificationId')">
-                                        <i class="bi bi-trash me-1"></i>Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="text-center py-5">
-                    <i class="bi bi-calendar-check" style="font-size: 3rem; color: #ccc;"></i>
-                    <p class="text-muted mt-3">No leave application notifications</p>
-                </div>
-            }
-        </div>
-
-        <div class="tab-pane fade" id="system" role="tabpanel" aria-labelledby="system-tab">
-            @if (notifications.Any(n => n.Type == "Announcement" || n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
-            {
-                <div class="notifications-container">
-                    @foreach (var notification in notifications.Where(n => n.Type == "Announcement" || n.Description.ToLower().Contains("system") || n.Description.ToLower().Contains("update")))
-                    {
-                        var isUnread = notification.Status == "unread";
-                        var isAnnouncement = notification.Type == "Announcement";
-                        var timeAgo = GetTimeAgo(notification.CreatedDate);
-
-                        <div class="notification-item type-system notification-record @(isUnread ? "unread" : "read")" 
-                             data-type="system" 
-                             data-status="@(isUnread ? "unread" : "read")"
-                             data-notification-id="@notification.NotificationId"
-                             style="cursor: pointer;"
-                             onclick="showNotificationDetails('@notification.NotificationId')">
-                            <div class="notification-header">
-                                <div class="d-flex align-items-center gap-2 w-100">
-                                    <div class="notification-icon @(isAnnouncement ? "danger" : "primary")">
-                                        <i class="bi @(isAnnouncement ? "bi-megaphone-fill" : "bi-info-circle-fill")"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-1">@GetNotificationTitle(notification.Description)</h6>
-                                        <small class="text-muted"><i class="bi bi-clock me-1"></i>@timeAgo</small>
-                                    </div>
-                                    @if (isUnread)
-                                    {
-                                        <span class="badge bg-danger">Unread</span>
-                                    }
-                                </div>
-                            </div>
-                            <div class="notification-body">
-                                <p class="mb-2">@notification.Description</p>
-                            </div>
-                            <div class="notification-footer">
-                                <div class="d-flex gap-2 flex-wrap">
-                                    @if (isUnread)
-                                    {
-                                        <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); markAsRead('@notification.NotificationId')">
-                                            <i class="bi bi-check me-1"></i>Mark as Read
-                                        </button>
-                                    }
-                                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteNotification('@notification.NotificationId')">
-                                        <i class="bi bi-trash me-1"></i>Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="text-center py-5">
-                    <i class="bi bi-gear" style="font-size: 3rem; color: #ccc;"></i>
-                    <p class="text-muted mt-3">No system notifications</p>
                 </div>
             }
         </div>
